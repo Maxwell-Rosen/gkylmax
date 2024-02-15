@@ -1,0 +1,888 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+ARCH_FLAGS	mirror1x_adiabatic/Makefile	/^ARCH_FLAGS ?= -march=native$/;"	m
+ARCH_FLAGS	mirror1x_adiabatic_eqdst/Makefile	/^ARCH_FLAGS ?= -march=native$/;"	m
+ARCH_FLAGS	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^ARCH_FLAGS ?= -march=native$/;"	m
+ARCH_FLAGS	mirror1x_trueMaxwellian/Makefile	/^ARCH_FLAGS ?= -march=native$/;"	m
+ARCH_FLAGS	wham1x_adiabatic/Makefile	/^ARCH_FLAGS ?= -march=native$/;"	m
+B_bt	mirror1x_adiabatic/sim.c	/^  double B_bt;$/;"	m	struct:gk_mirror_ctx	file:
+B_bt	mirror1x_adiabatic_eqdst/sim.c	/^  double B_bt;$/;"	m	struct:gk_mirror_ctx	file:
+B_bt	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double B_bt;$/;"	m	struct:gk_mirror_ctx	file:
+B_bt	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double B_bt;$/;"	m	struct:gk_mirror_ctx	file:
+B_bt	mirror1x_trueMaxwellian/sim.c	/^  double B_bt;$/;"	m	struct:gk_mirror_ctx	file:
+B_bt	wham1x_adiabatic/sim.c	/^  double B_bt;$/;"	m	struct:gk_mirror_ctx	file:
+B_m	mirror1x_adiabatic/sim.c	/^  double B_m;$/;"	m	struct:gk_mirror_ctx	file:
+B_m	mirror1x_adiabatic_eqdst/sim.c	/^  double B_m;$/;"	m	struct:gk_mirror_ctx	file:
+B_m	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double B_m;$/;"	m	struct:gk_mirror_ctx	file:
+B_m	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double B_m;$/;"	m	struct:gk_mirror_ctx	file:
+B_m	mirror1x_trueMaxwellian/sim.c	/^  double B_m;$/;"	m	struct:gk_mirror_ctx	file:
+B_m	wham1x_adiabatic/sim.c	/^  double B_m;$/;"	m	struct:gk_mirror_ctx	file:
+B_p	mirror1x_adiabatic/sim.c	/^  double B_p;$/;"	m	struct:gk_mirror_ctx	file:
+B_p	mirror1x_adiabatic_eqdst/sim.c	/^  double B_p;$/;"	m	struct:gk_mirror_ctx	file:
+B_p	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double B_p;$/;"	m	struct:gk_mirror_ctx	file:
+B_p	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double B_p;$/;"	m	struct:gk_mirror_ctx	file:
+B_p	mirror1x_trueMaxwellian/sim.c	/^  double B_p;$/;"	m	struct:gk_mirror_ctx	file:
+B_p	postprocessing/plot.py	/^B_p       = 0.53$/;"	v
+B_p	wham1x_adiabatic/sim.c	/^  double B_p;$/;"	m	struct:gk_mirror_ctx	file:
+Bfield_psiZ	mirror1x_adiabatic/sim.c	/^Bfield_psiZ(double psiIn, double ZIn, void *ctx, double *BRad, double *BZ, double *Bmag)$/;"	f
+Bfield_psiZ	mirror1x_adiabatic_eqdst/sim.c	/^Bfield_psiZ(double psiIn, double ZIn, void *ctx, double *BRad, double *BZ, double *Bmag)$/;"	f
+Bfield_psiZ	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^Bfield_psiZ(double psiIn, double ZIn, void *ctx, double *BRad, double *BZ, double *Bmag)$/;"	f
+Bfield_psiZ	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^Bfield_psiZ(double psiIn, double ZIn, void *ctx, double *BRad, double *BZ, double *Bmag)$/;"	f
+Bfield_psiZ	mirror1x_trueMaxwellian/sim.c	/^Bfield_psiZ(double psiIn, double ZIn, void *ctx, double *BRad, double *BZ, double *Bmag)$/;"	f
+CFLAGS	mirror1x_adiabatic/Makefile	/^CFLAGS = -O3 -g -ffast-math -I.$/;"	m
+CFLAGS	mirror1x_adiabatic/Makefile	/^CFLAGS ?= -O3 -g -ffast-math -fPIC -MMD -MP$/;"	m
+CFLAGS	mirror1x_adiabatic_eqdst/Makefile	/^CFLAGS = -O3 -g -ffast-math -I.$/;"	m
+CFLAGS	mirror1x_adiabatic_eqdst/Makefile	/^CFLAGS ?= -O3 -g -ffast-math -fPIC -MMD -MP$/;"	m
+CFLAGS	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^       CFLAGS = -O3 -g --forward-unknown-to-host-compiler --use_fast_math -ffast-math -MMD -MP -fPIC$/;"	m
+CFLAGS	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^CFLAGS = -O3 -g -ffast-math -I.$/;"	m
+CFLAGS	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^CFLAGS ?= -O3 -g -ffast-math -fPIC -MMD -MP$/;"	m
+CFLAGS	mirror1x_trueMaxwellian/Makefile	/^       CFLAGS = -O3 -g --forward-unknown-to-host-compiler --use_fast_math -ffast-math -MMD -MP -fPIC$/;"	m
+CFLAGS	mirror1x_trueMaxwellian/Makefile	/^CFLAGS = -O3 -g -ffast-math -I.$/;"	m
+CFLAGS	mirror1x_trueMaxwellian/Makefile	/^CFLAGS ?= -O3 -g -ffast-math -fPIC -MMD -MP$/;"	m
+CFLAGS	wham1x_adiabatic/Makefile	/^CFLAGS = -O3 -g -ffast-math -I.$/;"	m
+CFLAGS	wham1x_adiabatic/Makefile	/^CFLAGS ?= -O3 -g -ffast-math -fPIC -MMD -MP$/;"	m
+CUDA_ARCH	mirror1x_adiabatic/Makefile	/^CUDA_ARCH ?= 70$/;"	m
+CUDA_ARCH	mirror1x_adiabatic_eqdst/Makefile	/^CUDA_ARCH ?= 70$/;"	m
+CUDA_ARCH	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^CUDA_ARCH ?= 70$/;"	m
+CUDA_ARCH	mirror1x_trueMaxwellian/Makefile	/^CUDA_ARCH ?= 70$/;"	m
+CUDA_ARCH	wham1x_adiabatic/Makefile	/^CUDA_ARCH ?= 70$/;"	m
+CUDA_LIB	mirror1x_adiabatic/Makefile	/^	CUDA_LIB = -lcublas$/;"	m
+CUDA_LIB	mirror1x_adiabatic/Makefile	/^CUDA_LIB = $/;"	m
+CUDA_LIB	mirror1x_adiabatic_eqdst/Makefile	/^	CUDA_LIB = -lcublas$/;"	m
+CUDA_LIB	mirror1x_adiabatic_eqdst/Makefile	/^CUDA_LIB = $/;"	m
+CUDA_LIB	wham1x_adiabatic/Makefile	/^	CUDA_LIB = -lcublas$/;"	m
+CUDA_LIB	wham1x_adiabatic/Makefile	/^CUDA_LIB = $/;"	m
+CUDA_LIBS	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^              CUDA_LIBS = -L${CUDAMATH_LIBDIR}$/;"	m
+CUDA_LIBS	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^              CUDA_LIBS =$/;"	m
+CUDA_LIBS	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^CUDA_LIBS =$/;"	m
+CUDA_LIBS	mirror1x_trueMaxwellian/Makefile	/^              CUDA_LIBS = -L${CUDAMATH_LIBDIR}$/;"	m
+CUDA_LIBS	mirror1x_trueMaxwellian/Makefile	/^              CUDA_LIBS =$/;"	m
+CUDA_LIBS	mirror1x_trueMaxwellian/Makefile	/^CUDA_LIBS =$/;"	m
+EXT_LIBS	mirror1x_adiabatic/Makefile	/^EXT_LIBS = ${LAPACK_LIB} ${SUPERLU_LIB} ${MPI_LIBS} ${LUA_LIBS} -lm -lpthread -ldl$/;"	m
+EXT_LIBS	mirror1x_adiabatic_eqdst/Makefile	/^EXT_LIBS = ${LAPACK_LIB} ${SUPERLU_LIB} ${MPI_LIBS} ${LUA_LIBS} -lm -lpthread -ldl$/;"	m
+EXT_LIBS	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^EXT_LIBS = ${LAPACK_LIB} ${SUPERLU_LIB} ${MPI_LIBS} ${LUA_LIBS} -lm -lpthread -ldl$/;"	m
+EXT_LIBS	mirror1x_trueMaxwellian/Makefile	/^EXT_LIBS = ${LAPACK_LIB} ${SUPERLU_LIB} ${MPI_LIBS} ${LUA_LIBS} -lm -lpthread -ldl$/;"	m
+EXT_LIBS	wham1x_adiabatic/Makefile	/^EXT_LIBS = ${LAPACK_LIB} ${SUPERLU_LIB} ${MPI_LIBS} ${LUA_LIBS} -lm -lpthread -ldl$/;"	m
+G0_INC_DIR	mirror1x_adiabatic/Makefile	/^G0_INC_DIR = ${PREFIX}\/gkylzero\/include$/;"	m
+G0_INC_DIR	mirror1x_adiabatic_eqdst/Makefile	/^G0_INC_DIR = ${PREFIX}\/gkylzero\/include$/;"	m
+G0_INC_DIR	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^G0_INC_DIR = ${PREFIX}\/gkylzero\/include$/;"	m
+G0_INC_DIR	mirror1x_trueMaxwellian/Makefile	/^G0_INC_DIR = ${PREFIX}\/gkylzero\/include$/;"	m
+G0_INC_DIR	wham1x_adiabatic/Makefile	/^G0_INC_DIR = ${PREFIX}\/gkylzero\/include$/;"	m
+G0_LIB	mirror1x_adiabatic/Makefile	/^G0_LIB = -lgkylzero$/;"	m
+G0_LIB	mirror1x_adiabatic_eqdst/Makefile	/^G0_LIB = -lgkylzero$/;"	m
+G0_LIB	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^G0_LIB = -lgkylzero$/;"	m
+G0_LIB	mirror1x_trueMaxwellian/Makefile	/^G0_LIB = -lgkylzero$/;"	m
+G0_LIB	wham1x_adiabatic/Makefile	/^G0_LIB = -lgkylzero$/;"	m
+G0_LIBS	mirror1x_adiabatic/Makefile	/^G0_LIBS = ${G0_LIB} ${CUDA_LIB} -lm -lpthread$/;"	m
+G0_LIBS	mirror1x_adiabatic_eqdst/Makefile	/^G0_LIBS = ${G0_LIB} ${CUDA_LIB} -lm -lpthread$/;"	m
+G0_LIBS	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^G0_LIBS = ${G0_LIB} ${CUDA_LIBS} -lm -lpthread$/;"	m
+G0_LIBS	mirror1x_trueMaxwellian/Makefile	/^G0_LIBS = ${G0_LIB} ${CUDA_LIBS} -lm -lpthread$/;"	m
+G0_LIBS	wham1x_adiabatic/Makefile	/^G0_LIBS = ${G0_LIB} ${CUDA_LIB} -lm -lpthread$/;"	m
+G0_LIB_DIR	mirror1x_adiabatic/Makefile	/^G0_LIB_DIR = ${PREFIX}\/gkylzero\/lib$/;"	m
+G0_LIB_DIR	mirror1x_adiabatic_eqdst/Makefile	/^G0_LIB_DIR = ${PREFIX}\/gkylzero\/lib$/;"	m
+G0_LIB_DIR	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^G0_LIB_DIR = ${PREFIX}\/gkylzero\/lib$/;"	m
+G0_LIB_DIR	mirror1x_trueMaxwellian/Makefile	/^G0_LIB_DIR = ${PREFIX}\/gkylzero\/lib$/;"	m
+G0_LIB_DIR	wham1x_adiabatic/Makefile	/^G0_LIB_DIR = ${PREFIX}\/gkylzero\/lib$/;"	m
+G0_RPATH	mirror1x_adiabatic/Makefile	/^G0_RPATH = -Wl,-rpath,${G0_LIB_DIR}$/;"	m
+G0_RPATH	mirror1x_adiabatic_eqdst/Makefile	/^G0_RPATH = -Wl,-rpath,${G0_LIB_DIR}$/;"	m
+G0_RPATH	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^G0_RPATH = -Wl,-rpath,${G0_LIB_DIR}$/;"	m
+G0_RPATH	mirror1x_trueMaxwellian/Makefile	/^G0_RPATH = -Wl,-rpath,${G0_LIB_DIR}$/;"	m
+G0_RPATH	wham1x_adiabatic/Makefile	/^G0_RPATH = -Wl,-rpath,${G0_LIB_DIR}$/;"	m
+INCLUDES	mirror1x_adiabatic/Makefile	/^INCLUDES = -I${G0_INC_DIR} -I${LAPACK_INC} -I${SUPERLU_INC} -I${MPI_INC_DIR} -I${LUA_INC_DIR}$/;"	m
+INCLUDES	mirror1x_adiabatic_eqdst/Makefile	/^INCLUDES = -I${G0_INC_DIR} -I${LAPACK_INC} -I${SUPERLU_INC} -I${MPI_INC_DIR} -I${LUA_INC_DIR}$/;"	m
+INCLUDES	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^INCLUDES = -I${G0_INC_DIR} -I${LAPACK_INC} -I${SUPERLU_INC} -I${MPI_INC_DIR} -I${LUA_INC_DIR}$/;"	m
+INCLUDES	mirror1x_trueMaxwellian/Makefile	/^INCLUDES = -I${G0_INC_DIR} -I${LAPACK_INC} -I${SUPERLU_INC} -I${MPI_INC_DIR} -I${LUA_INC_DIR}$/;"	m
+INCLUDES	wham1x_adiabatic/Makefile	/^INCLUDES = -I${G0_INC_DIR} -I${LAPACK_INC} -I${SUPERLU_INC} -I${MPI_INC_DIR} -I${LUA_INC_DIR}$/;"	m
+LAPACK_INC	mirror1x_adiabatic/Makefile	/^	LAPACK_INC = . # dummy$/;"	m
+LAPACK_INC	mirror1x_adiabatic/Makefile	/^LAPACK_INC = $(PREFIX)\/OpenBLAS\/include$/;"	m
+LAPACK_INC	mirror1x_adiabatic_eqdst/Makefile	/^	LAPACK_INC = . # dummy$/;"	m
+LAPACK_INC	mirror1x_adiabatic_eqdst/Makefile	/^LAPACK_INC = $(PREFIX)\/OpenBLAS\/include$/;"	m
+LAPACK_INC	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^	LAPACK_INC = . # dummy$/;"	m
+LAPACK_INC	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^LAPACK_INC = $(PREFIX)\/OpenBLAS\/include$/;"	m
+LAPACK_INC	mirror1x_trueMaxwellian/Makefile	/^	LAPACK_INC = . # dummy$/;"	m
+LAPACK_INC	mirror1x_trueMaxwellian/Makefile	/^LAPACK_INC = $(PREFIX)\/OpenBLAS\/include$/;"	m
+LAPACK_INC	wham1x_adiabatic/Makefile	/^	LAPACK_INC = . # dummy$/;"	m
+LAPACK_INC	wham1x_adiabatic/Makefile	/^LAPACK_INC = $(PREFIX)\/OpenBLAS\/include$/;"	m
+LAPACK_LIB	mirror1x_adiabatic/Makefile	/^	LAPACK_LIB = -framework Accelerate$/;"	m
+LAPACK_LIB	mirror1x_adiabatic/Makefile	/^LAPACK_LIB = -lopenblas$/;"	m
+LAPACK_LIB	mirror1x_adiabatic_eqdst/Makefile	/^	LAPACK_LIB = -framework Accelerate$/;"	m
+LAPACK_LIB	mirror1x_adiabatic_eqdst/Makefile	/^LAPACK_LIB = -lopenblas$/;"	m
+LAPACK_LIB	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^	LAPACK_LIB = -framework Accelerate$/;"	m
+LAPACK_LIB	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^LAPACK_LIB = -lopenblas$/;"	m
+LAPACK_LIB	mirror1x_trueMaxwellian/Makefile	/^	LAPACK_LIB = -framework Accelerate$/;"	m
+LAPACK_LIB	mirror1x_trueMaxwellian/Makefile	/^LAPACK_LIB = -lopenblas$/;"	m
+LAPACK_LIB	wham1x_adiabatic/Makefile	/^	LAPACK_LIB = -framework Accelerate$/;"	m
+LAPACK_LIB	wham1x_adiabatic/Makefile	/^LAPACK_LIB = -lopenblas$/;"	m
+LAPACK_LIB_DIR	mirror1x_adiabatic/Makefile	/^LAPACK_LIB_DIR = $(PREFIX)\/OpenBLAS\/lib$/;"	m
+LAPACK_LIB_DIR	mirror1x_adiabatic_eqdst/Makefile	/^LAPACK_LIB_DIR = $(PREFIX)\/OpenBLAS\/lib$/;"	m
+LAPACK_LIB_DIR	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^LAPACK_LIB_DIR = $(PREFIX)\/OpenBLAS\/lib$/;"	m
+LAPACK_LIB_DIR	mirror1x_trueMaxwellian/Makefile	/^LAPACK_LIB_DIR = $(PREFIX)\/OpenBLAS\/lib$/;"	m
+LAPACK_LIB_DIR	wham1x_adiabatic/Makefile	/^LAPACK_LIB_DIR = $(PREFIX)\/OpenBLAS\/lib$/;"	m
+LDFLAGS	mirror1x_adiabatic/Makefile	/^LDFLAGS = $/;"	m
+LDFLAGS	mirror1x_adiabatic_eqdst/Makefile	/^LDFLAGS = $/;"	m
+LDFLAGS	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^LDFLAGS = $/;"	m
+LDFLAGS	mirror1x_trueMaxwellian/Makefile	/^LDFLAGS = $/;"	m
+LDFLAGS	wham1x_adiabatic/Makefile	/^LDFLAGS = $/;"	m
+LIB_DIRS	mirror1x_adiabatic/Makefile	/^LIB_DIRS = -L${LAPACK_LIB_DIR} -L${SUPERLU_LIB_DIR} -L${MPI_LIB_DIR} -L${LUA_LIB_DIR}$/;"	m
+LIB_DIRS	mirror1x_adiabatic_eqdst/Makefile	/^LIB_DIRS = -L${LAPACK_LIB_DIR} -L${SUPERLU_LIB_DIR} -L${MPI_LIB_DIR} -L${LUA_LIB_DIR}$/;"	m
+LIB_DIRS	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^LIB_DIRS = -L${LAPACK_LIB_DIR} -L${SUPERLU_LIB_DIR} -L${MPI_LIB_DIR} -L${LUA_LIB_DIR}$/;"	m
+LIB_DIRS	mirror1x_trueMaxwellian/Makefile	/^LIB_DIRS = -L${LAPACK_LIB_DIR} -L${SUPERLU_LIB_DIR} -L${MPI_LIB_DIR} -L${LUA_LIB_DIR}$/;"	m
+LIB_DIRS	wham1x_adiabatic/Makefile	/^LIB_DIRS = -L${LAPACK_LIB_DIR} -L${SUPERLU_LIB_DIR} -L${MPI_LIB_DIR} -L${LUA_LIB_DIR}$/;"	m
+LUA_INC_DIR	mirror1x_adiabatic/Makefile	/^	LUA_INC_DIR = ${CONF_LUA_INC_DIR}$/;"	m
+LUA_INC_DIR	mirror1x_adiabatic/Makefile	/^LUA_INC_DIR = zero # dummy$/;"	m
+LUA_INC_DIR	mirror1x_adiabatic_eqdst/Makefile	/^	LUA_INC_DIR = ${CONF_LUA_INC_DIR}$/;"	m
+LUA_INC_DIR	mirror1x_adiabatic_eqdst/Makefile	/^LUA_INC_DIR = zero # dummy$/;"	m
+LUA_INC_DIR	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^	LUA_INC_DIR = ${CONF_LUA_INC_DIR}$/;"	m
+LUA_INC_DIR	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^LUA_INC_DIR = zero # dummy$/;"	m
+LUA_INC_DIR	mirror1x_trueMaxwellian/Makefile	/^	LUA_INC_DIR = ${CONF_LUA_INC_DIR}$/;"	m
+LUA_INC_DIR	mirror1x_trueMaxwellian/Makefile	/^LUA_INC_DIR = zero # dummy$/;"	m
+LUA_INC_DIR	wham1x_adiabatic/Makefile	/^	LUA_INC_DIR = ${CONF_LUA_INC_DIR}$/;"	m
+LUA_INC_DIR	wham1x_adiabatic/Makefile	/^LUA_INC_DIR = zero # dummy$/;"	m
+LUA_LIBS	mirror1x_adiabatic/Makefile	/^	LUA_LIBS = -l${CONF_LUA_LIB}$/;"	m
+LUA_LIBS	mirror1x_adiabatic_eqdst/Makefile	/^	LUA_LIBS = -l${CONF_LUA_LIB}$/;"	m
+LUA_LIBS	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^	LUA_LIBS = -l${CONF_LUA_LIB}$/;"	m
+LUA_LIBS	mirror1x_trueMaxwellian/Makefile	/^	LUA_LIBS = -l${CONF_LUA_LIB}$/;"	m
+LUA_LIBS	wham1x_adiabatic/Makefile	/^	LUA_LIBS = -l${CONF_LUA_LIB}$/;"	m
+LUA_LIB_DIR	mirror1x_adiabatic/Makefile	/^	LUA_LIB_DIR = ${CONF_LUA_LIB_DIR}$/;"	m
+LUA_LIB_DIR	mirror1x_adiabatic/Makefile	/^LUA_LIB_DIR = .$/;"	m
+LUA_LIB_DIR	mirror1x_adiabatic_eqdst/Makefile	/^	LUA_LIB_DIR = ${CONF_LUA_LIB_DIR}$/;"	m
+LUA_LIB_DIR	mirror1x_adiabatic_eqdst/Makefile	/^LUA_LIB_DIR = .$/;"	m
+LUA_LIB_DIR	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^	LUA_LIB_DIR = ${CONF_LUA_LIB_DIR}$/;"	m
+LUA_LIB_DIR	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^LUA_LIB_DIR = .$/;"	m
+LUA_LIB_DIR	mirror1x_trueMaxwellian/Makefile	/^	LUA_LIB_DIR = ${CONF_LUA_LIB_DIR}$/;"	m
+LUA_LIB_DIR	mirror1x_trueMaxwellian/Makefile	/^LUA_LIB_DIR = .$/;"	m
+LUA_LIB_DIR	wham1x_adiabatic/Makefile	/^	LUA_LIB_DIR = ${CONF_LUA_LIB_DIR}$/;"	m
+LUA_LIB_DIR	wham1x_adiabatic/Makefile	/^LUA_LIB_DIR = .$/;"	m
+MPI_INC_DIR	mirror1x_adiabatic/Makefile	/^	MPI_INC_DIR = ${CONF_MPI_INC_DIR}$/;"	m
+MPI_INC_DIR	mirror1x_adiabatic/Makefile	/^MPI_INC_DIR = zero # dummy$/;"	m
+MPI_INC_DIR	mirror1x_adiabatic_eqdst/Makefile	/^	MPI_INC_DIR = ${CONF_MPI_INC_DIR}$/;"	m
+MPI_INC_DIR	mirror1x_adiabatic_eqdst/Makefile	/^MPI_INC_DIR = zero # dummy$/;"	m
+MPI_INC_DIR	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^	MPI_INC_DIR = ${CONF_MPI_INC_DIR}$/;"	m
+MPI_INC_DIR	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^MPI_INC_DIR = zero # dummy$/;"	m
+MPI_INC_DIR	mirror1x_trueMaxwellian/Makefile	/^	MPI_INC_DIR = ${CONF_MPI_INC_DIR}$/;"	m
+MPI_INC_DIR	mirror1x_trueMaxwellian/Makefile	/^MPI_INC_DIR = zero # dummy$/;"	m
+MPI_INC_DIR	wham1x_adiabatic/Makefile	/^	MPI_INC_DIR = ${CONF_MPI_INC_DIR}$/;"	m
+MPI_INC_DIR	wham1x_adiabatic/Makefile	/^MPI_INC_DIR = zero # dummy$/;"	m
+MPI_LIBS	mirror1x_adiabatic/Makefile	/^	MPI_LIBS = -lmpi$/;"	m
+MPI_LIBS	mirror1x_adiabatic_eqdst/Makefile	/^	MPI_LIBS = -lmpi$/;"	m
+MPI_LIBS	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^	MPI_LIBS = -lmpi$/;"	m
+MPI_LIBS	mirror1x_trueMaxwellian/Makefile	/^	MPI_LIBS = -lmpi$/;"	m
+MPI_LIBS	wham1x_adiabatic/Makefile	/^	MPI_LIBS = -lmpi$/;"	m
+MPI_LIB_DIR	mirror1x_adiabatic/Makefile	/^	MPI_LIB_DIR = ${CONF_MPI_LIB_DIR}$/;"	m
+MPI_LIB_DIR	mirror1x_adiabatic/Makefile	/^MPI_LIB_DIR = .$/;"	m
+MPI_LIB_DIR	mirror1x_adiabatic_eqdst/Makefile	/^	MPI_LIB_DIR = ${CONF_MPI_LIB_DIR}$/;"	m
+MPI_LIB_DIR	mirror1x_adiabatic_eqdst/Makefile	/^MPI_LIB_DIR = .$/;"	m
+MPI_LIB_DIR	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^	MPI_LIB_DIR = ${CONF_MPI_LIB_DIR}$/;"	m
+MPI_LIB_DIR	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^MPI_LIB_DIR = .$/;"	m
+MPI_LIB_DIR	mirror1x_trueMaxwellian/Makefile	/^	MPI_LIB_DIR = ${CONF_MPI_LIB_DIR}$/;"	m
+MPI_LIB_DIR	mirror1x_trueMaxwellian/Makefile	/^MPI_LIB_DIR = .$/;"	m
+MPI_LIB_DIR	wham1x_adiabatic/Makefile	/^	MPI_LIB_DIR = ${CONF_MPI_LIB_DIR}$/;"	m
+MPI_LIB_DIR	wham1x_adiabatic/Makefile	/^MPI_LIB_DIR = .$/;"	m
+NSrcElc	wham1x_adiabatic/sim.c	/^  double NSrcElc;$/;"	m	struct:gk_mirror_ctx	file:
+NSrcFloorElc	wham1x_adiabatic/sim.c	/^  double NSrcFloorElc;$/;"	m	struct:gk_mirror_ctx	file:
+NSrcFloorIon	wham1x_adiabatic/sim.c	/^  double NSrcFloorIon;$/;"	m	struct:gk_mirror_ctx	file:
+NSrcIon	wham1x_adiabatic/sim.c	/^  double NSrcIon;$/;"	m	struct:gk_mirror_ctx	file:
+NVCC_FLAGS	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^       NVCC_FLAGS = -x cu -dc -arch=sm_${CUDA_ARCH} --compiler-options="-fPIC"$/;"	m
+NVCC_FLAGS	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^NVCC_FLAGS =$/;"	m
+NVCC_FLAGS	mirror1x_trueMaxwellian/Makefile	/^       NVCC_FLAGS = -x cu -dc -arch=sm_${CUDA_ARCH} --compiler-options="-fPIC"$/;"	m
+NVCC_FLAGS	mirror1x_trueMaxwellian/Makefile	/^NVCC_FLAGS =$/;"	m
+PREFIX	mirror1x_adiabatic/Makefile	/^PREFIX ?= ${HOME}\/gkylsoft$/;"	m
+PREFIX	mirror1x_adiabatic_eqdst/Makefile	/^PREFIX ?= ${HOME}\/gkylsoft$/;"	m
+PREFIX	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^PREFIX ?= ${HOME}\/gkylsoft$/;"	m
+PREFIX	mirror1x_trueMaxwellian/Makefile	/^PREFIX ?= ${HOME}\/gkylsoft$/;"	m
+PREFIX	wham1x_adiabatic/Makefile	/^PREFIX ?= ${HOME}\/gkylsoft$/;"	m
+R_bt	mirror1x_adiabatic/sim.c	/^  double R_bt;$/;"	m	struct:gk_mirror_ctx	file:
+R_bt	mirror1x_adiabatic_eqdst/sim.c	/^  double R_bt;$/;"	m	struct:gk_mirror_ctx	file:
+R_bt	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double R_bt;$/;"	m	struct:gk_mirror_ctx	file:
+R_bt	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double R_bt;$/;"	m	struct:gk_mirror_ctx	file:
+R_bt	mirror1x_trueMaxwellian/sim.c	/^  double R_bt;$/;"	m	struct:gk_mirror_ctx	file:
+R_bt	wham1x_adiabatic/sim.c	/^  double R_bt;$/;"	m	struct:gk_mirror_ctx	file:
+R_m	wham1x_adiabatic/sim.c	/^  double R_m;$/;"	m	struct:gk_mirror_ctx	file:
+R_psiZ	mirror1x_adiabatic/sim.c	/^R_psiZ(double psiIn, double ZIn, void *ctx)$/;"	f
+R_psiZ	mirror1x_adiabatic_eqdst/sim.c	/^R_psiZ(double psiIn, double ZIn, void *ctx)$/;"	f
+R_psiZ	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^R_psiZ(double psiIn, double ZIn, void *ctx)$/;"	f
+R_psiZ	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^R_psiZ(double psiIn, double ZIn, void *ctx)$/;"	f
+R_psiZ	mirror1x_trueMaxwellian/sim.c	/^R_psiZ(double psiIn, double ZIn, void *ctx)$/;"	f
+RatZeq0	mirror1x_adiabatic/sim.c	/^  double RatZeq0; \/\/ Radius of the field line at Z=0.$/;"	m	struct:gk_mirror_ctx	file:
+RatZeq0	mirror1x_adiabatic_eqdst/sim.c	/^  double RatZeq0; \/\/ Radius of the field line at Z=0.$/;"	m	struct:gk_mirror_ctx	file:
+RatZeq0	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double RatZeq0; \/\/ Radius of the field line at Z=0.$/;"	m	struct:gk_mirror_ctx	file:
+RatZeq0	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double RatZeq0; \/\/ Radius of the field line at Z=0.$/;"	m	struct:gk_mirror_ctx	file:
+RatZeq0	mirror1x_trueMaxwellian/sim.c	/^  double RatZeq0; \/\/ Radius of the field line at Z=0.$/;"	m	struct:gk_mirror_ctx	file:
+RatZeq0	wham1x_adiabatic/sim.c	/^  double RatZeq0; \/\/ Radius of the field line at Z=0.$/;"	m	struct:gk_mirror_ctx	file:
+SUPERLU_INC	mirror1x_adiabatic/Makefile	/^SUPERLU_INC = $(PREFIX)\/superlu\/include$/;"	m
+SUPERLU_INC	mirror1x_adiabatic_eqdst/Makefile	/^SUPERLU_INC = $(PREFIX)\/superlu\/include$/;"	m
+SUPERLU_INC	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^SUPERLU_INC = $(PREFIX)\/superlu\/include$/;"	m
+SUPERLU_INC	mirror1x_trueMaxwellian/Makefile	/^SUPERLU_INC = $(PREFIX)\/superlu\/include$/;"	m
+SUPERLU_INC	wham1x_adiabatic/Makefile	/^SUPERLU_INC = $(PREFIX)\/superlu\/include$/;"	m
+SUPERLU_LIB	mirror1x_adiabatic/Makefile	/^	SUPERLU_LIB = $(PREFIX)\/superlu\/lib64\/libsuperlu.a$/;"	m
+SUPERLU_LIB	mirror1x_adiabatic/Makefile	/^	SUPERLU_LIB = $(PREFIX)\/superlu\/lib\/libsuperlu.a$/;"	m
+SUPERLU_LIB	mirror1x_adiabatic_eqdst/Makefile	/^	SUPERLU_LIB = $(PREFIX)\/superlu\/lib64\/libsuperlu.a$/;"	m
+SUPERLU_LIB	mirror1x_adiabatic_eqdst/Makefile	/^	SUPERLU_LIB = $(PREFIX)\/superlu\/lib\/libsuperlu.a$/;"	m
+SUPERLU_LIB	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^	SUPERLU_LIB = $(PREFIX)\/superlu\/lib64\/libsuperlu.a$/;"	m
+SUPERLU_LIB	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^	SUPERLU_LIB = $(PREFIX)\/superlu\/lib\/libsuperlu.a$/;"	m
+SUPERLU_LIB	mirror1x_trueMaxwellian/Makefile	/^	SUPERLU_LIB = $(PREFIX)\/superlu\/lib64\/libsuperlu.a$/;"	m
+SUPERLU_LIB	mirror1x_trueMaxwellian/Makefile	/^	SUPERLU_LIB = $(PREFIX)\/superlu\/lib\/libsuperlu.a$/;"	m
+SUPERLU_LIB	wham1x_adiabatic/Makefile	/^	SUPERLU_LIB = $(PREFIX)\/superlu\/lib64\/libsuperlu.a$/;"	m
+SUPERLU_LIB	wham1x_adiabatic/Makefile	/^	SUPERLU_LIB = $(PREFIX)\/superlu\/lib\/libsuperlu.a$/;"	m
+SUPERLU_LIB_DIR	mirror1x_adiabatic/Makefile	/^	SUPERLU_LIB_DIR = $(PREFIX)\/superlu\/lib$/;"	m
+SUPERLU_LIB_DIR	mirror1x_adiabatic/Makefile	/^	SUPERLU_LIB_DIR = $(PREFIX)\/superlu\/lib64$/;"	m
+SUPERLU_LIB_DIR	mirror1x_adiabatic_eqdst/Makefile	/^	SUPERLU_LIB_DIR = $(PREFIX)\/superlu\/lib$/;"	m
+SUPERLU_LIB_DIR	mirror1x_adiabatic_eqdst/Makefile	/^	SUPERLU_LIB_DIR = $(PREFIX)\/superlu\/lib64$/;"	m
+SUPERLU_LIB_DIR	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^	SUPERLU_LIB_DIR = $(PREFIX)\/superlu\/lib$/;"	m
+SUPERLU_LIB_DIR	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^	SUPERLU_LIB_DIR = $(PREFIX)\/superlu\/lib64$/;"	m
+SUPERLU_LIB_DIR	mirror1x_trueMaxwellian/Makefile	/^	SUPERLU_LIB_DIR = $(PREFIX)\/superlu\/lib$/;"	m
+SUPERLU_LIB_DIR	mirror1x_trueMaxwellian/Makefile	/^	SUPERLU_LIB_DIR = $(PREFIX)\/superlu\/lib64$/;"	m
+SUPERLU_LIB_DIR	wham1x_adiabatic/Makefile	/^	SUPERLU_LIB_DIR = $(PREFIX)\/superlu\/lib$/;"	m
+SUPERLU_LIB_DIR	wham1x_adiabatic/Makefile	/^	SUPERLU_LIB_DIR = $(PREFIX)\/superlu\/lib64$/;"	m
+TSrc0Elc	wham1x_adiabatic/sim.c	/^  double TSrc0Elc;$/;"	m	struct:gk_mirror_ctx	file:
+TSrc0Ion	wham1x_adiabatic/sim.c	/^  double TSrc0Ion;$/;"	m	struct:gk_mirror_ctx	file:
+TSrcFloorElc	wham1x_adiabatic/sim.c	/^  double TSrcFloorElc;$/;"	m	struct:gk_mirror_ctx	file:
+TSrcFloorIon	wham1x_adiabatic/sim.c	/^  double TSrcFloorIon;$/;"	m	struct:gk_mirror_ctx	file:
+Te0	mirror1x_adiabatic/sim.c	/^  double Te0;$/;"	m	struct:gk_mirror_ctx	file:
+Te0	mirror1x_adiabatic_eqdst/sim.c	/^  double Te0;$/;"	m	struct:gk_mirror_ctx	file:
+Te0	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double Te0;$/;"	m	struct:gk_mirror_ctx	file:
+Te0	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double Te0;$/;"	m	struct:gk_mirror_ctx	file:
+Te0	mirror1x_trueMaxwellian/sim.c	/^  double Te0;$/;"	m	struct:gk_mirror_ctx	file:
+Te0	postprocessing/plot.py	/^Te0       = 940*eV$/;"	v
+Te0	wham1x_adiabatic/sim.c	/^  double Te0;$/;"	m	struct:gk_mirror_ctx	file:
+Te_m	wham1x_adiabatic/sim.c	/^  double Te_m;$/;"	m	struct:gk_mirror_ctx	file:
+Te_par0	wham1x_adiabatic/sim.c	/^  double Te_par0;$/;"	m	struct:gk_mirror_ctx	file:
+Te_par_m	wham1x_adiabatic/sim.c	/^  double Te_par_m;$/;"	m	struct:gk_mirror_ctx	file:
+Te_perp0	wham1x_adiabatic/sim.c	/^  double Te_perp0;$/;"	m	struct:gk_mirror_ctx	file:
+Te_perp_m	wham1x_adiabatic/sim.c	/^  double Te_perp_m;$/;"	m	struct:gk_mirror_ctx	file:
+Ti0	mirror1x_adiabatic/sim.c	/^  double Ti0;$/;"	m	struct:gk_mirror_ctx	file:
+Ti0	mirror1x_adiabatic_eqdst/sim.c	/^  double Ti0;$/;"	m	struct:gk_mirror_ctx	file:
+Ti0	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double Ti0;$/;"	m	struct:gk_mirror_ctx	file:
+Ti0	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double Ti0;$/;"	m	struct:gk_mirror_ctx	file:
+Ti0	mirror1x_trueMaxwellian/sim.c	/^  double Ti0;$/;"	m	struct:gk_mirror_ctx	file:
+Ti0	postprocessing/plot.py	/^Ti0       = tau*Te0$/;"	v
+Ti0	wham1x_adiabatic/sim.c	/^  double Ti0;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_m	mirror1x_adiabatic/sim.c	/^  double Ti_m;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_m	mirror1x_adiabatic_eqdst/sim.c	/^  double Ti_m;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_m	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double Ti_m;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_m	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double Ti_m;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_m	mirror1x_trueMaxwellian/sim.c	/^  double Ti_m;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_m	wham1x_adiabatic/sim.c	/^  double Ti_m;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_par0	mirror1x_adiabatic/sim.c	/^  double Ti_par0;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_par0	mirror1x_adiabatic_eqdst/sim.c	/^  double Ti_par0;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_par0	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double Ti_par0;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_par0	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double Ti_par0;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_par0	mirror1x_trueMaxwellian/sim.c	/^  double Ti_par0;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_par0	wham1x_adiabatic/sim.c	/^  double Ti_par0;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_par_m	mirror1x_adiabatic/sim.c	/^  double Ti_par_m;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_par_m	mirror1x_adiabatic_eqdst/sim.c	/^  double Ti_par_m;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_par_m	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double Ti_par_m;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_par_m	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double Ti_par_m;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_par_m	mirror1x_trueMaxwellian/sim.c	/^  double Ti_par_m;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_par_m	wham1x_adiabatic/sim.c	/^  double Ti_par_m;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_perp0	mirror1x_adiabatic/sim.c	/^  double Ti_perp0;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_perp0	mirror1x_adiabatic_eqdst/sim.c	/^  double Ti_perp0;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_perp0	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double Ti_perp0;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_perp0	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double Ti_perp0;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_perp0	mirror1x_trueMaxwellian/sim.c	/^  double Ti_perp0;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_perp0	wham1x_adiabatic/sim.c	/^double Ti_perp0;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_perp_m	mirror1x_adiabatic/sim.c	/^  double Ti_perp_m;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_perp_m	mirror1x_adiabatic_eqdst/sim.c	/^  double Ti_perp_m;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_perp_m	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double Ti_perp_m;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_perp_m	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double Ti_perp_m;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_perp_m	mirror1x_trueMaxwellian/sim.c	/^  double Ti_perp_m;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_perp_m	wham1x_adiabatic/sim.c	/^  double Ti_perp_m;$/;"	m	struct:gk_mirror_ctx	file:
+UNAME	mirror1x_adiabatic/Makefile	/^UNAME = $(shell uname)$/;"	m
+UNAME	mirror1x_adiabatic_eqdst/Makefile	/^UNAME = $(shell uname)$/;"	m
+UNAME	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^UNAME = $(shell uname)$/;"	m
+UNAME	mirror1x_trueMaxwellian/Makefile	/^UNAME = $(shell uname)$/;"	m
+UNAME	wham1x_adiabatic/Makefile	/^UNAME = $(shell uname)$/;"	m
+USING_LUA	mirror1x_adiabatic/Makefile	/^	USING_LUA = yes$/;"	m
+USING_LUA	mirror1x_adiabatic/Makefile	/^USING_LUA =$/;"	m
+USING_LUA	mirror1x_adiabatic_eqdst/Makefile	/^	USING_LUA = yes$/;"	m
+USING_LUA	mirror1x_adiabatic_eqdst/Makefile	/^USING_LUA =$/;"	m
+USING_LUA	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^	USING_LUA = yes$/;"	m
+USING_LUA	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^USING_LUA =$/;"	m
+USING_LUA	mirror1x_trueMaxwellian/Makefile	/^	USING_LUA = yes$/;"	m
+USING_LUA	mirror1x_trueMaxwellian/Makefile	/^USING_LUA =$/;"	m
+USING_LUA	wham1x_adiabatic/Makefile	/^	USING_LUA = yes$/;"	m
+USING_LUA	wham1x_adiabatic/Makefile	/^USING_LUA =$/;"	m
+USING_MPI	mirror1x_adiabatic/Makefile	/^	USING_MPI = yes$/;"	m
+USING_MPI	mirror1x_adiabatic/Makefile	/^USING_MPI =$/;"	m
+USING_MPI	mirror1x_adiabatic_eqdst/Makefile	/^	USING_MPI = yes$/;"	m
+USING_MPI	mirror1x_adiabatic_eqdst/Makefile	/^USING_MPI =$/;"	m
+USING_MPI	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^	USING_MPI = yes$/;"	m
+USING_MPI	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^USING_MPI =$/;"	m
+USING_MPI	mirror1x_trueMaxwellian/Makefile	/^	USING_MPI = yes$/;"	m
+USING_MPI	mirror1x_trueMaxwellian/Makefile	/^USING_MPI =$/;"	m
+USING_MPI	wham1x_adiabatic/Makefile	/^	USING_MPI = yes$/;"	m
+USING_MPI	wham1x_adiabatic/Makefile	/^USING_MPI =$/;"	m
+USING_NVCC	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^       USING_NVCC = yes$/;"	m
+USING_NVCC	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^USING_NVCC =$/;"	m
+USING_NVCC	mirror1x_trueMaxwellian/Makefile	/^       USING_NVCC = yes$/;"	m
+USING_NVCC	mirror1x_trueMaxwellian/Makefile	/^USING_NVCC =$/;"	m
+Xnodal	postprocessing/plot.py	/^            np.outer(np.ones(np.size(timesC)+2),xInt[0])]$/;"	v
+Z_bt	mirror1x_adiabatic/sim.c	/^  double Z_bt;$/;"	m	struct:gk_mirror_ctx	file:
+Z_bt	mirror1x_adiabatic_eqdst/sim.c	/^  double Z_bt;$/;"	m	struct:gk_mirror_ctx	file:
+Z_bt	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double Z_bt;$/;"	m	struct:gk_mirror_ctx	file:
+Z_bt	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double Z_bt;$/;"	m	struct:gk_mirror_ctx	file:
+Z_bt	mirror1x_trueMaxwellian/sim.c	/^  double Z_bt;$/;"	m	struct:gk_mirror_ctx	file:
+Z_bt	wham1x_adiabatic/sim.c	/^  double Z_bt;$/;"	m	struct:gk_mirror_ctx	file:
+Z_m	mirror1x_adiabatic/sim.c	/^  double Z_m;$/;"	m	struct:gk_mirror_ctx	file:
+Z_m	mirror1x_adiabatic_eqdst/sim.c	/^  double Z_m;$/;"	m	struct:gk_mirror_ctx	file:
+Z_m	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double Z_m;$/;"	m	struct:gk_mirror_ctx	file:
+Z_m	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double Z_m;$/;"	m	struct:gk_mirror_ctx	file:
+Z_m	mirror1x_trueMaxwellian/sim.c	/^  double Z_m;$/;"	m	struct:gk_mirror_ctx	file:
+Z_m	wham1x_adiabatic/sim.c	/^  double Z_m;$/;"	m	struct:gk_mirror_ctx	file:
+Z_m_computational	mirror1x_adiabatic/sim.c	/^  double Z_m_computational;$/;"	m	struct:gk_mirror_ctx	file:
+Z_m_computational	mirror1x_adiabatic_eqdst/sim.c	/^  double Z_m_computational;$/;"	m	struct:gk_mirror_ctx	file:
+Z_m_computational	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double Z_m_computational;$/;"	m	struct:gk_mirror_ctx	file:
+Z_m_computational	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double Z_m_computational;$/;"	m	struct:gk_mirror_ctx	file:
+Z_m_computational	mirror1x_trueMaxwellian/sim.c	/^  double Z_m_computational;$/;"	m	struct:gk_mirror_ctx	file:
+Z_m_computational	wham1x_adiabatic/sim.c	/^double Z_m_computational;$/;"	m	struct:gk_mirror_ctx	file:
+Z_max	mirror1x_adiabatic/sim.c	/^  double Z_max;$/;"	m	struct:gk_mirror_ctx	file:
+Z_max	mirror1x_adiabatic_eqdst/sim.c	/^  double Z_max;$/;"	m	struct:gk_mirror_ctx	file:
+Z_max	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double Z_max;$/;"	m	struct:gk_mirror_ctx	file:
+Z_max	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double Z_max;$/;"	m	struct:gk_mirror_ctx	file:
+Z_max	mirror1x_trueMaxwellian/sim.c	/^  double Z_max;$/;"	m	struct:gk_mirror_ctx	file:
+Z_min	mirror1x_adiabatic/sim.c	/^  double Z_min;$/;"	m	struct:gk_mirror_ctx	file:
+Z_min	mirror1x_adiabatic_eqdst/sim.c	/^  double Z_min;$/;"	m	struct:gk_mirror_ctx	file:
+Z_min	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double Z_min;$/;"	m	struct:gk_mirror_ctx	file:
+Z_min	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double Z_min;$/;"	m	struct:gk_mirror_ctx	file:
+Z_min	mirror1x_trueMaxwellian/sim.c	/^  double Z_min;$/;"	m	struct:gk_mirror_ctx	file:
+Z_psiz	mirror1x_adiabatic/sim.c	/^Z_psiz(double psiIn, double zIn, void *ctx)$/;"	f
+Z_psiz	mirror1x_adiabatic_eqdst/sim.c	/^Z_psiz(double psiIn, double zIn, void *ctx)$/;"	f
+Z_psiz	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^Z_psiz(double psiIn, double zIn, void *ctx)$/;"	f
+Z_psiz	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^Z_psiz(double psiIn, double zIn, void *ctx)$/;"	f
+Z_psiz	mirror1x_trueMaxwellian/sim.c	/^Z_psiz(double psiIn, double zIn, void *ctx)$/;"	f
+ad	postprocessing/pgkylUtil.py	/^import adios2 as ad$/;"	i
+alim	mirror1x_adiabatic/sim.c	/^  double alim;$/;"	m	struct:gk_mirror_ctx	file:
+alim	mirror1x_adiabatic_eqdst/sim.c	/^  double alim;$/;"	m	struct:gk_mirror_ctx	file:
+alim	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double alim;$/;"	m	struct:gk_mirror_ctx	file:
+alim	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double alim;$/;"	m	struct:gk_mirror_ctx	file:
+alim	mirror1x_trueMaxwellian/sim.c	/^  double alim;$/;"	m	struct:gk_mirror_ctx	file:
+alim	wham1x_adiabatic/sim.c	/^  double alim;$/;"	m	struct:gk_mirror_ctx	file:
+alphaIC0	mirror1x_adiabatic/sim.c	/^  double alphaIC0;$/;"	m	struct:gk_mirror_ctx	file:
+alphaIC0	mirror1x_adiabatic_eqdst/sim.c	/^  double alphaIC0;$/;"	m	struct:gk_mirror_ctx	file:
+alphaIC0	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double alphaIC0;$/;"	m	struct:gk_mirror_ctx	file:
+alphaIC0	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double alphaIC0;$/;"	m	struct:gk_mirror_ctx	file:
+alphaIC0	mirror1x_trueMaxwellian/sim.c	/^  double alphaIC0;$/;"	m	struct:gk_mirror_ctx	file:
+alphaIC0	wham1x_adiabatic/sim.c	/^  double alphaIC0;$/;"	m	struct:gk_mirror_ctx	file:
+alphaIC1	mirror1x_adiabatic/sim.c	/^  double alphaIC1;$/;"	m	struct:gk_mirror_ctx	file:
+alphaIC1	mirror1x_adiabatic_eqdst/sim.c	/^  double alphaIC1;$/;"	m	struct:gk_mirror_ctx	file:
+alphaIC1	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double alphaIC1;$/;"	m	struct:gk_mirror_ctx	file:
+alphaIC1	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double alphaIC1;$/;"	m	struct:gk_mirror_ctx	file:
+alphaIC1	mirror1x_trueMaxwellian/sim.c	/^  double alphaIC1;$/;"	m	struct:gk_mirror_ctx	file:
+alphaIC1	wham1x_adiabatic/sim.c	/^  double alphaIC1;$/;"	m	struct:gk_mirror_ctx	file:
+avAllDim	postprocessing/pgkylUtil.py	/^def avAllDim(fIn,dimIn):$/;"	f
+ax1	postprocessing/plot.py	/^  ax1      = [fig1.add_axes(pos) for pos in ax1Pos]$/;"	v
+ax1Pos	postprocessing/plot.py	/^  ax1Pos   = [[0.16, 0.18, 0.82, 0.80],]$/;"	v
+ax7	postprocessing/plot.py	/^  ax7      = [fig7.add_axes(pos) for pos in ax7Pos]$/;"	v
+ax7Pos	postprocessing/plot.py	/^  ax7Pos   = [[0.12, 0.57, 0.725, 0.42],$/;"	v
+basisType	postprocessing/plot.py	/^basisType = 'gkhyb'$/;"	v
+beta	mirror1x_adiabatic/sim.c	/^  double beta;$/;"	m	struct:gk_mirror_ctx	file:
+beta	mirror1x_adiabatic_eqdst/sim.c	/^  double beta;$/;"	m	struct:gk_mirror_ctx	file:
+beta	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double beta;$/;"	m	struct:gk_mirror_ctx	file:
+beta	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double beta;$/;"	m	struct:gk_mirror_ctx	file:
+beta	mirror1x_trueMaxwellian/sim.c	/^  double beta;$/;"	m	struct:gk_mirror_ctx	file:
+beta	postprocessing/plot.py	/^beta      = 0.4                              #[ Ratio of plasma to magnetic pressure.$/;"	v
+beta	wham1x_adiabatic/sim.c	/^  double beta;$/;"	m	struct:gk_mirror_ctx	file:
+bmag_func	mirror1x_adiabatic/sim.c	/^bmag_func(double t, const double *xc, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+bmag_func	mirror1x_adiabatic_eqdst/sim.c	/^bmag_func(double t, const double *xc, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+bmag_func	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^bmag_func(double t, const double *xc, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+bmag_func	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^bmag_func(double t, const double *xc, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+bmag_func	mirror1x_trueMaxwellian/sim.c	/^bmag_func(double t, const double *xc, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+c_s	mirror1x_adiabatic/sim.c	/^  double c_s;$/;"	m	struct:gk_mirror_ctx	file:
+c_s	mirror1x_adiabatic_eqdst/sim.c	/^  double c_s;$/;"	m	struct:gk_mirror_ctx	file:
+c_s	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double c_s;$/;"	m	struct:gk_mirror_ctx	file:
+c_s	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double c_s;$/;"	m	struct:gk_mirror_ctx	file:
+c_s	mirror1x_trueMaxwellian/sim.c	/^  double c_s;$/;"	m	struct:gk_mirror_ctx	file:
+c_s	postprocessing/plot.py	/^c_s = np.sqrt(Te0\/mi)$/;"	v
+c_s	wham1x_adiabatic/sim.c	/^  double c_s;$/;"	m	struct:gk_mirror_ctx	file:
+calculate_mirror_throat_location	mirror1x_adiabatic/sim.c	/^calculate_mirror_throat_location(void *ctx)$/;"	f
+calculate_mirror_throat_location	mirror1x_adiabatic_eqdst/sim.c	/^calculate_mirror_throat_location(void *ctx)$/;"	f
+calculate_mirror_throat_location	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^calculate_mirror_throat_location(void *ctx)$/;"	f
+calculate_mirror_throat_location	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^calculate_mirror_throat_location(void *ctx)$/;"	f
+calculate_mirror_throat_location	mirror1x_trueMaxwellian/sim.c	/^calculate_mirror_throat_location(void *ctx)$/;"	f
+calculate_optimal_mapping	mirror1x_adiabatic/sim.c	/^calculate_optimal_mapping(void *ctx)$/;"	f
+calculate_optimal_mapping	mirror1x_adiabatic_eqdst/sim.c	/^calculate_optimal_mapping(void *ctx)$/;"	f
+calculate_optimal_mapping	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^calculate_optimal_mapping(void *ctx)$/;"	f
+calculate_optimal_mapping	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^calculate_optimal_mapping(void *ctx)$/;"	f
+calculate_optimal_mapping	mirror1x_trueMaxwellian/sim.c	/^calculate_optimal_mapping(void *ctx)$/;"	f
+cax7Pos	postprocessing/plot.py	/^  cax7Pos  = [[0.855, 0.57, 0.02, 0.42]]$/;"	v
+cbar_ax7	postprocessing/plot.py	/^  cbar_ax7 = [fig7.add_axes(pos) for pos in cax7Pos]$/;"	v
+checkDir	postprocessing/pgkylUtil.py	/^def checkDir(dirIn):$/;"	f
+checkFile	postprocessing/pgkylUtil.py	/^def checkFile(fileIn):$/;"	f
+checkMkdir	postprocessing/pgkylUtil.py	/^def checkMkdir(dirIn):$/;"	f
+colorBarLabelFontSize	postprocessing/plot.py	/^colorBarLabelFontSize = 17$/;"	v
+commonVarName	postprocessing/pgkylUtil.py	/^def commonVarName(fileVarName,**opKey):$/;"	f
+create_ctx	mirror1x_adiabatic/sim.c	/^create_ctx(void)$/;"	f
+create_ctx	mirror1x_adiabatic_eqdst/sim.c	/^create_ctx(void)$/;"	f
+create_ctx	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^create_ctx(void)$/;"	f
+create_ctx	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^create_ctx(void)$/;"	f
+create_ctx	mirror1x_trueMaxwellian/sim.c	/^create_ctx(void)$/;"	f
+create_ctx	wham1x_adiabatic/sim.c	/^create_ctx(void)$/;"	f
+cs_m	mirror1x_adiabatic/sim.c	/^  double cs_m;$/;"	m	struct:gk_mirror_ctx	file:
+cs_m	mirror1x_adiabatic_eqdst/sim.c	/^  double cs_m;$/;"	m	struct:gk_mirror_ctx	file:
+cs_m	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double cs_m;$/;"	m	struct:gk_mirror_ctx	file:
+cs_m	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double cs_m;$/;"	m	struct:gk_mirror_ctx	file:
+cs_m	mirror1x_trueMaxwellian/sim.c	/^  double cs_m;$/;"	m	struct:gk_mirror_ctx	file:
+cs_m	wham1x_adiabatic/sim.c	/^  double cs_m;$/;"	m	struct:gk_mirror_ctx	file:
+dBdz	mirror1x_adiabatic/sim.c	/^dBdz(double z, void *ctx)$/;"	f
+dBdz	mirror1x_adiabatic_eqdst/sim.c	/^dBdz(double z, void *ctx)$/;"	f
+dBdz	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^dBdz(double z, void *ctx)$/;"	f
+dBdz	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^dBdz(double z, void *ctx)$/;"	f
+dBdz	mirror1x_trueMaxwellian/sim.c	/^dBdz(double z, void *ctx)$/;"	f
+dataDir	postprocessing/plot.py	/^dataDir = '\/scratch\/gpfs\/mr1884\/gkylzero\/'$/;"	v
+defaultBlue	postprocessing/plot.py	/^defaultBlue    = [0, 0.4470, 0.7410]$/;"	v
+defaultColors	postprocessing/plot.py	/^defaultColors = [defaultBlue,defaultOrange,defaultGreen,defaultPurple,defaultRed,defaultSkyBlue,grey,'black']$/;"	v
+defaultGreen	postprocessing/plot.py	/^defaultGreen   = [0.4660, 0.6740, 0.1880]$/;"	v
+defaultOrange	postprocessing/plot.py	/^defaultOrange  = [0.8500, 0.3250, 0.0980]$/;"	v
+defaultPurple	postprocessing/plot.py	/^defaultPurple  = [0.4940, 0.1840, 0.5560]$/;"	v
+defaultRed	postprocessing/plot.py	/^defaultRed     = [0.6350, 0.0780, 0.1840]$/;"	v
+defaultSkyBlue	postprocessing/plot.py	/^defaultSkyBlue = [0.3010, 0.7450, 0.9330]$/;"	v
+denFile	postprocessing/plot.py	/^  denFile = dataDir+fileName+'_ion_gridDiagnostics_%d.gkyl'    #.Complete file name.$/;"	v
+den_i	postprocessing/plot.py	/^  den_i = np.squeeze(pgu.getInterpData(denFile % (nFrames-1), polyOrder, basisType, varName='M0'))$/;"	v
+derX	postprocessing/pgkylUtil.py	/^def derX(aIn,dx,xBC,acc):$/;"	f
+derY	postprocessing/pgkylUtil.py	/^def derY(aIn,dy,yBC,acc):$/;"	f
+diff_dz	mirror1x_adiabatic/sim.c	/^  double diff_dz;$/;"	m	struct:gk_mirror_ctx	file:
+diff_dz	mirror1x_adiabatic_eqdst/sim.c	/^  double diff_dz;$/;"	m	struct:gk_mirror_ctx	file:
+diff_dz	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double diff_dz;$/;"	m	struct:gk_mirror_ctx	file:
+diff_dz	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double diff_dz;$/;"	m	struct:gk_mirror_ctx	file:
+diff_dz	mirror1x_trueMaxwellian/sim.c	/^  double diff_dz;$/;"	m	struct:gk_mirror_ctx	file:
+diff_dz	wham1x_adiabatic/sim.c	/^  double diff_dz;$/;"	m	struct:gk_mirror_ctx	file:
+eV	postprocessing/plot.py	/^eV        = 1.602176487e-19$/;"	v
+errno	postprocessing/pgkylUtil.py	/^import errno$/;"	i
+evDGatNodes	postprocessing/pgkylUtil.py	/^def evDGatNodes(fIn,basisType,pOrder,nCells,lower,upper):$/;"	f
+evalF1x_e	postprocessing/pgkylUtil.py	/^def evalF1x_e(fIn,xE,xcIn,dxIn,pOrderIn,**opKey):$/;"	f
+evalF2x_e	postprocessing/pgkylUtil.py	/^def evalF2x_e(fIn,xE,xcIn,dxIn,pOrderIn,**opKey):$/;"	f
+evalNuElc	wham1x_adiabatic/sim.c	/^evalNuElc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+evalNuIon	mirror1x_adiabatic/sim.c	/^evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+evalNuIon	mirror1x_adiabatic_eqdst/sim.c	/^evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+evalNuIon	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+evalNuIon	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+evalNuIon	mirror1x_trueMaxwellian/sim.c	/^evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+evalNuIon	wham1x_adiabatic/sim.c	/^evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+evalOnGrid	postprocessing/pgkylUtil.py	/^  def evalOnGrid():$/;"	f	function:evalF2x_e
+eval_density_elc	wham1x_adiabatic/sim.c	/^eval_density_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_density_elc_source	wham1x_adiabatic/sim.c	/^eval_density_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_density_ion	mirror1x_adiabatic/sim.c	/^eval_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_density_ion	mirror1x_adiabatic_eqdst/sim.c	/^eval_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_density_ion	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^eval_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_density_ion	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^eval_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_density_ion	mirror1x_trueMaxwellian/sim.c	/^eval_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_density_ion	wham1x_adiabatic/sim.c	/^eval_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_density_ion_source	mirror1x_adiabatic/sim.c	/^eval_density_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_density_ion_source	mirror1x_adiabatic_eqdst/sim.c	/^eval_density_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_density_ion_source	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^eval_density_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_density_ion_source	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^eval_density_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_density_ion_source	mirror1x_trueMaxwellian/sim.c	/^eval_density_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_density_ion_source	wham1x_adiabatic/sim.c	/^eval_density_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_elc	wham1x_adiabatic/sim.c	/^eval_temp_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_elc_source	wham1x_adiabatic/sim.c	/^eval_temp_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_ion	mirror1x_adiabatic/sim.c	/^eval_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_ion	mirror1x_adiabatic_eqdst/sim.c	/^eval_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_ion	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^eval_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_ion	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^eval_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_ion	mirror1x_trueMaxwellian/sim.c	/^eval_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_ion	wham1x_adiabatic/sim.c	/^eval_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_ion_source	mirror1x_adiabatic/sim.c	/^eval_temp_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_ion_source	mirror1x_adiabatic_eqdst/sim.c	/^eval_temp_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_ion_source	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^eval_temp_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_ion_source	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^eval_temp_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_ion_source	mirror1x_trueMaxwellian/sim.c	/^eval_temp_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_ion_source	wham1x_adiabatic/sim.c	/^eval_temp_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_par_elc	wham1x_adiabatic/sim.c	/^eval_temp_par_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_par_ion	mirror1x_adiabatic/sim.c	/^eval_temp_par_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_par_ion	mirror1x_adiabatic_eqdst/sim.c	/^eval_temp_par_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_par_ion	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^eval_temp_par_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_par_ion	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^eval_temp_par_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_par_ion	mirror1x_trueMaxwellian/sim.c	/^eval_temp_par_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_par_ion	wham1x_adiabatic/sim.c	/^eval_temp_par_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_perp_elc	wham1x_adiabatic/sim.c	/^eval_temp_perp_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_perp_ion	mirror1x_adiabatic/sim.c	/^eval_temp_perp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_perp_ion	mirror1x_adiabatic_eqdst/sim.c	/^eval_temp_perp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_perp_ion	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^eval_temp_perp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_perp_ion	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^eval_temp_perp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_perp_ion	mirror1x_trueMaxwellian/sim.c	/^eval_temp_perp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_perp_ion	wham1x_adiabatic/sim.c	/^eval_temp_perp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_upar_elc	wham1x_adiabatic/sim.c	/^eval_upar_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_upar_elc_source	wham1x_adiabatic/sim.c	/^eval_upar_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_upar_ion	mirror1x_adiabatic/sim.c	/^eval_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_upar_ion	mirror1x_adiabatic_eqdst/sim.c	/^eval_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_upar_ion	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^eval_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_upar_ion	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^eval_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_upar_ion	mirror1x_trueMaxwellian/sim.c	/^eval_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_upar_ion	wham1x_adiabatic/sim.c	/^eval_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_upar_ion_source	mirror1x_adiabatic/sim.c	/^eval_upar_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_upar_ion_source	mirror1x_adiabatic_eqdst/sim.c	/^eval_upar_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_upar_ion_source	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^eval_upar_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_upar_ion_source	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^eval_upar_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_upar_ion_source	mirror1x_trueMaxwellian/sim.c	/^eval_upar_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_upar_ion_source	wham1x_adiabatic/sim.c	/^eval_upar_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+fig1	postprocessing/plot.py	/^  fig1     = plt.figure(figsize=figProp1)$/;"	v
+fig7	postprocessing/plot.py	/^  fig7     = plt.figure(figsize=figProp7)$/;"	v
+figName	postprocessing/plot.py	/^  figName = fileName+'_ion_M0_'+str(nFrames-1)$/;"	v
+figName	postprocessing/plot.py	/^  figName = fileName+'_phiVtime_0-'+str(nFrames-1)$/;"	v
+figProp1	postprocessing/plot.py	/^  figProp1 = (6.4,3.5)$/;"	v
+figProp7	postprocessing/plot.py	/^  figProp7 = (6.4,4.5)$/;"	v
+figureFileFormat	postprocessing/plot.py	/^figureFileFormat = '.png'    #[ Can be .png, .pdf, .ps, .eps, .svg.$/;"	v
+fileName	postprocessing/plot.py	/^fileName = 'gk_mirror_adiabatic_elc_1x2v_p1_nonuniform_nosource_128vt20_128z_192Nmu'    #.Root name of files to process.$/;"	v
+final_time	mirror1x_adiabatic/sim.c	/^  double final_time;$/;"	m	struct:gk_mirror_ctx	file:
+final_time	mirror1x_adiabatic_eqdst/sim.c	/^  double final_time;$/;"	m	struct:gk_mirror_ctx	file:
+final_time	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double final_time;$/;"	m	struct:gk_mirror_ctx	file:
+final_time	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double final_time;$/;"	m	struct:gk_mirror_ctx	file:
+final_time	mirror1x_trueMaxwellian/sim.c	/^  double final_time;$/;"	m	struct:gk_mirror_ctx	file:
+final_time	wham1x_adiabatic/sim.c	/^  double final_time;$/;"	m	struct:gk_mirror_ctx	file:
+findLastFrame	postprocessing/pgkylUtil.py	/^def findLastFrame(absFileName,fileExt):$/;"	f
+findNearestIndex	postprocessing/pgkylUtil.py	/^def findNearestIndex(array,value):$/;"	f
+firstFile	postprocessing/plot.py	/^  firstFile = str(fileName + '-field_0.gkyl')$/;"	v
+frameNum	postprocessing/plot.py	/^frameNum = 0                 #.Frame number to process.$/;"	v
+gamma	mirror1x_adiabatic/sim.c	/^  double gamma;$/;"	m	struct:gk_mirror_ctx	file:
+gamma	mirror1x_adiabatic_eqdst/sim.c	/^  double gamma;$/;"	m	struct:gk_mirror_ctx	file:
+gamma	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double gamma;$/;"	m	struct:gk_mirror_ctx	file:
+gamma	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double gamma;$/;"	m	struct:gk_mirror_ctx	file:
+gamma	mirror1x_trueMaxwellian/sim.c	/^  double gamma;$/;"	m	struct:gk_mirror_ctx	file:
+gamma	wham1x_adiabatic/sim.c	/^  double gamma;$/;"	m	struct:gk_mirror_ctx	file:
+getAttribute	postprocessing/pgkylUtil.py	/^def getAttribute(dataFile, attrName):$/;"	f
+getBasisType	postprocessing/pgkylUtil.py	/^def getBasisType(dataFile):$/;"	f
+getGrid	postprocessing/pgkylUtil.py	/^def getGrid(dataFile,polyOrder,basisType,**opKey):$/;"	f
+getGridFileName	postprocessing/pgkylUtil.py	/^def getGridFileName(dataFile):$/;"	f
+getGridType	postprocessing/pgkylUtil.py	/^def getGridType(dataFile):$/;"	f
+getInterpData	postprocessing/pgkylUtil.py	/^def getInterpData(dataFile,polyOrder,basisType,**opKey):$/;"	f
+getLowerBounds	postprocessing/pgkylUtil.py	/^def getLowerBounds(dataFile):$/;"	f
+getNodalGrid	postprocessing/pgkylUtil.py	/^    def getNodalGrid():$/;"	f	function:getRawGrid
+getNodeCoordsFEM	postprocessing/pgkylUtil.py	/^def getNodeCoordsFEM(basisType,pOrder,nCells,lower,upper):$/;"	f
+getNodeCoordsFEMfromFile	postprocessing/pgkylUtil.py	/^def getNodeCoordsFEMfromFile(dataFile):$/;"	f
+getNumCells	postprocessing/pgkylUtil.py	/^def getNumCells(dataFile):$/;"	f
+getPolyOrder	postprocessing/pgkylUtil.py	/^def getPolyOrder(dataFile):$/;"	f
+getRawData	postprocessing/pgkylUtil.py	/^def getRawData(dataFile):$/;"	f
+getRawDataFEM	postprocessing/pgkylUtil.py	/^def getRawDataFEM(dataFile):$/;"	f
+getRawGrid	postprocessing/pgkylUtil.py	/^def getRawGrid(dataFile,**opKey):$/;"	f
+getTime	postprocessing/pgkylUtil.py	/^def getTime(dataFile):$/;"	f
+getTimeAv	postprocessing/pgkylUtil.py	/^def getTimeAv(dataDir,simName,varName,iFrame,fFrame,p,b,saveAv,tAvDir):$/;"	f
+getTimeStamps	postprocessing/pgkylUtil.py	/^def getTimeStamps(dataFileRoot,frameI,frameF,fileExt):$/;"	f
+getUpperBounds	postprocessing/pgkylUtil.py	/^def getUpperBounds(dataFile):$/;"	f
+ginp	mirror1x_adiabatic_eqdst/sim.c	/^struct gkyl_mirror_geo_grid_inp ginp = {$/;"	v	typeref:struct:gkyl_mirror_geo_grid_inp
+ginp	wham1x_adiabatic/sim.c	/^struct gkyl_mirror_geo_grid_inp ginp = {$/;"	v	typeref:struct:gkyl_mirror_geo_grid_inp
+gk_mirror_ctx	mirror1x_adiabatic/sim.c	/^struct gk_mirror_ctx$/;"	s	file:
+gk_mirror_ctx	mirror1x_adiabatic_eqdst/sim.c	/^struct gk_mirror_ctx$/;"	s	file:
+gk_mirror_ctx	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^struct gk_mirror_ctx$/;"	s	file:
+gk_mirror_ctx	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^struct gk_mirror_ctx$/;"	s	file:
+gk_mirror_ctx	mirror1x_trueMaxwellian/sim.c	/^struct gk_mirror_ctx$/;"	s	file:
+gk_mirror_ctx	wham1x_adiabatic/sim.c	/^struct gk_mirror_ctx$/;"	s	file:
+grey	postprocessing/plot.py	/^grey           = [0.5, 0.5, 0.5]$/;"	v
+hcb7a	postprocessing/plot.py	/^  hcb7a = plt.colorbar(hpl7a, ax=ax7[0], cax=cbar_ax7[0], ticks=[0., 2.5, 5., 7.5, 10.])$/;"	v
+hpl7a	postprocessing/plot.py	/^  hpl7a = ax7[0].pcolormesh(Xnodal[0], Xnodal[1], eV*phi\/Te0, cmap='inferno')$/;"	v
+hpl7b	postprocessing/plot.py	/^  hpl7b = ax7[1].plot(times, (eV\/Te0)*0.5*(phi[:,nxIntC[0]\/\/2-1]+phi[:,nxIntC[0]\/\/2]), color=defaultColors[0])$/;"	v
+inp	mirror1x_adiabatic_eqdst/sim.c	/^struct gkyl_mirror_geo_efit_inp inp = {$/;"	v	typeref:struct:gkyl_mirror_geo_efit_inp
+inp	wham1x_adiabatic/sim.c	/^struct gkyl_mirror_geo_efit_inp inp = {$/;"	v	typeref:struct:gkyl_mirror_geo_efit_inp
+integrand_z_psiZ	mirror1x_adiabatic/sim.c	/^integrand_z_psiZ(double ZIn, void *ctx)$/;"	f
+integrand_z_psiZ	mirror1x_adiabatic_eqdst/sim.c	/^integrand_z_psiZ(double ZIn, void *ctx)$/;"	f
+integrand_z_psiZ	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^integrand_z_psiZ(double ZIn, void *ctx)$/;"	f
+integrand_z_psiZ	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^integrand_z_psiZ(double ZIn, void *ctx)$/;"	f
+integrand_z_psiZ	mirror1x_trueMaxwellian/sim.c	/^integrand_z_psiZ(double ZIn, void *ctx)$/;"	f
+itt	postprocessing/pgkylUtil.py	/^import itertools as itt$/;"	i
+kperp	wham1x_adiabatic/sim.c	/^  double kperp; \/\/ Perpendicular wavenumber in SI units.$/;"	m	struct:gk_mirror_ctx	file:
+kperpRhos	wham1x_adiabatic/sim.c	/^  double kperpRhos;$/;"	m	struct:gk_mirror_ctx	file:
+legendFontSize	postprocessing/plot.py	/^legendFontSize        = 14$/;"	v
+lineLengthSrcElc	wham1x_adiabatic/sim.c	/^  double lineLengthSrcElc;$/;"	m	struct:gk_mirror_ctx	file:
+lineLengthSrcIon	wham1x_adiabatic/sim.c	/^  double lineLengthSrcIon;$/;"	m	struct:gk_mirror_ctx	file:
+lineStyles	postprocessing/plot.py	/^lineStyles = ['-','--',':','-.','None','None','None','None']$/;"	v
+logLambdaElc	wham1x_adiabatic/sim.c	/^  double logLambdaElc;$/;"	m	struct:gk_mirror_ctx	file:
+logLambdaIon	mirror1x_adiabatic/sim.c	/^  double logLambdaIon;$/;"	m	struct:gk_mirror_ctx	file:
+logLambdaIon	mirror1x_adiabatic_eqdst/sim.c	/^  double logLambdaIon;$/;"	m	struct:gk_mirror_ctx	file:
+logLambdaIon	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double logLambdaIon;$/;"	m	struct:gk_mirror_ctx	file:
+logLambdaIon	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double logLambdaIon;$/;"	m	struct:gk_mirror_ctx	file:
+logLambdaIon	mirror1x_trueMaxwellian/sim.c	/^  double logLambdaIon;$/;"	m	struct:gk_mirror_ctx	file:
+logLambdaIon	wham1x_adiabatic/sim.c	/^  double logLambdaIon;$/;"	m	struct:gk_mirror_ctx	file:
+main	mirror1x_adiabatic/sim.c	/^int main(int argc, char **argv)$/;"	f
+main	mirror1x_adiabatic_eqdst/sim.c	/^int main(int argc, char **argv)$/;"	f
+main	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^int main(int argc, char **argv)$/;"	f
+main	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^int main(int argc, char **argv)$/;"	f
+main	mirror1x_trueMaxwellian/sim.c	/^int main(int argc, char **argv)$/;"	f
+main	wham1x_adiabatic/sim.c	/^int main(int argc, char **argv)$/;"	f
+mapc2p	mirror1x_adiabatic/sim.c	/^mapc2p(double t, const double *xc, double *GKYL_RESTRICT xp, void *ctx)$/;"	f
+mapc2p	mirror1x_adiabatic_eqdst/sim.c	/^mapc2p(double t, const double *xc, double *GKYL_RESTRICT xp, void *ctx)$/;"	f
+mapc2p	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^mapc2p(double t, const double *xc, double *GKYL_RESTRICT xp, void *ctx)$/;"	f
+mapc2p	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^mapc2p(double t, const double *xc, double *GKYL_RESTRICT xp, void *ctx)$/;"	f
+mapc2p	mirror1x_trueMaxwellian/sim.c	/^mapc2p(double t, const double *xc, double *GKYL_RESTRICT xp, void *ctx)$/;"	f
+mapc2p	wham1x_adiabatic/sim.c	/^  void *mapc2p;$/;"	m	struct:gk_mirror_ctx	file:
+mapping_frac	mirror1x_adiabatic/sim.c	/^  double mapping_frac;$/;"	m	struct:gk_mirror_ctx	file:
+mapping_frac	mirror1x_adiabatic_eqdst/sim.c	/^  double mapping_frac;$/;"	m	struct:gk_mirror_ctx	file:
+mapping_frac	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double mapping_frac;$/;"	m	struct:gk_mirror_ctx	file:
+mapping_frac	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double mapping_frac;$/;"	m	struct:gk_mirror_ctx	file:
+mapping_frac	mirror1x_trueMaxwellian/sim.c	/^  double mapping_frac;$/;"	m	struct:gk_mirror_ctx	file:
+mapping_frac	wham1x_adiabatic/sim.c	/^  double mapping_frac;$/;"	m	struct:gk_mirror_ctx	file:
+mapping_order_center	mirror1x_adiabatic/sim.c	/^  int mapping_order_center;$/;"	m	struct:gk_mirror_ctx	file:
+mapping_order_center	mirror1x_adiabatic_eqdst/sim.c	/^  int mapping_order_center;$/;"	m	struct:gk_mirror_ctx	file:
+mapping_order_center	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  int mapping_order_center;$/;"	m	struct:gk_mirror_ctx	file:
+mapping_order_center	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  int mapping_order_center;$/;"	m	struct:gk_mirror_ctx	file:
+mapping_order_center	mirror1x_trueMaxwellian/sim.c	/^  int mapping_order_center;$/;"	m	struct:gk_mirror_ctx	file:
+mapping_order_center	wham1x_adiabatic/sim.c	/^  int mapping_order_center;$/;"	m	struct:gk_mirror_ctx	file:
+mapping_order_expander	mirror1x_adiabatic/sim.c	/^  int mapping_order_expander;$/;"	m	struct:gk_mirror_ctx	file:
+mapping_order_expander	mirror1x_adiabatic_eqdst/sim.c	/^  int mapping_order_expander;$/;"	m	struct:gk_mirror_ctx	file:
+mapping_order_expander	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  int mapping_order_expander;$/;"	m	struct:gk_mirror_ctx	file:
+mapping_order_expander	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  int mapping_order_expander;$/;"	m	struct:gk_mirror_ctx	file:
+mapping_order_expander	mirror1x_trueMaxwellian/sim.c	/^  int mapping_order_expander;$/;"	m	struct:gk_mirror_ctx	file:
+mapping_order_expander	wham1x_adiabatic/sim.c	/^  int mapping_order_expander;$/;"	m	struct:gk_mirror_ctx	file:
+markers	postprocessing/plot.py	/^markers    = ['None','None','None','None','o','d','s','+']$/;"	v
+matplotlib	postprocessing/plot.py	/^import matplotlib.pyplot as plt$/;"	i
+mcB	mirror1x_adiabatic/sim.c	/^  double mcB;$/;"	m	struct:gk_mirror_ctx	file:
+mcB	mirror1x_adiabatic_eqdst/sim.c	/^  double mcB;$/;"	m	struct:gk_mirror_ctx	file:
+mcB	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double mcB;$/;"	m	struct:gk_mirror_ctx	file:
+mcB	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double mcB;$/;"	m	struct:gk_mirror_ctx	file:
+mcB	mirror1x_trueMaxwellian/sim.c	/^  double mcB;$/;"	m	struct:gk_mirror_ctx	file:
+mcB	wham1x_adiabatic/sim.c	/^  double mcB;$/;"	m	struct:gk_mirror_ctx	file:
+me	mirror1x_adiabatic/sim.c	/^  double me;$/;"	m	struct:gk_mirror_ctx	file:
+me	mirror1x_adiabatic_eqdst/sim.c	/^  double me;$/;"	m	struct:gk_mirror_ctx	file:
+me	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double me;$/;"	m	struct:gk_mirror_ctx	file:
+me	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double me;$/;"	m	struct:gk_mirror_ctx	file:
+me	mirror1x_trueMaxwellian/sim.c	/^  double me;$/;"	m	struct:gk_mirror_ctx	file:
+me	wham1x_adiabatic/sim.c	/^  double me;$/;"	m	struct:gk_mirror_ctx	file:
+mi	mirror1x_adiabatic/sim.c	/^  double mi;$/;"	m	struct:gk_mirror_ctx	file:
+mi	mirror1x_adiabatic_eqdst/sim.c	/^  double mi;$/;"	m	struct:gk_mirror_ctx	file:
+mi	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double mi;$/;"	m	struct:gk_mirror_ctx	file:
+mi	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double mi;$/;"	m	struct:gk_mirror_ctx	file:
+mi	mirror1x_trueMaxwellian/sim.c	/^  double mi;$/;"	m	struct:gk_mirror_ctx	file:
+mi	postprocessing/plot.py	/^mi        = 2.014*mp                         #[ Deuterium ion mass.$/;"	v
+mi	wham1x_adiabatic/sim.c	/^  double mi;$/;"	m	struct:gk_mirror_ctx	file:
+mu_max_elc	wham1x_adiabatic/sim.c	/^  double mu_max_elc;$/;"	m	struct:gk_mirror_ctx	file:
+mu_max_ion	mirror1x_adiabatic/sim.c	/^  double mu_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
+mu_max_ion	mirror1x_adiabatic_eqdst/sim.c	/^  double mu_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
+mu_max_ion	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double mu_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
+mu_max_ion	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double mu_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
+mu_max_ion	mirror1x_trueMaxwellian/sim.c	/^  double mu_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
+mu_max_ion	wham1x_adiabatic/sim.c	/^  double mu_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
+n0	mirror1x_adiabatic/sim.c	/^  double n0;$/;"	m	struct:gk_mirror_ctx	file:
+n0	mirror1x_adiabatic_eqdst/sim.c	/^  double n0;$/;"	m	struct:gk_mirror_ctx	file:
+n0	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double n0;$/;"	m	struct:gk_mirror_ctx	file:
+n0	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double n0;$/;"	m	struct:gk_mirror_ctx	file:
+n0	mirror1x_trueMaxwellian/sim.c	/^  double n0;$/;"	m	struct:gk_mirror_ctx	file:
+n0	postprocessing/plot.py	/^n0        = 3.e19$/;"	v
+n0	wham1x_adiabatic/sim.c	/^  double n0;$/;"	m	struct:gk_mirror_ctx	file:
+nFrames	postprocessing/plot.py	/^  nFrames = 1+pgu.findLastFrame(phiFile, '.gkyl')$/;"	v
+n_m	mirror1x_adiabatic/sim.c	/^  double n_m;$/;"	m	struct:gk_mirror_ctx	file:
+n_m	mirror1x_adiabatic_eqdst/sim.c	/^  double n_m;$/;"	m	struct:gk_mirror_ctx	file:
+n_m	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double n_m;$/;"	m	struct:gk_mirror_ctx	file:
+n_m	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double n_m;$/;"	m	struct:gk_mirror_ctx	file:
+n_m	mirror1x_trueMaxwellian/sim.c	/^  double n_m;$/;"	m	struct:gk_mirror_ctx	file:
+n_m	wham1x_adiabatic/sim.c	/^  double n_m;$/;"	m	struct:gk_mirror_ctx	file:
+nodesSer1x	postprocessing/pgkylUtil.py	/^               [[-1],[-1.\/3.],[1.\/3.],[1]] ]$/;"	v
+nodesSer2x	postprocessing/pgkylUtil.py	/^               [[-1,-1],[-1.\/3.,-1],[1.\/3.,-1],[1,-1],[-1,-1.\/3.],[1,-1.\/3.],[-1,1.\/3.],[1,1.\/3.],[-1,1],[-1.\/3.,1],[1.\/3.,1],[1,1]] ]$/;"	v
+nodesTensor1x	postprocessing/pgkylUtil.py	/^                  [[-1],[-1.\/3.],[1.\/3.],[1]] ]$/;"	v
+nodesTensor2x	postprocessing/pgkylUtil.py	/^                  [[-1,-1],[-1.\/3.,-1],[1.\/3.,-1],[1,-1],[-1,-1.\/3.],[-1.\/3.,-1.\/3.],[1.\/3.,-1.\/3.],[1,-1.\/3.],[-1,1.\/3.],[-1.\/3.,1.\/3.],[1.\/3.,1.\/3.],[1,1.\/3.],[-1,1],[-1.\/3.,1],[1.\/3.,1],[1,1]] ]$/;"	v
+np	postprocessing/pgkylUtil.py	/^import numpy as np$/;"	i
+np	postprocessing/plot.py	/^import numpy as np$/;"	i
+nuElc	wham1x_adiabatic/sim.c	/^  double nuElc;$/;"	m	struct:gk_mirror_ctx	file:
+nuFrac	mirror1x_adiabatic/sim.c	/^  double nuFrac;$/;"	m	struct:gk_mirror_ctx	file:
+nuFrac	mirror1x_adiabatic_eqdst/sim.c	/^  double nuFrac;$/;"	m	struct:gk_mirror_ctx	file:
+nuFrac	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double nuFrac;$/;"	m	struct:gk_mirror_ctx	file:
+nuFrac	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double nuFrac;$/;"	m	struct:gk_mirror_ctx	file:
+nuFrac	mirror1x_trueMaxwellian/sim.c	/^  double nuFrac;$/;"	m	struct:gk_mirror_ctx	file:
+nuFrac	wham1x_adiabatic/sim.c	/^  double nuFrac;$/;"	m	struct:gk_mirror_ctx	file:
+nuIon	mirror1x_adiabatic/sim.c	/^  double nuIon;$/;"	m	struct:gk_mirror_ctx	file:
+nuIon	mirror1x_adiabatic_eqdst/sim.c	/^  double nuIon;$/;"	m	struct:gk_mirror_ctx	file:
+nuIon	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double nuIon;$/;"	m	struct:gk_mirror_ctx	file:
+nuIon	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double nuIon;$/;"	m	struct:gk_mirror_ctx	file:
+nuIon	mirror1x_trueMaxwellian/sim.c	/^  double nuIon;$/;"	m	struct:gk_mirror_ctx	file:
+nuIon	wham1x_adiabatic/sim.c	/^  double nuIon;$/;"	m	struct:gk_mirror_ctx	file:
+num_cell_mu	mirror1x_adiabatic/sim.c	/^  int num_cell_mu;$/;"	m	struct:gk_mirror_ctx	file:
+num_cell_mu	mirror1x_adiabatic_eqdst/sim.c	/^  int num_cell_mu;$/;"	m	struct:gk_mirror_ctx	file:
+num_cell_mu	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  int num_cell_mu;$/;"	m	struct:gk_mirror_ctx	file:
+num_cell_mu	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  int num_cell_mu;$/;"	m	struct:gk_mirror_ctx	file:
+num_cell_mu	mirror1x_trueMaxwellian/sim.c	/^  int num_cell_mu;$/;"	m	struct:gk_mirror_ctx	file:
+num_cell_mu	wham1x_adiabatic/sim.c	/^  int num_cell_mu;$/;"	m	struct:gk_mirror_ctx	file:
+num_cell_vpar	mirror1x_adiabatic/sim.c	/^  int num_cell_vpar;$/;"	m	struct:gk_mirror_ctx	file:
+num_cell_vpar	mirror1x_adiabatic_eqdst/sim.c	/^  int num_cell_vpar;$/;"	m	struct:gk_mirror_ctx	file:
+num_cell_vpar	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  int num_cell_vpar;$/;"	m	struct:gk_mirror_ctx	file:
+num_cell_vpar	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  int num_cell_vpar;$/;"	m	struct:gk_mirror_ctx	file:
+num_cell_vpar	mirror1x_trueMaxwellian/sim.c	/^  int num_cell_vpar;$/;"	m	struct:gk_mirror_ctx	file:
+num_cell_vpar	wham1x_adiabatic/sim.c	/^  int num_cell_vpar;$/;"	m	struct:gk_mirror_ctx	file:
+num_cell_z	mirror1x_adiabatic/sim.c	/^  int num_cell_z;$/;"	m	struct:gk_mirror_ctx	file:
+num_cell_z	mirror1x_adiabatic_eqdst/sim.c	/^  int num_cell_z;$/;"	m	struct:gk_mirror_ctx	file:
+num_cell_z	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  int num_cell_z;$/;"	m	struct:gk_mirror_ctx	file:
+num_cell_z	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  int num_cell_z;$/;"	m	struct:gk_mirror_ctx	file:
+num_cell_z	mirror1x_trueMaxwellian/sim.c	/^  int num_cell_z;$/;"	m	struct:gk_mirror_ctx	file:
+num_cell_z	wham1x_adiabatic/sim.c	/^  int num_cell_z;$/;"	m	struct:gk_mirror_ctx	file:
+num_frames	mirror1x_adiabatic/sim.c	/^  int num_frames;$/;"	m	struct:gk_mirror_ctx	file:
+num_frames	mirror1x_adiabatic_eqdst/sim.c	/^  int num_frames;$/;"	m	struct:gk_mirror_ctx	file:
+num_frames	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  int num_frames;$/;"	m	struct:gk_mirror_ctx	file:
+num_frames	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  int num_frames;$/;"	m	struct:gk_mirror_ctx	file:
+num_frames	mirror1x_trueMaxwellian/sim.c	/^  int num_frames;$/;"	m	struct:gk_mirror_ctx	file:
+num_frames	wham1x_adiabatic/sim.c	/^  int num_frames;$/;"	m	struct:gk_mirror_ctx	file:
+omega_ci	mirror1x_adiabatic/sim.c	/^  double omega_ci;$/;"	m	struct:gk_mirror_ctx	file:
+omega_ci	mirror1x_adiabatic_eqdst/sim.c	/^  double omega_ci;$/;"	m	struct:gk_mirror_ctx	file:
+omega_ci	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double omega_ci;$/;"	m	struct:gk_mirror_ctx	file:
+omega_ci	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double omega_ci;$/;"	m	struct:gk_mirror_ctx	file:
+omega_ci	mirror1x_trueMaxwellian/sim.c	/^  double omega_ci;$/;"	m	struct:gk_mirror_ctx	file:
+omega_ci	postprocessing/plot.py	/^omega_ci = eV*B_p\/mi$/;"	v
+omega_ci	wham1x_adiabatic/sim.c	/^  double omega_ci;$/;"	m	struct:gk_mirror_ctx	file:
+os	postprocessing/pgkylUtil.py	/^import os$/;"	i
+outDir	postprocessing/plot.py	/^outDir = '.\/python_plots'$/;"	v
+outFigureFile	postprocessing/plot.py	/^outFigureFile    = False     #[ Output a figure file?.$/;"	v
+path	postprocessing/pgkylUtil.py	/^from os import path$/;"	i
+pg	postprocessing/pgkylUtil.py	/^import postgkyl as pg$/;"	i
+pg	postprocessing/plot.py	/^import postgkyl as pg$/;"	i
+pgData	postprocessing/plot.py	/^  pgData = pg.GData(firstFile)$/;"	v
+pgInterp	postprocessing/plot.py	/^  pgInterp = pg.GInterpNodal(pgData, polyOrder, 'ns')$/;"	v
+pgu	postprocessing/plot.py	/^import pgkylUtil as pgu$/;"	i
+phi	postprocessing/plot.py	/^  phi = np.zeros((nFrames,nxIntC[0]))$/;"	v
+phiFile	postprocessing/plot.py	/^  phiFile = dataDir+fileName+'-field_%d.gkyl'    #.Complete file name.$/;"	v
+phiFile	postprocessing/plot.py	/^  phiFile = dataDir+fileName+'-field_'    #.Complete file name.$/;"	v
+plotLocalPoints	postprocessing/pgkylUtil.py	/^def plotLocalPoints(axisIn,xNodal1D,fIn,pIn,plotX,**opKey):$/;"	f
+plotLocalPoly	postprocessing/pgkylUtil.py	/^def plotLocalPoly(axisIn,xNodal,fIn,pIn,**opKey):$/;"	f
+plot_density	postprocessing/plot.py	/^plot_density       = True  #[ Plot density.$/;"	v
+plot_phiAdiabatic	postprocessing/plot.py	/^plot_phiAdiabatic  = False  #[ Plot e*phi(z,t)\/Te0 and e*phi(z=0,t)\/Te0 for the adiabatic elc sim.$/;"	v
+plot_verticalLinesPM	postprocessing/plot.py	/^def plot_verticalLinesPM(xIn, axIn):$/;"	f
+plt	postprocessing/plot.py	/^import matplotlib.pyplot as plt$/;"	i
+polyOrder	postprocessing/plot.py	/^polyOrder = 1$/;"	v
+poly_order	mirror1x_adiabatic/sim.c	/^  int poly_order;$/;"	m	struct:gk_mirror_ctx	file:
+poly_order	mirror1x_adiabatic_eqdst/sim.c	/^  int poly_order;$/;"	m	struct:gk_mirror_ctx	file:
+poly_order	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  int poly_order;$/;"	m	struct:gk_mirror_ctx	file:
+poly_order	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  int poly_order;$/;"	m	struct:gk_mirror_ctx	file:
+poly_order	mirror1x_trueMaxwellian/sim.c	/^  int poly_order;$/;"	m	struct:gk_mirror_ctx	file:
+poly_order	wham1x_adiabatic/sim.c	/^  int poly_order;$/;"	m	struct:gk_mirror_ctx	file:
+psi_RZ	mirror1x_adiabatic/sim.c	/^psi_RZ(double RIn, double ZIn, void *ctx)$/;"	f
+psi_RZ	mirror1x_adiabatic_eqdst/sim.c	/^psi_RZ(double RIn, double ZIn, void *ctx)$/;"	f
+psi_RZ	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^psi_RZ(double RIn, double ZIn, void *ctx)$/;"	f
+psi_RZ	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^psi_RZ(double RIn, double ZIn, void *ctx)$/;"	f
+psi_RZ	mirror1x_trueMaxwellian/sim.c	/^psi_RZ(double RIn, double ZIn, void *ctx)$/;"	f
+psi_eval	mirror1x_adiabatic/sim.c	/^  double psi_eval;$/;"	m	struct:gk_mirror_ctx	file:
+psi_eval	mirror1x_adiabatic_eqdst/sim.c	/^  double psi_eval;$/;"	m	struct:gk_mirror_ctx	file:
+psi_eval	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double psi_eval;$/;"	m	struct:gk_mirror_ctx	file:
+psi_eval	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double psi_eval;$/;"	m	struct:gk_mirror_ctx	file:
+psi_eval	mirror1x_trueMaxwellian/sim.c	/^  double psi_eval;$/;"	m	struct:gk_mirror_ctx	file:
+psi_eval	wham1x_adiabatic/sim.c	/^  double psi_eval;$/;"	m	struct:gk_mirror_ctx	file:
+psi_in	mirror1x_adiabatic/sim.c	/^  double psi_in;$/;"	m	struct:gk_mirror_ctx	file:
+psi_in	mirror1x_adiabatic_eqdst/sim.c	/^  double psi_in;$/;"	m	struct:gk_mirror_ctx	file:
+psi_in	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double psi_in;$/;"	m	struct:gk_mirror_ctx	file:
+psi_in	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double psi_in;$/;"	m	struct:gk_mirror_ctx	file:
+psi_in	mirror1x_trueMaxwellian/sim.c	/^  double psi_in;$/;"	m	struct:gk_mirror_ctx	file:
+psi_in	wham1x_adiabatic/sim.c	/^  double psi_in;$/;"	m	struct:gk_mirror_ctx	file:
+psi_in_diff	mirror1x_adiabatic/sim.c	/^  double psi_in_diff;$/;"	m	struct:gk_mirror_ctx	file:
+psi_in_diff	mirror1x_adiabatic_eqdst/sim.c	/^  double psi_in_diff;$/;"	m	struct:gk_mirror_ctx	file:
+psi_in_diff	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double psi_in_diff;$/;"	m	struct:gk_mirror_ctx	file:
+psi_in_diff	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double psi_in_diff;$/;"	m	struct:gk_mirror_ctx	file:
+psi_in_diff	mirror1x_trueMaxwellian/sim.c	/^  double psi_in_diff;$/;"	m	struct:gk_mirror_ctx	file:
+psi_in_diff	wham1x_adiabatic/sim.c	/^  double psi_in_diff;$/;"	m	struct:gk_mirror_ctx	file:
+qe	mirror1x_adiabatic/sim.c	/^  double qe;$/;"	m	struct:gk_mirror_ctx	file:
+qe	mirror1x_adiabatic_eqdst/sim.c	/^  double qe;$/;"	m	struct:gk_mirror_ctx	file:
+qe	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double qe;$/;"	m	struct:gk_mirror_ctx	file:
+qe	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double qe;$/;"	m	struct:gk_mirror_ctx	file:
+qe	mirror1x_trueMaxwellian/sim.c	/^  double qe;$/;"	m	struct:gk_mirror_ctx	file:
+qe	wham1x_adiabatic/sim.c	/^  double qe;$/;"	m	struct:gk_mirror_ctx	file:
+qi	mirror1x_adiabatic/sim.c	/^  double qi;$/;"	m	struct:gk_mirror_ctx	file:
+qi	mirror1x_adiabatic_eqdst/sim.c	/^  double qi;$/;"	m	struct:gk_mirror_ctx	file:
+qi	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double qi;$/;"	m	struct:gk_mirror_ctx	file:
+qi	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double qi;$/;"	m	struct:gk_mirror_ctx	file:
+qi	mirror1x_trueMaxwellian/sim.c	/^  double qi;$/;"	m	struct:gk_mirror_ctx	file:
+qi	wham1x_adiabatic/sim.c	/^  double qi;$/;"	m	struct:gk_mirror_ctx	file:
+readDynVector	postprocessing/pgkylUtil.py	/^def readDynVector(dataFile):$/;"	f
+rho_s	mirror1x_adiabatic/sim.c	/^  double rho_s;$/;"	m	struct:gk_mirror_ctx	file:
+rho_s	mirror1x_adiabatic_eqdst/sim.c	/^  double rho_s;$/;"	m	struct:gk_mirror_ctx	file:
+rho_s	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double rho_s;$/;"	m	struct:gk_mirror_ctx	file:
+rho_s	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double rho_s;$/;"	m	struct:gk_mirror_ctx	file:
+rho_s	mirror1x_trueMaxwellian/sim.c	/^  double rho_s;$/;"	m	struct:gk_mirror_ctx	file:
+rho_s	postprocessing/plot.py	/^rho_s    = c_s\/omega_ci$/;"	v
+rho_s	wham1x_adiabatic/sim.c	/^  double rho_s;$/;"	m	struct:gk_mirror_ctx	file:
+root_Z_psiz	mirror1x_adiabatic/sim.c	/^root_Z_psiz(double Z, void *ctx)$/;"	f
+root_Z_psiz	mirror1x_adiabatic_eqdst/sim.c	/^root_Z_psiz(double Z, void *ctx)$/;"	f
+root_Z_psiz	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^root_Z_psiz(double Z, void *ctx)$/;"	f
+root_Z_psiz	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^root_Z_psiz(double Z, void *ctx)$/;"	f
+root_Z_psiz	mirror1x_trueMaxwellian/sim.c	/^root_Z_psiz(double Z, void *ctx)$/;"	f
+rsqrt2	postprocessing/pgkylUtil.py	/^rsqrt2   = np.sqrt(2.0)\/2.0$/;"	v
+rsqrt2Cu	postprocessing/pgkylUtil.py	/^rsqrt2Cu = 1.0\/np.sqrt(2.0**3)$/;"	v
+saveData	postprocessing/plot.py	/^saveData         = False    #.Indicate whether to save data in plot to HDF5 file.$/;"	v
+setMinMax	postprocessing/pgkylUtil.py	/^def setMinMax(aIn,minIn,maxIn):$/;"	f
+setTickFontSize	postprocessing/plot.py	/^def setTickFontSize(axIn,fontSizeIn):$/;"	f
+shutil	postprocessing/pgkylUtil.py	/^import shutil$/;"	i
+sigSrcElc	wham1x_adiabatic/sim.c	/^  double sigSrcElc;$/;"	m	struct:gk_mirror_ctx	file:
+sigSrcIon	wham1x_adiabatic/sim.c	/^  double sigSrcIon;$/;"	m	struct:gk_mirror_ctx	file:
+sqrt15	postprocessing/pgkylUtil.py	/^sqrt15   = np.sqrt(15.0)$/;"	v
+sqrt2	postprocessing/pgkylUtil.py	/^sqrt2    = np.sqrt(2.0)$/;"	v
+sqrt3	postprocessing/pgkylUtil.py	/^sqrt3    = np.sqrt(3.0)$/;"	v
+sqrt3d2	postprocessing/pgkylUtil.py	/^sqrt3d2  = np.sqrt(3.0\/2.0)$/;"	v
+sqrt5	postprocessing/pgkylUtil.py	/^sqrt5    = np.sqrt(5.0)$/;"	v
+sqrt7	postprocessing/pgkylUtil.py	/^sqrt7    = np.sqrt(7.0)$/;"	v
+tau	mirror1x_adiabatic/sim.c	/^  double tau;$/;"	m	struct:gk_mirror_ctx	file:
+tau	mirror1x_adiabatic_eqdst/sim.c	/^  double tau;$/;"	m	struct:gk_mirror_ctx	file:
+tau	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double tau;$/;"	m	struct:gk_mirror_ctx	file:
+tau	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double tau;$/;"	m	struct:gk_mirror_ctx	file:
+tau	mirror1x_trueMaxwellian/sim.c	/^  double tau;$/;"	m	struct:gk_mirror_ctx	file:
+tau	postprocessing/plot.py	/^tau       = (B_p**2)*beta\/(2*mu0*n0*Te0)-1    #[ Ti\/Te ratio.$/;"	v
+tau	wham1x_adiabatic/sim.c	/^  double tau;$/;"	m	struct:gk_mirror_ctx	file:
+textFontSize	postprocessing/plot.py	/^textFontSize          = 16$/;"	v
+tickFontSize	postprocessing/plot.py	/^tickFontSize          = 14$/;"	v
+times	postprocessing/plot.py	/^  times = 1.e6*pgu.getTimeStamps(phiFile,0,nFrames-1, '.gkyl')$/;"	v
+times	postprocessing/plot.py	/^  times = 1e-6*np.arange(0, nFrames, 1)  #1.e6*pgu.getTimeStamps(phiFile,0,nFrames-1, '.gkyl')$/;"	v
+timesC	postprocessing/plot.py	/^  timesC  = 0.5*(times[1:]+times[0:-1])$/;"	v
+titleFontSize	postprocessing/plot.py	/^titleFontSize         = 17$/;"	v
+vpar_max_elc	wham1x_adiabatic/sim.c	/^  double vpar_max_elc;$/;"	m	struct:gk_mirror_ctx	file:
+vpar_max_ion	mirror1x_adiabatic/sim.c	/^  double vpar_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
+vpar_max_ion	mirror1x_adiabatic_eqdst/sim.c	/^  double vpar_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
+vpar_max_ion	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double vpar_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
+vpar_max_ion	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double vpar_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
+vpar_max_ion	mirror1x_trueMaxwellian/sim.c	/^  double vpar_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
+vpar_max_ion	wham1x_adiabatic/sim.c	/^  double vpar_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
+vte	mirror1x_adiabatic/sim.c	/^  double vte;$/;"	m	struct:gk_mirror_ctx	file:
+vte	mirror1x_adiabatic_eqdst/sim.c	/^  double vte;$/;"	m	struct:gk_mirror_ctx	file:
+vte	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double vte;$/;"	m	struct:gk_mirror_ctx	file:
+vte	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double vte;$/;"	m	struct:gk_mirror_ctx	file:
+vte	mirror1x_trueMaxwellian/sim.c	/^  double vte;$/;"	m	struct:gk_mirror_ctx	file:
+vte	postprocessing/plot.py	/^vte = np.sqrt(Te0\/me)$/;"	v
+vte	wham1x_adiabatic/sim.c	/^  double vte;$/;"	m	struct:gk_mirror_ctx	file:
+vti	mirror1x_adiabatic/sim.c	/^  double vti;$/;"	m	struct:gk_mirror_ctx	file:
+vti	mirror1x_adiabatic_eqdst/sim.c	/^  double vti;$/;"	m	struct:gk_mirror_ctx	file:
+vti	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double vti;$/;"	m	struct:gk_mirror_ctx	file:
+vti	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double vti;$/;"	m	struct:gk_mirror_ctx	file:
+vti	mirror1x_trueMaxwellian/sim.c	/^  double vti;$/;"	m	struct:gk_mirror_ctx	file:
+vti	postprocessing/plot.py	/^vti = np.sqrt(Ti0\/mi)$/;"	v
+vti	wham1x_adiabatic/sim.c	/^  double vti;$/;"	m	struct:gk_mirror_ctx	file:
+write_data	mirror1x_adiabatic/sim.c	/^write_data(struct gkyl_tm_trigger *iot, gkyl_gyrokinetic_app *app, double tcurr)$/;"	f
+write_data	mirror1x_adiabatic_eqdst/sim.c	/^write_data(struct gkyl_tm_trigger *iot, gkyl_gyrokinetic_app *app, double tcurr)$/;"	f
+write_data	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^write_data(struct gkyl_tm_trigger *iot, gkyl_gyrokinetic_app *app, double tcurr)$/;"	f
+write_data	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^write_data(struct gkyl_tm_trigger *iot, gkyl_gyrokinetic_app *app, double tcurr)$/;"	f
+write_data	mirror1x_trueMaxwellian/sim.c	/^write_data(struct gkyl_tm_trigger *iot, gkyl_gyrokinetic_app *app, double tcurr)$/;"	f
+write_data	wham1x_adiabatic/sim.c	/^write_data(struct gkyl_tm_trigger *iot, gkyl_gyrokinetic_app *app, double tcurr)$/;"	f
+xyLabelFontSize	postprocessing/plot.py	/^xyLabelFontSize       = 17$/;"	v
+z_bt	mirror1x_adiabatic/sim.c	/^  double z_bt;$/;"	m	struct:gk_mirror_ctx	file:
+z_bt	mirror1x_adiabatic_eqdst/sim.c	/^  double z_bt;$/;"	m	struct:gk_mirror_ctx	file:
+z_bt	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double z_bt;$/;"	m	struct:gk_mirror_ctx	file:
+z_bt	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double z_bt;$/;"	m	struct:gk_mirror_ctx	file:
+z_bt	mirror1x_trueMaxwellian/sim.c	/^  double z_bt;$/;"	m	struct:gk_mirror_ctx	file:
+z_bt	wham1x_adiabatic/sim.c	/^  double z_bt;$/;"	m	struct:gk_mirror_ctx	file:
+z_in	mirror1x_adiabatic/sim.c	/^  double z_in;$/;"	m	struct:gk_mirror_ctx	file:
+z_in	mirror1x_adiabatic_eqdst/sim.c	/^  double z_in;$/;"	m	struct:gk_mirror_ctx	file:
+z_in	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double z_in;$/;"	m	struct:gk_mirror_ctx	file:
+z_in	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double z_in;$/;"	m	struct:gk_mirror_ctx	file:
+z_in	mirror1x_trueMaxwellian/sim.c	/^  double z_in;$/;"	m	struct:gk_mirror_ctx	file:
+z_in	wham1x_adiabatic/sim.c	/^  double z_in;$/;"	m	struct:gk_mirror_ctx	file:
+z_m	mirror1x_adiabatic/sim.c	/^  double z_m;$/;"	m	struct:gk_mirror_ctx	file:
+z_m	mirror1x_adiabatic_eqdst/sim.c	/^  double z_m;$/;"	m	struct:gk_mirror_ctx	file:
+z_m	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double z_m;$/;"	m	struct:gk_mirror_ctx	file:
+z_m	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double z_m;$/;"	m	struct:gk_mirror_ctx	file:
+z_m	mirror1x_trueMaxwellian/sim.c	/^  double z_m;$/;"	m	struct:gk_mirror_ctx	file:
+z_m	postprocessing/plot.py	/^z_m = 0.983244   #[ Location of maximum B-field.$/;"	v
+z_m	wham1x_adiabatic/sim.c	/^  double z_m;$/;"	m	struct:gk_mirror_ctx	file:
+z_max	mirror1x_adiabatic/sim.c	/^  double z_max;$/;"	m	struct:gk_mirror_ctx	file:
+z_max	mirror1x_adiabatic_eqdst/sim.c	/^  double z_max;$/;"	m	struct:gk_mirror_ctx	file:
+z_max	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double z_max;$/;"	m	struct:gk_mirror_ctx	file:
+z_max	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double z_max;$/;"	m	struct:gk_mirror_ctx	file:
+z_max	mirror1x_trueMaxwellian/sim.c	/^  double z_max;$/;"	m	struct:gk_mirror_ctx	file:
+z_max	wham1x_adiabatic/sim.c	/^  double z_max;$/;"	m	struct:gk_mirror_ctx	file:
+z_min	mirror1x_adiabatic/sim.c	/^  double z_min;$/;"	m	struct:gk_mirror_ctx	file:
+z_min	mirror1x_adiabatic_eqdst/sim.c	/^  double z_min;$/;"	m	struct:gk_mirror_ctx	file:
+z_min	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double z_min;$/;"	m	struct:gk_mirror_ctx	file:
+z_min	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^  double z_min;$/;"	m	struct:gk_mirror_ctx	file:
+z_min	mirror1x_trueMaxwellian/sim.c	/^  double z_min;$/;"	m	struct:gk_mirror_ctx	file:
+z_min	wham1x_adiabatic/sim.c	/^  double z_min;$/;"	m	struct:gk_mirror_ctx	file:
+z_psiZ	mirror1x_adiabatic/sim.c	/^z_psiZ(double psiIn, double ZIn, void *ctx)$/;"	f
+z_psiZ	mirror1x_adiabatic_eqdst/sim.c	/^z_psiZ(double psiIn, double ZIn, void *ctx)$/;"	f
+z_psiZ	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^z_psiZ(double psiIn, double ZIn, void *ctx)$/;"	f
+z_psiZ	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^z_psiZ(double psiIn, double ZIn, void *ctx)$/;"	f
+z_psiZ	mirror1x_trueMaxwellian/sim.c	/^z_psiZ(double psiIn, double ZIn, void *ctx)$/;"	f
+z_xi	mirror1x_adiabatic/sim.c	/^z_xi(double xi, double psi, void *ctx)$/;"	f
+z_xi	mirror1x_adiabatic_eqdst/sim.c	/^z_xi(double xi, double psi, void *ctx)$/;"	f
+z_xi	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^z_xi(double xi, double psi, void *ctx)$/;"	f
+z_xi	mirror1x_compare_unif_vs_nonunif_grids/sim_unif.c	/^z_xi(double xi, double psi, void *ctx)$/;"	f
+z_xi	mirror1x_trueMaxwellian/sim.c	/^z_xi(double xi, double psi, void *ctx)$/;"	f
