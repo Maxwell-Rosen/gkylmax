@@ -1,0 +1,62 @@
+*.gkyl
+*.mp4
+
+# Ignore compiled binaries and executables
+*.exe
+*.out
+*.app
+
+# Ignore logs and databases
+*.log
+*.sql
+*.sqlite
+
+# Ignore user-specific files and directories
+*.DS_Store
+Thumbs.db
+
+# Ignore environment-specific files
+.env
+env/
+venv/
+node_modules/
+.idea/
+
+# Ignore compiled Python files
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore compiled Java files
+*.class
+
+# Ignore compiled C/C++ files
+*.o
+*.obj
+
+# Ignore compiled JavaScript files
+*.js
+*.min.js
+
+# Ignore compiled CSS files
+*.css
+*.min.css
+
+# Ignore compiled HTML files
+*.html
+*.htm
+
+# Ignore temporary files
+*.tmp
+*.bak
+*.swp
+
+# Ignore dependency directories
+lib/
+vendor/
+
+# Ignore Jupyter Notebooks
+.ipynb_checkpoints/
+
+# Ignore VS Code settings
+.vscode/
