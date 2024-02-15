@@ -305,33 +305,35 @@ eval_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT
   double z = z_xi(xn[0], psi, ctx);
   double z_m = app->z_m;
   double z_max = app->z_max;
-  if (fabs(z) <= z_m)
-  {
-    fout[0] = app->n0 * (tanh(10 * z_m * fabs(z_m - fabs(z))) / 2 + .5);
-  }
-  else
-  {
-    fout[0] = app->n0 / 2 * exp(-5 * (fabs(z_m - fabs(z))));
-  }
+  fout[0] = app->n0;
+  // if (fabs(z) <= z_m)
+  // {
+  //   fout[0] = app->n0 * (tanh(10 * z_m * fabs(z_m - fabs(z))) / 2 + .5);
+  // }
+  // else
+  // {
+  //   fout[0] = app->n0 / 2 * exp(-5 * (fabs(z_m - fabs(z))));
+  // }
 }
 
 void
 eval_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
-  struct gk_mirror_ctx *app = ctx;
-  double psi = psi_RZ(app->RatZeq0, 0.0, ctx); // Magnetic flux function psi of field line.
-  double z = z_xi(xn[0], psi, ctx);
-  double cs_m = app->cs_m;
-  double z_m = app->z_m;
-  double z_max = app->z_max;
-  if (fabs(z) <= z_m)
-  {
-    fout[0] = 0.0;
-  }
-  else
-  {
-    fout[0] = 3.0 * fabs(z) / z * cs_m * tanh(3 * (z_max - z_m) * fabs(fabs(z) - z_m)); // Maybe put a 5 here
-  }
+  fout[0]=0.0;
+  // struct gk_mirror_ctx *app = ctx;
+  // double psi = psi_RZ(app->RatZeq0, 0.0, ctx); // Magnetic flux function psi of field line.
+  // double z = z_xi(xn[0], psi, ctx);
+  // double cs_m = app->cs_m;
+  // double z_m = app->z_m;
+  // double z_max = app->z_max;
+  // if (fabs(z) <= z_m)
+  // {
+  //   fout[0] = 0.0;
+  // }
+  // else
+  // {
+  //   fout[0] = 3.0 * fabs(z) / z * cs_m * tanh(3 * (z_max - z_m) * fabs(fabs(z) - z_m)); // Maybe put a 5 here
+  // }
 }
 
 void
@@ -343,14 +345,15 @@ eval_temp_par_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
   double z_m = app->z_m;
   double Ti_par0 = app->Ti_par0;
   double Ti_par_m = app->Ti_par_m;
-  if (fabs(z) <= z_m)
-  {
-    fout[0] = Ti_par_m+(Ti_par0-Ti_par_m)*tanh(4 * fabs(z_m - fabs(z)));
-  }
-  else
-  {
-    fout[0] = Ti_par_m;
-  }
+  fout[0] = Ti_par0;
+  // if (fabs(z) <= z_m)
+  // {
+  //   fout[0] = Ti_par_m+(Ti_par0-Ti_par_m)*tanh(4 * fabs(z_m - fabs(z)));
+  // }
+  // else
+  // {
+  //   fout[0] = Ti_par_m;
+  // }
 }
 
 void
@@ -362,14 +365,15 @@ eval_temp_perp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRI
   double z_m = app->z_m;
   double Ti_perp0 = app->Ti_perp0;
   double Ti_perp_m = app->Ti_perp_m;
-  if (fabs(z) <= z_m)
-  {
-    fout[0] = Ti_perp_m - Ti_perp0*tanh(3.*fabs(z_m-fabs(z)));
-  }
-  else
-  {
-    fout[0] = Ti_perp_m * GKYL_MAX2(1.e-3, exp(-5. * (fabs(z_m - fabs(z)))));
-  }
+  fout[0] = Ti_perp0;
+  // if (fabs(z) <= z_m)
+  // {
+  //   fout[0] = Ti_perp_m - Ti_perp0*tanh(3.*fabs(z_m-fabs(z)));
+  // }
+  // else
+  // {
+  //   fout[0] = Ti_perp_m * GKYL_MAX2(1.e-3, exp(-5. * (fabs(z_m - fabs(z)))));
+  // }
 }
 
 void
@@ -612,7 +616,7 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   int num_cell_vpar = 128; // Number of cells in the paralell velocity direction 96
   int num_cell_mu = 192;  // Number of cells in the mu direction 192
-  int num_cell_z = 288;
+  int num_cell_z = 128;
   int poly_order = 1;
   double final_time = 200e-6;
   int num_frames = 200;
@@ -635,7 +639,7 @@ create_ctx(void)
   double Ti_par_m = 1000 * eV;
 
   // Non-uniform z mapping
-  double mapping_frac = 0.0; // 1 is full mapping, 0 is no mapping
+  double mapping_frac = 0.7; // 1 is full mapping, 0 is no mapping
 
   struct gk_mirror_ctx ctx = {
     .mi = mi,
@@ -748,15 +752,13 @@ int main(int argc, char **argv)
     .cells = {NV, NMU},
     .polarization_density = ctx.n0,
     .projection = {
-      .proj_id = GKYL_PROJ_BIMAXWELLIAN, 
+      .proj_id = GKYL_PROJ_MAXWELLIAN, 
       .ctx_density = &ctx,
       .density = eval_density_ion,
       .ctx_upar = &ctx,
       .upar= eval_upar_ion,
-      .ctx_temppar = &ctx,
-      .temppar = eval_temp_par_ion,      
-      .ctx_tempperp = &ctx,
-      .tempperp = eval_temp_perp_ion,    
+      .ctx_temp = &ctx,
+      .temp = eval_temp_ion,
     },
     .collisions =  {
       .collision_id = GKYL_LBO_COLLISIONS,
@@ -779,7 +781,7 @@ int main(int argc, char **argv)
     .fem_parbc = GKYL_FEM_PARPROJ_NONE,
   };
   struct gkyl_gk gk = {  // GK app
-    .name = "outputs/gk_mirror_adiabatic_elc_1x2v_p1_nosource_uniform",
+    .name = "outputs/gk_mirror_adiabatic_elc_1x2v_p1_true_maxwellian",
     .cdim = 1,
     .vdim = 2,
     .lower = {ctx.z_min},
