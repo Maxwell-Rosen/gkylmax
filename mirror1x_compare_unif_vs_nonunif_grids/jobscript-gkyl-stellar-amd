@@ -4,7 +4,7 @@
 #.it is recommended that this name be kept to 16 characters or less
 #SBATCH -J gkyl-wham
 
-#SBATCH --qos pppl-short
+#SBATCH --qos pppl-long
 
 #.Number of nodes to request (Stellar-amd has 96 cores per node)
 #SBATCH -N 1
@@ -16,7 +16,7 @@
 #SBATCH --gres=gpu:1
 
 #.Request wall time
-#SBATCH -t 24:00:00
+#SBATCH -t 168:00:00
 
 #.Mail is sent to you when the job starts and when it terminates or aborts.
 #.SBATCH --mail-user=mhrosen@pppl.gov
@@ -43,7 +43,7 @@ module load openmpi/cuda-11.1/gcc/4.1.1
 start_time=$(date +"%s")
 
 echo "Starting Job"
-./sim_nonunif -g
+./sim_unif -g
 end_time=$(date +"%s")
 elapsed_time=$((end_time - start_time))
 echo "Elapsed Time: $elapsed_time seconds"

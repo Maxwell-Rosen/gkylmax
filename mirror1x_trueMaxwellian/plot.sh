@@ -4,22 +4,22 @@
 # name="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nonuniform_nosource_mirrorIC"
 # name="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nonuniform_nosource_bimaxIC"
 # name="../mirror1x_compare_unif_vs_nonunif_grids/outputs/gk_mirror_adiabatic_elc_1x2v_p1_nonuniform_nosource_bimaxIC"
-name="../mirror1x_trueMaxwellian/outputs/gk_mirror_adiabatic_elc_1x2v_p1_true_maxwellian"
+name="outputs/gk_mirror_adiabatic_elc_1x2v_p1_true_maxwellian"
 species="ion"
 
 # Animations of distribution functions with vpar on z and mu on z
 pgkyl "$name-ion_[0-9]*.gkyl"\
   interp -b gkhyb -p1 integrate 2 ev 'f[:] abs' animate --logz --zmin 1e-20 --fps 4 \
-  --saveas "$name vpar.mp4" &
+  --saveas "vpar.mp4" &
 pgkyl "$name-ion_[0-9]*.gkyl"\
   interp -b gkhyb -p1 integrate 1 ev 'f[:] abs' animate --logz --zmin 1e-4 --fps 4\
-  --saveas "$name mu.mp4" &
+  --saveas "mu.mp4" &
 pgkyl "$name-ion_[0-9]*.gkyl"\
   interp -b gkhyb -p1 sel --z0 0.0 ev 'f[:] abs' animate --logz --zmin 1e-10 --fps 4\
-  --saveas "$name z=0,0.mp4" &
+  --saveas "z=0,0.mp4" &
 pgkyl "$name-ion_[0-9]*.gkyl"\
   interp -b gkhyb -p1 sel --z0 0.70 ev 'f[:] abs' animate --logz --zmin 1e-10 --fps 4\
-  --saveas "$name z=0,7.mp4" &
+  --saveas "z=0,7.mp4" &
 
 # pgkyl "$name-ion_0.gkyl" "$name-ion_1.gkyl" "$name-ion_2.gkyl" "$name-ion_3.gkyl" \
 # "$name-ion_4.gkyl" "$name-ion_5.gkyl" "$name-ion_6.gkyl" "$name-ion_7.gkyl" \

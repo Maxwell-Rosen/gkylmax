@@ -1,32 +1,28 @@
 
-# name="outputs/gk_wham_1x2v_p1_adiabatic"
-# name="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nonuniform_nosource"
-# name="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nonuniform_nosource_mirrorIC"
-# name="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nonuniform_nosource_bimaxIC"
-# name="../mirror1x_compare_unif_vs_nonunif_grids/outputs/gk_mirror_adiabatic_elc_1x2v_p1_nonuniform_nosource_bimaxIC"
-name="../mirror1x_trueMaxwellian/outputs/gk_mirror_adiabatic_elc_1x2v_p1_true_maxwellian"
+name1="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nosource_uniform"
+name2="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nosource_nonuniform"
 species="ion"
 
 # Animations of distribution functions with vpar on z and mu on z
-pgkyl "$name-ion_[0-9]*.gkyl"\
-  interp -b gkhyb -p1 integrate 2 ev 'f[:] abs' animate --logz --zmin 1e-20 --fps 4 \
-  --saveas "$name vpar.mp4" &
-pgkyl "$name-ion_[0-9]*.gkyl"\
-  interp -b gkhyb -p1 integrate 1 ev 'f[:] abs' animate --logz --zmin 1e-4 --fps 4\
-  --saveas "$name mu.mp4" &
-pgkyl "$name-ion_[0-9]*.gkyl"\
-  interp -b gkhyb -p1 sel --z0 0.0 ev 'f[:] abs' animate --logz --zmin 1e-10 --fps 4\
-  --saveas "$name z=0,0.mp4" &
-pgkyl "$name-ion_[0-9]*.gkyl"\
-  interp -b gkhyb -p1 sel --z0 0.70 ev 'f[:] abs' animate --logz --zmin 1e-10 --fps 4\
-  --saveas "$name z=0,7.mp4" &
+# pgkyl "$name-ion_[0-9]*.gkyl"\
+#   interp -b gkhyb -p1 integrate 2 ev 'f[:] abs' animate --logz --zmin 1e-20 --fps 4 \
+#   --saveas "$name vpar.mp4" &
+# pgkyl "$name-ion_[0-9]*.gkyl"\
+#   interp -b gkhyb -p1 integrate 1 ev 'f[:] abs' animate --logz --zmin 1e-4 --fps 4\
+#   --saveas "$name mu.mp4" &
+# pgkyl "$name-ion_[0-9]*.gkyl"\
+#   interp -b gkhyb -p1 sel --z0 0.0 ev 'f[:] abs' animate --logz --zmin 1e-10 --fps 4\
+#   --saveas "$name z=0,0.mp4" &
+# pgkyl "$name-ion_[0-9]*.gkyl"\
+#   interp -b gkhyb -p1 sel --z0 0.70 ev 'f[:] abs' animate --logz --zmin 1e-10 --fps 4\
+#   --saveas "$name z=0,7.mp4" &
 
 # pgkyl "$name-ion_0.gkyl" "$name-ion_1.gkyl" "$name-ion_2.gkyl" "$name-ion_3.gkyl" \
 # "$name-ion_4.gkyl" "$name-ion_5.gkyl" "$name-ion_6.gkyl" "$name-ion_7.gkyl" \
 # "$name-ion_8.gkyl" "$name-ion_9.gkyl" "$name-ion_10.gkyl"\
-#   interp -b gkhyb -p1 sel --z0 0.7 ev 'f[:] abs' \
+#   interp -b gkhyb -p1 sel --z0 0.0 ev 'f[:] abs' \
 #   animate --logz --zmin 1e-10 --fps 4 --title "z=7" \
-#   --saveas "$name z=0,7.mp4"&
+#   --saveas "$name z=0,0.mp4"&
 
 
 # Plot single frames of the distribution function
@@ -47,12 +43,12 @@ frame=1
 # pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 sel --z0 0.0 pl --logz --zmin 1e-10 --title "frame $frame z=0"&
 
 # Plot geometry quantities
-# pgkyl jacobgeo.gkyl interp -b ms -p1 pl --title "jacobgeo"&
+pgkyl outputs/jacobgeo.gkyl interp -b ms -p1 pl --title "jacobgeo"&
 # pgkyl jacobtot.gkyl interp -b ms -p1 pl --title "jacobtot"&
 # pgkyl jacobtot_inv.gkyl interp -b ms -p1 pl --title "jacobtot_inv"&
 # pgkyl jacogeo_inv.gkyl interp -b ms -p1 pl --title "jacobgeo_inv"&
 # pgkyl b_i.gkyl interp -b ms -p1 pl --title "b_i"&
-# pgkyl mapc2p.gkyl interp -b ms -p1 select --z0 0.5 --z1 0 pl --title "mapc2p"&
+# pgkyl outputs/mapc2p.gkyl interp -b ms -p1 pl --title "mapc2p"&
 # pgkyl bmag.gkyl interp -b ms -p1 pl --title "bmag"&
 # pgkyl bmag_inv.gkyl interp -b ms -p1 pl --title "bmag_inv"&
 # pgkyl bmag_inv_sq.gkyl interp -b ms -p1 pl --title "bmag_inv_sq"&
@@ -69,11 +65,13 @@ frame=117
 # pgkyl "$name-field_$frame.gkyl" interp -b ms -p1 ev 'f[:] 940 /' pl --title "phi at frame $frame in unite e phi/Te" &
 
 # Moments of the distribution function
-frame=3
+frame=0
 if [ "$species" = "elc" ]; then mass=9.11e-31
 elif [ "$species" = "ion" ]; then mass=3.34e-27
 else echo "species must be ion or elc"
 fi
+pgkyl $name2-"$species"_M0_$frame.gkyl -c2p outputs/mapc2p.gkyl interp -b ms -p1 pl --title 'mapped density' &
+pgkyl $name2-"$species"_M0_$frame.gkyl interp -b ms -p1 pl --title 'density' &
 # pgkyl $name-"$species"_M0_$frame.gkyl $name-"$species"_M1_$frame.gkyl interp -b ms -p1 ev "f[1] f[0] /" pl --title 'Upar' &
 # pgkyl $name-"$species"_prim_moms_$frame.gkyl interp -b ms -p1 pl --title 'prim--moms' &
 # pgkyl $name-"$species"_M0_$frame.gkyl $name-"$species"_M2perp_$frame.gkyl interp -b ms -p1 ev "$mass f[1] f[0] / * 1.6e-19 /" pl --title 'Tperp (eV)' &
