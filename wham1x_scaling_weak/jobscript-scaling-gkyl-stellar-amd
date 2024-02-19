@@ -1,0 +1,66 @@
+#!/bin/bash -l
+
+#.Declare a name for this job to be my_serial_job
+#.it is recommended that this name be kept to 16 characters or less
+#SBATCH -J gkyl-wham
+
+#SBATCH --qos pppl-short
+
+#.Number of nodes to request (Stellar-amd has 96 cores per node)
+#SBATCH -N 1
+
+#. Total number of cores (96 per node).
+#SBATCH --tasks-per-node=4
+
+#.Request a GPU.
+#SBATCH --gres=gpu:1
+
+#.Request wall time
+#SBATCH -t 24:00:00
+
+#.Mail is sent to you when the job starts and when it terminates or aborts.
+#.SBATCH --mail-user=mhrosen@pppl.gov
+#.SBATCH --mail-type=BEGIN,END,FAIL,REQUEUE
+
+#.Specify name format of output file.
+#SBATCH -o slurm-%j.out
+
+# If doing a restart indicate restart file path. Must also
+# add it as a command line argument after outdir below.
+
+# GPU Stellar AMD
+module load gcc/8
+module load anaconda3/2020.11
+module load cudatoolkit/12.0
+module load openmpi/cuda-11.1/gcc/4.1.1
+
+# CPU Stellar Intel
+# module load intel/2021.1.2
+# module load openmpi/intel-2021.1/4.1.0
+# module load anaconda3/2020.11
+
+Nz_values=($(seq 40 20 300)) #Minimum is 20 < x < 40
+# Initialize an array to store execution times
+execution_times=()
+output_file="temp_output.txt"
+for Nz in "${Nz_values[@]}"
+do
+  echo "Starting job for Nz=$Nz"
+  ./sim -g -x $Nz > "$output_file"
+  # cat "$output_file"
+  elapsedTime=$(awk '/Updates took/ {print $3}' "$output_file")
+  echo "Elapsed Time: $elapsedTime seconds"
+  execution_times+=($elapsedTime)
+  echo "Finished job for Nz=$Nz"
+done
+
+# Print the final execution times
+echo "Final results"
+echo "Nz values: ${Nz_values[@]}"
+echo "${Nz_values[@]}" > Nz_vals.txt
+echo "Execution times: ${execution_times[@]}"
+echo "${execution_times[@]}" > execution_times.txt
+
+mv *.gkyl outputs/
+
+exit 0

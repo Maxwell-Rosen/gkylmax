@@ -4,22 +4,28 @@
 # name="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nonuniform_nosource_mirrorIC"
 # name="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nonuniform_nosource_bimaxIC"
 # name="../mirror1x_compare_unif_vs_nonunif_grids/outputs/gk_mirror_adiabatic_elc_1x2v_p1_nonuniform_nosource_bimaxIC"
-name="../mirror1x_trueMaxwellian/outputs/gk_mirror_adiabatic_elc_1x2v_p1_true_maxwellian"
+name="outputs/gk_mirror_adiabatic_elc_1x2v_p1_true_maxwellian"
 species="ion"
 
+# pgkyl outputs/gk_mirror_adiabatic_elc_1x2v_p1_true_maxwellian-ion_0.gkyl --c2p outputs/mapc2p.gkyl \
+#  interp -b gkhyb -p1 integrate 1 pl &
+# pgkyl outputs/gk_mirror_adiabatic_elc_1x2v_p1_true_maxwellian-ion_0.gkyl \
+#  interp -b gkhyb -p1 integrate 1 pl &
+
+
 # Animations of distribution functions with vpar on z and mu on z
-pgkyl "$name-ion_[0-9]*.gkyl"\
-  interp -b gkhyb -p1 integrate 2 ev 'f[:] abs' animate --logz --zmin 1e-20 --fps 4 \
-  --saveas "$name vpar.mp4" &
-pgkyl "$name-ion_[0-9]*.gkyl"\
-  interp -b gkhyb -p1 integrate 1 ev 'f[:] abs' animate --logz --zmin 1e-4 --fps 4\
-  --saveas "$name mu.mp4" &
-pgkyl "$name-ion_[0-9]*.gkyl"\
-  interp -b gkhyb -p1 sel --z0 0.0 ev 'f[:] abs' animate --logz --zmin 1e-10 --fps 4\
-  --saveas "$name z=0,0.mp4" &
-pgkyl "$name-ion_[0-9]*.gkyl"\
-  interp -b gkhyb -p1 sel --z0 0.70 ev 'f[:] abs' animate --logz --zmin 1e-10 --fps 4\
-  --saveas "$name z=0,7.mp4" &
+# pgkyl "$name-ion_[0-9]*.gkyl"\
+#   interp -b gkhyb -p1 integrate 2 ev 'f[:] abs' animate --logz --zmin 1e-20 --fps 4 \
+#   --saveas "vpar.mp4" &
+# pgkyl "$name-ion_[0-9]*.gkyl"\
+#   interp -b gkhyb -p1 integrate 1 ev 'f[:] abs' animate --logz --zmin 1e-4 --fps 4\
+#   --saveas "mu.mp4" &
+# pgkyl "$name-ion_[0-9]*.gkyl"\
+#   interp -b gkhyb -p1 sel --z0 0.0 ev 'f[:] abs' animate --logz --zmin 1e-10 --fps 4\
+#   --saveas "z=0,0.mp4" &
+# pgkyl "$name-ion_[0-9]*.gkyl"\
+#   interp -b gkhyb -p1 sel --z0 0.70 ev 'f[:] abs' animate --logz --zmin 1e-10 --fps 4\
+#   --saveas "z=0,7.mp4" &
 
 # pgkyl "$name-ion_0.gkyl" "$name-ion_1.gkyl" "$name-ion_2.gkyl" "$name-ion_3.gkyl" \
 # "$name-ion_4.gkyl" "$name-ion_5.gkyl" "$name-ion_6.gkyl" "$name-ion_7.gkyl" \
@@ -68,39 +74,63 @@ frame=117
 # pgkyl "$name-field_[0-9]*.gkyl" interp -b ms -p1 collect pl --title 'phi' &
 # pgkyl "$name-field_$frame.gkyl" interp -b ms -p1 ev 'f[:] 940 /' pl --title "phi at frame $frame in unite e phi/Te" &
 
-# Moments of the distribution function
-frame=3
+
 if [ "$species" = "elc" ]; then mass=9.11e-31
 elif [ "$species" = "ion" ]; then mass=3.34e-27
 else echo "species must be ion or elc"
 fi
+# Moments of the distribution function at a single frame
+frame=15
 # pgkyl $name-"$species"_M0_$frame.gkyl $name-"$species"_M1_$frame.gkyl interp -b ms -p1 ev "f[1] f[0] /" pl --title 'Upar' &
 # pgkyl $name-"$species"_prim_moms_$frame.gkyl interp -b ms -p1 pl --title 'prim--moms' &
 # pgkyl $name-"$species"_M0_$frame.gkyl $name-"$species"_M2perp_$frame.gkyl interp -b ms -p1 ev "$mass f[1] f[0] / * 1.6e-19 /" pl --title 'Tperp (eV)' &
 # pgkyl $name-"$species"_M0_$frame.gkyl $name-"$species"_M1_$frame.gkyl $name-"$species"_M2par_$frame.gkyl interp -b ms -p1 ev "f[2] f[1] f[1] * f[0] / - $mass * f[0] / 1.6e-19 /" pl --title 'Tpar (eV)' &
 
+# # Plot tperp at all frames
+# pgkyl "$name-"$species"_M0_[0-9]*.gkyl" -t M0 "$name-"$species"_M2perp_[0-9]*.gkyl" -t M2perp\
+#   activate -t M0,M2perp interp -b ms -p1 ev -a -t res \
+#   "$mass M2perp M0 / * 1.6e-19 /" activate -t res collect pl  --title 'Tperp (ev)'&
 
-## compute moments of distribution function
-# for frame in $(seq 0 200); do
-#   pgkyl $name-"$species"_M0_$frame.gkyl interp -b ms -p1 writ -f "$name-"$species"-dens_$frame.gkyl" &
-#   pgkyl $name-"$species"_M0_$frame.gkyl $name-"$species"_M1_$frame.gkyl interp -b ms -p1 ev "f[1] f[0] /"  writ -f "$name-"$species"-upar_$frame.gkyl" &
-#   pgkyl $name-"$species"_M0_$frame.gkyl $name-"$species"_M2perp_$frame.gkyl interp -b ms -p1 ev "$mass f[1] f[0] / * 1.6e-19 /" writ -f "$name-"$species"-tperp_$frame.gkyl" &
-#   pgkyl $name-"$species"_M0_$frame.gkyl $name-"$species"_M1_$frame.gkyl $name-"$species"_M2par_$frame.gkyl interp -b ms -p1 ev "f[2] f[1] f[1] * f[0] / - $mass * f[0] / 1.6e-19 /" writ -f "$name-"$species"-tpar_$frame.gkyl" &
-# done
+# # Plot tpar at all frames
+# pgkyl "$name-"$species"_M0_[0-9]*.gkyl" -t M0 "$name-"$species"_M1_[0-9]*.gkyl"\
+#  -t M1 "$name-"$species"_M2par_[0-9]*.gkyl" -t M2par\
+#   activate -t M0,M1,M2par interp -b ms -p1 ev -a -t res \
+#   "M2par M1 M1 * M0 / - $mass * M0 / 1.6e-19 /" activate -t res\
+#   collect pl  --title 'Tpar (ev)' --zmin 0.0 &
 
-# Plot moments of two distribution functions
-frame1=0
-frame2=200
-# pgkyl $name-"$species"_dens_$frame1.gkyl $name-"$species"_dens_$frame2.gkyl pl --title 'Density' -f0 &
-# pgkyl $name-"$species"_upar_$frame1.gkyl $name-"$species"_upar_$frame2.gkyl pl --title 'Upar' -f0 &
-# pgkyl $name-"$species"_tperp_$frame1.gkyl $name-"$species"_tperp_$frame2.gkyl pl --title 'Tperp (eV)' -f0 &
-# pgkyl $name-"$species"_tpar_$frame1.gkyl $name-"$species"_tpar_$frame2.gkyl pl --title 'Tpar (eV)' -f0 &
+# # Plot density at all frames
+# pgkyl "$name-"$species"_M0_[0-9]*.gkyl" interp -b ms -p1 collect pl --title 'Density' &
 
-# Plot moments at all frames
-# pgkyl "$name-$species-tperp_[0-9]*.gkyl" collect &
-# pgkyl $name-"$species"_tpar_[0-9]*.gkyl collect pl --title 'Tpar (eV)' &
+# # Plot Upar at all frames
+# pgkyl "$name-"$species"_M0_[0-9]*.gkyl" -t M0 "$name-"$species"_M1_[0-9]*.gkyl"\
+#  -t M1 activate -t M0,M1 interp -b ms -p1 ev -a -t res "M1 M0 /" activate -t res\
+#   collect pl  --title 'Upar'&
 
-# frame=[0-9]*
-# pgkyl $name-"$species"_M0_$frame.gkyl $name-"$species"_M2perp_$frame.gkyl\
-#  interp -b ms -p1 ev "$mass f[1] f[0] / * 1.6e-19 /" collect pl &
+# Compare moments at two frames
+# frame1=0
+# frame2=40
+# #Density
+# pgkyl "$name-"$species"_M0_$frame1.gkyl" -t M00 "$name-"$species"_M0_$frame2.gkyl" \
+#   -t M01 interp -b ms -p1 pl --title 'Density' -f0 &
+# #Upar
+# pgkyl "$name-"$species"_M0_$frame1.gkyl" -t M00 "$name-"$species"_M1_$frame1.gkyl" -t M10\
+#   "$name-"$species"_M0_$frame2.gkyl" -t M01 "$name-"$species"_M1_$frame2.gkyl" -t M11\
+#   activate -t M00,M10 interp -b ms -p1 ev -a -t res0 -l "Frame $frame1" "M10 M00 /"\
+#   activate -t M01,M11 interp -b ms -p1 ev -a -t res1 -l "Frame $frame2" "M11 M01 /"\
+#   activate -t res0,res1 pl  --title 'Upar' -f0 &
+# #Tperp
+# pgkyl "$name-"$species"_M0_$frame1.gkyl" -t M00 "$name-"$species"_M2perp_$frame1.gkyl" -t M20\
+#   "$name-"$species"_M0_$frame2.gkyl" -t M01 "$name-"$species"_M2perp_$frame2.gkyl" -t M21\
+#   activate -t M00,M20 interp -b ms -p1 ev -a -t res0 -l "Frame $frame1" "$mass M20 M00 / * 1.6e-19 /"\
+#   activate -t M01,M21 interp -b ms -p1 ev -a -t res1 -l "Frame $frame2" "$mass M21 M01 / * 1.6e-19 /"\
+#   activate -t res0,res1 pl  --title 'Tperp (eV)' -f0 &
+# #Tpar
+# pgkyl "$name-"$species"_M0_$frame1.gkyl" -t M00 "$name-"$species"_M1_$frame1.gkyl" -t M10\
+#   "$name-"$species"_M2par_$frame1.gkyl" -t M20 "$name-"$species"_M0_$frame2.gkyl" -t M01\
+#   "$name-"$species"_M1_$frame2.gkyl" -t M11 "$name-"$species"_M2par_$frame2.gkyl" -t M21\
+#   activate -t M00,M10,M20 interp -b ms -p1 ev -a -t res0 -l \
+#   "Frame $frame1" "M20 M10 M10 * M00 / - $mass * M00 / 1.6e-19 /"\
+#   activate -t M01,M11,M21 interp -b ms -p1 ev -a -t res1 -l \
+#   "Frame $frame2" "M21 M11 M11 * M01 / - $mass * M01 / 1.6e-19 /"\
+#   activate -t res0,res1 pl  --title 'Tpar (eV)' -f0 &
 

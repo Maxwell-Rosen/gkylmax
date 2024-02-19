@@ -1,0 +1,52 @@
+#!/bin/bash -l
+
+#.Declare a name for this job to be my_serial_job
+#.it is recommended that this name be kept to 16 characters or less
+#SBATCH -J gkyl-wham
+
+#SBATCH --qos pppl-medium
+
+#.Number of nodes to request (Stellar-amd has 96 cores per node)
+#SBATCH -N 1
+
+#. Total number of cores (96 per node).
+#SBATCH --tasks-per-node=4
+
+#.Request a GPU.
+#SBATCH --gres=gpu:1
+
+#.Request wall time
+#SBATCH -t 48:00:00
+
+#.Mail is sent to you when the job starts and when it terminates or aborts.
+#.SBATCH --mail-user=mhrosen@pppl.gov
+#.SBATCH --mail-type=BEGIN,END,FAIL,REQUEUE
+
+#.Specify name format of output file.
+#SBATCH -o slurm-%j.out
+
+# If doing a restart indicate restart file path. Must also
+# add it as a command line argument after outdir below.
+
+# GPU Stellar AMD
+module load gcc/8
+module load anaconda3/2020.11
+module load cudatoolkit/12.0
+module load openmpi/cuda-11.1/gcc/4.1.1
+
+# CPU Stellar Intel
+# module load intel/2021.1.2
+# module load openmpi/intel-2021.1/4.1.0
+# module load anaconda3/2020.11
+
+# Record the start time
+start_time=$(date +"%s")
+
+echo "Starting Job"
+./sim -g
+end_time=$(date +"%s")
+elapsed_time=$((end_time - start_time))
+echo "Elapsed Time: $elapsed_time seconds"
+echo "Finished job: $name"
+mv *.gkyl *.json outputs
+exit 0
