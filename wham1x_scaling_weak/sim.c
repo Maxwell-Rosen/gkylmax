@@ -621,6 +621,7 @@ int main(int argc, char **argv)
   int NZ = APP_ARGS_CHOOSE(app_args.xcells[0], ctx.num_cell_z);
   int NV = APP_ARGS_CHOOSE(app_args.vcells[0], ctx.num_cell_vpar);
   int NMU = APP_ARGS_CHOOSE(app_args.vcells[1], ctx.num_cell_mu);
+  printf("Grid size = %d in Z, %d in Vpar, %d in mu\n", NZ, NV, NMU);
     struct gkyl_gyrokinetic_species ion = {
     .name = "ion",
     .charge = ctx.qi,

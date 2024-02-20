@@ -29,7 +29,7 @@ else
 endif
 
 # Include config.mak file (if it exists)
--include /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/share/config.mak
+-include /home/mr1884/gkylsoft/gkylzero/share/config.mak
 
 CFLAGS = -O3 -g -ffast-math -I.
 
@@ -97,9 +97,8 @@ EXT_LIBS = ${LAPACK_LIB} ${SUPERLU_LIB} ${MPI_LIBS} ${LUA_LIBS} -lm -lpthread -l
 all: sim_unif sim_nonunif
 
 sim: sim_unif.c sim_nonunif.c
-	${CC} ${CFLAGS} ${INCLUDES} sim_unif.c -o sim_unif -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
-	${CC} ${CFLAGS} ${INCLUDES} sim_nonunif.c -o sim_nonunif -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
-
+	 ${CC} ${CFLAGS} ${INCLUDES} sim_unif.c -o sim_unif -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
+	 ${CC} ${CFLAGS} ${INCLUDES} sim_nonunif.c -o sim_nonunif -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
 clean:
-	rm -rf sim_unif sim_nonunif sim_unif.dSYM sim_nonunif.dSYM
+	rm -rf sim_unif sim_nonunif *.dSYM
 

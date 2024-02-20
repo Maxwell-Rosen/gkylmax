@@ -614,12 +614,12 @@ create_ctx(void)
   // Grid parameters
   double vpar_max_ion = 20 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
-  int num_cell_vpar = 384; // Number of cells in the paralell velocity direction 96
-  int num_cell_mu = 192;  // Number of cells in the mu direction 192
+  int num_cell_vpar = 128; // Number of cells in the paralell velocity direction 96
+  int num_cell_mu = 192 * 3;  // Number of cells in the mu direction 192
   int num_cell_z = 128;
   int poly_order = 1;
-  double final_time = 200e-6;
-  int num_frames = 200;
+  double final_time = 100e-6;
+  int num_frames = 100;
 
   // Bananna tip info. Hardcoad to avoid dependency on ctx
   double B_bt = 1.058278;

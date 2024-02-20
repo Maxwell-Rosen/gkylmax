@@ -1,7 +1,7 @@
 sim_unif : sim_unif.c \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_alloc.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_util.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/pcg_basic.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_alloc.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_util.h \
+    /home/mr1884/gkylsoft/gkylzero/include/pcg_basic.h \
     /usr/local/cuda-12.0/bin/../targets/x86_64-linux/include/cuda_runtime.h \
     /usr/local/cuda-12.0/bin/../targets/x86_64-linux/include/crt/host_config.h \
     /usr/local/cuda-12.0/bin/../targets/x86_64-linux/include/builtin_types.h \
@@ -18,42 +18,42 @@ sim_unif : sim_unif.c \
     /usr/local/cuda-12.0/bin/../targets/x86_64-linux/include/driver_functions.h \
     /usr/local/cuda-12.0/bin/../targets/x86_64-linux/include/vector_functions.h \
     /usr/local/cuda-12.0/bin/../targets/x86_64-linux/include/vector_functions.hpp \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_const.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_eqn_type.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_fem_parproj.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_array.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_ref_count.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_elem_type.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_basis.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_range.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_vargm.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_rect_grid.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_rect_decomp.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_array_ops.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_evalf_def.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_mat.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_mat_triples.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_superlu_ops.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_superlu.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/superlu/include/slu_ddefs.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/superlu/include/slu_Cnames.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/superlu/include/supermatrix.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/superlu/include/slu_util.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/superlu/include/superlu_enum_consts.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_fem_poisson_bctype.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_gyrokinetic.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_app.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_math.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/rt_arg_parse.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_mp_scheme.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_wave_geom.h \
-    /home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_wv_eqn.h
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_const.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_eqn_type.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_fem_parproj.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_array.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_ref_count.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_elem_type.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_basis.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_range.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_vargm.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_rect_grid.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_rect_decomp.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_array_ops.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_evalf_def.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_mat.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_mat_triples.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_superlu_ops.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_superlu.h \
+    /home/mr1884/gkylsoft/superlu/include/slu_ddefs.h \
+    /home/mr1884/gkylsoft/superlu/include/slu_Cnames.h \
+    /home/mr1884/gkylsoft/superlu/include/supermatrix.h \
+    /home/mr1884/gkylsoft/superlu/include/slu_util.h \
+    /home/mr1884/gkylsoft/superlu/include/superlu_enum_consts.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_fem_poisson_bctype.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_gyrokinetic.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_app.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_math.h \
+    /home/mr1884/gkylsoft/gkylzero/include/rt_arg_parse.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_mp_scheme.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_wave_geom.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_wv_eqn.h
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_alloc.h:
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_alloc.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_util.h:
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_util.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/pcg_basic.h:
+/home/mr1884/gkylsoft/gkylzero/include/pcg_basic.h:
 
 /usr/local/cuda-12.0/bin/../targets/x86_64-linux/include/cuda_runtime.h:
 
@@ -87,62 +87,62 @@ sim_unif : sim_unif.c \
 
 /usr/local/cuda-12.0/bin/../targets/x86_64-linux/include/vector_functions.hpp:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_const.h:
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_const.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_eqn_type.h:
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_eqn_type.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_fem_parproj.h:
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_fem_parproj.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_array.h:
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_array.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_ref_count.h:
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_ref_count.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_elem_type.h:
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_elem_type.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_basis.h:
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_basis.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_range.h:
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_range.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_vargm.h:
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_vargm.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_rect_grid.h:
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_rect_grid.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_rect_decomp.h:
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_rect_decomp.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_array_ops.h:
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_array_ops.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_evalf_def.h:
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_evalf_def.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_mat.h:
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_mat.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_mat_triples.h:
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_mat_triples.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_superlu_ops.h:
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_superlu_ops.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_superlu.h:
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_superlu.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/superlu/include/slu_ddefs.h:
+/home/mr1884/gkylsoft/superlu/include/slu_ddefs.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/superlu/include/slu_Cnames.h:
+/home/mr1884/gkylsoft/superlu/include/slu_Cnames.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/superlu/include/supermatrix.h:
+/home/mr1884/gkylsoft/superlu/include/supermatrix.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/superlu/include/slu_util.h:
+/home/mr1884/gkylsoft/superlu/include/slu_util.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/superlu/include/superlu_enum_consts.h:
+/home/mr1884/gkylsoft/superlu/include/superlu_enum_consts.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_fem_poisson_bctype.h:
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_fem_poisson_bctype.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_gyrokinetic.h:
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_gyrokinetic.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_app.h:
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_app.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_math.h:
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_math.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/rt_arg_parse.h:
+/home/mr1884/gkylsoft/gkylzero/include/rt_arg_parse.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_mp_scheme.h:
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_mp_scheme.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_wave_geom.h:
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_wave_geom.h:
 
-/home/mr1884/scratch/gkylsoft-amd-gzero/gkylzero/include/gkyl_wv_eqn.h:
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_wv_eqn.h:
