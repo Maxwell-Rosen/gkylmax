@@ -1,5 +1,7 @@
 *.gkyl
 *.mp4
+*.txt
+*.json
 
 # Ignore compiled binaries and executables
 *.exe
