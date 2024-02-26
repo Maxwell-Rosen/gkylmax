@@ -624,7 +624,7 @@ create_ctx(void)
   int num_cell_mu = 192;  // Number of cells in the mu direction 192
   int num_cell_z = 128;
   int poly_order = 1;
-  double final_time = 100-6;
+  double final_time = 100e-6;
   int num_frames = 100;
 
   // Bananna tip info. Hardcoad to avoid dependency on ctx
@@ -958,5 +958,13 @@ int main(int argc, char **argv)
   gkyl_gyrokinetic_app_cout(app, stdout, "Number of write calls %ld,\n", stat.nio);
   gkyl_gyrokinetic_app_cout(app, stdout, "IO time took %g secs \n", stat.io_tm);
   gkyl_gyrokinetic_app_release(app); // simulation complete, free app
+
+  mpifinalize:
+  ;
+#ifdef GKYL_HAVE_MPI
+  if (app_args.use_mpi)
+    MPI_Finalize();
+#endif
+
   return 0;
 }

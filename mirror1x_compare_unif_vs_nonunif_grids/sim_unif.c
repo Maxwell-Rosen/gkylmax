@@ -624,7 +624,7 @@ create_ctx(void)
   int num_cell_mu = 192;  // Number of cells in the mu direction 192
   int num_cell_z = 288;
   int poly_order = 1;
-  double final_time = 100-6;
+  double final_time = 100e-6;
   int num_frames = 100;
 
   // Bananna tip info. Hardcoad to avoid dependency on ctx

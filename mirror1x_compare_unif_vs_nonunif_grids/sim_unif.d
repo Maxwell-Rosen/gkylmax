@@ -44,6 +44,11 @@ sim_unif : sim_unif.c \
     /home/mr1884/gkylsoft/gkylzero/include/gkyl_gyrokinetic.h \
     /home/mr1884/gkylsoft/gkylzero/include/gkyl_app.h \
     /home/mr1884/gkylsoft/gkylzero/include/gkyl_math.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_null_comm.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_comm.h \
+    /usr/local/openmpi/cuda-11.1/4.1.1/gcc/include/mpi.h \
+    /usr/local/openmpi/cuda-11.1/4.1.1/gcc/include/mpi_portable_platform.h \
+    /home/mr1884/gkylsoft/gkylzero/include/gkyl_mpi_comm.h \
     /home/mr1884/gkylsoft/gkylzero/include/rt_arg_parse.h \
     /home/mr1884/gkylsoft/gkylzero/include/gkyl_mp_scheme.h \
     /home/mr1884/gkylsoft/gkylzero/include/gkyl_wave_geom.h \
@@ -138,6 +143,16 @@ sim_unif : sim_unif.c \
 /home/mr1884/gkylsoft/gkylzero/include/gkyl_app.h:
 
 /home/mr1884/gkylsoft/gkylzero/include/gkyl_math.h:
+
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_null_comm.h:
+
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_comm.h:
+
+/usr/local/openmpi/cuda-11.1/4.1.1/gcc/include/mpi.h:
+
+/usr/local/openmpi/cuda-11.1/4.1.1/gcc/include/mpi_portable_platform.h:
+
+/home/mr1884/gkylsoft/gkylzero/include/gkyl_mpi_comm.h:
 
 /home/mr1884/gkylsoft/gkylzero/include/rt_arg_parse.h:
 

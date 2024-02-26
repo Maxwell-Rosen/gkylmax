@@ -18,8 +18,11 @@ unifFile = 'gk_mirror_adiabatic_elc_1x2v_p1_nosource_uniform'
 nonunifFile = 'gk_mirror_adiabatic_elc_1x2v_p1_nosource_nonuniform'
 frameNum = 0                 #.Frame number to process.
 
-plot_density       = True  #[ Plot density.
-plot_phiAdiabatic  = False  #[ Plot e*phi(z,t)/Te0 and e*phi(z=0,t)/Te0 for the adiabatic elc sim.
+plot_density       = False  #[ Plot density.
+plot_phiAdiabatic  = True  #[ Plot e*phi(z,t)/Te0 and e*phi(z=0,t)/Te0 for the adiabatic elc sim.
+plot_uPar          = True  #[ Plot uPar.
+plot_tPerp         = True  #[ Plot tPerp.
+plot_tPar          = True  #[ Plot tPar.
 
 outDir = './python_plots'
 
@@ -95,133 +98,172 @@ def plot_verticalLinesPM(xIn, axIn):
   axIn.plot([-xIn, -xIn], [ymin-eps, ymax+eps], linestyle=":", color='grey')
   axIn.set_ylim(ymin, ymax)
 
-#................................................................................#
-
-if plot_density:
-  densityFileName_unif = str(dataDir+unifFile+'-ion_M0_' + str(frameNum) + '.gkyl')
+def load_mapped_data(dataName):
+  densityFileName_unif = str(dataDir+unifFile + str(dataName) + str(frameNum) + '.gkyl')
   pgData_unif = pg.GData(densityFileName_unif)
   pgInterp_unif = pg.GInterpModal(pgData_unif, polyOrder, 'ms')
   x_unif, dataOut_unif = pgInterp_unif.interpolate()
 
-  densityFileName_nonunif = str(dataDir+nonunifFile+'-ion_M0_' + str(frameNum) + '.gkyl')
+  densityFileName_nonunif = str(dataDir+nonunifFile + str(dataName) + str(frameNum) + '.gkyl')
   pgData_nonunif = pg.GData(densityFileName_nonunif)
   pgInterp_nonunif = pg.GInterpModal(pgData_nonunif, polyOrder, 'ms')
   x_nonunif, dataOut_nonunif = pgInterp_nonunif.interpolate()
 
-  nonunif_mapc2p_filename = str(dataDir+'mapc2p_nonunif.gkyl')
+  nonunif_mapc2p_filename = str(dataDir+nonunifFile+'-mapc2p.gkyl')
   pgData_nonunif_mapc2p = pg.GData(nonunif_mapc2p_filename)
   pgInterp_nonunif_mapc2p = pg.GInterpModal(pgData_nonunif_mapc2p, polyOrder, 'ms')
   x_nonunif_mapc2p, dataOut_nonunif_mapc2p = pgInterp_nonunif_mapc2p.interpolate(2)
-  avg_x = x_nonunif_mapc2p[0][:-1] + 0.5*np.diff(x_nonunif_mapc2p[0])
-  plt.plot(avg_x, dataOut_nonunif_mapc2p)
-  plt.show()
-        #.Complete file name.
-  # #[ Plot phi(z) and e*Phi/Te0 for a single frame, or phi(z,t) and phi(z=0,t).
 
-  # phiFile = dataDir+fileName+'-field_'    #.Complete file name.
-  # nFrames = 1+pgu.findLastFrame(phiFile, '.gkyl')
-  # times = 1e-6*np.arange(0, nFrames, 1)  #1.e6*pgu.getTimeStamps(phiFile,0,nFrames-1, '.gkyl')
+  unif_mapc2p_filename = str(dataDir+unifFile+'-mapc2p.gkyl')
+  pgData_unif_mapc2p = pg.GData(unif_mapc2p_filename)
+  pgInterp_unif_mapc2p = pg.GInterpModal(pgData_unif_mapc2p, polyOrder, 'ms')
+  x_unif_mapc2p, dataOut_unif_mapc2p = pgInterp_unif_mapc2p.interpolate(2)
 
-  # denFile = dataDir+fileName+'_ion_gridDiagnostics_%d.gkyl'    #.Complete file name.
-  # #[ Load the grid.
-
-  # # xInt, _, nxInt, lxInt, dxInt, _ = pgu.getGrid(denFile % 0,polyOrder,basisType,varName='M0')
-  # # xIntC, _, nxIntC, lxIntC, dxIntC, _ = pgu.getGrid(denFile % 0,polyOrder,basisType,varName='M0',location='center')
-  # firstFile = str(fileName + '-field_0.gkyl')
-  # print(firstFile)
-  # pgData = pg.GData(firstFile)
-  # pgInterp = pg.GInterpNodal(pgData, polyOrder, 'ns')
-  # print(pgInterp)
-  # xInt, dataOut = pgInterp.interpolate()
-
-  # den_i = np.squeeze(pgu.getInterpData(denFile % (nFrames-1), polyOrder, basisType, varName='M0'))
-
-  # #[ Prepare figure.
-  # figProp1 = (6.4,3.5)
-  # ax1Pos   = [[0.16, 0.18, 0.82, 0.80],]
-  # fig1     = plt.figure(figsize=figProp1)
-  # ax1      = [fig1.add_axes(pos) for pos in ax1Pos]
-
-  # ax1[0].semilogy(xInt[0], den_i)
-
-  # #[ Plot central value over time:
-  # ax1[0].set_xlim( np.amin(xInt[0]),np.amax(xInt[0]) )
-  # ax1[0].set_xlabel('Length along field line, $z$ (m)', fontsize=xyLabelFontSize)
-  # ax1[0].set_ylabel('$n_i$ (m$^{-3}$)', fontsize=xyLabelFontSize)
-  # for i in range(len(ax1)):
-  #   setTickFontSize(ax1[i],tickFontSize)
-
-  # figName = fileName+'_ion_M0_'+str(nFrames-1)
-  # if outFigureFile:
-  #   fig1.savefig(outDir+figName+figureFileFormat)
-  #   plt.close()
-  # else:
-  #   plt.show()
+  return dataOut_unif, dataOut_unif_mapc2p, dataOut_nonunif, dataOut_nonunif_mapc2p
 
 #................................................................................#
 
-if plot_phiAdiabatic:
-  #[ Plot phi(z) and e*Phi/Te0 for a single frame, or phi(z,t) and phi(z=0,t).
+if plot_density:
+  dataOut_unif, dataOut_unif_mapc2p, dataOut_nonunif, dataOut_nonunif_mapc2p = load_mapped_data('-ion_M0_')
+  
+  figProp1 = (6.4,3.5)
+  ax1Pos   = [[0.16, 0.18, 0.82, 0.80],]
+  fig1     = plt.figure(figsize=figProp1)
+  ax1      = [fig1.add_axes(pos) for pos in ax1Pos]
 
-  # dataDir = '/scratch/gpfs/manaurer/gkeyll/mirror/gk57/'
-  # fileName = 'gk57-wham1x2v'    #.Root name of files to process.
+  plt.plot(dataOut_unif_mapc2p[:,0], dataOut_unif[:,0],'r', label='Uniform grid')
+  plt.plot(dataOut_nonunif_mapc2p[:,0], dataOut_nonunif[:,0],'b--', label='Nonuniform grid')
 
-  #[ Prepare figure.
-  figProp7 = (6.4,4.5)
-  ax7Pos   = [[0.12, 0.57, 0.725, 0.42],
-              [0.12, 0.13, 0.725, 0.42]]
-  cax7Pos  = [[0.855, 0.57, 0.02, 0.42]]
-  fig7     = plt.figure(figsize=figProp7)
-  ax7      = [fig7.add_axes(pos) for pos in ax7Pos]
-  cbar_ax7 = [fig7.add_axes(pos) for pos in cax7Pos]
+  # #[ Plot central value over time:
+  ax1[0].set_xlabel('Length along field line, $z$ (m)', fontsize=xyLabelFontSize)
+  ax1[0].set_ylabel('$n_i$ (m$^{-3}$)', fontsize=xyLabelFontSize)
+  ax1[0].legend(loc='upper left', fontsize=legendFontSize)
+  for i in range(len(ax1)):
+    setTickFontSize(ax1[i],tickFontSize)
 
-  phiFile = dataDir+fileName+'-field_'    #.Complete file name.
-  nFrames = 1+pgu.findLastFrame(phiFile, '.gkyl')
-  times = 1.e6*pgu.getTimeStamps(phiFile,0,nFrames-1, '.gkyl')
-
-  phiFile = dataDir+fileName+'-field_%d.gkyl'    #.Complete file name.
-
-  #[ Load the grid.
-  xInt, _, nxInt, lxInt, dxInt, _ = pgu.getGrid(phiFile % 0,polyOrder,basisType)
-  xIntC, _, nxIntC, lxIntC, dxIntC, _ = pgu.getGrid(phiFile % 0,polyOrder,basisType,location='center')
-
-  phi = np.zeros((nFrames,nxIntC[0]))
-
-  for fI in range(nFrames):
-    phi[fI,:] = np.squeeze(pgu.getInterpData(phiFile % fI, polyOrder, basisType))
-
-  #[ Create colorplot grid (coordinates have to be nodal).
-  timesC  = 0.5*(times[1:]+times[0:-1])
-  Xnodal = [np.outer(np.concatenate([[timesC[0]-(timesC[1]-timesC[0])],timesC,[timesC[-1]+(timesC[-1]-timesC[-2])]]), \
-                     np.ones(np.shape(xInt[0]))), \
-            np.outer(np.ones(np.size(timesC)+2),xInt[0])]
-
-  hpl7a = ax7[0].pcolormesh(Xnodal[0], Xnodal[1], eV*phi/Te0, cmap='inferno')
-  hcb7a = plt.colorbar(hpl7a, ax=ax7[0], cax=cbar_ax7[0], ticks=[0., 2.5, 5., 7.5, 10.])
-  #[ Plots lines at mirror throat:
-  ax7[0].plot([Xnodal[0][0][0], Xnodal[0][-1][0]],   [z_m, z_m], color='white', linestyle='--', alpha=0.5)
-  ax7[0].plot([Xnodal[0][0][0], Xnodal[0][-1][0]], [-z_m, -z_m], color='white', linestyle='--', alpha=0.5)
-
-  #[ Plot central value over time:
-  hpl7b = ax7[1].plot(times, (eV/Te0)*0.5*(phi[:,nxIntC[0]//2-1]+phi[:,nxIntC[0]//2]), color=defaultColors[0])
-  ax7[1].set_xlim( np.amin(times),np.amax(times) )
-  ax7[1].set_ylim( 0., 12. ) #np.amin(y),np.amax(y) )
-  hcb7a.set_label('$e\phi/T_{e0}$', rotation=270, labelpad=18, fontsize=colorBarLabelFontSize)
-  hcb7a.ax.tick_params(labelsize=tickFontSize)
-  plt.setp( ax7[0].get_xticklabels(), visible=False)
-  ax7[0].set_ylabel(r'$z$ (m)', fontsize=xyLabelFontSize)
-  ax7[1].set_xlabel(r'Time ($\mu$s)', fontsize=xyLabelFontSize)
-  ax7[1].set_ylabel(r'$e\phi(z=0)/T_{e0}$', fontsize=xyLabelFontSize)
-  plt.text(0.025, 0.85, r'(a)', fontsize=textFontSize, color='white', transform=ax7[0].transAxes)
-  plt.text(0.025, 0.85, r'(b)', fontsize=textFontSize, color='black', transform=ax7[1].transAxes)
-  for i in range(len(ax7)):
-    setTickFontSize(ax7[i],tickFontSize)
-
-  figName = fileName+'_phiVtime_0-'+str(nFrames-1)
+  figName = 'ion_M0_'+str(frameNum)
   if outFigureFile:
-    fig7.savefig(outDir+figName+figureFileFormat)
+    fig1.savefig(outDir+figName+figureFileFormat)
     plt.close()
   else:
     plt.show()
 
 #................................................................................#
+
+if plot_phiAdiabatic:
+  dataOut_unif, dataOut_unif_mapc2p, dataOut_nonunif, dataOut_nonunif_mapc2p = load_mapped_data('-field_')
+
+  dataOut_unif *= eV/Te0
+  dataOut_nonunif *= eV/Te0
+  
+  figProp1 = (6.4,3.5)
+  ax1Pos   = [[0.16, 0.18, 0.82, 0.80],]
+  fig1     = plt.figure(figsize=figProp1)
+  ax1      = [fig1.add_axes(pos) for pos in ax1Pos]
+
+  plt.plot(dataOut_unif_mapc2p[:,0], dataOut_unif[:,0],'r', label='Uniform grid')
+  plt.plot(dataOut_nonunif_mapc2p[:,0], dataOut_nonunif[:,0],'b--', label='Nonuniform grid')
+
+  # #[ Plot central value over time:
+  ax1[0].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
+  ax1[0].set_ylabel('$\phi$ (m$^{-3}$)', fontsize=xyLabelFontSize)
+  ax1[0].legend(loc='upper left', fontsize=legendFontSize)
+  for i in range(len(ax1)):
+    setTickFontSize(ax1[i],tickFontSize)
+
+  figName = 'field_'+str(frameNum)
+  if outFigureFile:
+    fig1.savefig(outDir+figName+figureFileFormat)
+    plt.close()
+  else:
+    plt.show()
+#................................................................................#
+
+if plot_uPar:
+  M0_unif, M0_map, M0_nonunif, M0_nonunif_map = load_mapped_data('-ion_M0_')
+  M1_unif, M1_map, M1_nonunif, M1_nonunif_map = load_mapped_data('-ion_M1_')
+
+  upar_unif = M1_unif[:,0]/M0_unif[:,0]
+  upar_nonunif = M1_nonunif[:,0]/M0_nonunif[:,0]
+
+  figProp1 = (6.4,3.5)
+  ax1Pos   = [[0.16, 0.18, 0.82, 0.80],]
+  fig1     = plt.figure(figsize=figProp1)
+  ax1      = [fig1.add_axes(pos) for pos in ax1Pos]
+
+  plt.plot(M0_map[:,0], upar_unif,'r', label='Uniform grid')
+  plt.plot(M0_nonunif_map[:,0], upar_nonunif,'b--', label='Nonuniform grid')
+
+  # #[ Plot central value over time:
+  ax1[0].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
+  ax1[0].set_ylabel('$u_{\parallel}$ (m/s)', fontsize=xyLabelFontSize)
+  ax1[0].legend(loc='upper left', fontsize=legendFontSize)
+  for i in range(len(ax1)):
+    setTickFontSize(ax1[i],tickFontSize)
+
+  figName = 'upar_'+str(frameNum)
+  if outFigureFile:
+    fig1.savefig(outDir+figName+figureFileFormat)
+    plt.close()
+  else:
+    plt.show()
+#................................................................................#
+
+if plot_tPerp:
+  M0_unif, M0_map, M0_nonunif, M0_nonunif_map = load_mapped_data('-ion_M0_')
+  M2perp_unif, M2perp_map, M2perp_nonunif, M2perp_nonunif_map = load_mapped_data('-ion_M2perp_')
+
+  tPerp_unif = M2perp_unif[:,0]/M0_unif[:,0] * mi / eV
+  tPerp_nonunif = M2perp_nonunif[:,0]/M0_nonunif[:,0] * mi / eV
+
+  figProp1 = (6.4,3.5)
+  ax1Pos   = [[0.16, 0.18, 0.82, 0.80],]
+  fig1     = plt.figure(figsize=figProp1)
+  ax1      = [fig1.add_axes(pos) for pos in ax1Pos]
+
+  plt.plot(M0_map[:,0], tPerp_unif,'r', label='Uniform grid')
+  plt.plot(M0_nonunif_map[:,0], tPerp_nonunif,'b--', label='Nonuniform grid')
+
+  # #[ Plot central value over time:
+  ax1[0].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
+  ax1[0].set_ylabel('$T_{\perp}$ (eV)', fontsize=xyLabelFontSize)
+  ax1[0].legend(loc='upper left', fontsize=legendFontSize)
+  for i in range(len(ax1)):
+    setTickFontSize(ax1[i],tickFontSize)
+  
+  figName = 'tPerp_'+str(frameNum)
+  if outFigureFile:
+    fig1.savefig(outDir+figName+figureFileFormat)
+    plt.close()
+  else:
+    plt.show()
+
+if plot_tPar:
+  M0_unif, M0_map, M0_nonunif, M0_nonunif_map = load_mapped_data('-ion_M0_')
+  M1_unif, M1_map, M1_nonunif, M1_nonunif_map = load_mapped_data('-ion_M1_')
+  M2par_unif, M2par_map, M2par_nonunif, M2par_nonunif_map = load_mapped_data('-ion_M2par_')
+
+  tPar_unif = (M2par_unif[:,0] - M1_unif[:,0]**2/M0_unif[:,0]) * mi / eV / M0_unif[:,0]
+  tPar_nonunif = (M2par_nonunif[:,0] - M1_nonunif[:,0]**2/M0_nonunif[:,0]) * mi / eV / M0_nonunif[:,0]
+
+  figProp1 = (6.4,3.5)
+  ax1Pos   = [[0.16, 0.18, 0.82, 0.80],]
+  fig1     = plt.figure(figsize=figProp1)
+  ax1      = [fig1.add_axes(pos) for pos in ax1Pos]
+  
+  plt.plot(M0_map[:,0], tPar_unif,'r', label='Uniform grid')
+  plt.plot(M0_nonunif_map[:,0], tPar_nonunif,'b--', label='Nonuniform grid')
+  
+  # #[ Plot central value over time:
+  ax1[0].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
+  ax1[0].set_ylabel('$T_{\parallel}$ (eV)', fontsize=xyLabelFontSize)
+  ax1[0].legend(loc='upper left', fontsize=legendFontSize)
+  for i in range(len(ax1)):
+    setTickFontSize(ax1[i],tickFontSize)
+  
+  figName = 'tPar_'+str(frameNum)
+  if outFigureFile:
+    fig1.savefig(outDir+figName+figureFileFormat)
+    plt.close()
+  else:
+    plt.show()
