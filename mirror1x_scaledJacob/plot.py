@@ -14,10 +14,10 @@ import matplotlib.pyplot as plt
 import postgkyl as pg
 from matplotlib.colors import LogNorm
 
-dataDir = '/scratch/gpfs/mr1884/scratch/gkylmax/mirror1x_compare_unif_vs_nonunif_grids/outputs/'
-unifFile = 'gk_mirror_adiabatic_elc_1x2v_p1_nosource_uniform'
-nonunifFile = 'gk_mirror_adiabatic_elc_1x2v_p1_nosource_nonuniform'
-frameNum = 32
+dataDir = '/scratch/gpfs/mr1884/scratch/gkylmax/'
+unifFile = 'mirror1x_compare_unif_vs_nonunif_grids/outputs/gk_mirror_adiabatic_elc_1x2v_p1_nosource_uniform'
+nonunifFile = 'mirror1x_scaledJacob/outputs/gk_mirror_adiabatic_elc_1x2v_p1_nosource_nonuniform'
+frameNum = 0
 
 plot_density       = 0  #[ Plot density.
 plot_phiAdiabatic  = 0  #[ Plot e*phi(z,t)/Te0 and e*phi(z=0,t)/Te0 for the adiabatic elc sim.
@@ -289,13 +289,6 @@ if plot_distvpar:
   x_nonunif_mapc2p, dataOut_nonunif_mapc2p = pgInterp_nonunif_mapc2p.interpolate(2)
   dataOut_nonunif_mapc2p = np.squeeze(dataOut_nonunif_mapc2p)
 
-  # Convert from cell center to edges
-  zmin = x_nonunif_mapc2p[0][0]
-  zmax = x_nonunif_mapc2p[0][-1]
-  diffs  = dataOut_nonunif_mapc2p[0:-1] + np.diff(dataOut_nonunif_mapc2p)/2
-  edged_dataOut_nonunif_mapc2p = np.insert(diffs, 0, zmin)
-  edged_dataOut_nonunif_mapc2p = np.append(edged_dataOut_nonunif_mapc2p, zmax)
-
   unif_mapc2p_filename = str(dataDir+unifFile+'-mapc2p.gkyl')
   pgData_unif_mapc2p = pg.GData(unif_mapc2p_filename)
   pgInterp_unif_mapc2p = pg.GInterpModal(pgData_unif_mapc2p, polyOrder, 'ms')
@@ -305,6 +298,11 @@ if plot_distvpar:
   # Convert from cell center to edges
   zmin = x_unif_mapc2p[0][0]
   zmax = x_unif_mapc2p[0][-1]
+  diffs  = dataOut_nonunif_mapc2p[0:-1] + np.diff(dataOut_nonunif_mapc2p)/2
+  edged_dataOut_nonunif_mapc2p = np.insert(diffs, 0, zmin)
+  edged_dataOut_nonunif_mapc2p = np.append(edged_dataOut_nonunif_mapc2p, zmax)
+
+  # Convert from cell center to edges
   diffs  = dataOut_unif_mapc2p[0:-1] + np.diff(dataOut_unif_mapc2p)/2
   edged_dataOut_unif_mapc2p = np.insert(diffs, 0, zmin)
   edged_dataOut_unif_mapc2p = np.append(edged_dataOut_unif_mapc2p, zmax)
@@ -381,13 +379,6 @@ if plot_distmu:
   x_nonunif_mapc2p, dataOut_nonunif_mapc2p = pgInterp_nonunif_mapc2p.interpolate(2)
   dataOut_nonunif_mapc2p = np.squeeze(dataOut_nonunif_mapc2p)
 
-  # Convert from cell center to edges
-  zmin = x_nonunif_mapc2p[0][0]
-  zmax = x_nonunif_mapc2p[0][-1]
-  diffs  = dataOut_nonunif_mapc2p[0:-1] + np.diff(dataOut_nonunif_mapc2p)/2
-  edged_dataOut_nonunif_mapc2p = np.insert(diffs, 0, zmin)
-  edged_dataOut_nonunif_mapc2p = np.append(edged_dataOut_nonunif_mapc2p, zmax)
-
   unif_mapc2p_filename = str(dataDir+unifFile+'-mapc2p.gkyl')
   pgData_unif_mapc2p = pg.GData(unif_mapc2p_filename)
   pgInterp_unif_mapc2p = pg.GInterpModal(pgData_unif_mapc2p, polyOrder, 'ms')
@@ -397,6 +388,12 @@ if plot_distmu:
   # Convert from cell center to edges
   zmin = x_unif_mapc2p[0][0]
   zmax = x_unif_mapc2p[0][-1]
+  diffs  = dataOut_nonunif_mapc2p[0:-1] + np.diff(dataOut_nonunif_mapc2p)/2
+  edged_dataOut_nonunif_mapc2p = np.insert(diffs, 0, zmin)
+  edged_dataOut_nonunif_mapc2p = np.append(edged_dataOut_nonunif_mapc2p, zmax)
+  print(edged_dataOut_nonunif_mapc2p)
+
+  # Convert from cell center to edges
   diffs  = dataOut_unif_mapc2p[0:-1] + np.diff(dataOut_unif_mapc2p)/2
   edged_dataOut_unif_mapc2p = np.insert(diffs, 0, zmin)
   edged_dataOut_unif_mapc2p = np.append(edged_dataOut_unif_mapc2p, zmax)

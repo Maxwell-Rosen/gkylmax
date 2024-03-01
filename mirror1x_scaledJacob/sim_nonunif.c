@@ -334,7 +334,7 @@ eval_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fo
   double z = z_xi(xn[0], psi, ctx);
   double cs_m = app->cs_m;
   double z_m = app->z_m;
-  double z_max = app->z_max;
+  double z_max = app->z_max/10;
   if (fabs(z) <= z_m)
   {
     fout[0] = 0.0;
