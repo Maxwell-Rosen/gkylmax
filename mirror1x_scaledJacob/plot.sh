@@ -46,21 +46,21 @@ frame=32
 # pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 integrate 1 ev 'f[:] abs' pl --logz --zmin 1e-4 --title "frame $frame mu"&
 # pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 sel --z0 0.0 ev 'f[:] abs' pl --logz --zmin 1e-10 --title "frame $frame z=0"&
 #Without absolute value
-pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 integrate 2 pl --logz --zmin 1e-20 --title "frame $frame vpar"&
-pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 integrate 1 pl --logz --zmin 1e-4 --title "frame $frame mu"&
-pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 sel --z0 0.0 pl --logz --zmin 1e-10 --title "frame $frame z=0"&
+# pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 integrate 2 pl --logz --zmin 1e-20 --title "frame $frame vpar"&
+# pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 integrate 1 pl --logz --zmin 1e-4 --title "frame $frame mu"&
+# pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 sel --z0 0.0 pl --logz --zmin 1e-10 --title "frame $frame z=0"&
 
 # Plot geometry quantities
-# pgkyl jacobgeo.gkyl interp -b ms -p1 pl --title "jacobgeo"&
-# pgkyl jacobtot.gkyl interp -b ms -p1 pl --title "jacobtot"&
-# pgkyl jacobtot_inv.gkyl interp -b ms -p1 pl --title "jacobtot_inv"&
-# pgkyl jacogeo_inv.gkyl interp -b ms -p1 pl --title "jacobgeo_inv"&
-# pgkyl b_i.gkyl interp -b ms -p1 pl --title "b_i"&
-# pgkyl mapc2p.gkyl interp -b ms -p1 select --z0 0.5 --z1 0 pl --title "mapc2p"&
-# pgkyl bmag.gkyl interp -b ms -p1 pl --title "bmag"&
-# pgkyl bmag_inv.gkyl interp -b ms -p1 pl --title "bmag_inv"&
-# pgkyl bmag_inv_sq.gkyl interp -b ms -p1 pl --title "bmag_inv_sq"&
-# pgkyl cmag.gkyl interp -b ms -p1 pl --title "cmag"&
+pgkyl "$name-"jacobgeo.gkyl interp -b ms -p1 pl --title "jacobgeo"&
+pgkyl "$name-"jacobtot.gkyl interp -b ms -p1 pl --title "jacobtot"&
+# pgkyl "$name-"jacobtot_inv.gkyl interp -b ms -p1 pl --title "jacobtot_inv"&
+# pgkyl "$name-"jacogeo_inv.gkyl interp -b ms -p1 pl --title "jacobgeo_inv"&
+# pgkyl "$name-"b_i.gkyl interp -b ms -p1 pl --title "b_i"&
+pgkyl "$name-"mapc2p.gkyl interp -b ms -p1 pl --title "mapc2p"&
+pgkyl "$name-"bmag.gkyl interp -b ms -p1 pl --title "bmag"&
+# pgkyl "$name-"bmag_inv.gkyl interp -b ms -p1 pl --title "bmag_inv"&
+# pgkyl "$name-"bmag_inv_sq.gkyl interp -b ms -p1 pl --title "bmag_inv_sq"&
+# pgkyl "$name-"cmag.gkyl interp -b ms -p1 pl --title "cmag"&
 
 # Distribution function at a single velocity space point at all z
 # "$name-"$species"_[0-9]*.gkyl"\
