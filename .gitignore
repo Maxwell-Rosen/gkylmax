@@ -2,6 +2,8 @@
 *.mp4
 *.txt
 *.json
+tags.lock
+tags
 
 # Ignore compiled binaries and executables
 *.exe
