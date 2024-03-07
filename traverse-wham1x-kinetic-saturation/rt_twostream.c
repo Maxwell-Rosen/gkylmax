@@ -73,12 +73,12 @@ struct gk_mirror_ctx
   double R_m;
   double B_m;
   double z_m;
-double Z_m_computational;
+  double Z_m_computational;
   // Physics parameters at mirror throat
   double n_m;
   double Te_m;
   double Ti_m;
-double Ti_perp0;
+  double Ti_perp0;
   double Ti_par0;
   double Ti_perp_m;
   double Ti_par_m;
@@ -139,7 +139,7 @@ struct gkyl_mirror_geo_grid_inp ginp = {
   .zmax =  2.48,
   .write_node_coord_array = true,
   .node_file_nm = "wham_nodes.gkyl",
-  .nonuniform_mapping_fraction = 0.7,
+  // .nonuniform_mapping_fraction = 0,
 };
 
 // -- Source functions.
@@ -504,9 +504,9 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   int num_cell_vpar = 128; // Number of cells in the paralell velocity direction 96
   int num_cell_mu = 192;  // Number of cells in the mu direction 192
-  int num_cell_z = 128;
+  int num_cell_z = 144;
   int poly_order = 1;
-  double final_time = 1e-8;
+  double final_time = 1e-10; // use -9 for the real runs
   int num_frames = 1;
 
   // Bananna tip info. Hardcoad to avoid dependency on ctx
@@ -718,12 +718,59 @@ int main(int argc, char **argv)
     }
   }
 
+struct gkyl_gyrokinetic_species elc = {
+    .name = "elc",
+    .charge = ctx.qe,
+    .mass = ctx.me,
+    .lower = {-ctx.vpar_max_elc, 0.0},
+    .upper = {ctx.vpar_max_elc, ctx.mu_max_elc},
+    .cells = {NV, NMU},
+    .polarization_density = ctx.n0,
+    .projection = {
+      .proj_id = GKYL_PROJ_BIMAXWELLIAN, 
+      .ctx_density = &ctx,
+      .density = eval_density_elc,
+      .ctx_upar = &ctx,
+      .upar= eval_upar_elc,
+      .ctx_temppar = &ctx,
+      .temppar = eval_temp_par_elc,
+      .ctx_tempperp = &ctx,
+      .tempperp = eval_temp_perp_elc,     
+    },
+    .collisions =  {
+      .collision_id = GKYL_LBO_COLLISIONS,
+      .ctx = &ctx,
+      .self_nu = evalNuElc,
+      .num_cross_collisions = 1,
+      .collide_with = { "ion" },
+    },
+    .source = {
+      .source_id = GKYL_PROJ_SOURCE,
+      .write_source = true,
+      .num_sources = 1,
+      .projection[0] = {
+        .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM, 
+        .ctx_density = &ctx,
+        .density = eval_density_elc_source,
+        .ctx_upar = &ctx,
+        .upar= eval_upar_elc_source,
+        .ctx_temp = &ctx,
+        .temp = eval_temp_elc_source,      
+      }, 
+    },
+    .bcx = {
+      .lower={.type = GKYL_SPECIES_GK_SHEATH,},
+      .upper={.type = GKYL_SPECIES_GK_SHEATH,},
+    },
+    .num_diag_moments = 7, // Copied from GKsoloviev, but
+    .diag_moments = {"M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp"},
+  };
   struct gkyl_gyrokinetic_species ion = {
     .name = "ion",
     .charge = ctx.qi,
     .mass = ctx.mi,
     .lower = {-ctx.vpar_max_ion, 0.0},
-    .upper = {ctx.vpar_max_ion, ctx.mu_max_ion},
+    .upper = { ctx.vpar_max_ion, ctx.mu_max_ion},
     .cells = {NV, NMU},
     .polarization_density = ctx.n0,
     .projection = {
@@ -737,20 +784,19 @@ int main(int argc, char **argv)
       .ctx_tempperp = &ctx,
       .tempperp = eval_temp_perp_ion,    
     },
-    .bcx = {
-      .lower={.type = GKYL_SPECIES_GK_SHEATH,},
-      .upper={.type = GKYL_SPECIES_GK_SHEATH,},
-    }, 
    .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
       .ctx = &ctx,
       .self_nu = evalNuIon,
+    .num_cross_collisions = 1,
+      .collide_with = { "elc" },
     },
     .source = {
       .source_id = GKYL_PROJ_SOURCE,
       .write_source = true,
+      .num_sources = 1,
       .projection[0] = {
-        .proj_id = GKYL_PROJ_MAXWELLIAN, 
+        .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM, 
         .ctx_density = &ctx,
         .density = eval_density_ion_source,
         .ctx_upar = &ctx,
@@ -759,19 +805,20 @@ int main(int argc, char **argv)
         .temp = eval_temp_ion_source,      
       }, 
     },
+    .bcx = {
+      .lower={.type = GKYL_SPECIES_GK_SHEATH,},
+      .upper={.type = GKYL_SPECIES_GK_SHEATH,},
+    }, 
     .num_diag_moments = 7,
     .diag_moments = {"M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp"},
   };
   struct gkyl_gyrokinetic_field field = {
-    .gkfield_id = GKYL_GK_FIELD_ADIABATIC,
-    .electron_mass = ctx.me,
-    .electron_charge = ctx.qe,
-    .electron_temp = ctx.Te0,
-    .bmag_fac = ctx.B_p, // Issue here. B0 from soloviev, so not sure what to do. Ours is not constant
+    .bmag_fac = ctx.B_p, 
     .fem_parbc = GKYL_FEM_PARPROJ_NONE,
+    .kperpSq = pow(ctx.kperp, 2.),
       };
   struct gkyl_gk gk = {  // GK app
-    .name = "outputs/gk_wham_1x2v_p1_adiabatic",
+    .name = "outputs/gk_wham",
     .cdim = 1,
     .vdim = 2,
     .lower = {ctx.z_min},
@@ -787,8 +834,8 @@ int main(int argc, char **argv)
     },
     .num_periodic_dir = 0,
     .periodic_dirs = {},
-    .num_species = 1,
-    .species = {ion},
+    .num_species = 2,
+    .species = {elc, ion},
     .field = field,
     .use_gpu = app_args.use_gpu,
     .has_low_inp = true,
@@ -842,7 +889,7 @@ int main(int argc, char **argv)
   if (stat.nstage_2_fail > 0)
   {
     gkyl_gyrokinetic_app_cout(app, stdout, "Max rel dt diff for RK stage-2 failures %g\n", stat.stage_2_dt_diff[1]);
-    gkyl_gyrokinetic_app_cout(app, stdout, "Min rel dt diff for RK stage-2 failures %g\n", stat.stage_2_dt_diff[0]);
+  gkyl_gyrokinetic_app_cout(app, stdout, "Min rel dt diff for RK stage-2 failures %g\n", stat.stage_2_dt_diff[0]);
   }
   gkyl_gyrokinetic_app_cout(app, stdout, "Number of RK stage-3 failures %ld\n", stat.nstage_3_fail);
   gkyl_gyrokinetic_app_cout(app, stdout, "Species RHS calc took %g secs\n", stat.species_rhs_tm);

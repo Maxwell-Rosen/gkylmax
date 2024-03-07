@@ -41,7 +41,7 @@ output_file="temp_output.txt"
 for Nz in "${Nz_values[@]}"
 do
   echo "Starting job for Nz=$Nz"
-  srun -n $num_procs ./rt_twostream -g -x $Nz -M -c $num_procs > "$output_file"
+  mpirun -np $num_procs ./rt_twostream -g -x $Nz -M -c $num_procs > "$output_file"
   # cat "$output_file"
   elapsedTime=$(awk '/Updates took/ {print $3}' "$output_file")
   echo "Elapsed Time: $elapsedTime seconds"

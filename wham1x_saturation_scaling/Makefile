@@ -78,6 +78,22 @@ ifeq (${USE_MPI}, 1)
 	CFLAGS += -DGKYL_HAVE_MPI
 endif
 
+# Read NCCL paths and flags if needed (needs MPI and NVCC)
+USING_NCCL =
+NCCL_INC_DIR = zero # dummy
+NCCL_LIB_DIR = .
+ifeq (${USE_NCCL}, 1)
+ifdef USING_MPI
+ifdef USING_NVCC
+	USING_NCCL = yes
+	NCCL_INC_DIR = ${CONF_NCCL_INC_DIR}
+	NCCL_LIB_DIR = ${CONF_NCCL_LIB_DIR}
+	NCCL_LIBS = -lnccl
+	CFLAGS += -DGKYL_HAVE_NCCL
+endif
+endif
+endif
+
 # Read LUA paths and flags if needed 
 USING_LUA =
 LUA_INC_DIR = zero # dummy
@@ -90,15 +106,15 @@ ifeq (${USE_LUA}, 1)
 	CFLAGS += -DGKYL_HAVE_LUA
 endif
 
-INCLUDES = -I${G0_INC_DIR} -I${LAPACK_INC} -I${SUPERLU_INC} -I${MPI_INC_DIR} -I${LUA_INC_DIR}
-LIB_DIRS = -L${LAPACK_LIB_DIR} -L${SUPERLU_LIB_DIR} -L${MPI_LIB_DIR} -L${LUA_LIB_DIR}
-EXT_LIBS = ${LAPACK_LIB} ${SUPERLU_LIB} ${MPI_LIBS} ${LUA_LIBS} -lm -lpthread -ldl
+INCLUDES = -I${G0_INC_DIR} -I${LAPACK_INC} -I${SUPERLU_INC} -I${MPI_INC_DIR} -I${LUA_INC_DIR} -I${NCCL_INC_DIR}
+LIB_DIRS = -L${LAPACK_LIB_DIR} -L${SUPERLU_LIB_DIR} -L${MPI_LIB_DIR} -L${LUA_LIB_DIR} -L${NCCL_LIB_DIR}
+EXT_LIBS = ${LAPACK_LIB} ${SUPERLU_LIB} ${MPI_LIBS} ${LUA_LIBS} ${NCCL_LIBS} -lm -lpthread -ldl
 
-all: sim
+all: rt_twostream
 
-sim: sim.c
-	 ${CC} ${CFLAGS} ${INCLUDES} sim.c -o sim -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
+rt_twostream: rt_twostream.c
+	 ${CC} ${CFLAGS} ${INCLUDES} rt_twostream.c -o rt_twostream -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
 
 clean:
-	rm -rf sim sim.dSYM
+	rm -rf rt_twostream rt_twostream.dSYM
 

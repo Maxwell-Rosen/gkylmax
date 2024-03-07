@@ -25,7 +25,7 @@ B_bt	mirror1x_scaledJacob/sim_unif.c	/^  double B_bt;$/;"	m	struct:gk_mirror_ctx
 B_bt	mirror1x_trueMaxwellian/sim.c	/^  double B_bt;$/;"	m	struct:gk_mirror_ctx	file:
 B_bt	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double B_bt;$/;"	m	struct:gk_mirror_ctx	file:
 B_bt	wham1x_adiabatic/sim.c	/^  double B_bt;$/;"	m	struct:gk_mirror_ctx	file:
-B_bt	wham1x_saturation_scaling/sim.c	/^  double B_bt;$/;"	m	struct:gk_mirror_ctx	file:
+B_bt	wham1x_saturation_scaling/rt_twostream.c	/^  double B_bt;$/;"	m	struct:gk_mirror_ctx	file:
 B_m	mirror1x_adiabatic/sim.c	/^  double B_m;$/;"	m	struct:gk_mirror_ctx	file:
 B_m	mirror1x_adiabatic_eqdst/sim.c	/^  double B_m;$/;"	m	struct:gk_mirror_ctx	file:
 B_m	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double B_m;$/;"	m	struct:gk_mirror_ctx	file:
@@ -35,7 +35,7 @@ B_m	mirror1x_scaledJacob/sim_unif.c	/^  double B_m;$/;"	m	struct:gk_mirror_ctx	f
 B_m	mirror1x_trueMaxwellian/sim.c	/^  double B_m;$/;"	m	struct:gk_mirror_ctx	file:
 B_m	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double B_m;$/;"	m	struct:gk_mirror_ctx	file:
 B_m	wham1x_adiabatic/sim.c	/^  double B_m;$/;"	m	struct:gk_mirror_ctx	file:
-B_m	wham1x_saturation_scaling/sim.c	/^  double B_m;$/;"	m	struct:gk_mirror_ctx	file:
+B_m	wham1x_saturation_scaling/rt_twostream.c	/^  double B_m;$/;"	m	struct:gk_mirror_ctx	file:
 B_p	mirror1x_adiabatic/sim.c	/^  double B_p;$/;"	m	struct:gk_mirror_ctx	file:
 B_p	mirror1x_adiabatic_eqdst/sim.c	/^  double B_p;$/;"	m	struct:gk_mirror_ctx	file:
 B_p	mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^B_p       = 0.53$/;"	v
@@ -50,7 +50,7 @@ B_p	postprocessing/mana_plots.py	/^  B_p  = np.interp(0., xIntC_i[0], bmag)$/;"	
 B_p	postprocessing/mana_plots.py	/^B_p       = 0.53$/;"	v
 B_p	postprocessing/plot.py	/^B_p       = 0.53$/;"	v
 B_p	wham1x_adiabatic/sim.c	/^  double B_p;$/;"	m	struct:gk_mirror_ctx	file:
-B_p	wham1x_saturation_scaling/sim.c	/^  double B_p;$/;"	m	struct:gk_mirror_ctx	file:
+B_p	wham1x_saturation_scaling/rt_twostream.c	/^  double B_p;$/;"	m	struct:gk_mirror_ctx	file:
 Bfield_RZ	postprocessing/mana_plots.py	/^def Bfield_RZ(Rin, Zin, modelParsIn):$/;"	f
 Bfield_psiZ	mirror1x_adiabatic/sim.c	/^Bfield_psiZ(double psiIn, double ZIn, void *ctx, double *BRad, double *BZ, double *Bmag)$/;"	f
 Bfield_psiZ	mirror1x_adiabatic_eqdst/sim.c	/^Bfield_psiZ(double psiIn, double ZIn, void *ctx, double *BRad, double *BZ, double *Bmag)$/;"	f
@@ -340,14 +340,19 @@ MPI_LIB_DIR	wham1x_adiabatic/Makefile	/^	MPI_LIB_DIR = ${CONF_MPI_LIB_DIR}$/;"	m
 MPI_LIB_DIR	wham1x_adiabatic/Makefile	/^MPI_LIB_DIR = .$/;"	m
 MPI_LIB_DIR	wham1x_saturation_scaling/Makefile	/^	MPI_LIB_DIR = ${CONF_MPI_LIB_DIR}$/;"	m
 MPI_LIB_DIR	wham1x_saturation_scaling/Makefile	/^MPI_LIB_DIR = .$/;"	m
+NCCL_INC_DIR	wham1x_saturation_scaling/Makefile	/^	NCCL_INC_DIR = ${CONF_NCCL_INC_DIR}$/;"	m
+NCCL_INC_DIR	wham1x_saturation_scaling/Makefile	/^NCCL_INC_DIR = zero # dummy$/;"	m
+NCCL_LIBS	wham1x_saturation_scaling/Makefile	/^	NCCL_LIBS = -lnccl$/;"	m
+NCCL_LIB_DIR	wham1x_saturation_scaling/Makefile	/^	NCCL_LIB_DIR = ${CONF_NCCL_LIB_DIR}$/;"	m
+NCCL_LIB_DIR	wham1x_saturation_scaling/Makefile	/^NCCL_LIB_DIR = .$/;"	m
 NSrcElc	wham1x_adiabatic/sim.c	/^  double NSrcElc;$/;"	m	struct:gk_mirror_ctx	file:
-NSrcElc	wham1x_saturation_scaling/sim.c	/^  double NSrcElc;$/;"	m	struct:gk_mirror_ctx	file:
+NSrcElc	wham1x_saturation_scaling/rt_twostream.c	/^  double NSrcElc;$/;"	m	struct:gk_mirror_ctx	file:
 NSrcFloorElc	wham1x_adiabatic/sim.c	/^  double NSrcFloorElc;$/;"	m	struct:gk_mirror_ctx	file:
-NSrcFloorElc	wham1x_saturation_scaling/sim.c	/^  double NSrcFloorElc;$/;"	m	struct:gk_mirror_ctx	file:
+NSrcFloorElc	wham1x_saturation_scaling/rt_twostream.c	/^  double NSrcFloorElc;$/;"	m	struct:gk_mirror_ctx	file:
 NSrcFloorIon	wham1x_adiabatic/sim.c	/^  double NSrcFloorIon;$/;"	m	struct:gk_mirror_ctx	file:
-NSrcFloorIon	wham1x_saturation_scaling/sim.c	/^  double NSrcFloorIon;$/;"	m	struct:gk_mirror_ctx	file:
+NSrcFloorIon	wham1x_saturation_scaling/rt_twostream.c	/^  double NSrcFloorIon;$/;"	m	struct:gk_mirror_ctx	file:
 NSrcIon	wham1x_adiabatic/sim.c	/^  double NSrcIon;$/;"	m	struct:gk_mirror_ctx	file:
-NSrcIon	wham1x_saturation_scaling/sim.c	/^  double NSrcIon;$/;"	m	struct:gk_mirror_ctx	file:
+NSrcIon	wham1x_saturation_scaling/rt_twostream.c	/^  double NSrcIon;$/;"	m	struct:gk_mirror_ctx	file:
 NVCC_FLAGS	Makefile	/^       NVCC_FLAGS = -x cu -dc -arch=sm_${CUDA_ARCH} --compiler-options="-fPIC"$/;"	m
 NVCC_FLAGS	Makefile	/^NVCC_FLAGS =$/;"	m
 NVCC_FLAGS	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^       NVCC_FLAGS = -x cu -dc -arch=sm_${CUDA_ARCH} --compiler-options="-fPIC"$/;"	m
@@ -379,10 +384,10 @@ R_bt	mirror1x_scaledJacob/sim_unif.c	/^  double R_bt;$/;"	m	struct:gk_mirror_ctx
 R_bt	mirror1x_trueMaxwellian/sim.c	/^  double R_bt;$/;"	m	struct:gk_mirror_ctx	file:
 R_bt	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double R_bt;$/;"	m	struct:gk_mirror_ctx	file:
 R_bt	wham1x_adiabatic/sim.c	/^  double R_bt;$/;"	m	struct:gk_mirror_ctx	file:
-R_bt	wham1x_saturation_scaling/sim.c	/^  double R_bt;$/;"	m	struct:gk_mirror_ctx	file:
+R_bt	wham1x_saturation_scaling/rt_twostream.c	/^  double R_bt;$/;"	m	struct:gk_mirror_ctx	file:
 R_m	postprocessing/mana_plots.py	/^  R_m  = np.interp(z_m, xIntC_i[0], bmag)\/B_p$/;"	v
 R_m	wham1x_adiabatic/sim.c	/^  double R_m;$/;"	m	struct:gk_mirror_ctx	file:
-R_m	wham1x_saturation_scaling/sim.c	/^  double R_m;$/;"	m	struct:gk_mirror_ctx	file:
+R_m	wham1x_saturation_scaling/rt_twostream.c	/^  double R_m;$/;"	m	struct:gk_mirror_ctx	file:
 R_psiZ	mirror1x_adiabatic/sim.c	/^R_psiZ(double psiIn, double ZIn, void *ctx)$/;"	f
 R_psiZ	mirror1x_adiabatic_eqdst/sim.c	/^R_psiZ(double psiIn, double ZIn, void *ctx)$/;"	f
 R_psiZ	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^R_psiZ(double psiIn, double ZIn, void *ctx)$/;"	f
@@ -400,7 +405,7 @@ RatZeq0	mirror1x_scaledJacob/sim_unif.c	/^  double RatZeq0; \/\/ Radius of the f
 RatZeq0	mirror1x_trueMaxwellian/sim.c	/^  double RatZeq0; \/\/ Radius of the field line at Z=0.$/;"	m	struct:gk_mirror_ctx	file:
 RatZeq0	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double RatZeq0; \/\/ Radius of the field line at Z=0.$/;"	m	struct:gk_mirror_ctx	file:
 RatZeq0	wham1x_adiabatic/sim.c	/^  double RatZeq0; \/\/ Radius of the field line at Z=0.$/;"	m	struct:gk_mirror_ctx	file:
-RatZeq0	wham1x_saturation_scaling/sim.c	/^  double RatZeq0; \/\/ Radius of the field line at Z=0.$/;"	m	struct:gk_mirror_ctx	file:
+RatZeq0	wham1x_saturation_scaling/rt_twostream.c	/^  double RatZeq0; \/\/ Radius of the field line at Z=0.$/;"	m	struct:gk_mirror_ctx	file:
 RectMesh	postprocessing/mana_plots.py	/^  from pleiades import RectMesh, compute_equilibrium, write_eqdsk$/;"	i
 SUPERLU_INC	Makefile	/^SUPERLU_INC = $(PREFIX)\/superlu\/include$/;"	m
 SUPERLU_INC	mirror1x_adiabatic/Makefile	/^SUPERLU_INC = $(PREFIX)\/superlu\/include$/;"	m
@@ -448,13 +453,13 @@ SUPERLU_LIB_DIR	wham1x_adiabatic/Makefile	/^	SUPERLU_LIB_DIR = $(PREFIX)\/superl
 SUPERLU_LIB_DIR	wham1x_saturation_scaling/Makefile	/^	SUPERLU_LIB_DIR = $(PREFIX)\/superlu\/lib$/;"	m
 SUPERLU_LIB_DIR	wham1x_saturation_scaling/Makefile	/^	SUPERLU_LIB_DIR = $(PREFIX)\/superlu\/lib64$/;"	m
 TSrc0Elc	wham1x_adiabatic/sim.c	/^  double TSrc0Elc;$/;"	m	struct:gk_mirror_ctx	file:
-TSrc0Elc	wham1x_saturation_scaling/sim.c	/^  double TSrc0Elc;$/;"	m	struct:gk_mirror_ctx	file:
+TSrc0Elc	wham1x_saturation_scaling/rt_twostream.c	/^  double TSrc0Elc;$/;"	m	struct:gk_mirror_ctx	file:
 TSrc0Ion	wham1x_adiabatic/sim.c	/^  double TSrc0Ion;$/;"	m	struct:gk_mirror_ctx	file:
-TSrc0Ion	wham1x_saturation_scaling/sim.c	/^  double TSrc0Ion;$/;"	m	struct:gk_mirror_ctx	file:
+TSrc0Ion	wham1x_saturation_scaling/rt_twostream.c	/^  double TSrc0Ion;$/;"	m	struct:gk_mirror_ctx	file:
 TSrcFloorElc	wham1x_adiabatic/sim.c	/^  double TSrcFloorElc;$/;"	m	struct:gk_mirror_ctx	file:
-TSrcFloorElc	wham1x_saturation_scaling/sim.c	/^  double TSrcFloorElc;$/;"	m	struct:gk_mirror_ctx	file:
+TSrcFloorElc	wham1x_saturation_scaling/rt_twostream.c	/^  double TSrcFloorElc;$/;"	m	struct:gk_mirror_ctx	file:
 TSrcFloorIon	wham1x_adiabatic/sim.c	/^  double TSrcFloorIon;$/;"	m	struct:gk_mirror_ctx	file:
-TSrcFloorIon	wham1x_saturation_scaling/sim.c	/^  double TSrcFloorIon;$/;"	m	struct:gk_mirror_ctx	file:
+TSrcFloorIon	wham1x_saturation_scaling/rt_twostream.c	/^  double TSrcFloorIon;$/;"	m	struct:gk_mirror_ctx	file:
 Te0	mirror1x_adiabatic/sim.c	/^  double Te0;$/;"	m	struct:gk_mirror_ctx	file:
 Te0	mirror1x_adiabatic_eqdst/sim.c	/^  double Te0;$/;"	m	struct:gk_mirror_ctx	file:
 Te0	mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^Te0       = 940*eV$/;"	v
@@ -468,17 +473,17 @@ Te0	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double Te0;$/;"	m	struct:gk_mirror_c
 Te0	postprocessing/mana_plots.py	/^Te0       = 940*eV$/;"	v
 Te0	postprocessing/plot.py	/^Te0       = 940*eV$/;"	v
 Te0	wham1x_adiabatic/sim.c	/^  double Te0;$/;"	m	struct:gk_mirror_ctx	file:
-Te0	wham1x_saturation_scaling/sim.c	/^  double Te0;$/;"	m	struct:gk_mirror_ctx	file:
+Te0	wham1x_saturation_scaling/rt_twostream.c	/^  double Te0;$/;"	m	struct:gk_mirror_ctx	file:
 Te_m	wham1x_adiabatic/sim.c	/^  double Te_m;$/;"	m	struct:gk_mirror_ctx	file:
-Te_m	wham1x_saturation_scaling/sim.c	/^  double Te_m;$/;"	m	struct:gk_mirror_ctx	file:
+Te_m	wham1x_saturation_scaling/rt_twostream.c	/^  double Te_m;$/;"	m	struct:gk_mirror_ctx	file:
 Te_par0	wham1x_adiabatic/sim.c	/^  double Te_par0;$/;"	m	struct:gk_mirror_ctx	file:
-Te_par0	wham1x_saturation_scaling/sim.c	/^  double Te_par0;$/;"	m	struct:gk_mirror_ctx	file:
+Te_par0	wham1x_saturation_scaling/rt_twostream.c	/^  double Te_par0;$/;"	m	struct:gk_mirror_ctx	file:
 Te_par_m	wham1x_adiabatic/sim.c	/^  double Te_par_m;$/;"	m	struct:gk_mirror_ctx	file:
-Te_par_m	wham1x_saturation_scaling/sim.c	/^  double Te_par_m;$/;"	m	struct:gk_mirror_ctx	file:
+Te_par_m	wham1x_saturation_scaling/rt_twostream.c	/^  double Te_par_m;$/;"	m	struct:gk_mirror_ctx	file:
 Te_perp0	wham1x_adiabatic/sim.c	/^  double Te_perp0;$/;"	m	struct:gk_mirror_ctx	file:
-Te_perp0	wham1x_saturation_scaling/sim.c	/^  double Te_perp0;$/;"	m	struct:gk_mirror_ctx	file:
+Te_perp0	wham1x_saturation_scaling/rt_twostream.c	/^  double Te_perp0;$/;"	m	struct:gk_mirror_ctx	file:
 Te_perp_m	wham1x_adiabatic/sim.c	/^  double Te_perp_m;$/;"	m	struct:gk_mirror_ctx	file:
-Te_perp_m	wham1x_saturation_scaling/sim.c	/^  double Te_perp_m;$/;"	m	struct:gk_mirror_ctx	file:
+Te_perp_m	wham1x_saturation_scaling/rt_twostream.c	/^  double Te_perp_m;$/;"	m	struct:gk_mirror_ctx	file:
 TempElc	postprocessing/mana_plots.py	/^  TempElc = (1.\/1.602e-19)*pgu.getInterpData(fName % ('elc',frame), polyOrder, basisType, varName='Temp')$/;"	v
 TempIon	postprocessing/mana_plots.py	/^  TempIon = (1.\/1.602e-19)*pgu.getInterpData(fName % ('ion',frame), polyOrder, basisType, varName='Temp')$/;"	v
 Ti0	mirror1x_adiabatic/sim.c	/^  double Ti0;$/;"	m	struct:gk_mirror_ctx	file:
@@ -494,7 +499,7 @@ Ti0	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double Ti0;$/;"	m	struct:gk_mirror_c
 Ti0	postprocessing/mana_plots.py	/^Ti0       = tau*Te0$/;"	v
 Ti0	postprocessing/plot.py	/^Ti0       = tau*Te0$/;"	v
 Ti0	wham1x_adiabatic/sim.c	/^  double Ti0;$/;"	m	struct:gk_mirror_ctx	file:
-Ti0	wham1x_saturation_scaling/sim.c	/^  double Ti0;$/;"	m	struct:gk_mirror_ctx	file:
+Ti0	wham1x_saturation_scaling/rt_twostream.c	/^  double Ti0;$/;"	m	struct:gk_mirror_ctx	file:
 Ti_m	mirror1x_adiabatic/sim.c	/^  double Ti_m;$/;"	m	struct:gk_mirror_ctx	file:
 Ti_m	mirror1x_adiabatic_eqdst/sim.c	/^  double Ti_m;$/;"	m	struct:gk_mirror_ctx	file:
 Ti_m	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double Ti_m;$/;"	m	struct:gk_mirror_ctx	file:
@@ -504,7 +509,7 @@ Ti_m	mirror1x_scaledJacob/sim_unif.c	/^  double Ti_m;$/;"	m	struct:gk_mirror_ctx
 Ti_m	mirror1x_trueMaxwellian/sim.c	/^  double Ti_m;$/;"	m	struct:gk_mirror_ctx	file:
 Ti_m	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double Ti_m;$/;"	m	struct:gk_mirror_ctx	file:
 Ti_m	wham1x_adiabatic/sim.c	/^  double Ti_m;$/;"	m	struct:gk_mirror_ctx	file:
-Ti_m	wham1x_saturation_scaling/sim.c	/^  double Ti_m;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_m	wham1x_saturation_scaling/rt_twostream.c	/^  double Ti_m;$/;"	m	struct:gk_mirror_ctx	file:
 Ti_par0	mirror1x_adiabatic/sim.c	/^  double Ti_par0;$/;"	m	struct:gk_mirror_ctx	file:
 Ti_par0	mirror1x_adiabatic_eqdst/sim.c	/^  double Ti_par0;$/;"	m	struct:gk_mirror_ctx	file:
 Ti_par0	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double Ti_par0;$/;"	m	struct:gk_mirror_ctx	file:
@@ -514,7 +519,7 @@ Ti_par0	mirror1x_scaledJacob/sim_unif.c	/^  double Ti_par0;$/;"	m	struct:gk_mirr
 Ti_par0	mirror1x_trueMaxwellian/sim.c	/^  double Ti_par0;$/;"	m	struct:gk_mirror_ctx	file:
 Ti_par0	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double Ti_par0;$/;"	m	struct:gk_mirror_ctx	file:
 Ti_par0	wham1x_adiabatic/sim.c	/^  double Ti_par0;$/;"	m	struct:gk_mirror_ctx	file:
-Ti_par0	wham1x_saturation_scaling/sim.c	/^  double Ti_par0;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_par0	wham1x_saturation_scaling/rt_twostream.c	/^  double Ti_par0;$/;"	m	struct:gk_mirror_ctx	file:
 Ti_par_m	mirror1x_adiabatic/sim.c	/^  double Ti_par_m;$/;"	m	struct:gk_mirror_ctx	file:
 Ti_par_m	mirror1x_adiabatic_eqdst/sim.c	/^  double Ti_par_m;$/;"	m	struct:gk_mirror_ctx	file:
 Ti_par_m	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double Ti_par_m;$/;"	m	struct:gk_mirror_ctx	file:
@@ -524,7 +529,7 @@ Ti_par_m	mirror1x_scaledJacob/sim_unif.c	/^  double Ti_par_m;$/;"	m	struct:gk_mi
 Ti_par_m	mirror1x_trueMaxwellian/sim.c	/^  double Ti_par_m;$/;"	m	struct:gk_mirror_ctx	file:
 Ti_par_m	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double Ti_par_m;$/;"	m	struct:gk_mirror_ctx	file:
 Ti_par_m	wham1x_adiabatic/sim.c	/^  double Ti_par_m;$/;"	m	struct:gk_mirror_ctx	file:
-Ti_par_m	wham1x_saturation_scaling/sim.c	/^  double Ti_par_m;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_par_m	wham1x_saturation_scaling/rt_twostream.c	/^  double Ti_par_m;$/;"	m	struct:gk_mirror_ctx	file:
 Ti_perp0	mirror1x_adiabatic/sim.c	/^  double Ti_perp0;$/;"	m	struct:gk_mirror_ctx	file:
 Ti_perp0	mirror1x_adiabatic_eqdst/sim.c	/^  double Ti_perp0;$/;"	m	struct:gk_mirror_ctx	file:
 Ti_perp0	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double Ti_perp0;$/;"	m	struct:gk_mirror_ctx	file:
@@ -534,7 +539,7 @@ Ti_perp0	mirror1x_scaledJacob/sim_unif.c	/^  double Ti_perp0;$/;"	m	struct:gk_mi
 Ti_perp0	mirror1x_trueMaxwellian/sim.c	/^  double Ti_perp0;$/;"	m	struct:gk_mirror_ctx	file:
 Ti_perp0	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double Ti_perp0;$/;"	m	struct:gk_mirror_ctx	file:
 Ti_perp0	wham1x_adiabatic/sim.c	/^double Ti_perp0;$/;"	m	struct:gk_mirror_ctx	file:
-Ti_perp0	wham1x_saturation_scaling/sim.c	/^double Ti_perp0;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_perp0	wham1x_saturation_scaling/rt_twostream.c	/^double Ti_perp0;$/;"	m	struct:gk_mirror_ctx	file:
 Ti_perp_m	mirror1x_adiabatic/sim.c	/^  double Ti_perp_m;$/;"	m	struct:gk_mirror_ctx	file:
 Ti_perp_m	mirror1x_adiabatic_eqdst/sim.c	/^  double Ti_perp_m;$/;"	m	struct:gk_mirror_ctx	file:
 Ti_perp_m	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double Ti_perp_m;$/;"	m	struct:gk_mirror_ctx	file:
@@ -544,7 +549,7 @@ Ti_perp_m	mirror1x_scaledJacob/sim_unif.c	/^  double Ti_perp_m;$/;"	m	struct:gk_
 Ti_perp_m	mirror1x_trueMaxwellian/sim.c	/^  double Ti_perp_m;$/;"	m	struct:gk_mirror_ctx	file:
 Ti_perp_m	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double Ti_perp_m;$/;"	m	struct:gk_mirror_ctx	file:
 Ti_perp_m	wham1x_adiabatic/sim.c	/^  double Ti_perp_m;$/;"	m	struct:gk_mirror_ctx	file:
-Ti_perp_m	wham1x_saturation_scaling/sim.c	/^  double Ti_perp_m;$/;"	m	struct:gk_mirror_ctx	file:
+Ti_perp_m	wham1x_saturation_scaling/rt_twostream.c	/^  double Ti_perp_m;$/;"	m	struct:gk_mirror_ctx	file:
 UNAME	Makefile	/^UNAME = $(shell uname)$/;"	m
 UNAME	mirror1x_adiabatic/Makefile	/^UNAME = $(shell uname)$/;"	m
 UNAME	mirror1x_adiabatic_eqdst/Makefile	/^UNAME = $(shell uname)$/;"	m
@@ -590,6 +595,8 @@ USING_MPI	wham1x_adiabatic/Makefile	/^	USING_MPI = yes$/;"	m
 USING_MPI	wham1x_adiabatic/Makefile	/^USING_MPI =$/;"	m
 USING_MPI	wham1x_saturation_scaling/Makefile	/^	USING_MPI = yes$/;"	m
 USING_MPI	wham1x_saturation_scaling/Makefile	/^USING_MPI =$/;"	m
+USING_NCCL	wham1x_saturation_scaling/Makefile	/^	USING_NCCL = yes$/;"	m
+USING_NCCL	wham1x_saturation_scaling/Makefile	/^USING_NCCL =$/;"	m
 USING_NVCC	Makefile	/^       USING_NVCC = yes$/;"	m
 USING_NVCC	Makefile	/^USING_NVCC =$/;"	m
 USING_NVCC	mirror1x_compare_unif_vs_nonunif_grids/Makefile	/^       USING_NVCC = yes$/;"	m
@@ -618,7 +625,7 @@ Z_bt	mirror1x_scaledJacob/sim_unif.c	/^  double Z_bt;$/;"	m	struct:gk_mirror_ctx
 Z_bt	mirror1x_trueMaxwellian/sim.c	/^  double Z_bt;$/;"	m	struct:gk_mirror_ctx	file:
 Z_bt	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double Z_bt;$/;"	m	struct:gk_mirror_ctx	file:
 Z_bt	wham1x_adiabatic/sim.c	/^  double Z_bt;$/;"	m	struct:gk_mirror_ctx	file:
-Z_bt	wham1x_saturation_scaling/sim.c	/^  double Z_bt;$/;"	m	struct:gk_mirror_ctx	file:
+Z_bt	wham1x_saturation_scaling/rt_twostream.c	/^  double Z_bt;$/;"	m	struct:gk_mirror_ctx	file:
 Z_m	mirror1x_adiabatic/sim.c	/^  double Z_m;$/;"	m	struct:gk_mirror_ctx	file:
 Z_m	mirror1x_adiabatic_eqdst/sim.c	/^  double Z_m;$/;"	m	struct:gk_mirror_ctx	file:
 Z_m	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double Z_m;$/;"	m	struct:gk_mirror_ctx	file:
@@ -628,7 +635,7 @@ Z_m	mirror1x_scaledJacob/sim_unif.c	/^  double Z_m;$/;"	m	struct:gk_mirror_ctx	f
 Z_m	mirror1x_trueMaxwellian/sim.c	/^  double Z_m;$/;"	m	struct:gk_mirror_ctx	file:
 Z_m	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double Z_m;$/;"	m	struct:gk_mirror_ctx	file:
 Z_m	wham1x_adiabatic/sim.c	/^  double Z_m;$/;"	m	struct:gk_mirror_ctx	file:
-Z_m	wham1x_saturation_scaling/sim.c	/^  double Z_m;$/;"	m	struct:gk_mirror_ctx	file:
+Z_m	wham1x_saturation_scaling/rt_twostream.c	/^  double Z_m;$/;"	m	struct:gk_mirror_ctx	file:
 Z_m_computational	mirror1x_adiabatic/sim.c	/^  double Z_m_computational;$/;"	m	struct:gk_mirror_ctx	file:
 Z_m_computational	mirror1x_adiabatic_eqdst/sim.c	/^  double Z_m_computational;$/;"	m	struct:gk_mirror_ctx	file:
 Z_m_computational	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double Z_m_computational;$/;"	m	struct:gk_mirror_ctx	file:
@@ -638,7 +645,7 @@ Z_m_computational	mirror1x_scaledJacob/sim_unif.c	/^  double Z_m_computational;$
 Z_m_computational	mirror1x_trueMaxwellian/sim.c	/^  double Z_m_computational;$/;"	m	struct:gk_mirror_ctx	file:
 Z_m_computational	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double Z_m_computational;$/;"	m	struct:gk_mirror_ctx	file:
 Z_m_computational	wham1x_adiabatic/sim.c	/^double Z_m_computational;$/;"	m	struct:gk_mirror_ctx	file:
-Z_m_computational	wham1x_saturation_scaling/sim.c	/^double Z_m_computational;$/;"	m	struct:gk_mirror_ctx	file:
+Z_m_computational	wham1x_saturation_scaling/rt_twostream.c	/^double Z_m_computational;$/;"	m	struct:gk_mirror_ctx	file:
 Z_max	mirror1x_adiabatic/sim.c	/^  double Z_max;$/;"	m	struct:gk_mirror_ctx	file:
 Z_max	mirror1x_adiabatic_eqdst/sim.c	/^  double Z_max;$/;"	m	struct:gk_mirror_ctx	file:
 Z_max	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double Z_max;$/;"	m	struct:gk_mirror_ctx	file:
@@ -673,7 +680,7 @@ alim	mirror1x_scaledJacob/sim_unif.c	/^  double alim;$/;"	m	struct:gk_mirror_ctx
 alim	mirror1x_trueMaxwellian/sim.c	/^  double alim;$/;"	m	struct:gk_mirror_ctx	file:
 alim	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double alim;$/;"	m	struct:gk_mirror_ctx	file:
 alim	wham1x_adiabatic/sim.c	/^  double alim;$/;"	m	struct:gk_mirror_ctx	file:
-alim	wham1x_saturation_scaling/sim.c	/^  double alim;$/;"	m	struct:gk_mirror_ctx	file:
+alim	wham1x_saturation_scaling/rt_twostream.c	/^  double alim;$/;"	m	struct:gk_mirror_ctx	file:
 alphaIC0	mirror1x_adiabatic/sim.c	/^  double alphaIC0;$/;"	m	struct:gk_mirror_ctx	file:
 alphaIC0	mirror1x_adiabatic_eqdst/sim.c	/^  double alphaIC0;$/;"	m	struct:gk_mirror_ctx	file:
 alphaIC0	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double alphaIC0;$/;"	m	struct:gk_mirror_ctx	file:
@@ -683,7 +690,7 @@ alphaIC0	mirror1x_scaledJacob/sim_unif.c	/^  double alphaIC0;$/;"	m	struct:gk_mi
 alphaIC0	mirror1x_trueMaxwellian/sim.c	/^  double alphaIC0;$/;"	m	struct:gk_mirror_ctx	file:
 alphaIC0	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double alphaIC0;$/;"	m	struct:gk_mirror_ctx	file:
 alphaIC0	wham1x_adiabatic/sim.c	/^  double alphaIC0;$/;"	m	struct:gk_mirror_ctx	file:
-alphaIC0	wham1x_saturation_scaling/sim.c	/^  double alphaIC0;$/;"	m	struct:gk_mirror_ctx	file:
+alphaIC0	wham1x_saturation_scaling/rt_twostream.c	/^  double alphaIC0;$/;"	m	struct:gk_mirror_ctx	file:
 alphaIC1	mirror1x_adiabatic/sim.c	/^  double alphaIC1;$/;"	m	struct:gk_mirror_ctx	file:
 alphaIC1	mirror1x_adiabatic_eqdst/sim.c	/^  double alphaIC1;$/;"	m	struct:gk_mirror_ctx	file:
 alphaIC1	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double alphaIC1;$/;"	m	struct:gk_mirror_ctx	file:
@@ -693,7 +700,7 @@ alphaIC1	mirror1x_scaledJacob/sim_unif.c	/^  double alphaIC1;$/;"	m	struct:gk_mi
 alphaIC1	mirror1x_trueMaxwellian/sim.c	/^  double alphaIC1;$/;"	m	struct:gk_mirror_ctx	file:
 alphaIC1	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double alphaIC1;$/;"	m	struct:gk_mirror_ctx	file:
 alphaIC1	wham1x_adiabatic/sim.c	/^  double alphaIC1;$/;"	m	struct:gk_mirror_ctx	file:
-alphaIC1	wham1x_saturation_scaling/sim.c	/^  double alphaIC1;$/;"	m	struct:gk_mirror_ctx	file:
+alphaIC1	wham1x_saturation_scaling/rt_twostream.c	/^  double alphaIC1;$/;"	m	struct:gk_mirror_ctx	file:
 avAllDim	postprocessing/pgkylUtil.py	/^def avAllDim(fIn,dimIn):$/;"	f
 ax1	mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^  ax1      = [fig1.add_axes(pos) for pos in ax1Pos]$/;"	v
 ax1	mirror1x_scaledJacob/plot.py	/^  ax1      = [fig1.add_axes(pos) for pos in ax1Pos]$/;"	v
@@ -777,7 +784,7 @@ beta	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double beta;$/;"	m	struct:gk_mirror
 beta	postprocessing/mana_plots.py	/^beta      = 0.4                              #[ Ratio of plasma to magnetic pressure.$/;"	v
 beta	postprocessing/plot.py	/^beta      = 0.4                              #[ Ratio of plasma to magnetic pressure.$/;"	v
 beta	wham1x_adiabatic/sim.c	/^  double beta;$/;"	m	struct:gk_mirror_ctx	file:
-beta	wham1x_saturation_scaling/sim.c	/^  double beta;$/;"	m	struct:gk_mirror_ctx	file:
+beta	wham1x_saturation_scaling/rt_twostream.c	/^  double beta;$/;"	m	struct:gk_mirror_ctx	file:
 bmag	postprocessing/mana_plots.py	/^  bmag = np.squeeze(pgu.getInterpData(dataFile,polyOrder,basisType,location='center',varName='bmag'))$/;"	v
 bmag	postprocessing/mana_plots.py	/^  bmag = np.squeeze(pgu.getInterpData(fName, polyOrder, basisType, varName='bmag'))$/;"	v
 bmag	postprocessing/mana_plots.py	/^  bmag = pgu.getInterpData(dataFile,polyOrder,basisType,varName='bmag')$/;"	v
@@ -805,7 +812,7 @@ c_s	postprocessing/mana_plots.py	/^  c_s = np.sqrt(Te0\/mi)$/;"	v
 c_s	postprocessing/mana_plots.py	/^c_s = np.sqrt(Te0\/mi)$/;"	v
 c_s	postprocessing/plot.py	/^c_s = np.sqrt(Te0\/mi)$/;"	v
 c_s	wham1x_adiabatic/sim.c	/^  double c_s;$/;"	m	struct:gk_mirror_ctx	file:
-c_s	wham1x_saturation_scaling/sim.c	/^  double c_s;$/;"	m	struct:gk_mirror_ctx	file:
+c_s	wham1x_saturation_scaling/rt_twostream.c	/^  double c_s;$/;"	m	struct:gk_mirror_ctx	file:
 ca11Pos	postprocessing/mana_plots.py	/^  ca11Pos   = [[0.07, 0.9, 0.285, 0.02],[0.385, 0.9, 0.285, 0.02],[0.70, 0.9, 0.285, 0.02]]$/;"	v
 ca17Pos	postprocessing/mana_plots.py	/^  ca17Pos   = [[0.07-0.022, 0.935, 0.285, 0.02 ],[0.385-0.012, 0.935, 0.285, 0.02 ],[0.70-0.02, 0.935, 0.285, 0.02 ],$/;"	v
 ca19Pos	postprocessing/mana_plots.py	/^  ca19Pos   = [[0.07-0.022, 0.935, 0.285, 0.02 ],[0.385-0.012, 0.935, 0.282, 0.02 ],[0.70-0.02, 0.935, 0.285, 0.02 ],$/;"	v
@@ -877,7 +884,7 @@ create_ctx	mirror1x_scaledJacob/sim_unif.c	/^create_ctx(void)$/;"	f
 create_ctx	mirror1x_trueMaxwellian/sim.c	/^create_ctx(void)$/;"	f
 create_ctx	mirror1x_trueMaxwellian_3x_mu/sim.c	/^create_ctx(void)$/;"	f
 create_ctx	wham1x_adiabatic/sim.c	/^create_ctx(void)$/;"	f
-create_ctx	wham1x_saturation_scaling/sim.c	/^create_ctx(void)$/;"	f
+create_ctx	wham1x_saturation_scaling/rt_twostream.c	/^create_ctx(void)$/;"	f
 cs_m	mirror1x_adiabatic/sim.c	/^  double cs_m;$/;"	m	struct:gk_mirror_ctx	file:
 cs_m	mirror1x_adiabatic_eqdst/sim.c	/^  double cs_m;$/;"	m	struct:gk_mirror_ctx	file:
 cs_m	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double cs_m;$/;"	m	struct:gk_mirror_ctx	file:
@@ -887,7 +894,7 @@ cs_m	mirror1x_scaledJacob/sim_unif.c	/^  double cs_m;$/;"	m	struct:gk_mirror_ctx
 cs_m	mirror1x_trueMaxwellian/sim.c	/^  double cs_m;$/;"	m	struct:gk_mirror_ctx	file:
 cs_m	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double cs_m;$/;"	m	struct:gk_mirror_ctx	file:
 cs_m	wham1x_adiabatic/sim.c	/^  double cs_m;$/;"	m	struct:gk_mirror_ctx	file:
-cs_m	wham1x_saturation_scaling/sim.c	/^  double cs_m;$/;"	m	struct:gk_mirror_ctx	file:
+cs_m	wham1x_saturation_scaling/rt_twostream.c	/^  double cs_m;$/;"	m	struct:gk_mirror_ctx	file:
 dBdz	mirror1x_adiabatic/sim.c	/^dBdz(double z, void *ctx)$/;"	f
 dBdz	mirror1x_adiabatic_eqdst/sim.c	/^dBdz(double z, void *ctx)$/;"	f
 dBdz	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^dBdz(double z, void *ctx)$/;"	f
@@ -992,7 +999,7 @@ diff_dz	mirror1x_scaledJacob/sim_unif.c	/^  double diff_dz;$/;"	m	struct:gk_mirr
 diff_dz	mirror1x_trueMaxwellian/sim.c	/^  double diff_dz;$/;"	m	struct:gk_mirror_ctx	file:
 diff_dz	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double diff_dz;$/;"	m	struct:gk_mirror_ctx	file:
 diff_dz	wham1x_adiabatic/sim.c	/^  double diff_dz;$/;"	m	struct:gk_mirror_ctx	file:
-diff_dz	wham1x_saturation_scaling/sim.c	/^  double diff_dz;$/;"	m	struct:gk_mirror_ctx	file:
+diff_dz	wham1x_saturation_scaling/rt_twostream.c	/^  double diff_dz;$/;"	m	struct:gk_mirror_ctx	file:
 diffs	mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^  diffs  = dataOut_nonunif_mapc2p[0:-1] + np.diff(dataOut_nonunif_mapc2p)\/2$/;"	v
 diffs	mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^  diffs  = dataOut_unif_mapc2p[0:-1] + np.diff(dataOut_unif_mapc2p)\/2$/;"	v
 diffs	mirror1x_scaledJacob/plot.py	/^  diffs  = dataOut_nonunif_mapc2p[0:-1] + np.diff(dataOut_nonunif_mapc2p)\/2$/;"	v
@@ -1020,7 +1027,7 @@ evDGatNodes	postprocessing/pgkylUtil.py	/^def evDGatNodes(fIn,basisType,pOrder,n
 evalF1x_e	postprocessing/pgkylUtil.py	/^def evalF1x_e(fIn,xE,xcIn,dxIn,pOrderIn,**opKey):$/;"	f
 evalF2x_e	postprocessing/pgkylUtil.py	/^def evalF2x_e(fIn,xE,xcIn,dxIn,pOrderIn,**opKey):$/;"	f
 evalNuElc	wham1x_adiabatic/sim.c	/^evalNuElc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
-evalNuElc	wham1x_saturation_scaling/sim.c	/^evalNuElc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+evalNuElc	wham1x_saturation_scaling/rt_twostream.c	/^evalNuElc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 evalNuIon	mirror1x_adiabatic/sim.c	/^evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 evalNuIon	mirror1x_adiabatic_eqdst/sim.c	/^evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 evalNuIon	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
@@ -1030,12 +1037,12 @@ evalNuIon	mirror1x_scaledJacob/sim_unif.c	/^evalNuIon(double t, const double *GK
 evalNuIon	mirror1x_trueMaxwellian/sim.c	/^evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 evalNuIon	mirror1x_trueMaxwellian_3x_mu/sim.c	/^evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 evalNuIon	wham1x_adiabatic/sim.c	/^evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
-evalNuIon	wham1x_saturation_scaling/sim.c	/^evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+evalNuIon	wham1x_saturation_scaling/rt_twostream.c	/^evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 evalOnGrid	postprocessing/pgkylUtil.py	/^  def evalOnGrid():$/;"	f	function:evalF2x_e
 eval_density_elc	wham1x_adiabatic/sim.c	/^eval_density_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
-eval_density_elc	wham1x_saturation_scaling/sim.c	/^eval_density_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_density_elc	wham1x_saturation_scaling/rt_twostream.c	/^eval_density_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_density_elc_source	wham1x_adiabatic/sim.c	/^eval_density_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
-eval_density_elc_source	wham1x_saturation_scaling/sim.c	/^eval_density_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_density_elc_source	wham1x_saturation_scaling/rt_twostream.c	/^eval_density_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_density_ion	mirror1x_adiabatic/sim.c	/^eval_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_density_ion	mirror1x_adiabatic_eqdst/sim.c	/^eval_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_density_ion	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^eval_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
@@ -1045,7 +1052,7 @@ eval_density_ion	mirror1x_scaledJacob/sim_unif.c	/^eval_density_ion(double t, co
 eval_density_ion	mirror1x_trueMaxwellian/sim.c	/^eval_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_density_ion	mirror1x_trueMaxwellian_3x_mu/sim.c	/^eval_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_density_ion	wham1x_adiabatic/sim.c	/^eval_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
-eval_density_ion	wham1x_saturation_scaling/sim.c	/^eval_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_density_ion	wham1x_saturation_scaling/rt_twostream.c	/^eval_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_density_ion_source	mirror1x_adiabatic/sim.c	/^eval_density_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_density_ion_source	mirror1x_adiabatic_eqdst/sim.c	/^eval_density_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_density_ion_source	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^eval_density_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
@@ -1055,11 +1062,11 @@ eval_density_ion_source	mirror1x_scaledJacob/sim_unif.c	/^eval_density_ion_sourc
 eval_density_ion_source	mirror1x_trueMaxwellian/sim.c	/^eval_density_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_density_ion_source	mirror1x_trueMaxwellian_3x_mu/sim.c	/^eval_density_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_density_ion_source	wham1x_adiabatic/sim.c	/^eval_density_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
-eval_density_ion_source	wham1x_saturation_scaling/sim.c	/^eval_density_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_density_ion_source	wham1x_saturation_scaling/rt_twostream.c	/^eval_density_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_temp_elc	wham1x_adiabatic/sim.c	/^eval_temp_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
-eval_temp_elc	wham1x_saturation_scaling/sim.c	/^eval_temp_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_elc	wham1x_saturation_scaling/rt_twostream.c	/^eval_temp_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_temp_elc_source	wham1x_adiabatic/sim.c	/^eval_temp_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
-eval_temp_elc_source	wham1x_saturation_scaling/sim.c	/^eval_temp_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_elc_source	wham1x_saturation_scaling/rt_twostream.c	/^eval_temp_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_temp_ion	mirror1x_adiabatic/sim.c	/^eval_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_temp_ion	mirror1x_adiabatic_eqdst/sim.c	/^eval_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_temp_ion	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^eval_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
@@ -1069,7 +1076,7 @@ eval_temp_ion	mirror1x_scaledJacob/sim_unif.c	/^eval_temp_ion(double t, const do
 eval_temp_ion	mirror1x_trueMaxwellian/sim.c	/^eval_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_temp_ion	mirror1x_trueMaxwellian_3x_mu/sim.c	/^eval_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_temp_ion	wham1x_adiabatic/sim.c	/^eval_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
-eval_temp_ion	wham1x_saturation_scaling/sim.c	/^eval_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_ion	wham1x_saturation_scaling/rt_twostream.c	/^eval_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_temp_ion_source	mirror1x_adiabatic/sim.c	/^eval_temp_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_temp_ion_source	mirror1x_adiabatic_eqdst/sim.c	/^eval_temp_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_temp_ion_source	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^eval_temp_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
@@ -1079,9 +1086,9 @@ eval_temp_ion_source	mirror1x_scaledJacob/sim_unif.c	/^eval_temp_ion_source(doub
 eval_temp_ion_source	mirror1x_trueMaxwellian/sim.c	/^eval_temp_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_temp_ion_source	mirror1x_trueMaxwellian_3x_mu/sim.c	/^eval_temp_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_temp_ion_source	wham1x_adiabatic/sim.c	/^eval_temp_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
-eval_temp_ion_source	wham1x_saturation_scaling/sim.c	/^eval_temp_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_ion_source	wham1x_saturation_scaling/rt_twostream.c	/^eval_temp_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_temp_par_elc	wham1x_adiabatic/sim.c	/^eval_temp_par_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
-eval_temp_par_elc	wham1x_saturation_scaling/sim.c	/^eval_temp_par_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_par_elc	wham1x_saturation_scaling/rt_twostream.c	/^eval_temp_par_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_temp_par_ion	mirror1x_adiabatic/sim.c	/^eval_temp_par_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_temp_par_ion	mirror1x_adiabatic_eqdst/sim.c	/^eval_temp_par_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_temp_par_ion	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^eval_temp_par_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
@@ -1091,9 +1098,9 @@ eval_temp_par_ion	mirror1x_scaledJacob/sim_unif.c	/^eval_temp_par_ion(double t, 
 eval_temp_par_ion	mirror1x_trueMaxwellian/sim.c	/^eval_temp_par_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_temp_par_ion	mirror1x_trueMaxwellian_3x_mu/sim.c	/^eval_temp_par_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_temp_par_ion	wham1x_adiabatic/sim.c	/^eval_temp_par_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
-eval_temp_par_ion	wham1x_saturation_scaling/sim.c	/^eval_temp_par_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_par_ion	wham1x_saturation_scaling/rt_twostream.c	/^eval_temp_par_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_temp_perp_elc	wham1x_adiabatic/sim.c	/^eval_temp_perp_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
-eval_temp_perp_elc	wham1x_saturation_scaling/sim.c	/^eval_temp_perp_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_perp_elc	wham1x_saturation_scaling/rt_twostream.c	/^eval_temp_perp_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_temp_perp_ion	mirror1x_adiabatic/sim.c	/^eval_temp_perp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_temp_perp_ion	mirror1x_adiabatic_eqdst/sim.c	/^eval_temp_perp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_temp_perp_ion	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^eval_temp_perp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
@@ -1103,11 +1110,11 @@ eval_temp_perp_ion	mirror1x_scaledJacob/sim_unif.c	/^eval_temp_perp_ion(double t
 eval_temp_perp_ion	mirror1x_trueMaxwellian/sim.c	/^eval_temp_perp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_temp_perp_ion	mirror1x_trueMaxwellian_3x_mu/sim.c	/^eval_temp_perp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_temp_perp_ion	wham1x_adiabatic/sim.c	/^eval_temp_perp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
-eval_temp_perp_ion	wham1x_saturation_scaling/sim.c	/^eval_temp_perp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_temp_perp_ion	wham1x_saturation_scaling/rt_twostream.c	/^eval_temp_perp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_upar_elc	wham1x_adiabatic/sim.c	/^eval_upar_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
-eval_upar_elc	wham1x_saturation_scaling/sim.c	/^eval_upar_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_upar_elc	wham1x_saturation_scaling/rt_twostream.c	/^eval_upar_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_upar_elc_source	wham1x_adiabatic/sim.c	/^eval_upar_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
-eval_upar_elc_source	wham1x_saturation_scaling/sim.c	/^eval_upar_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_upar_elc_source	wham1x_saturation_scaling/rt_twostream.c	/^eval_upar_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_upar_ion	mirror1x_adiabatic/sim.c	/^eval_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_upar_ion	mirror1x_adiabatic_eqdst/sim.c	/^eval_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_upar_ion	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^eval_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
@@ -1117,7 +1124,7 @@ eval_upar_ion	mirror1x_scaledJacob/sim_unif.c	/^eval_upar_ion(double t, const do
 eval_upar_ion	mirror1x_trueMaxwellian/sim.c	/^eval_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_upar_ion	mirror1x_trueMaxwellian_3x_mu/sim.c	/^eval_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_upar_ion	wham1x_adiabatic/sim.c	/^eval_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
-eval_upar_ion	wham1x_saturation_scaling/sim.c	/^eval_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_upar_ion	wham1x_saturation_scaling/rt_twostream.c	/^eval_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_upar_ion_source	mirror1x_adiabatic/sim.c	/^eval_upar_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_upar_ion_source	mirror1x_adiabatic_eqdst/sim.c	/^eval_upar_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_upar_ion_source	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^eval_upar_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
@@ -1127,7 +1134,7 @@ eval_upar_ion_source	mirror1x_scaledJacob/sim_unif.c	/^eval_upar_ion_source(doub
 eval_upar_ion_source	mirror1x_trueMaxwellian/sim.c	/^eval_upar_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_upar_ion_source	mirror1x_trueMaxwellian_3x_mu/sim.c	/^eval_upar_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 eval_upar_ion_source	wham1x_adiabatic/sim.c	/^eval_upar_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
-eval_upar_ion_source	wham1x_saturation_scaling/sim.c	/^eval_upar_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
+eval_upar_ion_source	wham1x_saturation_scaling/rt_twostream.c	/^eval_upar_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)$/;"	f
 execution_times	wham1x_saturation_scaling/plot.py	/^execution_times = np.loadtxt('execution_times.txt')$/;"	v
 extreme_vals	postprocessing/mana_plots.py	/^  extreme_vals = [0., np.amax(fElc[plotzIdx[0],insetIdx[0][0]:insetIdx[0][1],insetIdx[1][0]:insetIdx[1][1]])]$/;"	v
 extreme_vals	postprocessing/mana_plots.py	/^  extreme_vals = [0., np.amax(fElc[plotzIdx[1],insetIdx[0][0]:insetIdx[0][1],insetIdx[1][0]:insetIdx[1][1]])]$/;"	v
@@ -1261,7 +1268,7 @@ final_time	mirror1x_scaledJacob/sim_unif.c	/^  double final_time;$/;"	m	struct:g
 final_time	mirror1x_trueMaxwellian/sim.c	/^  double final_time;$/;"	m	struct:gk_mirror_ctx	file:
 final_time	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double final_time;$/;"	m	struct:gk_mirror_ctx	file:
 final_time	wham1x_adiabatic/sim.c	/^  double final_time;$/;"	m	struct:gk_mirror_ctx	file:
-final_time	wham1x_saturation_scaling/sim.c	/^  double final_time;$/;"	m	struct:gk_mirror_ctx	file:
+final_time	wham1x_saturation_scaling/rt_twostream.c	/^  double final_time;$/;"	m	struct:gk_mirror_ctx	file:
 findLastFrame	postprocessing/pgkylUtil.py	/^def findLastFrame(absFileName,fileExt):$/;"	f
 findNearestIndex	postprocessing/pgkylUtil.py	/^def findNearestIndex(array,value):$/;"	f
 firstFile	postprocessing/plot.py	/^  firstFile = str(fileName + '-field_0.gkyl')$/;"	v
@@ -1290,7 +1297,7 @@ gamma	mirror1x_scaledJacob/sim_unif.c	/^  double gamma;$/;"	m	struct:gk_mirror_c
 gamma	mirror1x_trueMaxwellian/sim.c	/^  double gamma;$/;"	m	struct:gk_mirror_ctx	file:
 gamma	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double gamma;$/;"	m	struct:gk_mirror_ctx	file:
 gamma	wham1x_adiabatic/sim.c	/^  double gamma;$/;"	m	struct:gk_mirror_ctx	file:
-gamma	wham1x_saturation_scaling/sim.c	/^  double gamma;$/;"	m	struct:gk_mirror_ctx	file:
+gamma	wham1x_saturation_scaling/rt_twostream.c	/^  double gamma;$/;"	m	struct:gk_mirror_ctx	file:
 getAttribute	postprocessing/pgkylUtil.py	/^def getAttribute(dataFile, attrName):$/;"	f
 getBasisType	postprocessing/pgkylUtil.py	/^def getBasisType(dataFile):$/;"	f
 getGrid	postprocessing/pgkylUtil.py	/^def getGrid(dataFile,polyOrder,basisType,**opKey):$/;"	f
@@ -1312,7 +1319,7 @@ getTimeStamps	postprocessing/pgkylUtil.py	/^def getTimeStamps(dataFileRoot,frame
 getUpperBounds	postprocessing/pgkylUtil.py	/^def getUpperBounds(dataFile):$/;"	f
 ginp	mirror1x_adiabatic_eqdst/sim.c	/^struct gkyl_mirror_geo_grid_inp ginp = {$/;"	v	typeref:struct:gkyl_mirror_geo_grid_inp
 ginp	wham1x_adiabatic/sim.c	/^struct gkyl_mirror_geo_grid_inp ginp = {$/;"	v	typeref:struct:gkyl_mirror_geo_grid_inp
-ginp	wham1x_saturation_scaling/sim.c	/^struct gkyl_mirror_geo_grid_inp ginp = {$/;"	v	typeref:struct:gkyl_mirror_geo_grid_inp
+ginp	wham1x_saturation_scaling/rt_twostream.c	/^struct gkyl_mirror_geo_grid_inp ginp = {$/;"	v	typeref:struct:gkyl_mirror_geo_grid_inp
 gk_mirror_ctx	mirror1x_adiabatic/sim.c	/^struct gk_mirror_ctx$/;"	s	file:
 gk_mirror_ctx	mirror1x_adiabatic_eqdst/sim.c	/^struct gk_mirror_ctx$/;"	s	file:
 gk_mirror_ctx	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^struct gk_mirror_ctx$/;"	s	file:
@@ -1322,7 +1329,7 @@ gk_mirror_ctx	mirror1x_scaledJacob/sim_unif.c	/^struct gk_mirror_ctx$/;"	s	file:
 gk_mirror_ctx	mirror1x_trueMaxwellian/sim.c	/^struct gk_mirror_ctx$/;"	s	file:
 gk_mirror_ctx	mirror1x_trueMaxwellian_3x_mu/sim.c	/^struct gk_mirror_ctx$/;"	s	file:
 gk_mirror_ctx	wham1x_adiabatic/sim.c	/^struct gk_mirror_ctx$/;"	s	file:
-gk_mirror_ctx	wham1x_saturation_scaling/sim.c	/^struct gk_mirror_ctx$/;"	s	file:
+gk_mirror_ctx	wham1x_saturation_scaling/rt_twostream.c	/^struct gk_mirror_ctx$/;"	s	file:
 grey	mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^grey           = [0.5, 0.5, 0.5]$/;"	v
 grey	mirror1x_scaledJacob/plot.py	/^grey           = [0.5, 0.5, 0.5]$/;"	v
 grey	postprocessing/mana_plots.py	/^grey           = [0.5, 0.5, 0.5]$/;"	v
@@ -1379,7 +1386,7 @@ hpl9b	postprocessing/mana_plots.py	/^  hpl9b = list()$/;"	v
 hpl9bin	postprocessing/mana_plots.py	/^  hpl9bin = [0 for i in range(len(ax9))]$/;"	v
 inp	mirror1x_adiabatic_eqdst/sim.c	/^struct gkyl_mirror_geo_efit_inp inp = {$/;"	v	typeref:struct:gkyl_mirror_geo_efit_inp
 inp	wham1x_adiabatic/sim.c	/^struct gkyl_mirror_geo_efit_inp inp = {$/;"	v	typeref:struct:gkyl_mirror_geo_efit_inp
-inp	wham1x_saturation_scaling/sim.c	/^struct gkyl_mirror_geo_efit_inp inp = {$/;"	v	typeref:struct:gkyl_mirror_geo_efit_inp
+inp	wham1x_saturation_scaling/rt_twostream.c	/^struct gkyl_mirror_geo_efit_inp inp = {$/;"	v	typeref:struct:gkyl_mirror_geo_efit_inp
 insetIdx	postprocessing/mana_plots.py	/^  insetIdx = [[np.argmin(np.abs(xIntC_e[1]-val)) for val in sub_coords[0]],$/;"	v
 insetIdx	postprocessing/mana_plots.py	/^  insetIdx = [[np.argmin(np.abs(xIntC_i[1]-val)) for val in sub_coords[0]],$/;"	v
 inset_size	postprocessing/mana_plots.py	/^  inset_size = [0.5, 0.4, 0.48, 0.57]$/;"	v
@@ -1395,9 +1402,9 @@ itt	postprocessing/pgkylUtil.py	/^import itertools as itt$/;"	i
 kperp	postprocessing/mana_plots.py	/^  kperp = [0.3, 0.25,0.2,0.15,0.1,0.05,0.01,0.005]$/;"	v
 kperp	postprocessing/mana_plots.py	/^  kperp = kperp[::-1]$/;"	v
 kperp	wham1x_adiabatic/sim.c	/^  double kperp; \/\/ Perpendicular wavenumber in SI units.$/;"	m	struct:gk_mirror_ctx	file:
-kperp	wham1x_saturation_scaling/sim.c	/^  double kperp; \/\/ Perpendicular wavenumber in SI units.$/;"	m	struct:gk_mirror_ctx	file:
+kperp	wham1x_saturation_scaling/rt_twostream.c	/^  double kperp; \/\/ Perpendicular wavenumber in SI units.$/;"	m	struct:gk_mirror_ctx	file:
 kperpRhos	wham1x_adiabatic/sim.c	/^  double kperpRhos;$/;"	m	struct:gk_mirror_ctx	file:
-kperpRhos	wham1x_saturation_scaling/sim.c	/^  double kperpRhos;$/;"	m	struct:gk_mirror_ctx	file:
+kperpRhos	wham1x_saturation_scaling/rt_twostream.c	/^  double kperpRhos;$/;"	m	struct:gk_mirror_ctx	file:
 legendFontSize	mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^legendFontSize        = 14$/;"	v
 legendFontSize	mirror1x_scaledJacob/plot.py	/^legendFontSize        = 14$/;"	v
 legendFontSize	postprocessing/mana_plots.py	/^legendFontSize        = 14$/;"	v
@@ -1405,9 +1412,9 @@ legendFontSize	postprocessing/plot.py	/^legendFontSize        = 14$/;"	v
 legends	postprocessing/mana_plots.py	/^  legends = ['adiabatic e$^-$','kinetic e$^-$']$/;"	v
 legends	postprocessing/mana_plots.py	/^  legends = list()$/;"	v
 lineLengthSrcElc	wham1x_adiabatic/sim.c	/^  double lineLengthSrcElc;$/;"	m	struct:gk_mirror_ctx	file:
-lineLengthSrcElc	wham1x_saturation_scaling/sim.c	/^  double lineLengthSrcElc;$/;"	m	struct:gk_mirror_ctx	file:
+lineLengthSrcElc	wham1x_saturation_scaling/rt_twostream.c	/^  double lineLengthSrcElc;$/;"	m	struct:gk_mirror_ctx	file:
 lineLengthSrcIon	wham1x_adiabatic/sim.c	/^  double lineLengthSrcIon;$/;"	m	struct:gk_mirror_ctx	file:
-lineLengthSrcIon	wham1x_saturation_scaling/sim.c	/^  double lineLengthSrcIon;$/;"	m	struct:gk_mirror_ctx	file:
+lineLengthSrcIon	wham1x_saturation_scaling/rt_twostream.c	/^  double lineLengthSrcIon;$/;"	m	struct:gk_mirror_ctx	file:
 lineStyles	mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^lineStyles = ['-','--',':','-.','None','None','None','None']$/;"	v
 lineStyles	mirror1x_scaledJacob/plot.py	/^lineStyles = ['-','--',':','-.','None','None','None','None']$/;"	v
 lineStyles	postprocessing/mana_plots.py	/^lineStyles = ['-','--',':','-.','None','None','None','None']$/;"	v
@@ -1416,7 +1423,7 @@ load_mapped_data	mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^def load_mappe
 load_mapped_data	mirror1x_scaledJacob/plot.py	/^def load_mapped_data(dataName):$/;"	f
 logLambdaElc	postprocessing/mana_plots.py	/^  logLambdaElc = 6.6 - 0.5*np.log(n0\/1e20) + 1.5*np.log(Te0\/eV)$/;"	v
 logLambdaElc	wham1x_adiabatic/sim.c	/^  double logLambdaElc;$/;"	m	struct:gk_mirror_ctx	file:
-logLambdaElc	wham1x_saturation_scaling/sim.c	/^  double logLambdaElc;$/;"	m	struct:gk_mirror_ctx	file:
+logLambdaElc	wham1x_saturation_scaling/rt_twostream.c	/^  double logLambdaElc;$/;"	m	struct:gk_mirror_ctx	file:
 logLambdaIon	mirror1x_adiabatic/sim.c	/^  double logLambdaIon;$/;"	m	struct:gk_mirror_ctx	file:
 logLambdaIon	mirror1x_adiabatic_eqdst/sim.c	/^  double logLambdaIon;$/;"	m	struct:gk_mirror_ctx	file:
 logLambdaIon	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double logLambdaIon;$/;"	m	struct:gk_mirror_ctx	file:
@@ -1427,7 +1434,7 @@ logLambdaIon	mirror1x_trueMaxwellian/sim.c	/^  double logLambdaIon;$/;"	m	struct
 logLambdaIon	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double logLambdaIon;$/;"	m	struct:gk_mirror_ctx	file:
 logLambdaIon	postprocessing/mana_plots.py	/^  logLambdaIon = 6.6 - 0.5*np.log(n0\/1e20) + 1.5*np.log(Ti0\/eV)$/;"	v
 logLambdaIon	wham1x_adiabatic/sim.c	/^  double logLambdaIon;$/;"	m	struct:gk_mirror_ctx	file:
-logLambdaIon	wham1x_saturation_scaling/sim.c	/^  double logLambdaIon;$/;"	m	struct:gk_mirror_ctx	file:
+logLambdaIon	wham1x_saturation_scaling/rt_twostream.c	/^  double logLambdaIon;$/;"	m	struct:gk_mirror_ctx	file:
 main	mirror1x_adiabatic/sim.c	/^int main(int argc, char **argv)$/;"	f
 main	mirror1x_adiabatic_eqdst/sim.c	/^int main(int argc, char **argv)$/;"	f
 main	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^int main(int argc, char **argv)$/;"	f
@@ -1437,7 +1444,7 @@ main	mirror1x_scaledJacob/sim_unif.c	/^int main(int argc, char **argv)$/;"	f
 main	mirror1x_trueMaxwellian/sim.c	/^int main(int argc, char **argv)$/;"	f
 main	mirror1x_trueMaxwellian_3x_mu/sim.c	/^int main(int argc, char **argv)$/;"	f
 main	wham1x_adiabatic/sim.c	/^int main(int argc, char **argv)$/;"	f
-main	wham1x_saturation_scaling/sim.c	/^int main(int argc, char **argv)$/;"	f
+main	wham1x_saturation_scaling/rt_twostream.c	/^int main(int argc, char **argv)$/;"	f
 mapc2p	mirror1x_adiabatic/sim.c	/^mapc2p(double t, const double *xc, double *GKYL_RESTRICT xp, void *ctx)$/;"	f
 mapc2p	mirror1x_adiabatic_eqdst/sim.c	/^mapc2p(double t, const double *xc, double *GKYL_RESTRICT xp, void *ctx)$/;"	f
 mapc2p	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^mapc2p(double t, const double *xc, double *GKYL_RESTRICT xp, void *ctx)$/;"	f
@@ -1447,7 +1454,7 @@ mapc2p	mirror1x_scaledJacob/sim_unif.c	/^mapc2p(double t, const double *xc, doub
 mapc2p	mirror1x_trueMaxwellian/sim.c	/^mapc2p(double t, const double *xc, double *GKYL_RESTRICT xp, void *ctx)$/;"	f
 mapc2p	mirror1x_trueMaxwellian_3x_mu/sim.c	/^mapc2p(double t, const double *xc, double *GKYL_RESTRICT xp, void *ctx)$/;"	f
 mapc2p	wham1x_adiabatic/sim.c	/^  void *mapc2p;$/;"	m	struct:gk_mirror_ctx	file:
-mapc2p	wham1x_saturation_scaling/sim.c	/^  void *mapc2p;$/;"	m	struct:gk_mirror_ctx	file:
+mapc2p	wham1x_saturation_scaling/rt_twostream.c	/^  void *mapc2p;$/;"	m	struct:gk_mirror_ctx	file:
 mapping_frac	mirror1x_adiabatic/sim.c	/^  double mapping_frac;$/;"	m	struct:gk_mirror_ctx	file:
 mapping_frac	mirror1x_adiabatic_eqdst/sim.c	/^  double mapping_frac;$/;"	m	struct:gk_mirror_ctx	file:
 mapping_frac	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double mapping_frac;$/;"	m	struct:gk_mirror_ctx	file:
@@ -1457,7 +1464,7 @@ mapping_frac	mirror1x_scaledJacob/sim_unif.c	/^  double mapping_frac;$/;"	m	stru
 mapping_frac	mirror1x_trueMaxwellian/sim.c	/^  double mapping_frac;$/;"	m	struct:gk_mirror_ctx	file:
 mapping_frac	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double mapping_frac;$/;"	m	struct:gk_mirror_ctx	file:
 mapping_frac	wham1x_adiabatic/sim.c	/^  double mapping_frac;$/;"	m	struct:gk_mirror_ctx	file:
-mapping_frac	wham1x_saturation_scaling/sim.c	/^  double mapping_frac;$/;"	m	struct:gk_mirror_ctx	file:
+mapping_frac	wham1x_saturation_scaling/rt_twostream.c	/^  double mapping_frac;$/;"	m	struct:gk_mirror_ctx	file:
 mapping_order_center	mirror1x_adiabatic/sim.c	/^  int mapping_order_center;$/;"	m	struct:gk_mirror_ctx	file:
 mapping_order_center	mirror1x_adiabatic_eqdst/sim.c	/^  int mapping_order_center;$/;"	m	struct:gk_mirror_ctx	file:
 mapping_order_center	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  int mapping_order_center;$/;"	m	struct:gk_mirror_ctx	file:
@@ -1467,7 +1474,7 @@ mapping_order_center	mirror1x_scaledJacob/sim_unif.c	/^  int mapping_order_cente
 mapping_order_center	mirror1x_trueMaxwellian/sim.c	/^  int mapping_order_center;$/;"	m	struct:gk_mirror_ctx	file:
 mapping_order_center	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  int mapping_order_center;$/;"	m	struct:gk_mirror_ctx	file:
 mapping_order_center	wham1x_adiabatic/sim.c	/^  int mapping_order_center;$/;"	m	struct:gk_mirror_ctx	file:
-mapping_order_center	wham1x_saturation_scaling/sim.c	/^  int mapping_order_center;$/;"	m	struct:gk_mirror_ctx	file:
+mapping_order_center	wham1x_saturation_scaling/rt_twostream.c	/^  int mapping_order_center;$/;"	m	struct:gk_mirror_ctx	file:
 mapping_order_expander	mirror1x_adiabatic/sim.c	/^  int mapping_order_expander;$/;"	m	struct:gk_mirror_ctx	file:
 mapping_order_expander	mirror1x_adiabatic_eqdst/sim.c	/^  int mapping_order_expander;$/;"	m	struct:gk_mirror_ctx	file:
 mapping_order_expander	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  int mapping_order_expander;$/;"	m	struct:gk_mirror_ctx	file:
@@ -1477,7 +1484,7 @@ mapping_order_expander	mirror1x_scaledJacob/sim_unif.c	/^  int mapping_order_exp
 mapping_order_expander	mirror1x_trueMaxwellian/sim.c	/^  int mapping_order_expander;$/;"	m	struct:gk_mirror_ctx	file:
 mapping_order_expander	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  int mapping_order_expander;$/;"	m	struct:gk_mirror_ctx	file:
 mapping_order_expander	wham1x_adiabatic/sim.c	/^  int mapping_order_expander;$/;"	m	struct:gk_mirror_ctx	file:
-mapping_order_expander	wham1x_saturation_scaling/sim.c	/^  int mapping_order_expander;$/;"	m	struct:gk_mirror_ctx	file:
+mapping_order_expander	wham1x_saturation_scaling/rt_twostream.c	/^  int mapping_order_expander;$/;"	m	struct:gk_mirror_ctx	file:
 markers	mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^markers    = ['None','None','None','None','o','d','s','+']$/;"	v
 markers	mirror1x_scaledJacob/plot.py	/^markers    = ['None','None','None','None','o','d','s','+']$/;"	v
 markers	postprocessing/mana_plots.py	/^markers    = ['None','None','None','None','o','d','s','+']$/;"	v
@@ -1497,7 +1504,7 @@ mcB	mirror1x_scaledJacob/sim_unif.c	/^  double mcB;$/;"	m	struct:gk_mirror_ctx	f
 mcB	mirror1x_trueMaxwellian/sim.c	/^  double mcB;$/;"	m	struct:gk_mirror_ctx	file:
 mcB	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double mcB;$/;"	m	struct:gk_mirror_ctx	file:
 mcB	wham1x_adiabatic/sim.c	/^  double mcB;$/;"	m	struct:gk_mirror_ctx	file:
-mcB	wham1x_saturation_scaling/sim.c	/^  double mcB;$/;"	m	struct:gk_mirror_ctx	file:
+mcB	wham1x_saturation_scaling/rt_twostream.c	/^  double mcB;$/;"	m	struct:gk_mirror_ctx	file:
 me	mirror1x_adiabatic/sim.c	/^  double me;$/;"	m	struct:gk_mirror_ctx	file:
 me	mirror1x_adiabatic_eqdst/sim.c	/^  double me;$/;"	m	struct:gk_mirror_ctx	file:
 me	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double me;$/;"	m	struct:gk_mirror_ctx	file:
@@ -1507,7 +1514,7 @@ me	mirror1x_scaledJacob/sim_unif.c	/^  double me;$/;"	m	struct:gk_mirror_ctx	fil
 me	mirror1x_trueMaxwellian/sim.c	/^  double me;$/;"	m	struct:gk_mirror_ctx	file:
 me	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double me;$/;"	m	struct:gk_mirror_ctx	file:
 me	wham1x_adiabatic/sim.c	/^  double me;$/;"	m	struct:gk_mirror_ctx	file:
-me	wham1x_saturation_scaling/sim.c	/^  double me;$/;"	m	struct:gk_mirror_ctx	file:
+me	wham1x_saturation_scaling/rt_twostream.c	/^  double me;$/;"	m	struct:gk_mirror_ctx	file:
 mesh	postprocessing/mana_plots.py	/^  mesh = RectMesh(rmin=xxrange[0], rmax=xxrange[1], zmin=zzrange[0], zmax=zzrange[1], nr=76, nz=201)$/;"	v
 mi	mirror1x_adiabatic/sim.c	/^  double mi;$/;"	m	struct:gk_mirror_ctx	file:
 mi	mirror1x_adiabatic_eqdst/sim.c	/^  double mi;$/;"	m	struct:gk_mirror_ctx	file:
@@ -1522,7 +1529,7 @@ mi	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double mi;$/;"	m	struct:gk_mirror_ctx
 mi	postprocessing/mana_plots.py	/^mi        = 2.014*mp                         #[ Deuterium ion mass.$/;"	v
 mi	postprocessing/plot.py	/^mi        = 2.014*mp                         #[ Deuterium ion mass.$/;"	v
 mi	wham1x_adiabatic/sim.c	/^  double mi;$/;"	m	struct:gk_mirror_ctx	file:
-mi	wham1x_saturation_scaling/sim.c	/^  double mi;$/;"	m	struct:gk_mirror_ctx	file:
+mi	wham1x_saturation_scaling/rt_twostream.c	/^  double mi;$/;"	m	struct:gk_mirror_ctx	file:
 model	postprocessing/mana_plots.py	/^  model = ['kinElc','adiElc']$/;"	v
 modelPars	postprocessing/mana_plots.py	/^  modelPars = {}$/;"	v
 mpl	postprocessing/mana_plots.py	/^import matplotlib as mpl$/;"	i
@@ -1530,7 +1537,7 @@ muBound	postprocessing/mana_plots.py	/^  muBound = np.zeros(np.shape(xIntC_i[1])
 muBound_e	postprocessing/mana_plots.py	/^  muBound_e = np.zeros(np.shape(xIntC_i[1]))$/;"	v
 muBound_i	postprocessing/mana_plots.py	/^  muBound_i = np.zeros(np.shape(xIntC_i[1]))$/;"	v
 mu_max_elc	wham1x_adiabatic/sim.c	/^  double mu_max_elc;$/;"	m	struct:gk_mirror_ctx	file:
-mu_max_elc	wham1x_saturation_scaling/sim.c	/^  double mu_max_elc;$/;"	m	struct:gk_mirror_ctx	file:
+mu_max_elc	wham1x_saturation_scaling/rt_twostream.c	/^  double mu_max_elc;$/;"	m	struct:gk_mirror_ctx	file:
 mu_max_ion	mirror1x_adiabatic/sim.c	/^  double mu_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
 mu_max_ion	mirror1x_adiabatic_eqdst/sim.c	/^  double mu_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
 mu_max_ion	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double mu_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
@@ -1540,7 +1547,7 @@ mu_max_ion	mirror1x_scaledJacob/sim_unif.c	/^  double mu_max_ion;$/;"	m	struct:g
 mu_max_ion	mirror1x_trueMaxwellian/sim.c	/^  double mu_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
 mu_max_ion	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double mu_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
 mu_max_ion	wham1x_adiabatic/sim.c	/^  double mu_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
-mu_max_ion	wham1x_saturation_scaling/sim.c	/^  double mu_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
+mu_max_ion	wham1x_saturation_scaling/rt_twostream.c	/^  double mu_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
 mycolors	postprocessing/mana_plots.py	/^  mycolors = ['black',defaultColors[0],defaultColors[1]]$/;"	v
 myliness	postprocessing/mana_plots.py	/^  myliness = [':',lineStyles[0],lineStyles[1]]$/;"	v
 n0	mirror1x_adiabatic/sim.c	/^  double n0;$/;"	m	struct:gk_mirror_ctx	file:
@@ -1556,7 +1563,7 @@ n0	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double n0;$/;"	m	struct:gk_mirror_ctx
 n0	postprocessing/mana_plots.py	/^n0        = 3.e19$/;"	v
 n0	postprocessing/plot.py	/^n0        = 3.e19$/;"	v
 n0	wham1x_adiabatic/sim.c	/^  double n0;$/;"	m	struct:gk_mirror_ctx	file:
-n0	wham1x_saturation_scaling/sim.c	/^  double n0;$/;"	m	struct:gk_mirror_ctx	file:
+n0	wham1x_saturation_scaling/rt_twostream.c	/^  double n0;$/;"	m	struct:gk_mirror_ctx	file:
 nFrames	postprocessing/mana_plots.py	/^  nFrames = 1+frame$/;"	v
 nFrames	postprocessing/mana_plots.py	/^  nFrames = 1+pgu.findLastFrame(phiFile, 'bp')$/;"	v
 nFrames	postprocessing/plot.py	/^  nFrames = 1+pgu.findLastFrame(phiFile, '.gkyl')$/;"	v
@@ -1569,7 +1576,7 @@ n_m	mirror1x_scaledJacob/sim_unif.c	/^  double n_m;$/;"	m	struct:gk_mirror_ctx	f
 n_m	mirror1x_trueMaxwellian/sim.c	/^  double n_m;$/;"	m	struct:gk_mirror_ctx	file:
 n_m	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double n_m;$/;"	m	struct:gk_mirror_ctx	file:
 n_m	wham1x_adiabatic/sim.c	/^  double n_m;$/;"	m	struct:gk_mirror_ctx	file:
-n_m	wham1x_saturation_scaling/sim.c	/^  double n_m;$/;"	m	struct:gk_mirror_ctx	file:
+n_m	wham1x_saturation_scaling/rt_twostream.c	/^  double n_m;$/;"	m	struct:gk_mirror_ctx	file:
 negCells	postprocessing/mana_plots.py	/^  negCells = np.sum(dataIn < 0.)$/;"	v
 negCellsNorm	postprocessing/mana_plots.py	/^  negCellsNorm = np.sum(dataIn < -1.e-8)$/;"	v
 nodesSer1x	postprocessing/pgkylUtil.py	/^               [[-1],[-1.\/3.],[1.\/3.],[1]] ]$/;"	v
@@ -1599,7 +1606,7 @@ np	postprocessing/plot.py	/^import numpy as np$/;"	i
 np	wham1x_saturation_scaling/plot.py	/^import numpy as np$/;"	i
 nuElc	postprocessing/mana_plots.py	/^  nuElc        = logLambdaElc*(eV**4)*n0\/(6*np.sqrt(2)*(np.pi**(3\/2))*(eps0**2)*np.sqrt(me)*(Te0**(3\/2)))$/;"	v
 nuElc	wham1x_adiabatic/sim.c	/^  double nuElc;$/;"	m	struct:gk_mirror_ctx	file:
-nuElc	wham1x_saturation_scaling/sim.c	/^  double nuElc;$/;"	m	struct:gk_mirror_ctx	file:
+nuElc	wham1x_saturation_scaling/rt_twostream.c	/^  double nuElc;$/;"	m	struct:gk_mirror_ctx	file:
 nuFrac	mirror1x_adiabatic/sim.c	/^  double nuFrac;$/;"	m	struct:gk_mirror_ctx	file:
 nuFrac	mirror1x_adiabatic_eqdst/sim.c	/^  double nuFrac;$/;"	m	struct:gk_mirror_ctx	file:
 nuFrac	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double nuFrac;$/;"	m	struct:gk_mirror_ctx	file:
@@ -1609,7 +1616,7 @@ nuFrac	mirror1x_scaledJacob/sim_unif.c	/^  double nuFrac;$/;"	m	struct:gk_mirror
 nuFrac	mirror1x_trueMaxwellian/sim.c	/^  double nuFrac;$/;"	m	struct:gk_mirror_ctx	file:
 nuFrac	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double nuFrac;$/;"	m	struct:gk_mirror_ctx	file:
 nuFrac	wham1x_adiabatic/sim.c	/^  double nuFrac;$/;"	m	struct:gk_mirror_ctx	file:
-nuFrac	wham1x_saturation_scaling/sim.c	/^  double nuFrac;$/;"	m	struct:gk_mirror_ctx	file:
+nuFrac	wham1x_saturation_scaling/rt_twostream.c	/^  double nuFrac;$/;"	m	struct:gk_mirror_ctx	file:
 nuFrac_e	postprocessing/mana_plots.py	/^  nuFrac_e = np.array([0.05, 0.1, 0.5, 1., 2., 3., 5., 10., 20.]) #np.linspace(0.05, 20, 16)$/;"	v
 nuIon	mirror1x_adiabatic/sim.c	/^  double nuIon;$/;"	m	struct:gk_mirror_ctx	file:
 nuIon	mirror1x_adiabatic_eqdst/sim.c	/^  double nuIon;$/;"	m	struct:gk_mirror_ctx	file:
@@ -1621,7 +1628,7 @@ nuIon	mirror1x_trueMaxwellian/sim.c	/^  double nuIon;$/;"	m	struct:gk_mirror_ctx
 nuIon	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double nuIon;$/;"	m	struct:gk_mirror_ctx	file:
 nuIon	postprocessing/mana_plots.py	/^  nuIon        = logLambdaIon*(eV**4)*n0\/(12*(np.pi**(3\/2))*(eps0**2)*np.sqrt(mi)*(Ti0**(3\/2)))$/;"	v
 nuIon	wham1x_adiabatic/sim.c	/^  double nuIon;$/;"	m	struct:gk_mirror_ctx	file:
-nuIon	wham1x_saturation_scaling/sim.c	/^  double nuIon;$/;"	m	struct:gk_mirror_ctx	file:
+nuIon	wham1x_saturation_scaling/rt_twostream.c	/^  double nuIon;$/;"	m	struct:gk_mirror_ctx	file:
 num_cell_mu	mirror1x_adiabatic/sim.c	/^  int num_cell_mu;$/;"	m	struct:gk_mirror_ctx	file:
 num_cell_mu	mirror1x_adiabatic_eqdst/sim.c	/^  int num_cell_mu;$/;"	m	struct:gk_mirror_ctx	file:
 num_cell_mu	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  int num_cell_mu;$/;"	m	struct:gk_mirror_ctx	file:
@@ -1631,7 +1638,7 @@ num_cell_mu	mirror1x_scaledJacob/sim_unif.c	/^  int num_cell_mu;$/;"	m	struct:gk
 num_cell_mu	mirror1x_trueMaxwellian/sim.c	/^  int num_cell_mu;$/;"	m	struct:gk_mirror_ctx	file:
 num_cell_mu	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  int num_cell_mu;$/;"	m	struct:gk_mirror_ctx	file:
 num_cell_mu	wham1x_adiabatic/sim.c	/^  int num_cell_mu;$/;"	m	struct:gk_mirror_ctx	file:
-num_cell_mu	wham1x_saturation_scaling/sim.c	/^  int num_cell_mu;$/;"	m	struct:gk_mirror_ctx	file:
+num_cell_mu	wham1x_saturation_scaling/rt_twostream.c	/^  int num_cell_mu;$/;"	m	struct:gk_mirror_ctx	file:
 num_cell_vpar	mirror1x_adiabatic/sim.c	/^  int num_cell_vpar;$/;"	m	struct:gk_mirror_ctx	file:
 num_cell_vpar	mirror1x_adiabatic_eqdst/sim.c	/^  int num_cell_vpar;$/;"	m	struct:gk_mirror_ctx	file:
 num_cell_vpar	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  int num_cell_vpar;$/;"	m	struct:gk_mirror_ctx	file:
@@ -1641,7 +1648,7 @@ num_cell_vpar	mirror1x_scaledJacob/sim_unif.c	/^  int num_cell_vpar;$/;"	m	struc
 num_cell_vpar	mirror1x_trueMaxwellian/sim.c	/^  int num_cell_vpar;$/;"	m	struct:gk_mirror_ctx	file:
 num_cell_vpar	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  int num_cell_vpar;$/;"	m	struct:gk_mirror_ctx	file:
 num_cell_vpar	wham1x_adiabatic/sim.c	/^  int num_cell_vpar;$/;"	m	struct:gk_mirror_ctx	file:
-num_cell_vpar	wham1x_saturation_scaling/sim.c	/^  int num_cell_vpar;$/;"	m	struct:gk_mirror_ctx	file:
+num_cell_vpar	wham1x_saturation_scaling/rt_twostream.c	/^  int num_cell_vpar;$/;"	m	struct:gk_mirror_ctx	file:
 num_cell_z	mirror1x_adiabatic/sim.c	/^  int num_cell_z;$/;"	m	struct:gk_mirror_ctx	file:
 num_cell_z	mirror1x_adiabatic_eqdst/sim.c	/^  int num_cell_z;$/;"	m	struct:gk_mirror_ctx	file:
 num_cell_z	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  int num_cell_z;$/;"	m	struct:gk_mirror_ctx	file:
@@ -1651,7 +1658,7 @@ num_cell_z	mirror1x_scaledJacob/sim_unif.c	/^  int num_cell_z;$/;"	m	struct:gk_m
 num_cell_z	mirror1x_trueMaxwellian/sim.c	/^  int num_cell_z;$/;"	m	struct:gk_mirror_ctx	file:
 num_cell_z	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  int num_cell_z;$/;"	m	struct:gk_mirror_ctx	file:
 num_cell_z	wham1x_adiabatic/sim.c	/^  int num_cell_z;$/;"	m	struct:gk_mirror_ctx	file:
-num_cell_z	wham1x_saturation_scaling/sim.c	/^  int num_cell_z;$/;"	m	struct:gk_mirror_ctx	file:
+num_cell_z	wham1x_saturation_scaling/rt_twostream.c	/^  int num_cell_z;$/;"	m	struct:gk_mirror_ctx	file:
 num_frames	mirror1x_adiabatic/sim.c	/^  int num_frames;$/;"	m	struct:gk_mirror_ctx	file:
 num_frames	mirror1x_adiabatic_eqdst/sim.c	/^  int num_frames;$/;"	m	struct:gk_mirror_ctx	file:
 num_frames	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  int num_frames;$/;"	m	struct:gk_mirror_ctx	file:
@@ -1661,7 +1668,7 @@ num_frames	mirror1x_scaledJacob/sim_unif.c	/^  int num_frames;$/;"	m	struct:gk_m
 num_frames	mirror1x_trueMaxwellian/sim.c	/^  int num_frames;$/;"	m	struct:gk_mirror_ctx	file:
 num_frames	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  int num_frames;$/;"	m	struct:gk_mirror_ctx	file:
 num_frames	wham1x_adiabatic/sim.c	/^  int num_frames;$/;"	m	struct:gk_mirror_ctx	file:
-num_frames	wham1x_saturation_scaling/sim.c	/^  int num_frames;$/;"	m	struct:gk_mirror_ctx	file:
+num_frames	wham1x_saturation_scaling/rt_twostream.c	/^  int num_frames;$/;"	m	struct:gk_mirror_ctx	file:
 omega_ci	mirror1x_adiabatic/sim.c	/^  double omega_ci;$/;"	m	struct:gk_mirror_ctx	file:
 omega_ci	mirror1x_adiabatic_eqdst/sim.c	/^  double omega_ci;$/;"	m	struct:gk_mirror_ctx	file:
 omega_ci	mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^omega_ci = eV*B_p\/mi$/;"	v
@@ -1675,7 +1682,7 @@ omega_ci	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double omega_ci;$/;"	m	struct:g
 omega_ci	postprocessing/mana_plots.py	/^omega_ci = eV*B_p\/mi$/;"	v
 omega_ci	postprocessing/plot.py	/^omega_ci = eV*B_p\/mi$/;"	v
 omega_ci	wham1x_adiabatic/sim.c	/^  double omega_ci;$/;"	m	struct:gk_mirror_ctx	file:
-omega_ci	wham1x_saturation_scaling/sim.c	/^  double omega_ci;$/;"	m	struct:gk_mirror_ctx	file:
+omega_ci	wham1x_saturation_scaling/rt_twostream.c	/^  double omega_ci;$/;"	m	struct:gk_mirror_ctx	file:
 optimize	postprocessing/mana_plots.py	/^from scipy import optimize$/;"	i
 os	postprocessing/pgkylUtil.py	/^import os$/;"	i
 outDir	mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^outDir = '.\/python_plots\/'$/;"	v
@@ -1813,7 +1820,7 @@ poly_order	mirror1x_scaledJacob/sim_unif.c	/^  int poly_order;$/;"	m	struct:gk_m
 poly_order	mirror1x_trueMaxwellian/sim.c	/^  int poly_order;$/;"	m	struct:gk_mirror_ctx	file:
 poly_order	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  int poly_order;$/;"	m	struct:gk_mirror_ctx	file:
 poly_order	wham1x_adiabatic/sim.c	/^  int poly_order;$/;"	m	struct:gk_mirror_ctx	file:
-poly_order	wham1x_saturation_scaling/sim.c	/^  int poly_order;$/;"	m	struct:gk_mirror_ctx	file:
+poly_order	wham1x_saturation_scaling/rt_twostream.c	/^  int poly_order;$/;"	m	struct:gk_mirror_ctx	file:
 pparElc	postprocessing/mana_plots.py	/^  pparElc  = denElc*tparElc$/;"	v
 pparIon	postprocessing/mana_plots.py	/^  pparIon  = denIon*tparIon$/;"	v
 pperpElc	postprocessing/mana_plots.py	/^  pperpElc = denElc*tperpElc$/;"	v
@@ -1836,7 +1843,7 @@ psi_eval	mirror1x_scaledJacob/sim_unif.c	/^  double psi_eval;$/;"	m	struct:gk_mi
 psi_eval	mirror1x_trueMaxwellian/sim.c	/^  double psi_eval;$/;"	m	struct:gk_mirror_ctx	file:
 psi_eval	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double psi_eval;$/;"	m	struct:gk_mirror_ctx	file:
 psi_eval	wham1x_adiabatic/sim.c	/^  double psi_eval;$/;"	m	struct:gk_mirror_ctx	file:
-psi_eval	wham1x_saturation_scaling/sim.c	/^  double psi_eval;$/;"	m	struct:gk_mirror_ctx	file:
+psi_eval	wham1x_saturation_scaling/rt_twostream.c	/^  double psi_eval;$/;"	m	struct:gk_mirror_ctx	file:
 psi_in	mirror1x_adiabatic/sim.c	/^  double psi_in;$/;"	m	struct:gk_mirror_ctx	file:
 psi_in	mirror1x_adiabatic_eqdst/sim.c	/^  double psi_in;$/;"	m	struct:gk_mirror_ctx	file:
 psi_in	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double psi_in;$/;"	m	struct:gk_mirror_ctx	file:
@@ -1846,7 +1853,7 @@ psi_in	mirror1x_scaledJacob/sim_unif.c	/^  double psi_in;$/;"	m	struct:gk_mirror
 psi_in	mirror1x_trueMaxwellian/sim.c	/^  double psi_in;$/;"	m	struct:gk_mirror_ctx	file:
 psi_in	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double psi_in;$/;"	m	struct:gk_mirror_ctx	file:
 psi_in	wham1x_adiabatic/sim.c	/^  double psi_in;$/;"	m	struct:gk_mirror_ctx	file:
-psi_in	wham1x_saturation_scaling/sim.c	/^  double psi_in;$/;"	m	struct:gk_mirror_ctx	file:
+psi_in	wham1x_saturation_scaling/rt_twostream.c	/^  double psi_in;$/;"	m	struct:gk_mirror_ctx	file:
 psi_in_diff	mirror1x_adiabatic/sim.c	/^  double psi_in_diff;$/;"	m	struct:gk_mirror_ctx	file:
 psi_in_diff	mirror1x_adiabatic_eqdst/sim.c	/^  double psi_in_diff;$/;"	m	struct:gk_mirror_ctx	file:
 psi_in_diff	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double psi_in_diff;$/;"	m	struct:gk_mirror_ctx	file:
@@ -1856,7 +1863,7 @@ psi_in_diff	mirror1x_scaledJacob/sim_unif.c	/^  double psi_in_diff;$/;"	m	struct
 psi_in_diff	mirror1x_trueMaxwellian/sim.c	/^  double psi_in_diff;$/;"	m	struct:gk_mirror_ctx	file:
 psi_in_diff	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double psi_in_diff;$/;"	m	struct:gk_mirror_ctx	file:
 psi_in_diff	wham1x_adiabatic/sim.c	/^  double psi_in_diff;$/;"	m	struct:gk_mirror_ctx	file:
-psi_in_diff	wham1x_saturation_scaling/sim.c	/^  double psi_in_diff;$/;"	m	struct:gk_mirror_ctx	file:
+psi_in_diff	wham1x_saturation_scaling/rt_twostream.c	/^  double psi_in_diff;$/;"	m	struct:gk_mirror_ctx	file:
 qe	mirror1x_adiabatic/sim.c	/^  double qe;$/;"	m	struct:gk_mirror_ctx	file:
 qe	mirror1x_adiabatic_eqdst/sim.c	/^  double qe;$/;"	m	struct:gk_mirror_ctx	file:
 qe	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double qe;$/;"	m	struct:gk_mirror_ctx	file:
@@ -1866,7 +1873,7 @@ qe	mirror1x_scaledJacob/sim_unif.c	/^  double qe;$/;"	m	struct:gk_mirror_ctx	fil
 qe	mirror1x_trueMaxwellian/sim.c	/^  double qe;$/;"	m	struct:gk_mirror_ctx	file:
 qe	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double qe;$/;"	m	struct:gk_mirror_ctx	file:
 qe	wham1x_adiabatic/sim.c	/^  double qe;$/;"	m	struct:gk_mirror_ctx	file:
-qe	wham1x_saturation_scaling/sim.c	/^  double qe;$/;"	m	struct:gk_mirror_ctx	file:
+qe	wham1x_saturation_scaling/rt_twostream.c	/^  double qe;$/;"	m	struct:gk_mirror_ctx	file:
 qi	mirror1x_adiabatic/sim.c	/^  double qi;$/;"	m	struct:gk_mirror_ctx	file:
 qi	mirror1x_adiabatic_eqdst/sim.c	/^  double qi;$/;"	m	struct:gk_mirror_ctx	file:
 qi	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double qi;$/;"	m	struct:gk_mirror_ctx	file:
@@ -1876,7 +1883,7 @@ qi	mirror1x_scaledJacob/sim_unif.c	/^  double qi;$/;"	m	struct:gk_mirror_ctx	fil
 qi	mirror1x_trueMaxwellian/sim.c	/^  double qi;$/;"	m	struct:gk_mirror_ctx	file:
 qi	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double qi;$/;"	m	struct:gk_mirror_ctx	file:
 qi	wham1x_adiabatic/sim.c	/^  double qi;$/;"	m	struct:gk_mirror_ctx	file:
-qi	wham1x_saturation_scaling/sim.c	/^  double qi;$/;"	m	struct:gk_mirror_ctx	file:
+qi	wham1x_saturation_scaling/rt_twostream.c	/^  double qi;$/;"	m	struct:gk_mirror_ctx	file:
 readDynVector	postprocessing/pgkylUtil.py	/^def readDynVector(dataFile):$/;"	f
 res	postprocessing/mana_plots.py	/^  res   = [$/;"	v
 rho_s	mirror1x_adiabatic/sim.c	/^  double rho_s;$/;"	m	struct:gk_mirror_ctx	file:
@@ -1892,7 +1899,7 @@ rho_s	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double rho_s;$/;"	m	struct:gk_mirr
 rho_s	postprocessing/mana_plots.py	/^rho_s    = c_s\/omega_ci$/;"	v
 rho_s	postprocessing/plot.py	/^rho_s    = c_s\/omega_ci$/;"	v
 rho_s	wham1x_adiabatic/sim.c	/^  double rho_s;$/;"	m	struct:gk_mirror_ctx	file:
-rho_s	wham1x_saturation_scaling/sim.c	/^  double rho_s;$/;"	m	struct:gk_mirror_ctx	file:
+rho_s	wham1x_saturation_scaling/rt_twostream.c	/^  double rho_s;$/;"	m	struct:gk_mirror_ctx	file:
 rootEq	postprocessing/mana_plots.py	/^  def rootEq(x,R,frac_e):$/;"	f
 root_Z_psiz	mirror1x_adiabatic/sim.c	/^root_Z_psiz(double Z, void *ctx)$/;"	f
 root_Z_psiz	mirror1x_adiabatic_eqdst/sim.c	/^root_Z_psiz(double Z, void *ctx)$/;"	f
@@ -1915,9 +1922,9 @@ setTickFontSize	postprocessing/mana_plots.py	/^def setTickFontSize(axIn, fontSiz
 setTickFontSize	postprocessing/plot.py	/^def setTickFontSize(axIn,fontSizeIn):$/;"	f
 shutil	postprocessing/pgkylUtil.py	/^import shutil$/;"	i
 sigSrcElc	wham1x_adiabatic/sim.c	/^  double sigSrcElc;$/;"	m	struct:gk_mirror_ctx	file:
-sigSrcElc	wham1x_saturation_scaling/sim.c	/^  double sigSrcElc;$/;"	m	struct:gk_mirror_ctx	file:
+sigSrcElc	wham1x_saturation_scaling/rt_twostream.c	/^  double sigSrcElc;$/;"	m	struct:gk_mirror_ctx	file:
 sigSrcIon	wham1x_adiabatic/sim.c	/^  double sigSrcIon;$/;"	m	struct:gk_mirror_ctx	file:
-sigSrcIon	wham1x_saturation_scaling/sim.c	/^  double sigSrcIon;$/;"	m	struct:gk_mirror_ctx	file:
+sigSrcIon	wham1x_saturation_scaling/rt_twostream.c	/^  double sigSrcIon;$/;"	m	struct:gk_mirror_ctx	file:
 special	postprocessing/mana_plots.py	/^from scipy import special$/;"	i
 species	postprocessing/mana_plots.py	/^  species  = [["ion"],["ion","elc"]]$/;"	v
 sqrt15	postprocessing/pgkylUtil.py	/^sqrt15   = np.sqrt(15.0)$/;"	v
@@ -1954,7 +1961,7 @@ tau	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double tau;$/;"	m	struct:gk_mirror_c
 tau	postprocessing/mana_plots.py	/^tau       = (B_p**2)*beta\/(2*mu0*n0*Te0)-1    #[ Ti\/Te ratio.$/;"	v
 tau	postprocessing/plot.py	/^tau       = (B_p**2)*beta\/(2*mu0*n0*Te0)-1    #[ Ti\/Te ratio.$/;"	v
 tau	wham1x_adiabatic/sim.c	/^  double tau;$/;"	m	struct:gk_mirror_ctx	file:
-tau	wham1x_saturation_scaling/sim.c	/^  double tau;$/;"	m	struct:gk_mirror_ctx	file:
+tau	wham1x_saturation_scaling/rt_twostream.c	/^  double tau;$/;"	m	struct:gk_mirror_ctx	file:
 tau_pe	postprocessing/mana_plots.py	/^  def tau_pe(x,R,frac):$/;"	f
 tau_pi	postprocessing/mana_plots.py	/^  def tau_pi(R):$/;"	f
 temp	postprocessing/mana_plots.py	/^  temp = (1.e-3\/eV)*pgu.getInterpData(fName % ('ion',frame), polyOrder, basisType, varName='Temp')$/;"	v
@@ -2010,7 +2017,7 @@ upar_nonunif	mirror1x_scaledJacob/plot.py	/^  upar_nonunif = M1_nonunif[:,0]\/M0
 upar_unif	mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^  upar_unif = M1_unif[:,0]\/M0_unif[:,0]$/;"	v
 upar_unif	mirror1x_scaledJacob/plot.py	/^  upar_unif = M1_unif[:,0]\/M0_unif[:,0]$/;"	v
 vpar_max_elc	wham1x_adiabatic/sim.c	/^  double vpar_max_elc;$/;"	m	struct:gk_mirror_ctx	file:
-vpar_max_elc	wham1x_saturation_scaling/sim.c	/^  double vpar_max_elc;$/;"	m	struct:gk_mirror_ctx	file:
+vpar_max_elc	wham1x_saturation_scaling/rt_twostream.c	/^  double vpar_max_elc;$/;"	m	struct:gk_mirror_ctx	file:
 vpar_max_ion	mirror1x_adiabatic/sim.c	/^  double vpar_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
 vpar_max_ion	mirror1x_adiabatic_eqdst/sim.c	/^  double vpar_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
 vpar_max_ion	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double vpar_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
@@ -2020,7 +2027,7 @@ vpar_max_ion	mirror1x_scaledJacob/sim_unif.c	/^  double vpar_max_ion;$/;"	m	stru
 vpar_max_ion	mirror1x_trueMaxwellian/sim.c	/^  double vpar_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
 vpar_max_ion	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double vpar_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
 vpar_max_ion	wham1x_adiabatic/sim.c	/^  double vpar_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
-vpar_max_ion	wham1x_saturation_scaling/sim.c	/^  double vpar_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
+vpar_max_ion	wham1x_saturation_scaling/rt_twostream.c	/^  double vpar_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
 vte	mirror1x_adiabatic/sim.c	/^  double vte;$/;"	m	struct:gk_mirror_ctx	file:
 vte	mirror1x_adiabatic_eqdst/sim.c	/^  double vte;$/;"	m	struct:gk_mirror_ctx	file:
 vte	mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^vte = np.sqrt(Te0\/me)$/;"	v
@@ -2034,7 +2041,7 @@ vte	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double vte;$/;"	m	struct:gk_mirror_c
 vte	postprocessing/mana_plots.py	/^vte = np.sqrt(Te0\/me)$/;"	v
 vte	postprocessing/plot.py	/^vte = np.sqrt(Te0\/me)$/;"	v
 vte	wham1x_adiabatic/sim.c	/^  double vte;$/;"	m	struct:gk_mirror_ctx	file:
-vte	wham1x_saturation_scaling/sim.c	/^  double vte;$/;"	m	struct:gk_mirror_ctx	file:
+vte	wham1x_saturation_scaling/rt_twostream.c	/^  double vte;$/;"	m	struct:gk_mirror_ctx	file:
 vti	mirror1x_adiabatic/sim.c	/^  double vti;$/;"	m	struct:gk_mirror_ctx	file:
 vti	mirror1x_adiabatic_eqdst/sim.c	/^  double vti;$/;"	m	struct:gk_mirror_ctx	file:
 vti	mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^vti = np.sqrt(Ti0\/mi)$/;"	v
@@ -2048,7 +2055,7 @@ vti	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double vti;$/;"	m	struct:gk_mirror_c
 vti	postprocessing/mana_plots.py	/^vti = np.sqrt(Ti0\/mi)$/;"	v
 vti	postprocessing/plot.py	/^vti = np.sqrt(Ti0\/mi)$/;"	v
 vti	wham1x_adiabatic/sim.c	/^  double vti;$/;"	m	struct:gk_mirror_ctx	file:
-vti	wham1x_saturation_scaling/sim.c	/^  double vti;$/;"	m	struct:gk_mirror_ctx	file:
+vti	wham1x_saturation_scaling/rt_twostream.c	/^  double vti;$/;"	m	struct:gk_mirror_ctx	file:
 wham	postprocessing/mana_plots.py	/^  wham = WHAM()  #[ Create the WHAM device.$/;"	v
 write_data	mirror1x_adiabatic/sim.c	/^write_data(struct gkyl_tm_trigger *iot, gkyl_gyrokinetic_app *app, double tcurr)$/;"	f
 write_data	mirror1x_adiabatic_eqdst/sim.c	/^write_data(struct gkyl_tm_trigger *iot, gkyl_gyrokinetic_app *app, double tcurr)$/;"	f
@@ -2059,7 +2066,7 @@ write_data	mirror1x_scaledJacob/sim_unif.c	/^write_data(struct gkyl_tm_trigger *
 write_data	mirror1x_trueMaxwellian/sim.c	/^write_data(struct gkyl_tm_trigger *iot, gkyl_gyrokinetic_app *app, double tcurr)$/;"	f
 write_data	mirror1x_trueMaxwellian_3x_mu/sim.c	/^write_data(struct gkyl_tm_trigger *iot, gkyl_gyrokinetic_app *app, double tcurr)$/;"	f
 write_data	wham1x_adiabatic/sim.c	/^write_data(struct gkyl_tm_trigger *iot, gkyl_gyrokinetic_app *app, double tcurr)$/;"	f
-write_data	wham1x_saturation_scaling/sim.c	/^write_data(struct gkyl_tm_trigger *iot, gkyl_gyrokinetic_app *app, double tcurr)$/;"	f
+write_data	wham1x_saturation_scaling/rt_twostream.c	/^write_data(struct gkyl_tm_trigger *iot, gkyl_gyrokinetic_app *app, double tcurr)$/;"	f
 write_eqdsk	postprocessing/mana_plots.py	/^  from pleiades import RectMesh, compute_equilibrium, write_eqdsk$/;"	i
 xyLabelFontSize	mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^xyLabelFontSize       = 17$/;"	v
 xyLabelFontSize	mirror1x_scaledJacob/plot.py	/^xyLabelFontSize       = 17$/;"	v
@@ -2074,7 +2081,7 @@ z_bt	mirror1x_scaledJacob/sim_unif.c	/^  double z_bt;$/;"	m	struct:gk_mirror_ctx
 z_bt	mirror1x_trueMaxwellian/sim.c	/^  double z_bt;$/;"	m	struct:gk_mirror_ctx	file:
 z_bt	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double z_bt;$/;"	m	struct:gk_mirror_ctx	file:
 z_bt	wham1x_adiabatic/sim.c	/^  double z_bt;$/;"	m	struct:gk_mirror_ctx	file:
-z_bt	wham1x_saturation_scaling/sim.c	/^  double z_bt;$/;"	m	struct:gk_mirror_ctx	file:
+z_bt	wham1x_saturation_scaling/rt_twostream.c	/^  double z_bt;$/;"	m	struct:gk_mirror_ctx	file:
 z_in	mirror1x_adiabatic/sim.c	/^  double z_in;$/;"	m	struct:gk_mirror_ctx	file:
 z_in	mirror1x_adiabatic_eqdst/sim.c	/^  double z_in;$/;"	m	struct:gk_mirror_ctx	file:
 z_in	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double z_in;$/;"	m	struct:gk_mirror_ctx	file:
@@ -2084,7 +2091,7 @@ z_in	mirror1x_scaledJacob/sim_unif.c	/^  double z_in;$/;"	m	struct:gk_mirror_ctx
 z_in	mirror1x_trueMaxwellian/sim.c	/^  double z_in;$/;"	m	struct:gk_mirror_ctx	file:
 z_in	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double z_in;$/;"	m	struct:gk_mirror_ctx	file:
 z_in	wham1x_adiabatic/sim.c	/^  double z_in;$/;"	m	struct:gk_mirror_ctx	file:
-z_in	wham1x_saturation_scaling/sim.c	/^  double z_in;$/;"	m	struct:gk_mirror_ctx	file:
+z_in	wham1x_saturation_scaling/rt_twostream.c	/^  double z_in;$/;"	m	struct:gk_mirror_ctx	file:
 z_m	mirror1x_adiabatic/sim.c	/^  double z_m;$/;"	m	struct:gk_mirror_ctx	file:
 z_m	mirror1x_adiabatic_eqdst/sim.c	/^  double z_m;$/;"	m	struct:gk_mirror_ctx	file:
 z_m	mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^z_m = 0.983244   #[ Location of maximum B-field.$/;"	v
@@ -2098,7 +2105,7 @@ z_m	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double z_m;$/;"	m	struct:gk_mirror_c
 z_m	postprocessing/mana_plots.py	/^z_m = 0.983244   #[ Location of maximum B-field.$/;"	v
 z_m	postprocessing/plot.py	/^z_m = 0.983244   #[ Location of maximum B-field.$/;"	v
 z_m	wham1x_adiabatic/sim.c	/^  double z_m;$/;"	m	struct:gk_mirror_ctx	file:
-z_m	wham1x_saturation_scaling/sim.c	/^  double z_m;$/;"	m	struct:gk_mirror_ctx	file:
+z_m	wham1x_saturation_scaling/rt_twostream.c	/^  double z_m;$/;"	m	struct:gk_mirror_ctx	file:
 z_max	mirror1x_adiabatic/sim.c	/^  double z_max;$/;"	m	struct:gk_mirror_ctx	file:
 z_max	mirror1x_adiabatic_eqdst/sim.c	/^  double z_max;$/;"	m	struct:gk_mirror_ctx	file:
 z_max	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double z_max;$/;"	m	struct:gk_mirror_ctx	file:
@@ -2108,7 +2115,7 @@ z_max	mirror1x_scaledJacob/sim_unif.c	/^  double z_max;$/;"	m	struct:gk_mirror_c
 z_max	mirror1x_trueMaxwellian/sim.c	/^  double z_max;$/;"	m	struct:gk_mirror_ctx	file:
 z_max	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double z_max;$/;"	m	struct:gk_mirror_ctx	file:
 z_max	wham1x_adiabatic/sim.c	/^  double z_max;$/;"	m	struct:gk_mirror_ctx	file:
-z_max	wham1x_saturation_scaling/sim.c	/^  double z_max;$/;"	m	struct:gk_mirror_ctx	file:
+z_max	wham1x_saturation_scaling/rt_twostream.c	/^  double z_max;$/;"	m	struct:gk_mirror_ctx	file:
 z_min	mirror1x_adiabatic/sim.c	/^  double z_min;$/;"	m	struct:gk_mirror_ctx	file:
 z_min	mirror1x_adiabatic_eqdst/sim.c	/^  double z_min;$/;"	m	struct:gk_mirror_ctx	file:
 z_min	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  double z_min;$/;"	m	struct:gk_mirror_ctx	file:
@@ -2118,7 +2125,7 @@ z_min	mirror1x_scaledJacob/sim_unif.c	/^  double z_min;$/;"	m	struct:gk_mirror_c
 z_min	mirror1x_trueMaxwellian/sim.c	/^  double z_min;$/;"	m	struct:gk_mirror_ctx	file:
 z_min	mirror1x_trueMaxwellian_3x_mu/sim.c	/^  double z_min;$/;"	m	struct:gk_mirror_ctx	file:
 z_min	wham1x_adiabatic/sim.c	/^  double z_min;$/;"	m	struct:gk_mirror_ctx	file:
-z_min	wham1x_saturation_scaling/sim.c	/^  double z_min;$/;"	m	struct:gk_mirror_ctx	file:
+z_min	wham1x_saturation_scaling/rt_twostream.c	/^  double z_min;$/;"	m	struct:gk_mirror_ctx	file:
 z_psiZ	mirror1x_adiabatic/sim.c	/^z_psiZ(double psiIn, double ZIn, void *ctx)$/;"	f
 z_psiZ	mirror1x_adiabatic_eqdst/sim.c	/^z_psiZ(double psiIn, double ZIn, void *ctx)$/;"	f
 z_psiZ	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^z_psiZ(double psiIn, double ZIn, void *ctx)$/;"	f
