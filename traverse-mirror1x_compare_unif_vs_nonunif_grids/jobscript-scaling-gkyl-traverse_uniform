@@ -1,0 +1,47 @@
+#!/bin/bash -l
+
+#.Declare a name for this job to be my_serial_job
+#.it is recommended that this name be kept to 16 characters or less
+#SBATCH -J gkyl-wham
+
+#SBATCH --qos test
+
+#.Number of nodes to request
+#SBATCH -N 5
+
+#. Total number of cores (32 per node).
+#SBATCH --tasks-per-node=32
+
+#.Request a GPU. GPU's per node to request
+#SBATCH --gres=gpu:4
+
+#.Request wall time
+#SBATCH -t 1:00:00
+
+#.Mail is sent to you when the job starts and when it terminates or aborts.
+#.SBATCH --mail-user=mhrosen@pppl.gov
+#.SBATCH --mail-type=BEGIN,END,FAIL,REQUEUE
+
+#.Specify name format of output file.
+#SBATCH -o slurm-%j.out
+
+# If doing a restart indicate restart file path. Must also
+# add it as a command line argument after outdir below.
+
+module load cudatoolkit/12.0
+module load nccl/cuda-11.7/2.14.3
+module load openmpi/cuda-11.7/nvhpc-22.5/4.1.4/64
+
+export ALLINEA_FORCE_CUDA_VERSION=12.0
+export OMPI_MCA_btl_openib_allow_ib=1
+export OMPI_MCA_mpi_warn_on_fork=0
+
+num_procs=20
+
+./sim_unif -g -s 1
+
+srun -u -n $num_procs ./sim_unif_fromfile -g -M -c $num_procs 
+
+mv *.gkyl outputs/
+
+exit 0

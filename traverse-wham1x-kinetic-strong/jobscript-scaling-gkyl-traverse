@@ -7,7 +7,7 @@
 #SBATCH --qos test
 
 #.Number of nodes to request
-#SBATCH -N 12
+#SBATCH -N 5
 
 #. Total number of cores (32 per node).
 #SBATCH --tasks-per-node=32
@@ -36,20 +36,20 @@ export ALLINEA_FORCE_CUDA_VERSION=12.0
 export OMPI_MCA_btl_openib_allow_ib=1
 export OMPI_MCA_mpi_warn_on_fork=0
 
-num_procs=48
+num_procs=(1 2 3 4 5 6 8 10 12 15 16 20)
+Nz=240
 
-Nz_values=($(seq $(($num_procs*1)) $(($num_procs*1)) $(($num_procs*4)))) #Minimum is 20 < x < 40
-echo "Nz values: ${Nz_values[@]}"
+echo "num_procs: ${num_procs[@]}"
 # Initialize an array to store execution times
 execution_times=()
 output_file="temp_output.txt"
-for Nz in "${Nz_values[@]}"
+for procs in "${num_procs[@]}"
 do
-  echo "Starting job for Nz=$Nz"
+  echo "Starting job for $procs processors"
   echo "Generating geometry"
   ./rt_twostream_mirror -g -x $Nz -s 1
   echo "Running simulation"
-  srun -u -n $num_procs ./rt_twostream -g -s 100 -x $Nz -M -c $num_procs > "$output_file"
+  srun -n $procs ./rt_twostream -g -s 100 -x $Nz -M -c $procs > "$output_file"
   cat "$output_file"
   elapsedTime=$(awk '/Updates took/ {print $3}' "$output_file")
   eulerCalls=$(awk '/Number of forward-Euler calls/ {print $5}' "$output_file")
@@ -58,13 +58,13 @@ do
   echo "Euler Calls: $eulerCalls"
   echo "Time per call: $timePerCall seconds"
   execution_times+=($timePerCall)
-  echo "Finished job for Nz=$Nz"
+  echo "Finished job for $procs processors"
 done
 
 # Print the final execution times
 echo "Final results"
-echo "Nz values: ${Nz_values[@]}"
-echo "${Nz_values[@]}" > Nz_vals.txt
+echo "Processors: ${num_procs[@]}"
+echo "${num_procs[@]}" > num_procs.txt
 echo "Execution times: ${execution_times[@]}"
 echo "${execution_times[@]}" > execution_times.txt
 

@@ -4,6 +4,7 @@
 *.json
 tags.lock
 tags
+*.png
 
 # Ignore compiled binaries and executables
 *.exe
