@@ -867,7 +867,7 @@ int main(int argc, char **argv)
     .diag_moments = {"M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp"},
   };
   struct gkyl_gyrokinetic_field field = {
-    .gkfield_id = GKYL_GK_FIELD_ADIABATIC,
+    .gkfield_id = GKYL_GK_FIELD_BOLTZMANN,
     .electron_mass = ctx.me,
     .electron_charge = ctx.qe,
     .electron_temp = ctx.Te0,
@@ -875,7 +875,7 @@ int main(int argc, char **argv)
     .fem_parbc = GKYL_FEM_PARPROJ_NONE,
   };
   struct gkyl_gk gk = {  // GK app
-    .name = "outputs/gk_mirror_adiabatic_elc_1x2v_p1_nosource_uniform",
+    .name = "gk_mirror_boltz_uniform",
     .cdim = 1,
     .vdim = 2,
     .lower = {ctx.z_min},
@@ -890,7 +890,6 @@ int main(int argc, char **argv)
       .c2p_ctx = &ctx,
       .bmag_func = bmag_func, // magnetic field magnitude
       .bmag_ctx = &ctx,
-      // .geometry_id = GKYL_GEOMETRY_FROMFILE,
     },
     .num_periodic_dir = 0,
     .periodic_dirs = {},

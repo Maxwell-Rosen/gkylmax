@@ -622,7 +622,7 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   int num_cell_vpar = 128; // Number of cells in the paralell velocity direction 96
   int num_cell_mu = 192;  // Number of cells in the mu direction 192
-  int num_cell_z = 400;
+  int num_cell_z = 280;
   int poly_order = 1;
   double final_time = 100e-6;
   int num_frames = 100;
@@ -645,7 +645,7 @@ create_ctx(void)
   double Ti_par_m = 1000 * eV;
 
   // Non-uniform z mapping
-  double mapping_frac = 0.7; // 1 is full mapping, 0 is no mapping
+  double mapping_frac = 0.0; // 1 is full mapping, 0 is no mapping
 
   struct gk_mirror_ctx ctx = {
     .mi = mi,
@@ -755,9 +755,9 @@ int main(int argc, char **argv)
   int NZ = APP_ARGS_CHOOSE(app_args.xcells[0], ctx.num_cell_z);
   int NV = APP_ARGS_CHOOSE(app_args.vcells[0], ctx.num_cell_vpar);
   int NMU = APP_ARGS_CHOOSE(app_args.vcells[1], ctx.num_cell_mu);
+int nrank = 1; // number of processors in simulation
 
-  int nrank = 1; // number of processors in simulation
-#ifdef GKYL_HAVE_MPI
+  #ifdef GKYL_HAVE_MPI
   if (app_args.use_mpi)
     MPI_Comm_size(MPI_COMM_WORLD, &nrank);
 #endif  
@@ -867,7 +867,7 @@ int main(int argc, char **argv)
     .diag_moments = {"M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp"},
   };
   struct gkyl_gyrokinetic_field field = {
-    .gkfield_id = GKYL_GK_FIELD_BOLTZMANN,
+    .gkfield_id = GKYL_GK_FIELD_ADIABATIC,
     .electron_mass = ctx.me,
     .electron_charge = ctx.qe,
     .electron_temp = ctx.Te0,
@@ -875,7 +875,7 @@ int main(int argc, char **argv)
     .fem_parbc = GKYL_FEM_PARPROJ_NONE,
   };
   struct gkyl_gk gk = {  // GK app
-    .name = "gk_mirror_boltz_nonuniform",
+    .name = "outputs/gk_mirror_adiabatic_elc_1x2v_p1_nosource_uniform",
     .cdim = 1,
     .vdim = 2,
     .lower = {ctx.z_min},
@@ -889,8 +889,7 @@ int main(int argc, char **argv)
       .mapc2p = mapc2p, // mapping of computational to physical space
       .c2p_ctx = &ctx,
       .bmag_func = bmag_func, // magnetic field magnitude
-      .bmag_ctx = &ctx,
-    },
+      .bmag_ctx = &ctx},
     .num_periodic_dir = 0,
     .periodic_dirs = {},
     .num_species = 1,
@@ -903,19 +902,19 @@ int main(int argc, char **argv)
       .comm = comm
     }
   };
-  if (my_rank == 0) printf("Creating app object ...\n");
+  printf("Creating app object ...\n");
   gkyl_gyrokinetic_app *app = gkyl_gyrokinetic_app_new(&gk);  // create app object
   double tcurr = 0.0, tend = ctx.final_time; // start, end and initial time-step
   double dt = tend - tcurr;
   int nframe = ctx.num_frames;
   struct gkyl_tm_trigger io_trig = {.dt = tend / nframe}; // create trigger for IO
-  if (my_rank == 0) printf("Applying initial conditions ...\n");
+  printf("Applying initial conditions ...\n");
   gkyl_gyrokinetic_app_apply_ic(app, tcurr);  // initialize simulation
-  if (my_rank == 0) printf("Computing initial diagnostics ...\n");
+  printf("Computing initial diagnostics ...\n");
   write_data(&io_trig, app, tcurr);
-  if (my_rank == 0) printf("Computing initial field energy ...\n");
+  printf("Computing initial field energy ...\n");
   gkyl_gyrokinetic_app_calc_field_energy(app, tcurr);
-  if (my_rank == 0) printf("Starting main loop ...\n");
+  printf("Starting main loop ...\n");
   long step = 1, num_steps = app_args.num_steps;
   while ((tcurr < tend) && (step <= num_steps))
   {
@@ -936,7 +935,7 @@ int main(int argc, char **argv)
     write_data(&io_trig, app, tcurr);
     step += 1;
   }
-  if (my_rank == 0) printf(" ... finished\n");
+  printf(" ... finished\n");
   gkyl_gyrokinetic_app_calc_field_energy(app, tcurr);
   gkyl_gyrokinetic_app_write_field_energy(app);
   gkyl_gyrokinetic_app_stat_write(app);
@@ -958,12 +957,8 @@ int main(int argc, char **argv)
   gkyl_gyrokinetic_app_cout(app, stdout, "Updates took %g secs\n", stat.total_tm);
   gkyl_gyrokinetic_app_cout(app, stdout, "Number of write calls %ld,\n", stat.nio);
   gkyl_gyrokinetic_app_cout(app, stdout, "IO time took %g secs \n", stat.io_tm);
-  
-  // simulation complete, free app
-  gkyl_gyrokinetic_app_release(app);
-gkyl_rect_decomp_release(decomp);
-  gkyl_comm_release(comm);
-
+  gkyl_gyrokinetic_app_release(app); // simulation complete, free app
+    
   mpifinalize:
   ;
 #ifdef GKYL_HAVE_MPI

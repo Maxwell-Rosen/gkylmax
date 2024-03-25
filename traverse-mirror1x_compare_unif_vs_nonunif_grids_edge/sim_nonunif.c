@@ -245,8 +245,8 @@ double
 z_xi(double xi, double psi, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  double z_min = app->z_min;
-  double z_max = app->z_max;
+  double z_min = app->z_min*0.9;
+  double z_max = app->z_max*0.9;
   double z_m = app->z_m;
   int n_ex = app->mapping_order_expander;
   int n_ct = app->mapping_order_center;
@@ -622,7 +622,7 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   int num_cell_vpar = 128; // Number of cells in the paralell velocity direction 96
   int num_cell_mu = 192;  // Number of cells in the mu direction 192
-  int num_cell_z = 400;
+  int num_cell_z = 140;
   int poly_order = 1;
   double final_time = 100e-6;
   int num_frames = 100;
