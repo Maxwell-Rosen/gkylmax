@@ -14,18 +14,19 @@ from matplotlib.colors import LogNorm
 import multiprocessing
 
 # dataDir = '/scratch/gpfs/mr1884/scratch/gkylmax/traverse-mirror1x_compare_unif_vs_nonunif_grids/outputs/'
-dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-mirror1x_compare_unif_vs_nonunif_grids/outputs/'
+dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-mirror1x_compare_unif_vs_nonunif_grids_edge/outputs/'
+dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-mirror1x_compare_unif_vs_nonunif_grids_edge/'
 unifFile = 'gk_mirror_boltz_uniform'
 nonunifFile = 'gk_mirror_boltz_nonuniform'
-frame_arr = np.arange(0,94)
+frame_arr = np.arange(0,4)
 # frame_arr = np.array([1:4])
 save_figure_as_file= 1     #[ If True, save figure to file. If False, display figure on screen.
 
-plot_moments       = 0  # Plot density, potential, upar, tperp, tpar.
+plot_moments       = 1  # Plot density, potential, upar, tperp, tpar.
 plot_distvpar      = 0  # plot distribution function in vpar.
 plot_distmu        = 0  # plot distribution function in mu.
-plot_distf_at_z    = 1
-z_loctions = np.array([2.4])
+plot_distf_at_z    = 0
+z_loctions = np.array([0, 0.3, 0.98, 2.4])
 
 print(frame_arr)
 def process_frame(frameNum):
@@ -222,6 +223,19 @@ def process_frame(frameNum):
     ax[1,2].set_ylabel('$T_{\parallel}$ (eV)', fontsize=xyLabelFontSize)
     ax[1,2].legend(loc='upper left', fontsize=legendFontSize)
     setTickFontSize(ax[1,2],tickFontSize)
+
+    # Plot the grid and mapc2p
+    ax[0,2].plot(dataOut_unif_mapc2p[:,0], dataOut_unif_mapc2p[:,0],'r', label='Uniform grid', markersize=0.5)
+    ax[0,2].plot(dataOut_nonunif_mapc2p[:,0], dataOut_nonunif_mapc2p[:,0],'b.', label='Nonuniform grid', markersize=0.5)
+    ax[0,2].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
+    ax[0,2].set_ylabel('Mapped cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
+    ax[0,2].legend(loc='upper left', fontsize=legendFontSize)
+    setTickFontSize(ax[0,2],tickFontSize)
+    # print("mapc2p uniform grid: ", dataOut_unif_mapc2p[:,0])
+    # print("mapc2p nonuniform grid: ", dataOut_nonunif_mapc2p[:,0])
+    # print("last cell spacings uniform grid: ", dataOut_unif_mapc2p[-1,0] - dataOut_unif_mapc2p[-2,0])
+    # print("last cell spacings nonuniform grid: ", dataOut_nonunif_mapc2p[-1,0] - dataOut_nonunif_mapc2p[-2,0])
+    # print("ratio of last cell spacings: ", (dataOut_unif_mapc2p[-1,0] - dataOut_unif_mapc2p[-2,0])/(dataOut_nonunif_mapc2p[-1,0] - dataOut_nonunif_mapc2p[-2,0]))
     
     figName = 'moments_'+str(frameNum)
     if save_figure_as_file:
@@ -230,7 +244,7 @@ def process_frame(frameNum):
       print('Saved figure as '+figName+figureFileFormat)  
     else:
       plt.show()
-    
+  
   if plot_distvpar:
     # f_unif, f_map, f_nonunif, f_nonunif_map = load_mapped_data('-ion-')
     dataName = '-ion_'

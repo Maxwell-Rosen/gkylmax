@@ -1,0 +1,73 @@
+#!/bin/bash -l
+
+#.Declare a name for this job to be my_serial_job
+#.it is recommended that this name be kept to 16 characters or less
+#SBATCH -J gkyl-wham
+
+#SBATCH --qos test
+
+#.Number of nodes to request
+#SBATCH -N 12
+
+#. Total number of cores (32 per node).
+#SBATCH --tasks-per-node=32
+
+#.Request a GPU. GPU's per node to request
+#SBATCH --gres=gpu:4
+
+#.Request wall time
+#SBATCH -t 1:00:00
+
+#.Mail is sent to you when the job starts and when it terminates or aborts.
+#.SBATCH --mail-user=mhrosen@pppl.gov
+#.SBATCH --mail-type=BEGIN,END,FAIL,REQUEUE
+
+#.Specify name format of output file.
+#SBATCH -o slurm-%j.out
+
+# If doing a restart indicate restart file path. Must also
+# add it as a command line argument after outdir below.
+
+module load cudatoolkit/12.0
+module load nccl/cuda-11.7/2.14.3
+module load openmpi/cuda-11.7/nvhpc-22.5/4.1.4/64
+
+export ALLINEA_FORCE_CUDA_VERSION=12.0
+export OMPI_MCA_btl_openib_allow_ib=1
+export OMPI_MCA_mpi_warn_on_fork=0
+
+num_procs=48
+
+Nz_values=($(seq $(($num_procs*1)) $(($num_procs*1)) $(($num_procs*4)))) #Minimum is 20 < x < 40
+echo "Nz values: ${Nz_values[@]}"
+# Initialize an array to store execution times
+execution_times=()
+output_file="temp_output.txt"
+for Nz in "${Nz_values[@]}"
+do
+  echo "Starting job for Nz=$Nz"
+  echo "Generating geometry"
+  ./rt_twostream_mirror -g -x $Nz -s 1
+  echo "Running simulation"
+  srun -u -n $num_procs ./rt_twostream -g -s 100 -x $Nz -M -c $num_procs > "$output_file"
+  cat "$output_file"
+  elapsedTime=$(awk '/Updates took/ {print $3}' "$output_file")
+  eulerCalls=$(awk '/Number of forward-Euler calls/ {print $5}' "$output_file")
+  timePerCall=$(echo "scale=4; $elapsedTime / $eulerCalls" | bc)
+  echo "Elapsed Time: $elapsedTime seconds"
+  echo "Euler Calls: $eulerCalls"
+  echo "Time per call: $timePerCall seconds"
+  execution_times+=($timePerCall)
+  echo "Finished job for Nz=$Nz"
+done
+
+# Print the final execution times
+echo "Final results"
+echo "Nz values: ${Nz_values[@]}"
+echo "${Nz_values[@]}" > Nz_vals.txt
+echo "Execution times: ${execution_times[@]}"
+echo "${execution_times[@]}" > execution_times.txt
+
+mv *.gkyl outputs/
+
+exit 0

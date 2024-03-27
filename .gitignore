@@ -5,6 +5,8 @@
 tags.lock
 tags
 *.png
+*.bin
+*.h5
 
 # Ignore compiled binaries and executables
 *.exe

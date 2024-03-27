@@ -1459,7 +1459,7 @@ dataDir	postprocessing/mana_plots.py	/^  dataDir = ['\/scratch\/gpfs\/manaurer\/
 dataDir	postprocessing/mana_plots.py	/^  dataDir = ['\/scratch\/gpfs\/manaurer\/gkeyll\/mirror\/gk77\/',$/;"	v
 dataDir	postprocessing/plot.py	/^dataDir = '\/scratch\/gpfs\/mr1884\/gkylzero\/'$/;"	v
 dataDir	traverse-mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^dataDir = '\/home\/mr1884\/scratch\/Link to scratch_traverse\/gkylmax\/traverse-mirror1x_compare_unif_vs_nonunif_grids\/outputs\/'$/;"	v
-dataDir	traverse-mirror1x_compare_unif_vs_nonunif_grids_edge/plot.py	/^dataDir = '\/home\/mr1884\/scratch\/Link to scratch_traverse\/gkylmax\/traverse-mirror1x_compare_unif_vs_nonunif_grids\/outputs\/'$/;"	v
+dataDir	traverse-mirror1x_compare_unif_vs_nonunif_grids_edge/plot.py	/^dataDir = '\/home\/mr1884\/scratch\/Link to scratch_traverse\/gkylmax\/traverse-mirror1x_compare_unif_vs_nonunif_grids_edge\/outputs\/'$/;"	v
 dataDir	traverse-mirror1x_scaledJacob/plot.py	/^dataDir = '\/home\/mr1884\/scratch\/Link to scratch_traverse\/gkylmax\/traverse-mirror1x_compare_unif_vs_nonunif_grids\/outputs\/'$/;"	v
 dataFile	postprocessing/mana_plots.py	/^  dataFile = '\/scratch\/gpfs\/manaurer\/gkeyll\/mirror\/gk55\/gk55-wham1x2v_elc_128.bp'$/;"	v
 dataFile	postprocessing/mana_plots.py	/^  dataFile = dataDir + fileName + '_allGeo_0.bp'$/;"	v
@@ -1926,7 +1926,7 @@ frameNum	mirror1x_scaledJacob/plot.py	/^frameNum = 14$/;"	v
 frameNum	postprocessing/plot.py	/^frameNum = 0                 #.Frame number to process.$/;"	v
 frameProf	postprocessing/mana_plots.py	/^  frameProf = 128$/;"	v
 frame_arr	traverse-mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^frame_arr = np.arange(0,94)$/;"	v
-frame_arr	traverse-mirror1x_compare_unif_vs_nonunif_grids_edge/plot.py	/^frame_arr = np.arange(0,94)$/;"	v
+frame_arr	traverse-mirror1x_compare_unif_vs_nonunif_grids_edge/plot.py	/^frame_arr = np.arange(0,20)$/;"	v
 frame_arr	traverse-mirror1x_scaledJacob/plot.py	/^frame_arr = np.arange(0,94)$/;"	v
 frame_gk32	postprocessing/mana_plots.py	/^  frame_gk32 = 152$/;"	v
 gamma	mirror1x_adiabatic/sim.c	/^  double gamma;$/;"	m	struct:gk_mirror_ctx	file:
@@ -2620,7 +2620,7 @@ plot_Temp	postprocessing/mana_plots.py	/^plot_Temp         = False   #[ Plot tem
 plot_adiabaticElc	postprocessing/mana_plots.py	/^plot_adiabaticElc = False   #[ Plot M0, Temp, phi(z), e*phi\/Te for kinetic and adiabatic electrons.$/;"	v
 plot_density	postprocessing/plot.py	/^plot_density       = True  #[ Plot density.$/;"	v
 plot_distf_at_z	traverse-mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^plot_distf_at_z    = 1$/;"	v
-plot_distf_at_z	traverse-mirror1x_compare_unif_vs_nonunif_grids_edge/plot.py	/^plot_distf_at_z    = 1$/;"	v
+plot_distf_at_z	traverse-mirror1x_compare_unif_vs_nonunif_grids_edge/plot.py	/^plot_distf_at_z    = 0$/;"	v
 plot_distf_at_z	traverse-mirror1x_scaledJacob/plot.py	/^plot_distf_at_z    = 1$/;"	v
 plot_distf_at_z_eq	traverse-mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^  def plot_distf_at_z_eq(z0_coordinate):$/;"	f	function:process_frame
 plot_distf_at_z_eq	traverse-mirror1x_compare_unif_vs_nonunif_grids_edge/plot.py	/^  def plot_distf_at_z_eq(z0_coordinate):$/;"	f	function:process_frame
@@ -2656,7 +2656,7 @@ plot_mom_ic_final	postprocessing/mana_plots.py	/^plot_mom_ic_final         = Fal
 plot_moments	mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^plot_moments       = 1  # Plot density, potential, upar, tperp, tpar.$/;"	v
 plot_moments	mirror1x_scaledJacob/plot.py	/^plot_moments       = 1  # Plot density, potential, upar, tperp, tpar.$/;"	v
 plot_moments	traverse-mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^plot_moments       = 0  # Plot density, potential, upar, tperp, tpar.$/;"	v
-plot_moments	traverse-mirror1x_compare_unif_vs_nonunif_grids_edge/plot.py	/^plot_moments       = 0  # Plot density, potential, upar, tperp, tpar.$/;"	v
+plot_moments	traverse-mirror1x_compare_unif_vs_nonunif_grids_edge/plot.py	/^plot_moments       = 1  # Plot density, potential, upar, tperp, tpar.$/;"	v
 plot_moments	traverse-mirror1x_scaledJacob/plot.py	/^plot_moments       = 0  # Plot density, potential, upar, tperp, tpar.$/;"	v
 plot_nonuniformz	postprocessing/mana_plots.py	/^plot_nonuniformz  = False$/;"	v
 plot_pastukhovPhi	postprocessing/mana_plots.py	/^plot_pastukhovPhi         = False   #[ Plots with the estimate of the Pastukhov potential.$/;"	v
@@ -3120,7 +3120,7 @@ z_in	traverse-wham1x-kinetic-strong/rt_twostream.c	/^  double z_in;$/;"	m	struct
 z_in	wham1x_adiabatic/sim.c	/^  double z_in;$/;"	m	struct:gk_mirror_ctx	file:
 z_in	wham1x_saturation_scaling/rt_twostream.c	/^  double z_in;$/;"	m	struct:gk_mirror_ctx	file:
 z_loctions	traverse-mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^z_loctions = np.array([2.4])$/;"	v
-z_loctions	traverse-mirror1x_compare_unif_vs_nonunif_grids_edge/plot.py	/^z_loctions = np.array([2.4])$/;"	v
+z_loctions	traverse-mirror1x_compare_unif_vs_nonunif_grids_edge/plot.py	/^z_loctions = np.array([0, 0.3, 0.98, 2.4])$/;"	v
 z_loctions	traverse-mirror1x_scaledJacob/plot.py	/^z_loctions = np.array([2.4])$/;"	v
 z_m	mirror1x_adiabatic/sim.c	/^  double z_m;$/;"	m	struct:gk_mirror_ctx	file:
 z_m	mirror1x_adiabatic_eqdst/sim.c	/^  double z_m;$/;"	m	struct:gk_mirror_ctx	file:
