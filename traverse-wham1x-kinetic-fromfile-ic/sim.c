@@ -114,8 +114,8 @@ struct gkyl_mirror_geo_efit_inp inp = {
 
 struct gkyl_mirror_geo_grid_inp ginp = {
   .rclose = 0.2,
-  .zmin = -2.48,
-  .zmax =  2.48,
+  .zmin = -0.97,
+  .zmax =  0.97,
   .write_node_coord_array = true,
   .node_file_nm = "wham_nodes.gkyl",
   // .nonuniform_mapping_fraction = 0,
@@ -611,13 +611,6 @@ struct gkyl_gyrokinetic_species elc = {
     //   .func = read_elc_distf,
     //   .ctx_func = &ctx, 
     // },
-    .collisions =  {
-      .collision_id = GKYL_LBO_COLLISIONS,
-      .ctx = &ctx,
-      .self_nu = evalNuElc,
-      .num_cross_collisions = 1,
-      .collide_with = { "ion" },
-    },
     .bcx = {
       .lower={.type = GKYL_SPECIES_FIXED_FUNC,},
       .upper={.type = GKYL_SPECIES_FIXED_FUNC,},
@@ -625,6 +618,13 @@ struct gkyl_gyrokinetic_species elc = {
     .bcy = {
       .lower={.type = GKYL_SPECIES_GK_SHEATH,},
       .upper={.type = GKYL_SPECIES_GK_SHEATH,},
+    },
+    .collisions = {
+      .collision_id = GKYL_LBO_COLLISIONS,
+      .ctx = &ctx,
+      .self_nu = evalNuElc,
+      .num_cross_collisions = 1, // Not sure
+      .collide_with = {"ion"},
     },
     .num_diag_moments = 7, // Copied from GKsoloviev, but
     .diag_moments = {"M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp"},
@@ -656,6 +656,11 @@ struct gkyl_gyrokinetic_species elc = {
     .bcy = {
       .lower={.type = GKYL_SPECIES_GK_SHEATH,},
       .upper={.type = GKYL_SPECIES_GK_SHEATH,},
+    },    
+    .collisions = {
+      .collision_id = GKYL_LBO_COLLISIONS,
+      .ctx = &ctx,
+      .self_nu = evalNuIon,
     },
     .num_diag_moments = 7,
     .diag_moments = {"M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp"},
