@@ -65,7 +65,13 @@ struct gk_mirror_ctx
   double z_max;
   double psi_min;
   double psi_max;
+// Magnetic equilibrium model.
+  double mcB;
+  double gamma;
+  double Z_m;
+  // Bananna tip info. Hardcoad to avoid dependency on ctx
   double z_m;
+  double Z_m_computational;
   // Physics parameters at mirror throat
   double Ti_perp0;
   double Ti_par0;
@@ -101,6 +107,25 @@ struct gk_mirror_ctx
   int poly_order;
   double final_time;
   int num_frames;
+  double psi_in;
+  double z_in;
+  // For non-uniform mapping
+  double diff_dz;
+  double psi_in_diff;
+  int mapping_order_center;
+  int mapping_order_expander;
+  double mapping_frac;
+
+  
+  // Initial conditions reading
+  double *f_dist_ion;
+  double *f_dist_elc;
+  double *psi_grid;
+  double *z_grid;
+  double *v_grid;
+  double *theta_grid;
+  int *dims;
+  int rank;
 };
 
 
@@ -404,6 +429,224 @@ evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, 
   fout[0] = app->nuIon;
 }
 
+int get_lower_index(const int nx, const double *x, const double xP)
+  //  nx: number of cells in the dimension
+  //  x: grid points in the dimension
+  //  xP: point to interpolate at
+{
+  if(xP <= x[0])
+      return 0;
+  else if(xP >= x[nx-1])
+      return nx-2;
+  else
+  {
+    // Return the rounded down index of the point we are closest to in x
+    // use midpoint rule to find the right index
+    int i = 0;
+    int j = nx-1;
+    while(j-i > 1)
+    {
+      int k = (i+j)/2;
+      if(xP < x[k])
+        j = k;
+      else
+        i = k;
+    }
+    return i;
+  }
+}
+
+double LI_4D(const int *ncells, // array of number of cells
+             const double *x, // psi grid for data
+             const double *y, // z grid for data
+             const double *z, // vpar grid for data
+             const double *w, // mu grid for data
+             const double *f, // distribution function at grid locations
+             const double *pt // point to interpolate at
+             )
+{
+  // Heavily inspired by  yet adapted from the algorythm at 
+  // https://github.com/BYUignite/multilinear_interpolation
+  // printf("Calling 4D linear interpolation\n");
+  // printf("Point to interpolate at: %g, %g, %g, %g\n", pt[0], pt[1], pt[2], pt[3]);
+  int i = get_lower_index(ncells[0],x,pt[0]);
+  int j = get_lower_index(ncells[1],y,pt[1]);
+  int k = get_lower_index(ncells[2],z,pt[2]);
+  int l = get_lower_index(ncells[3],w,pt[3]);
+  int ip = i+1;
+  int jp = j+1;
+  int kp = k+1;
+  int lp = l+1;
+  double xWta = (pt[0] - x[i])/(x[i+1]-x[i]);
+  double yWta = (pt[1] - y[j])/(y[j+1]-y[j]);
+  double zWta = (pt[2] - z[k])/(z[k+1]-z[k]);
+  double wWta = (pt[3] - w[l])/(w[l+1]-w[l]);
+  double xWtb = 1-xWta;
+  double yWtb = 1-yWta;
+  double zWtb = 1-zWta;
+  double wWtb = 1-wWta;
+  int nwzy = ncells[3]*ncells[2]*ncells[1];
+  int nwz = ncells[3]*ncells[2];
+  int nw = ncells[3];
+  return (((f[i *nwzy + j *nwz + k *nw + l ]*xWtb +                                // return f[i ][j ][k ][l ]*xWtb*yWtb*zWtb*wWtb +
+            f[ip*nwzy + j *nwz + k *nw + l ]*xWta) * yWtb +                        //        f[ip][j ][k ][l ]*xWta*yWtb*zWtb*wWtb +
+            (f[i *nwzy + jp*nwz + k *nw + l ]*xWtb +                                //        f[i ][jp][k ][l ]*xWtb*yWta*zWtb*wWtb +
+            f[ip*nwzy + jp*nwz + k *nw + l ]*xWta) * yWta) * zWtb +                //        f[ip][jp][k ][l ]*xWta*yWta*zWtb*wWtb +
+          ((f[i *nwzy + j *nwz + kp*nw + l ]*xWtb +                                //        f[i ][j ][kp][l ]*xWtb*yWtb*zWta*wWtb +
+            f[ip*nwzy + j *nwz + kp*nw + l ]*xWta) * yWtb +                        //        f[ip][j ][kp][l ]*xWta*yWtb*zWta*wWtb +    
+            (f[i *nwzy + jp*nwz + kp*nw + l ]*xWtb +                                //        f[i ][jp][kp][l ]*xWtb*yWta*zWta*wWtb +
+            f[ip*nwzy + jp*nwz + kp*nw + l ]*xWta) * yWta) * zWta) * wWtb +        //        f[ip][jp][kp][l ]*xWta*yWta*zWta*wWtb +
+          (((f[i *nwzy + j *nwz + k *nw + lp]*xWtb +                                //        f[i ][j ][k ][lp]*xWtb*yWtb*zWtb*wWta +
+            f[ip*nwzy + j *nwz + k *nw + lp]*xWta) * yWtb +                        //        f[ip][j ][k ][lp]*xWta*yWtb*zWtb*wWta +
+            (f[i *nwzy + jp*nwz + k *nw + lp]*xWtb +                                //        f[i ][jp][k ][lp]*xWtb*yWta*zWtb*wWta +
+            f[ip*nwzy + jp*nwz + k *nw + lp]*xWta) * yWta) * zWtb +                //        f[ip][jp][k ][lp]*xWta*yWta*zWtb*wWta +
+          ((f[i *nwzy + j *nwz + kp*nw + lp]*xWtb +                                //        f[i ][j ][kp][lp]*xWtb*yWtb*zWta*wWta +
+            f[ip*nwzy + j *nwz + kp*nw + lp]*xWta) * yWtb +                        //        f[ip][j ][kp][lp]*xWta*yWtb*zWta*wWta +    
+            (f[i *nwzy + jp*nwz + kp*nw + lp]*xWtb +                                //        f[i ][jp][kp][lp]*xWtb*yWta*zWta*wWta +
+            f[ip*nwzy + jp*nwz + kp*nw + lp]*xWta) * yWta) * zWta) * wWta;         //        f[ip][jp][kp][lp]*xWta*yWta*zWta*wWta;
+}
+
+
+// Function to calculate the linear index from multi-dimensional indices
+size_t calculate_index(const size_t* indices, const int* dims, int num_dims) {
+    size_t index = 0;
+    size_t multiplier = 1; // Multiplier to calculate the linear index
+    for (int i = num_dims - 1; i >= 0; --i) {
+        index += indices[i] * multiplier;
+        multiplier *= dims[i];
+    }
+    return index;
+}
+
+double* load_binary_file(const char* filename, size_t* num_elements) {
+    FILE* file = fopen(filename, "rb");
+    // Determine the size of the file
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    rewind(file);
+    *num_elements = file_size / sizeof(double);
+    double* data = (double*)malloc(file_size);
+    size_t elements_read = fread(data, sizeof(double), *num_elements, file);
+    fclose(file);
+    return data;
+}
+
+void
+read_ion_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  struct gk_mirror_ctx app = *(struct gk_mirror_ctx*)ctx;
+  double* f_dist = app.f_dist_ion;
+  double* psi_grid = app.psi_grid;
+  double* z_grid = app.z_grid;
+  double* v_grid = app.v_grid;
+  double* theta_grid = app.theta_grid;
+  int* dims = app.dims;
+  int rank = app.rank;
+
+  // Must convert the point xn from cartesian to polar
+  double vpar = xn[2];
+  double mu = xn[3];
+
+  double vperp = sqrt((2.0 * app.B_p * mu) / app.mi);
+  double v = sqrt(pow(vpar, 2) + pow(vperp, 2));
+  double theta = atan2(vperp, vpar);
+
+  double *interp_pt = (double*)malloc(rank * sizeof(double));
+  interp_pt[0] = xn[0];
+  interp_pt[1] = xn[1];
+  interp_pt[2] = v;
+  interp_pt[3] = theta;
+
+  double interp_val = LI_4D(dims, psi_grid, z_grid, v_grid, theta_grid, f_dist, interp_pt);
+  fout[0] = interp_val;
+}
+
+void
+read_elc_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  struct gk_mirror_ctx app = *(struct gk_mirror_ctx*)ctx;
+  double* f_dist = app.f_dist_elc;
+  double* psi_grid = app.psi_grid;
+  double* z_grid = app.z_grid;
+  double* v_grid = app.v_grid;
+  double* theta_grid = app.theta_grid;
+  int* dims = app.dims;
+  int rank = app.rank;
+
+  // Must convert the point xn from cartesian to polar
+  double vpar = xn[2];
+  double mu = xn[3];
+
+  double vperp = sqrt((2.0 * app.B_p * mu) / app.me);
+  double v = sqrt(pow(vpar, 2) + pow(vperp, 2));
+  double theta = atan2(vperp, vpar);
+
+  double *interp_pt = (double*)malloc(rank * sizeof(double));
+  interp_pt[0] = xn[0];
+  interp_pt[1] = xn[1];
+  interp_pt[2] = v;
+  interp_pt[3] = theta;
+
+  double interp_val = LI_4D(dims, psi_grid, z_grid, v_grid, theta_grid, f_dist, interp_pt);
+  fout[0] = interp_val;
+}
+
+void
+load_wham_distf(void* ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+
+  const char* filename_f_dist_ion = "../binary_files/f_dist_ion.bin";
+  size_t num_elements_f_dist_ion;
+  double* f_dist_ion = load_binary_file(filename_f_dist_ion, &num_elements_f_dist_ion);
+  app->f_dist_ion = f_dist_ion;
+
+  const char* filename_f_dist_elc = "../binary_files/f_dist_elc.bin";
+  size_t num_elements_f_dist_elc;
+  double* f_dist_elc = load_binary_file(filename_f_dist_elc, &num_elements_f_dist_elc);
+  app->f_dist_elc = f_dist_elc;
+
+  const char *filename_psiGrid = "../binary_files/psiGrid.bin";
+  size_t num_elements_psiGrid;
+  double *psi_grid = load_binary_file(filename_psiGrid, &num_elements_psiGrid);
+  app->psi_grid = psi_grid;
+
+  const char *filename_zGrid = "../binary_files/zGrid.bin";
+  size_t num_elements_zGrid;
+  double *z_grid = load_binary_file(filename_zGrid, &num_elements_zGrid);
+  app->z_grid = z_grid;
+
+  const char *filename_uGrid = "../binary_files/uGrid.bin";
+  size_t num_elements_uGrid;
+  double *u_grid = load_binary_file(filename_uGrid, &num_elements_uGrid);
+
+  const char *filename_v_norm = "../binary_files/v_norm.bin";
+  size_t num_elements_v_norm;
+  double *v_norm = load_binary_file(filename_v_norm, &num_elements_v_norm);
+
+  // multiply every element of u_grid with v_norm and call it v_grid
+  double *v_grid = (double*)malloc(num_elements_uGrid * sizeof(double));
+  for (int i = 0; i < num_elements_uGrid; i++) {
+    v_grid[i] = u_grid[i] * v_norm[0];
+  }
+  app->v_grid = v_grid;
+  size_t num_elements_vGrid = num_elements_uGrid;
+
+  const char *filename_theta = "../binary_files/theta.bin";
+  size_t num_elements_theta;
+  double *theta_grid = load_binary_file(filename_theta, &num_elements_theta);
+  app->theta_grid = theta_grid;
+
+  int rank = 4;
+  int *dims = (int*)malloc(rank * sizeof(int));
+  dims[0] = num_elements_psiGrid;
+  dims[1] = num_elements_zGrid;
+  dims[2] = num_elements_vGrid;
+  dims[3] = num_elements_theta;
+  app->dims = dims;
+  app->rank = rank;
+}
+
 struct gk_mirror_ctx
 create_ctx(void)
 {
@@ -566,6 +809,7 @@ create_ctx(void)
     .num_frames = num_frames,
   };
   ctx.z_m = 0.98;
+  load_wham_distf(&ctx);
   return ctx;
 }
 
@@ -689,17 +933,10 @@ int main(int argc, char **argv)
     .cells = {NV, NMU},
     .polarization_density = ctx.n0,
     .projection = {
-      .proj_id = GKYL_PROJ_BIMAXWELLIAN, 
-      .ctx_density = &ctx,
-      .density = eval_density_elc,
-      .ctx_upar = &ctx,
-      .upar= eval_upar_elc,
-      .ctx_temppar = &ctx,
-      .temppar = eval_temp_par_elc,      
-      .ctx_tempperp = &ctx,
-      .tempperp = eval_temp_perp_elc,   
+      .proj_id = GKYL_PROJ_FUNC, 
+      .func = read_elc_distf,
+      .ctx_func = &ctx, 
     },
-
     .bcx = {
       .lower={.type = GKYL_SPECIES_FIXED_FUNC,},
       .upper={.type = GKYL_SPECIES_FIXED_FUNC,},
@@ -727,15 +964,9 @@ int main(int argc, char **argv)
     .cells = {NV, NMU},
     .polarization_density = ctx.n0,
     .projection = {
-      .proj_id = GKYL_PROJ_BIMAXWELLIAN, 
-      .ctx_density = &ctx,
-      .density = eval_density_ion,
-      .ctx_upar = &ctx,
-      .upar= eval_upar_ion,
-      .ctx_temppar = &ctx,
-      .temppar = eval_temp_par_ion,      
-      .ctx_tempperp = &ctx,
-      .tempperp = eval_temp_perp_ion,   
+      .proj_id = GKYL_PROJ_FUNC,
+      .func = read_ion_distf,
+      .ctx_func = &ctx,
     },
     .bcx = {
       .lower={.type = GKYL_SPECIES_FIXED_FUNC,},
@@ -749,6 +980,8 @@ int main(int argc, char **argv)
       .collision_id = GKYL_LBO_COLLISIONS,
       .ctx = &ctx,
       .self_nu = evalNuIon,
+      .num_cross_collisions = 1,
+      .collide_with = {"elc"},
     },
         .num_diag_moments = 7,
     .diag_moments = {"M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp"},

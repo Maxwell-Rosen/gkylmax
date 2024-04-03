@@ -136,53 +136,31 @@ evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, 
   fout[0] = app->nuIon;
 }
 
-int get_lower_index(const int nx, const double *x, const double xP, const int is_increasing)
+int get_lower_index(const int nx, const double *x, const double xP)
   //  nx: number of cells in the dimension
   //  x: grid points in the dimension
   //  xP: point to interpolate at
 {
-  if (is_increasing)
-    if(xP <= x[0])
-        return 0;
-    else if(xP >= x[nx-1])
-        return nx-2;
-    else
-    {
-      // Return the rounded down index of the point we are closest to in x
-      // use midpoint rule to find the right index
-      int i = 0;
-      int j = nx-1;
-      while(j-i > 1)
-      {
-        int k = (i+j)/2;
-        if(xP < x[k])
-          j = k;
-        else
-          i = k;
-      }
-      return i;
-    }
+  if(xP <= x[0])
+      return 0;
+  else if(xP >= x[nx-1])
+      return nx-2;
   else
-    if(xP >= x[0])
-        return 0;
-    else if(xP <= x[nx-1])
-        return nx-2;
-    else
+  {
+    // Return the rounded down index of the point we are closest to in x
+    // use midpoint rule to find the right index
+    int i = 0;
+    int j = nx-1;
+    while(j-i > 1)
     {
-      // Return the rounded down index of the point we are closest to in x
-      // use midpoint rule to find the right index
-      int i = 0;
-      int j = nx-1;
-      while(j-i > 1)
-      {
-        int k = (i+j)/2;
-        if(xP > x[k])
-          j = k;
-        else
-          i = k;
-      }
-      return i;
+      int k = (i+j)/2;
+      if(xP < x[k])
+        j = k;
+      else
+        i = k;
     }
+    return i;
+  }
 }
 
 double LI_4D(const int *ncells, // array of number of cells
@@ -196,43 +174,52 @@ double LI_4D(const int *ncells, // array of number of cells
 {
   // Heavily inspired by  yet adapted from the algorythm at 
   // https://github.com/BYUignite/multilinear_interpolation
-  int s = (int)pt[0];
-  int i = get_lower_index(ncells[1],x,pt[1],0);
-  int j = get_lower_index(ncells[2],y,pt[2],1);
-  int k = get_lower_index(ncells[3],z,pt[3],1);
-  int l = get_lower_index(ncells[4],w,pt[4],1);
+  // printf("Calling 4D linear interpolation\n");
+  // printf("Point to interpolate at: %g, %g, %g, %g\n", pt[0], pt[1], pt[2], pt[3]);
+  int i = get_lower_index(ncells[0],x,pt[0]); //16
+  int j = get_lower_index(ncells[1],y,pt[1]);
+  int k = get_lower_index(ncells[2],z,pt[2]);
+  int l = get_lower_index(ncells[3],w,pt[3]);
+  // // Nearest neighbor rounded down
+  // int nwzy = ncells[3]*ncells[2]*ncells[1];
+  // int nwz = ncells[3]*ncells[2];
+  // int nw = ncells[3];
+  // double distf = f[i *nwzy + j *nwz + k *nw + l ];
+  // return distf;
+  // printf("i = %d, j = %d, k = %d, l = %d\n", i, j, k, l);
+
+  // Linear interpolate
   int ip = i+1;
   int jp = j+1;
   int kp = k+1;
   int lp = l+1;
-  double xWta = (pt[1] - x[i])/(x[i+1]-x[i]);
-  double yWta = (pt[2] - y[j])/(y[j+1]-y[j]);
-  double zWta = (pt[3] - z[k])/(z[k+1]-z[k]);
-  double wWta = (pt[4] - w[l])/(w[l+1]-w[l]);
+  double xWta = 0.0;//(pt[0] - x[i])/(x[i+1]-x[i]);
+  double yWta = (pt[1] - y[j])/(y[j+1]-y[j]);
+  double zWta = (pt[2] - z[k])/(z[k+1]-z[k]);
+  double wWta = (pt[3] - w[l])/(w[l+1]-w[l]);
   double xWtb = 1-xWta;
   double yWtb = 1-yWta;
   double zWtb = 1-zWta;
   double wWtb = 1-wWta;
-  int nwzyx = ncells[4]*ncells[3]*ncells[2]*ncells[1];
-  int nwzy = ncells[4]*ncells[3]*ncells[2];
-  int nwz = ncells[4]*ncells[3];
-  int nw = ncells[4];
-  return (((f[s *nwzyx + i *nwzy + j *nwz + k *nw + l ]*xWtb +                                // return f[i ][j ][k ][l ]*xWtb*yWtb*zWtb*wWtb +
-            f[s *nwzyx + ip*nwzy + j *nwz + k *nw + l ]*xWta) * yWtb +                        //        f[ip][j ][k ][l ]*xWta*yWtb*zWtb*wWtb +
-            (f[s *nwzyx + i *nwzy + jp*nwz + k *nw + l ]*xWtb +                                //        f[i ][jp][k ][l ]*xWtb*yWta*zWtb*wWtb +
-            f[s *nwzyx + ip*nwzy + jp*nwz + k *nw + l ]*xWta) * yWta) * zWtb +                //        f[ip][jp][k ][l ]*xWta*yWta*zWtb*wWtb +
-          ((f[s *nwzyx + i *nwzy + j *nwz + kp*nw + l ]*xWtb +                                //        f[i ][j ][kp][l ]*xWtb*yWtb*zWta*wWtb +
-            f[s *nwzyx + ip*nwzy + j *nwz + kp*nw + l ]*xWta) * yWtb +                        //        f[ip][j ][kp][l ]*xWta*yWtb*zWta*wWtb +    
-            (f[s *nwzyx + i *nwzy + jp*nwz + kp*nw + l ]*xWtb +                                //        f[i ][jp][kp][l ]*xWtb*yWta*zWta*wWtb +
-            f[s *nwzyx + ip*nwzy + jp*nwz + kp*nw + l ]*xWta) * yWta) * zWta) * wWtb +        //        f[ip][jp][kp][l ]*xWta*yWta*zWta*wWtb +
-          (((f[s *nwzyx + i *nwzy + j *nwz + k *nw + lp]*xWtb +                                //        f[i ][j ][k ][lp]*xWtb*yWtb*zWtb*wWta +
-            f[s *nwzyx + ip*nwzy + j *nwz + k *nw + lp]*xWta) * yWtb +                        //        f[ip][j ][k ][lp]*xWta*yWtb*zWtb*wWta +
-            (f[s *nwzyx + i *nwzy + jp*nwz + k *nw + lp]*xWtb +                                //        f[i ][jp][k ][lp]*xWtb*yWta*zWtb*wWta +
-            f[s *nwzyx + ip*nwzy + jp*nwz + k *nw + lp]*xWta) * yWta) * zWtb +                //        f[ip][jp][k ][lp]*xWta*yWta*zWtb*wWta +
-          ((f[s *nwzyx + i *nwzy + j *nwz + kp*nw + lp]*xWtb +                                //        f[i ][j ][kp][lp]*xWtb*yWtb*zWta*wWta +
-            f[s *nwzyx + ip*nwzy + j *nwz + kp*nw + lp]*xWta) * yWtb +                        //        f[ip][j ][kp][lp]*xWta*yWtb*zWta*wWta +    
-            (f[s *nwzyx + i *nwzy + jp*nwz + kp*nw + lp]*xWtb +                                //        f[i ][jp][kp][lp]*xWtb*yWta*zWta*wWta +
-            f[s *nwzyx + ip*nwzy + jp*nwz + kp*nw + lp]*xWta) * yWta) * zWta) * wWta;         //        f[ip][jp][kp][lp]*xWta*yWta*zWta*wWta;
+  int nwzy = ncells[3]*ncells[2]*ncells[1];
+  int nwz = ncells[3]*ncells[2];
+  int nw = ncells[3];
+  return (((f[i *nwzy + j *nwz + k *nw + l ]*xWtb +                                // return f[i ][j ][k ][l ]*xWtb*yWtb*zWtb*wWtb +
+            f[ip*nwzy + j *nwz + k *nw + l ]*xWta) * yWtb +                        //        f[ip][j ][k ][l ]*xWta*yWtb*zWtb*wWtb +
+            (f[i *nwzy + jp*nwz + k *nw + l ]*xWtb +                                //        f[i ][jp][k ][l ]*xWtb*yWta*zWtb*wWtb +
+            f[ip*nwzy + jp*nwz + k *nw + l ]*xWta) * yWta) * zWtb +                //        f[ip][jp][k ][l ]*xWta*yWta*zWtb*wWtb +
+          ((f[i *nwzy + j *nwz + kp*nw + l ]*xWtb +                                //        f[i ][j ][kp][l ]*xWtb*yWtb*zWta*wWtb +
+            f[ip*nwzy + j *nwz + kp*nw + l ]*xWta) * yWtb +                        //        f[ip][j ][kp][l ]*xWta*yWtb*zWta*wWtb +    
+            (f[i *nwzy + jp*nwz + kp*nw + l ]*xWtb +                                //        f[i ][jp][kp][l ]*xWtb*yWta*zWta*wWtb +
+            f[ip*nwzy + jp*nwz + kp*nw + l ]*xWta) * yWta) * zWta) * wWtb +        //        f[ip][jp][kp][l ]*xWta*yWta*zWta*wWtb +
+          (((f[i *nwzy + j *nwz + k *nw + lp]*xWtb +                                //        f[i ][j ][k ][lp]*xWtb*yWtb*zWtb*wWta +
+            f[ip*nwzy + j *nwz + k *nw + lp]*xWta) * yWtb +                        //        f[ip][j ][k ][lp]*xWta*yWtb*zWtb*wWta +
+            (f[i *nwzy + jp*nwz + k *nw + lp]*xWtb +                                //        f[i ][jp][k ][lp]*xWtb*yWta*zWtb*wWta +
+            f[ip*nwzy + jp*nwz + k *nw + lp]*xWta) * yWta) * zWtb +                //        f[ip][jp][k ][lp]*xWta*yWta*zWtb*wWta +
+          ((f[i *nwzy + j *nwz + kp*nw + lp]*xWtb +                                //        f[i ][j ][kp][lp]*xWtb*yWtb*zWta*wWta +
+            f[ip*nwzy + j *nwz + kp*nw + lp]*xWta) * yWtb +                        //        f[ip][j ][kp][lp]*xWta*yWtb*zWta*wWta +    
+            (f[i *nwzy + jp*nwz + kp*nw + lp]*xWtb +                                //        f[i ][jp][kp][lp]*xWtb*yWta*zWta*wWta +
+            f[ip*nwzy + jp*nwz + kp*nw + lp]*xWta) * yWta) * zWta) * wWta;         //        f[ip][jp][kp][lp]*xWta*yWta*zWta*wWta;
 }
 
 
@@ -276,13 +263,23 @@ read_ion_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   double vpar = xn[2];
   double mu = xn[3];
 
+  // convert xn[1]  from -pi to pi into length
+  double tmin = app.z_min;
+  double tmax = app.z_max;
+  double t_norm_cord = (xn[1] + tmin) / (tmax - tmin);
+
+  // FROM GEOMETRY INPUT HARDCOPY
+  double z_min_geo = -0.97;
+  double z_max_geo =  0.97;
+  double z_cord = fabs(-z_min_geo + t_norm_cord * (z_max_geo - z_min_geo));
+
   double vperp = sqrt((2.0 * app.B_p * mu) / app.mi);
   double v = sqrt(pow(vpar, 2) + pow(vperp, 2));
   double theta = atan2(vperp, vpar);
 
   double *interp_pt = (double*)malloc(rank * sizeof(double));
   interp_pt[0] = xn[0];
-  interp_pt[1] = xn[1];
+  interp_pt[1] = z_cord;
   interp_pt[2] = v;
   interp_pt[3] = theta;
 
@@ -301,10 +298,21 @@ read_elc_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   double* theta_grid = app.theta_grid;
   int* dims = app.dims;
   int rank = app.rank;
+  // printf("Calling elc at point %g, %g, %g, %g\n", xn[0], xn[1], xn[2], xn[3]);
 
   // Must convert the point xn from cartesian to polar
   double vpar = xn[2];
   double mu = xn[3];
+
+    // convert xn[1]  from -pi to pi into length
+  double tmin = app.z_min;
+  double tmax = app.z_max;
+  double t_norm_cord = (xn[1] + tmin) / (tmax - tmin);
+
+  // FROM GEOMETRY INPUT HARDCOPY
+  double z_min_geo = -0.97;
+  double z_max_geo =  0.97;
+  double z_cord = fabs(-z_min_geo + t_norm_cord * (z_max_geo - z_min_geo));
 
   double vperp = sqrt((2.0 * app.B_p * mu) / app.me);
   double v = sqrt(pow(vpar, 2) + pow(vperp, 2));
@@ -312,7 +320,7 @@ read_elc_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
 
   double *interp_pt = (double*)malloc(rank * sizeof(double));
   interp_pt[0] = xn[0];
-  interp_pt[1] = xn[1];
+  interp_pt[1] = z_cord;
   interp_pt[2] = v;
   interp_pt[3] = theta;
 
@@ -332,6 +340,8 @@ load_wham_distf(void* ctx)
 
   const char* filename_f_dist_elc = "../binary_files/f_dist_elc.bin";
   size_t num_elements_f_dist_elc;
+  double* f_dist_elc = load_binary_file(filename_f_dist_elc, &num_elements_f_dist_elc);
+  app->f_dist_elc = f_dist_elc;
 
   const char *filename_psiGrid = "../binary_files/psiGrid.bin";
   size_t num_elements_psiGrid;
@@ -364,13 +374,17 @@ load_wham_distf(void* ctx)
   double *theta_grid = load_binary_file(filename_theta, &num_elements_theta);
   app->theta_grid = theta_grid;
 
-  int rank = 5;
+  // print theta grid
+  for (int i = 0; i < num_elements_theta; i++) {
+    // printf("theta_grid[%d] = %g\n", i, theta_grid[i]);
+  }
+
+  int rank = 4;
   int *dims = (int*)malloc(rank * sizeof(int));
-  dims[0] = 1;
-  dims[1] = num_elements_psiGrid;
-  dims[2] = num_elements_zGrid;
-  dims[3] = num_elements_vGrid;
-  dims[4] = num_elements_theta;
+  dims[0] = num_elements_psiGrid;
+  dims[1] = num_elements_zGrid;
+  dims[2] = num_elements_vGrid;
+  dims[3] = num_elements_theta;
   app->dims = dims;
   app->rank = rank;
 }
@@ -431,14 +445,16 @@ create_ctx(void)
   double psi_max = 1e-2;
 
   // Grid parameters
-  double vpar_max_elc = 20 * vte;
-  double mu_max_elc = me * pow(3. * vte, 2.) / (2. * B_p);
-  double vpar_max_ion = 20 * vti;
-  double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
+  // double vpar_max_elc = 20 * vte;
+  double vpar_max_elc = 5 * vte;
+  double mu_max_elc = me * pow(5. * vte, 2.) / (2. * B_p);
+  // double vpar_max_ion = 20 * vti;
+  double vpar_max_ion = 5 * vti;
+  double mu_max_ion = mi * pow(5. * vti, 2.) / (2. * B_p);
   int num_cell_vpar = 40; // Number of cells in the paralell velocity direction 96
   int num_cell_mu = 40;  // Number of cells in the mu direction 192
   int num_cell_z = 50;
-  int num_cell_psi = 10;
+  int num_cell_psi = 30;
   int poly_order = 1;
   double final_time = 1e-9;
   int num_frames = 1;
@@ -606,11 +622,11 @@ struct gkyl_gyrokinetic_species elc = {
     .upper = {ctx.vpar_max_elc, ctx.mu_max_elc},
     .cells = {NV, NMU},
     .polarization_density = ctx.n0,
-    // .projection = {
-    //   .proj_id = GKYL_PROJ_FUNC, 
-    //   .func = read_elc_distf,
-    //   .ctx_func = &ctx, 
-    // },
+    .projection = {
+      .proj_id = GKYL_PROJ_FUNC, 
+      .func = read_elc_distf,
+      .ctx_func = &ctx, 
+    },
     .bcx = {
       .lower={.type = GKYL_SPECIES_FIXED_FUNC,},
       .upper={.type = GKYL_SPECIES_FIXED_FUNC,},
@@ -623,10 +639,10 @@ struct gkyl_gyrokinetic_species elc = {
       .collision_id = GKYL_LBO_COLLISIONS,
       .ctx = &ctx,
       .self_nu = evalNuElc,
-      .num_cross_collisions = 1, // Not sure
+      .num_cross_collisions = 1,
       .collide_with = {"ion"},
     },
-    .num_diag_moments = 7, // Copied from GKsoloviev, but
+    .num_diag_moments = 7,
     .diag_moments = {"M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp"},
   };
   struct gkyl_gyrokinetic_species ion = {
@@ -637,17 +653,10 @@ struct gkyl_gyrokinetic_species elc = {
     .upper = { ctx.vpar_max_ion, ctx.mu_max_ion},
     .cells = {NV, NMU},
     .polarization_density = ctx.n0,
-    // .projection = {
-    //   .proj_id = GKYL_PROJ_FUNC,
-    //   .func = read_ion_distf,
-    //   .ctx_func = &ctx,
-    // },
-   .collisions = {
-      .collision_id = GKYL_LBO_COLLISIONS,
-      .ctx = &ctx,
-      .self_nu = evalNuIon,
-    .num_cross_collisions = 1,
-      .collide_with = { "elc" },
+    .projection = {
+      .proj_id = GKYL_PROJ_FUNC,
+      .func = read_ion_distf,
+      .ctx_func = &ctx,
     },
     .bcx = {
       .lower={.type = GKYL_SPECIES_FIXED_FUNC,},
@@ -661,6 +670,8 @@ struct gkyl_gyrokinetic_species elc = {
       .collision_id = GKYL_LBO_COLLISIONS,
       .ctx = &ctx,
       .self_nu = evalNuIon,
+      .num_cross_collisions = 1,
+      .collide_with = {"elc"},
     },
     .num_diag_moments = 7,
     .diag_moments = {"M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp"},
@@ -685,10 +696,11 @@ struct gkyl_gyrokinetic_species elc = {
     .poly_order = ctx.poly_order,
     .basis_type = app_args.basis_type,
     .geometry = {
-      .geometry_id = GKYL_MIRROR,
-      .world = {0.0},
-      .mirror_efit_info = &inp,
-      .mirror_grid_info = &ginp,
+      .geometry_id = GKYL_GEOMETRY_FROMFILE
+      // .geometry_id = GKYL_MIRROR,
+      // .world = {0.0},
+      // .mirror_efit_info = &inp,
+      // .mirror_grid_info = &ginp,
     },
     .num_periodic_dir = 0,
     .periodic_dirs = {},
