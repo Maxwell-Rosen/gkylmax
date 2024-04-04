@@ -97,6 +97,7 @@ struct gk_mirror_ctx
   double *z_grid;
   double *v_grid;
   double *theta_grid;
+  double *B_grid;
   int *dims;
   int rank;
 };
@@ -161,6 +162,27 @@ int get_lower_index(const int nx, const double *x, const double xP)
     }
     return i;
   }
+}
+
+double LI_2D(const int *ncells,  // array of number of cells
+             const double *x,            // x grid values
+             const double *y,            // y grid values
+             const double *f,            // field of function values over the x, y grid (1-D row major)
+             const double *pt           // point to interpolate at
+             )
+{
+    int i = get_lower_index(ncells[0],x,pt[0]);
+    int j = get_lower_index(ncells[1],y,pt[1]);
+    int ip = i+1;
+    int jp = j+1;
+    double xWta = (pt[0] - x[i])/(x[i+1]-x[i]);
+    double yWta = (pt[1] - y[j])/(y[j+1]-y[j]);
+    double xWtb = 1-xWta;
+    double yWtb = 1-yWta;
+    return (f[i *ncells[1] +j ]*xWtb +                    // return f[i ][j ]*xWtb*yWtb +
+            f[ip*ncells[1] +j ]*xWta) * yWtb +            //        f[ip][j ]*xWta*yWtb +
+           (f[i *ncells[1] +jp]*xWtb +                    //        f[i ][jp]*xWtb*yWta +
+            f[ip*ncells[1] +jp]*xWta) * yWta;             //        f[ip][jp]*xWta*yWta;
 }
 
 double LI_4D(const int *ncells, // array of number of cells
@@ -259,27 +281,27 @@ read_ion_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   int* dims = app.dims;
   int rank = app.rank;
 
-  // Must convert the point xn from cartesian to polar
-  double vpar = xn[2];
-  double mu = xn[3];
-
-  // convert xn[1]  from -pi to pi into length
-  double tmin = app.z_min;
-  double tmax = app.z_max;
-  double t_norm_cord = (xn[1] + tmin) / (tmax - tmin);
-
   // FROM GEOMETRY INPUT HARDCOPY
   double z_min_geo = -0.97;
   double z_max_geo =  0.97;
+  double tmin = app.z_min;
+  double tmax = app.z_max;
+  double t_norm_cord = (xn[1] + tmin) / (tmax - tmin);
   double z_cord = fabs(-z_min_geo + t_norm_cord * (z_max_geo - z_min_geo));
 
-  double vperp = sqrt((2.0 * app.B_p * mu) / app.mi);
-  double v = sqrt(pow(vpar, 2) + pow(vperp, 2));
-  double theta = atan2(vperp, vpar);
-
+  // Calculate magnetic field at this point
   double *interp_pt = (double*)malloc(rank * sizeof(double));
   interp_pt[0] = xn[0];
   interp_pt[1] = z_cord;
+  double B_val = LI_2D(dims, psi_grid, z_grid, app.B_grid, interp_pt);
+
+  // Must convert the point xn from cartesian to polar
+  double vpar = xn[2];
+  double mu = xn[3];
+  double vperp = sqrt((2.0 * B_val * mu) / app.mi);
+  double v = sqrt(pow(vpar, 2) + pow(vperp, 2));
+  double theta = atan2(vperp, vpar);
+
   interp_pt[2] = v;
   interp_pt[3] = theta;
 
@@ -298,29 +320,27 @@ read_elc_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   double* theta_grid = app.theta_grid;
   int* dims = app.dims;
   int rank = app.rank;
-  // printf("Calling elc at point %g, %g, %g, %g\n", xn[0], xn[1], xn[2], xn[3]);
-
-  // Must convert the point xn from cartesian to polar
-  double vpar = xn[2];
-  double mu = xn[3];
-
-    // convert xn[1]  from -pi to pi into length
-  double tmin = app.z_min;
-  double tmax = app.z_max;
-  double t_norm_cord = (xn[1] + tmin) / (tmax - tmin);
 
   // FROM GEOMETRY INPUT HARDCOPY
   double z_min_geo = -0.97;
   double z_max_geo =  0.97;
+  double tmin = app.z_min;
+  double tmax = app.z_max;
+  double t_norm_cord = (xn[1] + tmin) / (tmax - tmin);
   double z_cord = fabs(-z_min_geo + t_norm_cord * (z_max_geo - z_min_geo));
-
-  double vperp = sqrt((2.0 * app.B_p * mu) / app.me);
-  double v = sqrt(pow(vpar, 2) + pow(vperp, 2));
-  double theta = atan2(vperp, vpar);
 
   double *interp_pt = (double*)malloc(rank * sizeof(double));
   interp_pt[0] = xn[0];
   interp_pt[1] = z_cord;
+  double B_val = LI_2D(dims, psi_grid, z_grid, app.B_grid, interp_pt);
+
+  // Must convert the point xn from cartesian to polar
+  double vpar = xn[2];
+  double mu = xn[3];
+  double vperp = sqrt((2.0 * B_val * mu) / app.me);
+  double v = sqrt(pow(vpar, 2) + pow(vperp, 2));
+  double theta = atan2(vperp, vpar);
+
   interp_pt[2] = v;
   interp_pt[3] = theta;
 
@@ -374,10 +394,10 @@ load_wham_distf(void* ctx)
   double *theta_grid = load_binary_file(filename_theta, &num_elements_theta);
   app->theta_grid = theta_grid;
 
-  // print theta grid
-  for (int i = 0; i < num_elements_theta; i++) {
-    // printf("theta_grid[%d] = %g\n", i, theta_grid[i]);
-  }
+  const char *filename_BGrid = "../binary_files/BGrid.bin";
+  size_t num_elements_BGrid;
+  double *B_grid = load_binary_file(filename_BGrid, &num_elements_BGrid);
+  app->B_grid = B_grid;
 
   int rank = 4;
   int *dims = (int*)malloc(rank * sizeof(int));
@@ -441,8 +461,8 @@ create_ctx(void)
   // Geometry parameters.
   double z_min = -M_PI + 1e-1;
   double z_max = M_PI - 1e-1;
-  double psi_min = 1e-3;
-  double psi_max = 1e-2;
+  double psi_min = 1e-3; // Go smaller. 1e-4 might be too small
+  double psi_max = 1e-2; // aim for 3e-2
 
   // Grid parameters
   // double vpar_max_elc = 20 * vte;
