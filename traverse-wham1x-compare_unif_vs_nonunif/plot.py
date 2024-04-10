@@ -15,15 +15,15 @@ import multiprocessing
 
 # dataDir = '/scratch/gpfs/mr1884/scratch/gkylmax/traverse-mirror1x_compare_unif_vs_nonunif_grids/outputs/'
 dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-mirror1x_compare_unif_vs_nonunif_grids_edge/outputs/'
-dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-mirror1x_compare_unif_vs_nonunif_grids_edge/outputs/'
+dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-mirror1x_compare_unif_vs_nonunif_grids_edge/'
 unifFile = 'gk_mirror_boltz_uniform'
 nonunifFile = 'gk_mirror_boltz_nonuniform'
-frame_arr = np.arange(0,94)
+frame_arr = np.arange(0,4)
 # frame_arr = np.array([1:4])
 save_figure_as_file= 1     #[ If True, save figure to file. If False, display figure on screen.
 
 plot_moments       = 1  # Plot density, potential, upar, tperp, tpar.
-plot_distvpar      = 1  # plot distribution function in vpar.
+plot_distvpar      = 0  # plot distribution function in vpar.
 plot_distmu        = 0  # plot distribution function in mu.
 plot_distf_at_z    = 0
 z_loctions = np.array([0, 0.3, 0.98, 2.4])

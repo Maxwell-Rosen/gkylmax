@@ -44,7 +44,7 @@ pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 select --z0 $psival --z
 pgkyl "$name-$species"_prim_moms"_$frame.gkyl" interp -b ms -p1 select --z0 $psival pl --title "prim_moms" \
   --xscale 0.31891186969 -x "Field line length (m)" \
   --saveas "python-plots/$name-"$species"_$frame-1d-prim_moms.png" --no-show&
-pgkyl "$name-field_$frame.gkyl" interp -b ms -p1 select --z0 $psival pl --title "phi" \
+pgkyl "$name-field_$frame.gkyl" interp -b ms -p1 select --z0 $psival ev 'f[:] 940 /' pl --title "phi" \
   --xscale 0.31891186969 -x "Field line length (m)" -y "Electric potential (V)" --saveas "python-plots/$name-"$frame"-1d-field.png" --no-show &
 pgkyl "$name-"$species"_M0_$frame.gkyl" -t M0 "$name-"$species"_M1_$frame.gkyl" -t M1 \
   "$name-"$species"_M2par_$frame.gkyl" -t M2par activate -t M0,M1,M2par\
@@ -72,7 +72,7 @@ pgkyl "$name-"$species"_M0_$frame.gkyl" "$name-"$species"_M1_$frame.gkyl" \
   --xscale 0.31891186969 -x "Field line length (m)" -y "Parallel velocity (m/s)" --saveas "python-plots/$name-"$species"_$frame-1d-upar.png" --no-show &
 
 # # 2D plots of moments
-pgkyl "$name-field_$frame.gkyl" interp -b ms -p1 pl --title "phi" \
+pgkyl "$name-field_$frame.gkyl" interp -b ms -p1 ev 'f[:] 940 /' pl --title "phi" \
   --yscale 0.31891186969 -y "Field line length (m)" -x "Psi" --clabel "Electric potential (V)" --saveas "python-plots/$name-"$frame"-2d-field.png" --no-show &
 pgkyl "$name-"$species"_M0_$frame.gkyl" -t M0 "$name-"$species"_M1_$frame.gkyl" -t M1 \
   "$name-"$species"_M2par_$frame.gkyl" -t M2par activate -t M0,M1,M2par\
