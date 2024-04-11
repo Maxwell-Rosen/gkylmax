@@ -73,12 +73,12 @@ struct gk_mirror_ctx
   double R_m;
   double B_m;
   double z_m;
-  double Z_m_computational;
+double Z_m_computational;
   // Physics parameters at mirror throat
   double n_m;
   double Te_m;
   double Ti_m;
-  double Ti_perp0;
+double Ti_perp0;
   double Ti_par0;
   double Ti_perp_m;
   double Ti_par_m;
@@ -504,10 +504,10 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   int num_cell_vpar = 128; // Number of cells in the paralell velocity direction 96
   int num_cell_mu = 192;  // Number of cells in the mu direction 192
-  int num_cell_z = 200;
+  int num_cell_z = 240;
   int poly_order = 1;
-  double final_time = 1e-8; // use -9 for the real runs
-  int num_frames = 1;
+  double final_time = 100e-6;
+  int num_frames = 20;
 
   // Bananna tip info. Hardcoad to avoid dependency on ctx
   double B_bt = 1.058278;
@@ -765,12 +765,12 @@ struct gkyl_gyrokinetic_species elc = {
     .num_diag_moments = 7, // Copied from GKsoloviev, but
     .diag_moments = {"M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp"},
   };
-  struct gkyl_gyrokinetic_species ion = {
+    struct gkyl_gyrokinetic_species ion = {
     .name = "ion",
     .charge = ctx.qi,
     .mass = ctx.mi,
     .lower = {-ctx.vpar_max_ion, 0.0},
-    .upper = { ctx.vpar_max_ion, ctx.mu_max_ion},
+    .upper = {ctx.vpar_max_ion, ctx.mu_max_ion},
     .cells = {NV, NMU},
     .polarization_density = ctx.n0,
     .projection = {
@@ -784,17 +784,18 @@ struct gkyl_gyrokinetic_species elc = {
       .ctx_tempperp = &ctx,
       .tempperp = eval_temp_perp_ion,    
     },
+    .bcx = {
+      .lower={.type = GKYL_SPECIES_GK_SHEATH,},
+      .upper={.type = GKYL_SPECIES_GK_SHEATH,},
+    }, 
    .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
       .ctx = &ctx,
       .self_nu = evalNuIon,
-    .num_cross_collisions = 1,
-      .collide_with = { "elc" },
     },
     .source = {
       .source_id = GKYL_PROJ_SOURCE,
       .write_source = true,
-      .num_sources = 1,
       .projection[0] = {
         .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM, 
         .ctx_density = &ctx,
@@ -805,18 +806,17 @@ struct gkyl_gyrokinetic_species elc = {
         .temp = eval_temp_ion_source,      
       }, 
     },
-    .bcx = {
-      .lower={.type = GKYL_SPECIES_GK_SHEATH,},
-      .upper={.type = GKYL_SPECIES_GK_SHEATH,},
-    }, 
     .num_diag_moments = 7,
     .diag_moments = {"M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp"},
   };
   struct gkyl_gyrokinetic_field field = {
-    .bmag_fac = ctx.B_p, 
+    .gkfield_id = GKYL_GK_FIELD_BOLTZMANN,
+    .electron_mass = ctx.me,
+    .electron_charge = ctx.qe,
+    .electron_temp = ctx.Te0,
+    .bmag_fac = ctx.B_p, // Issue here. B0 from soloviev, so not sure what to do. Ours is not constant
     .fem_parbc = GKYL_FEM_PARPROJ_NONE,
-    .kperpSq = pow(ctx.kperp, 2.),
-  };
+      };
   struct gkyl_gk gk = {  // GK app
     .name = "gk_wham_unif",
     .cdim = 1,
@@ -827,16 +827,15 @@ struct gkyl_gyrokinetic_species elc = {
     .poly_order = ctx.poly_order,
     .basis_type = app_args.basis_type,
     .geometry = {
-      // .geometry_id = GKYL_MIRROR,
-      // .world = {ctx.psi_eval, 0.0},
-      // .mirror_efit_info = &inp,
-      // .mirror_grid_info = &ginp,
-      .geometry_id = GKYL_GEOMETRY_FROMFILE,
+      .geometry_id = GKYL_MIRROR,
+      .world = {ctx.psi_eval, 0.0},
+      .mirror_efit_info = &inp,
+      .mirror_grid_info = &ginp,
     },
     .num_periodic_dir = 0,
     .periodic_dirs = {},
-    .num_species = 2,
-    .species = {elc, ion},
+    .num_species = 1,
+    .species = {ion},
     .field = field,
     .use_gpu = app_args.use_gpu,
     .has_low_inp = true,
@@ -890,7 +889,7 @@ struct gkyl_gyrokinetic_species elc = {
   if (stat.nstage_2_fail > 0)
   {
     gkyl_gyrokinetic_app_cout(app, stdout, "Max rel dt diff for RK stage-2 failures %g\n", stat.stage_2_dt_diff[1]);
-  gkyl_gyrokinetic_app_cout(app, stdout, "Min rel dt diff for RK stage-2 failures %g\n", stat.stage_2_dt_diff[0]);
+    gkyl_gyrokinetic_app_cout(app, stdout, "Min rel dt diff for RK stage-2 failures %g\n", stat.stage_2_dt_diff[0]);
   }
   gkyl_gyrokinetic_app_cout(app, stdout, "Number of RK stage-3 failures %ld\n", stat.nstage_3_fail);
   gkyl_gyrokinetic_app_cout(app, stdout, "Species RHS calc took %g secs\n", stat.species_rhs_tm);

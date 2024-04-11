@@ -110,11 +110,10 @@ INCLUDES = -I${G0_INC_DIR} -I${LAPACK_INC} -I${SUPERLU_INC} -I${MPI_INC_DIR} -I$
 LIB_DIRS = -L${LAPACK_LIB_DIR} -L${SUPERLU_LIB_DIR} -L${MPI_LIB_DIR} -L${LUA_LIB_DIR} -L${NCCL_LIB_DIR}
 EXT_LIBS = ${LAPACK_LIB} ${SUPERLU_LIB} ${MPI_LIBS} ${LUA_LIBS} ${NCCL_LIBS} -lm -lpthread -ldl
 
-all: sim reg
+all: sim
 
-sim: sim.c reg.c
+sim: sim.c
 	 ${CC} ${CFLAGS} ${INCLUDES} sim.c -o sim -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
-	 ${CC} ${CFLAGS} ${INCLUDES} reg.c -o reg -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
 clean:
-	rm -rf sim reg
+	rm -rf sim
 	 *.dSYM

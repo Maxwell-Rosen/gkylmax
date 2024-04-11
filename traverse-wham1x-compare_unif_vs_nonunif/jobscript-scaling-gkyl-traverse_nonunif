@@ -38,7 +38,9 @@ export OMPI_MCA_mpi_warn_on_fork=0
 
 num_procs=20
 
-srun -u -n $num_procs ./sim_nonunif -g -M -c $num_procs 
+./sim_nonunif -s 1 -g
+
+srun -u -n $num_procs ./sim_nonunif_geofile -g -M -c $num_procs 
 
 mv *.gkyl outputs/
 

@@ -375,21 +375,21 @@ load_wham_distf(void* ctx)
 
   const char *filename_uGrid = "../binary_files/uGrid.bin";
   size_t num_elements_uGrid;
-  double *u_grid = load_binary_file(filename_uGrid, &num_elements_uGrid);
+  double *v_grid = load_binary_file(filename_uGrid, &num_elements_uGrid);
 
-  const char *filename_v_norm = "../binary_files/v_norm.bin";
-  size_t num_elements_v_norm;
-  double *v_norm = load_binary_file(filename_v_norm, &num_elements_v_norm);
+  // const char *filename_v_norm = "../binary_files/v_norm.bin";
+  // size_t num_elements_v_norm;
+  // double *v_norm = load_binary_file(filename_v_norm, &num_elements_v_norm);
 
-  // multiply every element of u_grid with v_norm and call it v_grid
-  double *v_grid = (double*)malloc(num_elements_uGrid * sizeof(double));
-  for (int i = 0; i < num_elements_uGrid; i++) {
-    v_grid[i] = u_grid[i] * v_norm[0];
-  }
+  // // multiply every element of u_grid with v_norm and call it v_grid
+  // double *v_grid = (double*)malloc(num_elements_uGrid * sizeof(double));
+  // for (int i = 0; i < num_elements_uGrid; i++) {
+  //   v_grid[i] = u_grid[i] * v_norm[0];
+  // }
   app->v_grid = v_grid;
   size_t num_elements_vGrid = num_elements_uGrid;
 
-  const char *filename_theta = "../binary_files/theta.bin";
+  const char *filename_theta = "../binary_files/thGrid.bin";
   size_t num_elements_theta;
   double *theta_grid = load_binary_file(filename_theta, &num_elements_theta);
   app->theta_grid = theta_grid;

@@ -112,9 +112,12 @@ EXT_LIBS = ${LAPACK_LIB} ${SUPERLU_LIB} ${MPI_LIBS} ${LUA_LIBS} ${NCCL_LIBS} -lm
 
 all: sim_unif sim_nonunif
 
-sim: sim_unif.c sim_nonunif.c
+sim: sim_unif.c sim_nonunif.c sim_unif_geofile.c sim_nonunif_geofile.c
 	 ${CC} ${CFLAGS} ${INCLUDES} sim_unif.c -o sim_unif -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
 	 ${CC} ${CFLAGS} ${INCLUDES} sim_nonunif.c -o sim_nonunif -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
+	 ${CC} ${CFLAGS} ${INCLUDES} sim_unif_geofile.c -o sim_unif_geofile -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
+	 ${CC} ${CFLAGS} ${INCLUDES} sim_nonunif_geofile.c -o sim_nonunif_geofile -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
 clean:
 	rm -rf sim_unif sim_nonunif *.dSYM
+	rm -rf sim_unif_geofile sim_nonunif_geofile *.dSYM
 
