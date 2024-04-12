@@ -105,7 +105,7 @@ struct gk_mirror_ctx
 
 struct gkyl_mirror_geo_efit_inp inp = {
   // psiRZ and related inputs
-  .filepath = "../eqdsk/wham_ics.geqdsk",
+  .filepath = "../eqdsk/wham.geqdsk",
   .rzpoly_order = 2,
   .fluxpoly_order = 1,
   .plate_spec = false,
@@ -115,8 +115,8 @@ struct gkyl_mirror_geo_efit_inp inp = {
 
 struct gkyl_mirror_geo_grid_inp ginp = {
   .rclose = 0.2,
-  .zmin = -0.97,
-  .zmax =  0.97,
+  .zmin = -2.48,
+  .zmax =  2.48,
   .write_node_coord_array = true,
   .node_file_nm = "wham_nodes.gkyl",
   // .nonuniform_mapping_fraction = 0,
@@ -142,9 +142,9 @@ int get_lower_index(const int nx, const double *x, const double xP)
   //  x: grid points in the dimension
   //  xP: point to interpolate at
 {
-  if(xP <= x[0])
+  if(xP < x[0])
       return 0;
-  else if(xP >= x[nx-1])
+  else if(xP > x[nx-1])
       return nx-2;
   else
   {
@@ -175,8 +175,8 @@ double LI_2D(const int *ncells,  // array of number of cells
     int j = get_lower_index(ncells[1],y,pt[1]);
     int ip = i+1;
     int jp = j+1;
-    double xWta = (pt[0] - x[i])/(x[i+1]-x[i]);
-    double yWta = (pt[1] - y[j])/(y[j+1]-y[j]);
+    double xWta = fmax(0, fmin(1, (pt[0] - x[i])/(x[i+1]-x[i])));
+    double yWta = fmax(0, fmin(1, (pt[1] - y[j])/(y[j+1]-y[j])));
     double xWtb = 1-xWta;
     double yWtb = 1-yWta;
     return (f[i *ncells[1] +j ]*xWtb +                    // return f[i ][j ]*xWtb*yWtb +
@@ -196,29 +196,20 @@ double LI_4D(const int *ncells, // array of number of cells
 {
   // Heavily inspired by  yet adapted from the algorythm at 
   // https://github.com/BYUignite/multilinear_interpolation
-  // printf("Calling 4D linear interpolation\n");
-  // printf("Point to interpolate at: %g, %g, %g, %g\n", pt[0], pt[1], pt[2], pt[3]);
   int i = get_lower_index(ncells[0],x,pt[0]); //16
   int j = get_lower_index(ncells[1],y,pt[1]);
   int k = get_lower_index(ncells[2],z,pt[2]);
   int l = get_lower_index(ncells[3],w,pt[3]);
-  // // Nearest neighbor rounded down
-  // int nwzy = ncells[3]*ncells[2]*ncells[1];
-  // int nwz = ncells[3]*ncells[2];
-  // int nw = ncells[3];
-  // double distf = f[i *nwzy + j *nwz + k *nw + l ];
-  // return distf;
-  // printf("i = %d, j = %d, k = %d, l = %d\n", i, j, k, l);
 
   // Linear interpolate
   int ip = i+1;
   int jp = j+1;
   int kp = k+1;
   int lp = l+1;
-  double xWta = 0.0;//(pt[0] - x[i])/(x[i+1]-x[i]);
-  double yWta = (pt[1] - y[j])/(y[j+1]-y[j]);
-  double zWta = (pt[2] - z[k])/(z[k+1]-z[k]);
-  double wWta = (pt[3] - w[l])/(w[l+1]-w[l]);
+  double xWta = fmax(0, fmin(1, (pt[0] - x[i])/(x[i+1]-x[i])));
+  double yWta = fmax(0, fmin(1, (pt[1] - y[j])/(y[j+1]-y[j])));
+  double zWta = fmax(0, fmin(1, (pt[2] - z[k])/(z[k+1]-z[k])));
+  double wWta = fmax(0, fmin(1, (pt[3] - w[l])/(w[l+1]-w[l])));
   double xWtb = 1-xWta;
   double yWtb = 1-yWta;
   double zWtb = 1-zWta;
@@ -282,8 +273,8 @@ read_ion_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   int rank = app.rank;
 
   // FROM GEOMETRY INPUT HARDCOPY
-  double z_min_geo = -0.97;
-  double z_max_geo =  0.97;
+  double z_min_geo = -2.48;
+  double z_max_geo =  2.48;
   double tmin = app.z_min;
   double tmax = app.z_max;
   double t_norm_cord = (xn[1] + tmin) / (tmax - tmin);
@@ -322,8 +313,8 @@ read_elc_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   int rank = app.rank;
 
   // FROM GEOMETRY INPUT HARDCOPY
-  double z_min_geo = -0.97;
-  double z_max_geo =  0.97;
+  double z_min_geo = -2.48;
+  double z_max_geo =  2.48;
   double tmin = app.z_min;
   double tmax = app.z_max;
   double t_norm_cord = (xn[1] + tmin) / (tmax - tmin);
@@ -375,21 +366,21 @@ load_wham_distf(void* ctx)
 
   const char *filename_uGrid = "../binary_files/uGrid.bin";
   size_t num_elements_uGrid;
-  double *v_grid = load_binary_file(filename_uGrid, &num_elements_uGrid);
+  double *u_grid = load_binary_file(filename_uGrid, &num_elements_uGrid);
 
-  // const char *filename_v_norm = "../binary_files/v_norm.bin";
-  // size_t num_elements_v_norm;
-  // double *v_norm = load_binary_file(filename_v_norm, &num_elements_v_norm);
+  const char *filename_v_norm = "../binary_files/v_norm.bin";
+  size_t num_elements_v_norm;
+  double *v_norm = load_binary_file(filename_v_norm, &num_elements_v_norm);
 
-  // // multiply every element of u_grid with v_norm and call it v_grid
-  // double *v_grid = (double*)malloc(num_elements_uGrid * sizeof(double));
-  // for (int i = 0; i < num_elements_uGrid; i++) {
-  //   v_grid[i] = u_grid[i] * v_norm[0];
-  // }
+  // multiply every element of u_grid with v_norm and call it v_grid
+  double *v_grid = (double*)malloc(num_elements_uGrid * sizeof(double));
+  for (int i = 0; i < num_elements_uGrid; i++) {
+    v_grid[i] = u_grid[i] * v_norm[0];
+  }
   app->v_grid = v_grid;
   size_t num_elements_vGrid = num_elements_uGrid;
 
-  const char *filename_theta = "../binary_files/thGrid.bin";
+  const char *filename_theta = "../binary_files/theta.bin";
   size_t num_elements_theta;
   double *theta_grid = load_binary_file(filename_theta, &num_elements_theta);
   app->theta_grid = theta_grid;
@@ -471,10 +462,10 @@ create_ctx(void)
   // double vpar_max_ion = 20 * vti;
   double vpar_max_ion = 5 * vti;
   double mu_max_ion = mi * pow(5. * vti, 2.) / (2. * B_p);
-  int num_cell_vpar = 40; // Number of cells in the paralell velocity direction 96
-  int num_cell_mu = 40;  // Number of cells in the mu direction 192
-  int num_cell_z = 50;
-  int num_cell_psi = 30;
+  int num_cell_vpar = 42; // Number of cells in the paralell velocity direction 96
+  int num_cell_mu = 128;  // Number of cells in the mu direction 192
+  int num_cell_z = 64;
+  int num_cell_psi = 16;
   int poly_order = 1;
   double final_time = 1e-9;
   int num_frames = 1;

@@ -625,7 +625,7 @@ create_ctx(void)
   int num_cell_z = 280;
   int poly_order = 1;
   double final_time = 100e-6;
-  int num_frames = 100;
+  int num_frames = 20;
 
   // Bananna tip info. Hardcoad to avoid dependency on ctx
   double B_bt = 1.058278;

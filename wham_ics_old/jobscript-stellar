@@ -1,0 +1,48 @@
+#!/bin/bash -l
+
+#.Declare a name for this job to be my_serial_job
+#.it is recommended that this name be kept to 16 characters or less
+#SBATCH -J cql3d-wham
+
+#SBATCH --qos pppl-short
+
+#.Number of nodes to request (Stellar-amd has 96 cores per node)
+#SBATCH -N 1
+
+#. Total number of cores (96 per node).
+#SBATCH --tasks-per-node=16
+#SBATCH --mem-per-cpu=7500M
+
+#.Request wall time
+#SBATCH -t 24:00:00
+
+#.Mail is sent to you when the job starts and when it terminates or aborts.
+#.SBATCH --mail-user=mhrosen@pppl.gov
+#.SBATCH --mail-type=BEGIN,END,FAIL,REQUEUE
+
+#.Specify name format of output file.
+#SBATCH -o slurm-%j.out
+
+# If doing a restart indicate restart file path. Must also
+# add it as a command line argument after outdir below.
+
+
+# CPU Stellar Intel
+module load intel/2021.1.2
+module load openmpi/intel-2021.1/4.1.0
+module load anaconda3/2020.11
+
+conda activate pgkylenv
+
+# Record the start time
+start_time=$(date +"%s")
+
+echo "Starting Job"
+
+mpirun -n 16 python map_output.py
+
+end_time=$(date +"%s")
+elapsed_time=$((end_time - start_time))
+echo "Elapsed Time: $elapsed_time seconds"
+echo "Finished job"
+exit 0

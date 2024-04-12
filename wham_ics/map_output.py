@@ -156,9 +156,9 @@ if (iam == 0):
         hf.create_dataset('uGrid',data=u_loc)      #[normalized]
         #hf.create_dataset('vGrid',data=v_loc)      #[cm/s]
     else:
-        hf.create_dataset('uGrid',data=u0)
+        hf.create_dataset('uGrid',data=x)
         hf.create_dataset('vGrid',data=v0)
-    hf.create_dataset('thGrid',data=theta)     #[rad]
+    hf.create_dataset('theta',data=theta)     #[rad]
     hf.create_dataset('charge',data=q)         #[e]
     hf.create_dataset('mass',data=m)           #[g]
     hf.create_dataset('BdB0',data=BdB0)        #[normalized]

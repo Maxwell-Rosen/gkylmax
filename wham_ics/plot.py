@@ -12,7 +12,7 @@ psiGrid = hf['psiGrid'][:]
 zGrid = hf['zGrid'][:]
 uGrid = hf['uGrid'][:] # Normalized spherical velocity
 vGrid = hf['vGrid'][:]
-theta = hf['thGrid'][:] # Pitch angle. Radians
+theta = hf['theta'][:] # Pitch angle. Radians
 charge = hf['charge'][:]
 mass = hf['mass'][:]
 BdB0 = hf['BdB0'][:]
@@ -33,7 +33,7 @@ v_eval = uGrid[u]
 theta_eval = theta[theta_ix]
 
 f_slice_0 = f_dist[0, psi, 0, :, :]
-plt.pcolormesh(theta, uGrid, f_slice_0[1:, 1:])
+plt.pcolormesh(theta, uGrid*v_norm, f_slice_0[1:, 1:])
 plt.ylim(0, 0.01*v_norm)
 plt.colorbar()
 plt.title("Ion distribution function at lineLength = 0")
@@ -44,7 +44,7 @@ plt.savefig("python-plots/distf_ion_0.png")
 plt.close()
 
 f_slice_1 = f_dist[0, psi, -1, :, :]
-plt.pcolormesh(theta, uGrid, f_slice_1[1:, 1:])
+plt.pcolormesh(theta, uGrid*v_norm, f_slice_1[1:, 1:])
 plt.ylim(0, 0.01*v_norm)
 plt.colorbar()
 plt.title("Ion distribution function at lineLength = " + str(zGrid[-1]))
@@ -55,7 +55,7 @@ plt.savefig("python-plots/distf_ion_98.png")
 plt.close()
 
 f_slice_2 = f_dist[0, psi, 80, :, :]
-plt.pcolormesh(theta, uGrid, f_slice_2[1:, 1:])
+plt.pcolormesh(theta, uGrid*v_norm, f_slice_2[1:, 1:])
 plt.ylim(0, 0.01*v_norm)
 plt.colorbar()
 plt.title("Ion distribution function at lineLength = " + str(zGrid[80]))
@@ -66,7 +66,7 @@ plt.savefig("python-plots/distf_ion_60.png")
 plt.close()
 
 f_slice_3 = f_dist[1, psi, 0, :, :]
-plt.pcolormesh(theta, uGrid, f_slice_3[1:, 1:])
+plt.pcolormesh(theta, uGrid*v_norm, f_slice_3[1:, 1:])
 plt.ylim(0, v_norm)
 plt.colorbar()
 plt.title("Elc distribution function at lineLength = 0")
@@ -77,7 +77,7 @@ plt.savefig("python-plots/distf_elc_0.png")
 plt.close()
 
 f_slice_4 = f_dist[1, psi, -1, :, :]
-plt.pcolormesh(theta, uGrid, f_slice_4[1:, 1:])
+plt.pcolormesh(theta, uGrid*v_norm, f_slice_4[1:, 1:])
 plt.ylim(0, v_norm)
 plt.colorbar()
 plt.title("Elc distribution function at lineLength = " + str(zGrid[-1]))
@@ -88,7 +88,7 @@ plt.savefig("python-plots/distf_elc_98.png")
 plt.close()
 
 f_slice_5 = f_dist[1, psi, 80, :, :]
-plt.pcolormesh(theta, uGrid, f_slice_5[1:, 1:])
+plt.pcolormesh(theta, uGrid*v_norm, f_slice_5[1:, 1:])
 plt.ylim(0, v_norm)
 plt.colorbar()
 plt.title("Elc distribution function at lineLength = " + str(zGrid[80]))
@@ -99,7 +99,7 @@ plt.savefig("python-plots/distf_elc_60.png")
 plt.close()
 
 # Convert from polar to cartesian
-v = uGrid
+v = uGrid*v_norm
 theta = theta
 vperp = np.outer(v,np.sin(theta))**2
 vpar = np.outer(v,np.cos(theta))
