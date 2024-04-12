@@ -453,15 +453,15 @@ create_ctx(void)
   double z_min = -M_PI + 1e-1;
   double z_max = M_PI - 1e-1;
   double psi_min = 1e-3; // Go smaller. 1e-4 might be too small
-  double psi_max = 1e-2; // aim for 3e-2
+  double psi_max = 1e-2; // aim for 2e-2
 
   // Grid parameters
   // double vpar_max_elc = 20 * vte;
   double vpar_max_elc = 5 * vte;
-  double mu_max_elc = me * pow(5. * vte, 2.) / (2. * B_p);
+  double mu_max_elc = me * pow(3. * vte, 2.) / (2. * B_p);
   // double vpar_max_ion = 20 * vti;
   double vpar_max_ion = 5 * vti;
-  double mu_max_ion = mi * pow(5. * vti, 2.) / (2. * B_p);
+  double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   int num_cell_vpar = 42; // Number of cells in the paralell velocity direction 96
   int num_cell_mu = 128;  // Number of cells in the mu direction 192
   int num_cell_z = 64;
