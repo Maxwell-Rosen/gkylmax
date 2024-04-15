@@ -39,11 +39,11 @@ export OMPI_MCA_mpi_warn_on_fork=0
 num_procs=20
 
 echo "Running on $num_procs cores"
-echo "Starting uniform simulation"
+echo "Starting reduced sim"
 
-./sim_unif -s 1 -g
+./sim_reduced -s 1 -g
 
-srun -u -n $num_procs ./sim_unif_geofile -g -M -c $num_procs 
+srun -u -n $num_procs ./sim_reduced_geofile -g -M -c $num_procs 
 
 mv *.gkyl outputs/
 

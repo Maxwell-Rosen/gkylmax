@@ -27,9 +27,10 @@ if [ "$species" = "elc" ]; then
     activate -t M0,M2perp ev -a -t res2 "$mass M2perp M0 / * 1.6e-19 /"\
     activate -t res,res2 ev -a -t res3 "res2 2 * res + 3 /" \
     activate -t phi interp -b ms -p1 select -t phi_interp --z0 $psival \
-    activate -t res3,phi_interp ev -a -t ephiTe "phi res3 /" \
+    activate -t res3 select -t T0 --z0 0.0 --z1 0.0 \
+    activate -t T0,phi_interp ev -a -t ephiTe "phi T0 /" \
     activate -t ephiTe select -t plotfit --z0 $psival \
-    activate -t plotfit pl --title "Potential at psi = $psival" -y "e phi / T" -x "Field line length (m)" --saveas "python-plots/$name-$frame-1d-ephiTe.png" --no-show &
+    activate -t plotfit pl --title "Potential at psi = $psival" -y "e phi / T" -x "Field line length (m)" --saveas "python-plots/$name-$frame-1d-ephiTe.png" &
     
   pgkyl "$name-elc_M0_$frame.gkyl" -t M0 "$name-elc_M1_$frame.gkyl" -t M1 \
     "$name-elc_M2par_$frame.gkyl" -t M2par "$name-elc_M2perp_$frame.gkyl" -t M2perp \
@@ -38,9 +39,10 @@ if [ "$species" = "elc" ]; then
     activate -t M0,M2perp ev -a -t res2 "$mass M2perp M0 / * 1.6e-19 /" \
     activate -t res,res2 ev -a -t res3 "res2 2 * res + 3 /" \
     activate -t phi interp -t phi_interp -b ms -p1  \
-    activate -t res3,phi_interp ev -a -t ephiTe "phi_interp res3 /" \
+    activate -t res3 select -t T0 --z1 0.0 \
+    activate -t T0,phi_interp ev -a -t ephiTe "phi_interp T0 /" \
     activate -t ephiTe pl --title "Potential" -y "Field line length (m)" -x "psi" --clabel "e phi / T" \
-    --saveas "python-plots/$name-$frame-2d-ephiTe.png" --no-show &
+    --saveas "python-plots/$name-$frame-2d-ephiTe.png"&
 fi
 # # 1D plots of distribution function at a certain psival
 pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 select --z0 $psival integrate 2 pl --title "$species distribution function integrating over vpar"  \

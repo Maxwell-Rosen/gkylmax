@@ -110,14 +110,19 @@ INCLUDES = -I${G0_INC_DIR} -I${LAPACK_INC} -I${SUPERLU_INC} -I${MPI_INC_DIR} -I$
 LIB_DIRS = -L${LAPACK_LIB_DIR} -L${SUPERLU_LIB_DIR} -L${MPI_LIB_DIR} -L${LUA_LIB_DIR} -L${NCCL_LIB_DIR}
 EXT_LIBS = ${LAPACK_LIB} ${SUPERLU_LIB} ${MPI_LIBS} ${LUA_LIBS} ${NCCL_LIBS} -lm -lpthread -ldl
 
-all: sim_unif sim_nonunif
+all: sim_unif sim_nonunif sim_unif_geofile sim_nonunif_geofile sim_reduced sim_reduced_geofile
 
-sim: sim_unif.c sim_nonunif.c sim_unif_geofile.c sim_nonunif_geofile.c
+sim: sim_unif.c sim_nonunif.c sim_unif_geofile.c sim_nonunif_geofile.c sim_reduced.c sim_reduced_geofile.c
 	 ${CC} ${CFLAGS} ${INCLUDES} sim_unif.c -o sim_unif -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
 	 ${CC} ${CFLAGS} ${INCLUDES} sim_nonunif.c -o sim_nonunif -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
 	 ${CC} ${CFLAGS} ${INCLUDES} sim_unif_geofile.c -o sim_unif_geofile -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
 	 ${CC} ${CFLAGS} ${INCLUDES} sim_nonunif_geofile.c -o sim_nonunif_geofile -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
+	 ${CC} ${CFLAGS} ${INCLUDES} sim_reduced.c -o sim_reduced -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
+	 ${CC} ${CFLAGS} ${INCLUDES} sim_reduced_geofile.c -o sim_reduced_geofile -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
 clean:
 	rm -rf sim_unif sim_nonunif *.dSYM
 	rm -rf sim_unif_geofile sim_nonunif_geofile *.dSYM
+	rm -rf sim_reduced sim_reduced_geofile *.dSYM
+	rm -rf *.dSYM
+	
 

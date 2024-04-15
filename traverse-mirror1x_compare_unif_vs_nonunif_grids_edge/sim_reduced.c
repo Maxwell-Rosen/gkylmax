@@ -622,7 +622,7 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   int num_cell_vpar = 128; // Number of cells in the paralell velocity direction 96
   int num_cell_mu = 192;  // Number of cells in the mu direction 192
-  int num_cell_z = 280;
+  int num_cell_z = 140;
   int poly_order = 1;
   double final_time = 100e-6;
   int num_frames = 20;
@@ -875,7 +875,7 @@ int main(int argc, char **argv)
     .fem_parbc = GKYL_FEM_PARPROJ_NONE,
   };
   struct gkyl_gk gk = {  // GK app
-    .name = "gk_mirror_boltz_nonuniform",
+    .name = "gk_mirror_boltz_reduced",
     .cdim = 1,
     .vdim = 2,
     .lower = {ctx.z_min},
@@ -961,7 +961,7 @@ int main(int argc, char **argv)
   
   // simulation complete, free app
   gkyl_gyrokinetic_app_release(app);
-  gkyl_rect_decomp_release(decomp);
+gkyl_rect_decomp_release(decomp);
   gkyl_comm_release(comm);
 
   mpifinalize:
