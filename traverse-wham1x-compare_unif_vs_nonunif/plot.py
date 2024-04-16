@@ -13,11 +13,11 @@ import postgkyl as pg
 from matplotlib.colors import LogNorm
 import multiprocessing
 
-dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-wham1x_compare_unif_vs_nonunif/outputs/'
+dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-wham1x-compare_unif_vs_nonunif/outputs/'
 unifFile = 'gk_wham_unif'
 nonunifFile = 'gk_wham_nonunif'
 reducedFile = 'gk_wham_reduced'
-frame_arr = np.arange(0,4)
+frame_arr = np.arange(0,20)
 # frame_arr = np.array([1:4])
 save_figure_as_file= 1     #[ If True, save figure to file. If False, display figure on screen.
 

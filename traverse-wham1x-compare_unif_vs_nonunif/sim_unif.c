@@ -240,75 +240,79 @@ void
 eval_density_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  double psi = app->psi_eval; // Magnetic flux function psi of field line.
-  double z = xn[0];
-  double z_m = app->z_m;
-  double sigma = 0.9*z_m;
-  if (fabs(z) <= sigma)
-  {
-    fout[0] = 0.5*app->n0*(1. + tanh(10. * sigma * fabs(sigma - fabs(z))));
-  }
-  else
-  {
-    fout[0] = 0.5*app->n0*exp(-5 * (fabs(sigma - fabs(z))));
-  }
+  fout[0] = app->n0;
+  // double psi = app->psi_eval; // Magnetic flux function psi of field line.
+  // double z = xn[0];
+  // double z_m = app->z_m;
+  // double sigma = 0.9*z_m;
+  // if (fabs(z) <= sigma)
+  // {
+  //   fout[0] = 0.5*app->n0*(1. + tanh(10. * sigma * fabs(sigma - fabs(z))));
+  // }
+  // else
+  // {
+  //   fout[0] = 0.5*app->n0*exp(-5 * (fabs(sigma - fabs(z))));
+  // }
 }
 
 void
 eval_upar_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  double psi = app->psi_eval; // Magnetic flux function psi of field line.
-  double z = xn[0];
-  double cs_m = app->cs_m;
-  double z_m = app->z_m;
-  double z_max = app->z_max;
-  if (fabs(z) <= z_m)
-  {
-    fout[0] = 0.0;
-  }
-  else
-  {
-    fout[0] = fabs(z) / z * cs_m * tanh(3 * (z_max - z_m) * fabs(fabs(z) - z_m)); // Maybe put a 5 here
-  }
+  fout[0] = 0.0;
+  // double psi = app->psi_eval; // Magnetic flux function psi of field line.
+  // double z = xn[0];
+  // double cs_m = app->cs_m;
+  // double z_m = app->z_m;
+  // double z_max = app->z_max;
+  // if (fabs(z) <= z_m)
+  // {
+  //   fout[0] = 0.0;
+  // }
+  // else
+  // {
+  //   fout[0] = fabs(z) / z * cs_m * tanh(3 * (z_max - z_m) * fabs(fabs(z) - z_m)); // Maybe put a 5 here
+  // }
 }
 
 void
 eval_temp_par_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  double psi = app->psi_eval; // Magnetic flux function psi of field line.
-  double z = xn[0];
-  double z_m = app->z_m;
-  double Te_par0 = app->Te_par0;
-  double Te_par_m = app->Te_par_m;
-  if (fabs(z) <= z_m)
-  {
-    fout[0] = Te_par_m+(Te_par0-Te_par_m)*tanh(4 * fabs(z_m - fabs(z)));
-  }
-  else
-  {
-    fout[0] = Te_par_m;
-  }
+  fout[0] = app->Te_par0;
+  // double psi = app->psi_eval; // Magnetic flux function psi of field line.
+  // double z = xn[0];
+  // double z_m = app->z_m;
+  // double Te_par0 = app->Te_par0;
+  // double Te_par_m = app->Te_par_m;
+  // if (fabs(z) <= z_m)
+  // {
+  //   fout[0] = Te_par_m+(Te_par0-Te_par_m)*tanh(4 * fabs(z_m - fabs(z)));
+  // }
+  // else
+  // {
+  //   fout[0] = Te_par_m;
+  // }
 }
 
 void
 eval_temp_perp_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  double psi = app->psi_eval; // Magnetic flux function psi of field line.
-  double z = xn[0];
-  double z_m = app->z_m;
-  double Te_perp0 = app->Te_perp0;
-  double Te_perp_m = app->Te_perp_m;
-  if (fabs(z) <= z_m)
-  {
-    fout[0] = Te_perp_m - Te_perp0*tanh(3.*fabs(z_m-fabs(z)));
-  }
-  else
-  {
-    fout[0] = Te_perp_m * GKYL_MAX2(1.e-3, exp(-5. * (fabs(z_m - fabs(z)))));
-  }
+  fout[0] = app->Te_perp0;
+  // double psi = app->psi_eval; // Magnetic flux function psi of field line.
+  // double z = xn[0];
+  // double z_m = app->z_m;
+  // double Te_perp0 = app->Te_perp0;
+  // double Te_perp_m = app->Te_perp_m;
+  // if (fabs(z) <= z_m)
+  // {
+  //   fout[0] = Te_perp_m - Te_perp0*tanh(3.*fabs(z_m-fabs(z)));
+  // }
+  // else
+  // {
+  //   fout[0] = Te_perp_m * GKYL_MAX2(1.e-3, exp(-5. * (fabs(z_m - fabs(z)))));
+  // }
 }
 
 void
@@ -327,75 +331,79 @@ void
 eval_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  double psi = app->psi_eval; // Magnetic flux function psi of field line.
-  double z = xn[0];
-  double z_m = app->z_m;
-  double sigma = 0.9*z_m;
-  if (fabs(z) <= sigma)
-  {
-    fout[0] = 0.5*app->n0*(1. + tanh(10. * sigma * fabs(sigma - fabs(z))));
-  }
-  else
-  {
-    fout[0] = 0.5*app->n0*exp(-5 * (fabs(sigma - fabs(z))));
-  }
+  fout[0] = app->n0;
+  // double psi = app->psi_eval; // Magnetic flux function psi of field line.
+  // double z = xn[0];
+  // double z_m = app->z_m;
+  // double sigma = 0.9*z_m;
+  // if (fabs(z) <= sigma)
+  // {
+  //   fout[0] = 0.5*app->n0*(1. + tanh(10. * sigma * fabs(sigma - fabs(z))));
+  // }
+  // else
+  // {
+  //   fout[0] = 0.5*app->n0*exp(-5 * (fabs(sigma - fabs(z))));
+  // }
 }
 
 void
 eval_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  double psi = app->psi_eval; // Magnetic flux function psi of field line.
-  double z = xn[0];
-  double cs_m = app->cs_m;
-  double z_m = app->z_m;
-  double z_max = app->z_max;
-  if (fabs(z) <= z_m)
-  {
-    fout[0] = 0.0;
-  }
-  else
-  {
-    fout[0] = fabs(z) / z * cs_m * tanh(3 * (z_max - z_m) * fabs(fabs(z) - z_m)); // Maybe put a 5 here
-  }
+  fout[0] = 0.0;
+  // double psi = app->psi_eval; // Magnetic flux function psi of field line.
+  // double z = xn[0];
+  // double cs_m = app->cs_m;
+  // double z_m = app->z_m;
+  // double z_max = app->z_max;
+  // if (fabs(z) <= z_m)
+  // {
+  //   fout[0] = 0.0;
+  // }
+  // else
+  // {
+  //   fout[0] = fabs(z) / z * cs_m * tanh(3 * (z_max - z_m) * fabs(fabs(z) - z_m)); // Maybe put a 5 here
+  // }
 }
 
 void
 eval_temp_par_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  double psi = app->psi_eval; // Magnetic flux function psi of field line.
-  double z = xn[0];
-  double z_m = app->z_m;
-  double Ti_par0 = app->Ti_par0;
-  double Ti_par_m = app->Ti_par_m;
-  if (fabs(z) <= z_m)
-  {
-    fout[0] = Ti_par_m + (Ti_par0 - Ti_par_m) * tanh(4 * fabs(z_m - fabs(z)));
-  }
-  else
-  {
-    fout[0] = Ti_par_m * GKYL_MAX2(1.e-2, 4 * log(fabs(fabs(z) - z_m) + 1));
-  }
+  fout[0] = app->Ti_par0;
+  // double psi = app->psi_eval; // Magnetic flux function psi of field line.
+  // double z = xn[0];
+  // double z_m = app->z_m;
+  // double Ti_par0 = app->Ti_par0;
+  // double Ti_par_m = app->Ti_par_m;
+  // if (fabs(z) <= z_m)
+  // {
+  //   fout[0] = Ti_par_m + (Ti_par0 - Ti_par_m) * tanh(4 * fabs(z_m - fabs(z)));
+  // }
+  // else
+  // {
+  //   fout[0] = Ti_par_m * GKYL_MAX2(1.e-2, 4 * log(fabs(fabs(z) - z_m) + 1));
+  // }
 }
 
 void
 eval_temp_perp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  double psi = app->psi_eval; // Magnetic flux function psi of field line.
-  double z = xn[0];
-  double z_m = app->z_m;
-  double Ti_perp0 = app->Ti_perp0;
-  double Ti_perp_m = app->Ti_perp_m;
-  if (fabs(z) <= z_m)
-  {
-    fout[0] = Ti_perp_m + (Ti_perp0 - Ti_perp_m) * tanh(3. * fabs(z_m - fabs(z)));
-  }
-  else
-  {
-    fout[0] = Ti_perp_m * GKYL_MAX2(1.e-3, exp(-5. * (fabs(z_m - fabs(z)))));
-  }
+  fout[0] = app->Ti_perp0;
+  // double psi = app->psi_eval; // Magnetic flux function psi of field line.
+  // double z = xn[0];
+  // double z_m = app->z_m;
+  // double Ti_perp0 = app->Ti_perp0;
+  // double Ti_perp_m = app->Ti_perp_m;
+  // if (fabs(z) <= z_m)
+  // {
+  //   fout[0] = Ti_perp_m + (Ti_perp0 - Ti_perp_m) * tanh(3. * fabs(z_m - fabs(z)));
+  // }
+  // else
+  // {
+  //   fout[0] = Ti_perp_m * GKYL_MAX2(1.e-3, exp(-5. * (fabs(z_m - fabs(z)))));
+  // }
 }
 
 void
@@ -744,20 +752,6 @@ struct gkyl_gyrokinetic_species elc = {
       .num_cross_collisions = 1,
       .collide_with = { "ion" },
     },
-    .source = {
-      .source_id = GKYL_PROJ_SOURCE,
-      .write_source = true,
-      .num_sources = 1,
-      .projection[0] = {
-        .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM, 
-        .ctx_density = &ctx,
-        .density = eval_density_elc_source,
-        .ctx_upar = &ctx,
-        .upar= eval_upar_elc_source,
-        .ctx_temp = &ctx,
-        .temp = eval_temp_elc_source,      
-      }, 
-    },
     .bcx = {
       .lower={.type = GKYL_SPECIES_GK_SHEATH,},
       .upper={.type = GKYL_SPECIES_GK_SHEATH,},
@@ -792,19 +786,6 @@ struct gkyl_gyrokinetic_species elc = {
       .collision_id = GKYL_LBO_COLLISIONS,
       .ctx = &ctx,
       .self_nu = evalNuIon,
-    },
-    .source = {
-      .source_id = GKYL_PROJ_SOURCE,
-      .write_source = true,
-      .projection[0] = {
-        .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM, 
-        .ctx_density = &ctx,
-        .density = eval_density_ion_source,
-        .ctx_upar = &ctx,
-        .upar= eval_upar_ion_source,
-        .ctx_temp = &ctx,
-        .temp = eval_temp_ion_source,      
-      }, 
     },
     .num_diag_moments = 7,
     .diag_moments = {"M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp"},
