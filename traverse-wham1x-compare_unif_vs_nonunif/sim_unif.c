@@ -23,6 +23,17 @@
 #include <gkyl_mirror_geo.h>
 
 // Define the context of the simulation. This is basically all the globals
+struct gk_mc2p_evaluator
+{
+   const struct gkyl_rect_grid* grid;
+   const struct gkyl_rect_grid* cgrid;
+   const struct gkyl_range* range;
+   const struct gkyl_range* crange;
+   const struct gkyl_range* crange_global;
+   const struct gkyl_basis* basis;
+   const struct gkyl_basis* cbasis;
+   const struct gkyl_array* mapc2p;
+};
 struct gk_mirror_ctx
 {
   // Plasma parameters
@@ -119,7 +130,7 @@ double Ti_perp0;
   int mapping_order_center;
   int mapping_order_expander;
   double mapping_frac;
-  void *mapc2p;
+  void *arcL_evaluator_ctx;
 };
 
 
@@ -142,13 +153,48 @@ struct gkyl_mirror_geo_grid_inp ginp = {
   .nonuniform_mapping_fraction = 0.0,
 };
 
+void calc_arcL_advance(double t, const double *xn, double *fout, void *ctx)
+{
+  // IMPORTANT xn is a 3x coordinate vector (psi, theta, z)
+  struct arcL_evaluator *gc = ctx;
+  struct gkyl_range_iter iter;
+  double XYZ[gc->cgrid.ndim];
+  struct gkyl_range_iter citer;
+  gkyl_range_iter_init(&iter, &gc->crange);
+  for(int i = 0; i < gc->cgrid.ndim; i++){
+    int idxtemp = gc->crange_global.lower[i] + (int) floor((xn[i] - (gc->cgrid.lower[i]) )/gc->cgrid.dx[i]);
+    idxtemp = GKYL_MIN2(idxtemp, gc->crange.upper[i]);
+    idxtemp = GKYL_MAX2(idxtemp, gc->crange.lower[i]);
+    citer.idx[i] = idxtemp;
+  }
+  long lidx = gkyl_range_idx(&gc->crange, citer.idx);
+  const double *mcoeffs = gkyl_array_cfetch(gc->map_arcL, lidx);
+  double cxc[gc->cgrid.ndim];
+  double xyz[gc->cgrid.ndim];
+  gkyl_rect_grid_cell_center(&gc->cgrid, citer.idx, cxc);
+  for(int i = 0; i < gc->cgrid.ndim; i++){
+    xyz[i] = (xn[i]-cxc[i])/(gc->cgrid.dx[i]*0.5);
+  }
+  for(int i = 0; i < gc->cgrid.ndim; i++){
+    XYZ[i] = gc->cbasis.eval_expand(xyz, &mcoeffs[i*gc->cbasis.num_basis]);
+    fout[i] = XYZ[i];
+  }
+}
+
 // -- Source functions.
 void
 eval_density_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
   double psi = app->psi_eval; // Magnetic flux function psi of field line.
-  double z = xn[0];
+  double *arcL_output = malloc(3*sizeof(double));
+  double *xn_3x = malloc(3*sizeof(double));
+  xn_3x[0] = psi;
+  xn_3x[1] = 0.0;
+  xn_3x[2] = xn[0];
+  calc_arcL_advance(t, xn_3x, arcL_output, app->arcL_evaluator_ctx);
+  double z = arcL_output[2]; //Alocate seperate space for this with a descriptive name
+  free(arcL_output);
   double NSrc = app->NSrcElc;
   double zSrc = app->lineLengthSrcElc;
   double sigSrc = app->sigSrcElc;
@@ -175,7 +221,14 @@ eval_temp_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_REST
 {
   struct gk_mirror_ctx *app = ctx;
   double psi = app->psi_eval; // Magnetic flux function psi of field line.
-  double z = xn[0];
+  double *arcL_output = malloc(3*sizeof(double));
+  double *xn_3x = malloc(3*sizeof(double));
+  xn_3x[0] = psi;
+  xn_3x[1] = 0.0;
+  xn_3x[2] = xn[0];
+  calc_arcL_advance(t, xn_3x, arcL_output, app->arcL_evaluator_ctx);
+  double z = arcL_output[2]; //Alocate seperate space for this with a descriptive name
+  free(arcL_output);
   double sigSrc = app->sigSrcElc;
   double TSrc0 = app->TSrc0Elc;
   double Tfloor = app->TSrcFloorElc;
@@ -194,7 +247,14 @@ eval_density_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_R
 {
   struct gk_mirror_ctx *app = ctx;
   double psi = app->psi_eval; // Magnetic flux function psi of field line.
-  double z = xn[0];
+  double *arcL_output = malloc(3*sizeof(double));
+  double *xn_3x = malloc(3*sizeof(double));
+  xn_3x[0] = psi;
+  xn_3x[1] = 0.0;
+  xn_3x[2] = xn[0];
+  calc_arcL_advance(t, xn_3x, arcL_output, app->arcL_evaluator_ctx);
+  double z = arcL_output[2]; //Alocate seperate space for this with a descriptive name
+  free(arcL_output);
   double NSrc = app->NSrcIon;
   double zSrc = app->lineLengthSrcIon;
   double sigSrc = app->sigSrcIon;
@@ -221,7 +281,14 @@ eval_temp_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_REST
 {
   struct gk_mirror_ctx *app = ctx;
   double psi = app->psi_eval; // Magnetic flux function psi of field line.
-  double z = xn[0];
+  double *arcL_output = malloc(3*sizeof(double));
+  double *xn_3x = malloc(3*sizeof(double));
+  xn_3x[0] = psi;
+  xn_3x[1] = 0.0;
+  xn_3x[2] = xn[0];
+  calc_arcL_advance(t, xn_3x, arcL_output, app->arcL_evaluator_ctx);
+  double z = arcL_output[2]; //Alocate seperate space for this with a descriptive name
+  free(arcL_output);
   double sigSrc = app->sigSrcIon;
   double TSrc0 = app->TSrc0Ion;
   double Tfloor = app->TSrcFloorIon;
@@ -240,79 +307,103 @@ void
 eval_density_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  fout[0] = app->n0;
-  // double psi = app->psi_eval; // Magnetic flux function psi of field line.
-  // double z = xn[0];
-  // double z_m = app->z_m;
-  // double sigma = 0.9*z_m;
-  // if (fabs(z) <= sigma)
-  // {
-  //   fout[0] = 0.5*app->n0*(1. + tanh(10. * sigma * fabs(sigma - fabs(z))));
-  // }
-  // else
-  // {
-  //   fout[0] = 0.5*app->n0*exp(-5 * (fabs(sigma - fabs(z))));
-  // }
+  double psi = app->psi_eval; // Magnetic flux function psi of field line.
+  double *arcL_output = malloc(3*sizeof(double));
+  double *xn_3x = malloc(3*sizeof(double));
+  xn_3x[0] = psi;
+  xn_3x[1] = 0.0;
+  xn_3x[2] = xn[0];
+  calc_arcL_advance(t, xn_3x, arcL_output, app->arcL_evaluator_ctx);
+  double z = arcL_output[2]; //Alocate seperate space for this with a descriptive name
+  free(arcL_output);
+  double z_m = app->z_m;
+  double sigma = 0.9*z_m;
+  if (fabs(z) <= sigma)
+  {
+    fout[0] = 0.5*app->n0*(1. + tanh(10. * sigma * fabs(sigma - fabs(z))));
+  }
+  else
+  {
+    fout[0] = 0.5*app->n0*exp(-5 * (fabs(sigma - fabs(z))));
+  }
 }
 
 void
 eval_upar_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  fout[0] = 0.0;
-  // double psi = app->psi_eval; // Magnetic flux function psi of field line.
-  // double z = xn[0];
-  // double cs_m = app->cs_m;
-  // double z_m = app->z_m;
-  // double z_max = app->z_max;
-  // if (fabs(z) <= z_m)
-  // {
-  //   fout[0] = 0.0;
-  // }
-  // else
-  // {
-  //   fout[0] = fabs(z) / z * cs_m * tanh(3 * (z_max - z_m) * fabs(fabs(z) - z_m)); // Maybe put a 5 here
-  // }
+  double psi = app->psi_eval; // Magnetic flux function psi of field line.
+  double *arcL_output = malloc(3*sizeof(double));
+  double *xn_3x = malloc(3*sizeof(double));
+  xn_3x[0] = psi;
+  xn_3x[1] = 0.0;
+  xn_3x[2] = xn[0];
+  calc_arcL_advance(t, xn_3x, arcL_output, app->arcL_evaluator_ctx);
+  double z = arcL_output[2]; //Alocate seperate space for this with a descriptive name
+  free(arcL_output);
+  double cs_m = app->cs_m;
+  double z_m = app->z_m;
+  double z_max = app->z_max;
+  if (fabs(z) <= z_m)
+  {
+    fout[0] = 0.0;
+  }
+  else
+  {
+    fout[0] = fabs(z) / z * cs_m * tanh(3 * (z_max - z_m) * fabs(fabs(z) - z_m)); // Maybe put a 5 here
+  }
 }
 
 void
 eval_temp_par_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  fout[0] = app->Te_par0;
-  // double psi = app->psi_eval; // Magnetic flux function psi of field line.
-  // double z = xn[0];
-  // double z_m = app->z_m;
-  // double Te_par0 = app->Te_par0;
-  // double Te_par_m = app->Te_par_m;
-  // if (fabs(z) <= z_m)
-  // {
-  //   fout[0] = Te_par_m+(Te_par0-Te_par_m)*tanh(4 * fabs(z_m - fabs(z)));
-  // }
-  // else
-  // {
-  //   fout[0] = Te_par_m;
-  // }
+  double psi = app->psi_eval; // Magnetic flux function psi of field line.
+  double *arcL_output = malloc(3*sizeof(double));
+  double *xn_3x = malloc(3*sizeof(double));
+  xn_3x[0] = psi;
+  xn_3x[1] = 0.0;
+  xn_3x[2] = xn[0];
+  calc_arcL_advance(t, xn_3x, arcL_output, app->arcL_evaluator_ctx);
+  double z = arcL_output[2]; //Alocate seperate space for this with a descriptive name
+  free(arcL_output);
+  double z_m = app->z_m;
+  double Te_par0 = app->Te_par0;
+  double Te_par_m = app->Te_par_m;
+  if (fabs(z) <= z_m)
+  {
+    fout[0] = Te_par_m+(Te_par0-Te_par_m)*tanh(4 * fabs(z_m - fabs(z)));
+  }
+  else
+  {
+    fout[0] = Te_par_m;
+  }
 }
 
 void
 eval_temp_perp_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  fout[0] = app->Te_perp0;
-  // double psi = app->psi_eval; // Magnetic flux function psi of field line.
-  // double z = xn[0];
-  // double z_m = app->z_m;
-  // double Te_perp0 = app->Te_perp0;
-  // double Te_perp_m = app->Te_perp_m;
-  // if (fabs(z) <= z_m)
-  // {
-  //   fout[0] = Te_perp_m - Te_perp0*tanh(3.*fabs(z_m-fabs(z)));
-  // }
-  // else
-  // {
-  //   fout[0] = Te_perp_m * GKYL_MAX2(1.e-3, exp(-5. * (fabs(z_m - fabs(z)))));
-  // }
+  double psi = app->psi_eval; // Magnetic flux function psi of field line.
+  double *arcL_output = malloc(3*sizeof(double));
+  double *xn_3x = malloc(3*sizeof(double));
+  xn_3x[0] = psi;
+  xn_3x[1] = 0.0;
+  xn_3x[2] = xn[0];
+  calc_arcL_advance(t, xn_3x, arcL_output, app->arcL_evaluator_ctx);
+  double z = arcL_output[2]; //Alocate seperate space for this with a descriptive name
+  free(arcL_output);
+  double z_m = app->z_m;
+  double Te_perp0 = app->Te_perp0;
+  double Te_perp_m = app->Te_perp_m;
+  if (fabs(z) <= z_m)
+  {
+    fout[0] = Te_perp_m - Te_perp0*tanh(3.*fabs(z_m-fabs(z)));
+  }
+  else
+  {
+    fout[0] = Te_perp_m * GKYL_MAX2(1.e-3, exp(-5. * (fabs(z_m - fabs(z)))));
+  }
 }
 
 void
@@ -331,79 +422,103 @@ void
 eval_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  fout[0] = app->n0;
-  // double psi = app->psi_eval; // Magnetic flux function psi of field line.
-  // double z = xn[0];
-  // double z_m = app->z_m;
-  // double sigma = 0.9*z_m;
-  // if (fabs(z) <= sigma)
-  // {
-  //   fout[0] = 0.5*app->n0*(1. + tanh(10. * sigma * fabs(sigma - fabs(z))));
-  // }
-  // else
-  // {
-  //   fout[0] = 0.5*app->n0*exp(-5 * (fabs(sigma - fabs(z))));
-  // }
+  double psi = app->psi_eval; // Magnetic flux function psi of field line.
+  double *arcL_output = malloc(3*sizeof(double));
+  double *xn_3x = malloc(3*sizeof(double));
+  xn_3x[0] = psi;
+  xn_3x[1] = 0.0;
+  xn_3x[2] = xn[0];
+  calc_arcL_advance(t, xn_3x, arcL_output, app->arcL_evaluator_ctx);
+  double z = arcL_output[2]; //Alocate seperate space for this with a descriptive name
+  free(arcL_output);
+  double z_m = app->z_m;
+  double sigma = 0.9*z_m;
+  if (fabs(z) <= sigma)
+  {
+    fout[0] = 0.5*app->n0*(1. + tanh(10. * sigma * fabs(sigma - fabs(z))));
+  }
+  else
+  {
+    fout[0] = 0.5*app->n0*exp(-5 * (fabs(sigma - fabs(z))));
+  }
 }
 
 void
 eval_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  fout[0] = 0.0;
-  // double psi = app->psi_eval; // Magnetic flux function psi of field line.
-  // double z = xn[0];
-  // double cs_m = app->cs_m;
-  // double z_m = app->z_m;
-  // double z_max = app->z_max;
-  // if (fabs(z) <= z_m)
-  // {
-  //   fout[0] = 0.0;
-  // }
-  // else
-  // {
-  //   fout[0] = fabs(z) / z * cs_m * tanh(3 * (z_max - z_m) * fabs(fabs(z) - z_m)); // Maybe put a 5 here
-  // }
+  double psi = app->psi_eval; // Magnetic flux function psi of field line.
+  double *arcL_output = malloc(3*sizeof(double));
+  double *xn_3x = malloc(3*sizeof(double));
+  xn_3x[0] = psi;
+  xn_3x[1] = 0.0;
+  xn_3x[2] = xn[0];
+  calc_arcL_advance(t, xn_3x, arcL_output, app->arcL_evaluator_ctx);
+  double z = arcL_output[2]; //Alocate seperate space for this with a descriptive name
+  free(arcL_output);
+  double cs_m = app->cs_m;
+  double z_m = app->z_m;
+  double z_max = app->z_max;
+  if (fabs(z) <= z_m)
+  {
+    fout[0] = 0.0;
+  }
+  else
+  {
+    fout[0] = fabs(z) / z * cs_m * tanh(3 * (z_max - z_m) * fabs(fabs(z) - z_m)); // Maybe put a 5 here
+  }
 }
 
 void
 eval_temp_par_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  fout[0] = app->Ti_par0;
-  // double psi = app->psi_eval; // Magnetic flux function psi of field line.
-  // double z = xn[0];
-  // double z_m = app->z_m;
-  // double Ti_par0 = app->Ti_par0;
-  // double Ti_par_m = app->Ti_par_m;
-  // if (fabs(z) <= z_m)
-  // {
-  //   fout[0] = Ti_par_m + (Ti_par0 - Ti_par_m) * tanh(4 * fabs(z_m - fabs(z)));
-  // }
-  // else
-  // {
-  //   fout[0] = Ti_par_m * GKYL_MAX2(1.e-2, 4 * log(fabs(fabs(z) - z_m) + 1));
-  // }
+  double psi = app->psi_eval; // Magnetic flux function psi of field line.
+  double *arcL_output = malloc(3*sizeof(double));
+  double *xn_3x = malloc(3*sizeof(double));
+  xn_3x[0] = psi;
+  xn_3x[1] = 0.0;
+  xn_3x[2] = xn[0];
+  calc_arcL_advance(t, xn_3x, arcL_output, app->arcL_evaluator_ctx);
+  double z = arcL_output[2]; //Alocate seperate space for this with a descriptive name
+  free(arcL_output);
+  double z_m = app->z_m;
+  double Ti_par0 = app->Ti_par0;
+  double Ti_par_m = app->Ti_par_m;
+  if (fabs(z) <= z_m)
+  {
+    fout[0] = Ti_par_m + (Ti_par0 - Ti_par_m) * tanh(4 * fabs(z_m - fabs(z)));
+  }
+  else
+  {
+    fout[0] = Ti_par_m * GKYL_MAX2(1.e-2, 4 * log(fabs(fabs(z) - z_m) + 1));
+  }
 }
 
 void
 eval_temp_perp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  fout[0] = app->Ti_perp0;
-  // double psi = app->psi_eval; // Magnetic flux function psi of field line.
-  // double z = xn[0];
-  // double z_m = app->z_m;
-  // double Ti_perp0 = app->Ti_perp0;
-  // double Ti_perp_m = app->Ti_perp_m;
-  // if (fabs(z) <= z_m)
-  // {
-  //   fout[0] = Ti_perp_m + (Ti_perp0 - Ti_perp_m) * tanh(3. * fabs(z_m - fabs(z)));
-  // }
-  // else
-  // {
-  //   fout[0] = Ti_perp_m * GKYL_MAX2(1.e-3, exp(-5. * (fabs(z_m - fabs(z)))));
-  // }
+  double psi = app->psi_eval; // Magnetic flux function psi of field line.
+  double *arcL_output = malloc(3*sizeof(double));
+  double *xn_3x = malloc(3*sizeof(double));
+  xn_3x[0] = psi;
+  xn_3x[1] = 0.0;
+  xn_3x[2] = xn[0];
+  calc_arcL_advance(t, xn_3x, arcL_output, app->arcL_evaluator_ctx);
+  double z = arcL_output[2]; //Alocate seperate space for this with a descriptive name
+  free(arcL_output);
+  double z_m = app->z_m;
+  double Ti_perp0 = app->Ti_perp0;
+  double Ti_perp_m = app->Ti_perp_m;
+  if (fabs(z) <= z_m)
+  {
+    fout[0] = Ti_perp_m + (Ti_perp0 - Ti_perp_m) * tanh(3. * fabs(z_m - fabs(z)));
+  }
+  else
+  {
+    fout[0] = Ti_perp_m * GKYL_MAX2(1.e-3, exp(-5. * (fabs(z_m - fabs(z)))));
+  }
 }
 
 void
@@ -613,6 +728,7 @@ create_ctx(void)
     .num_frames = num_frames,
   };
   ctx.z_m = 1;
+  ctx.arcL_evaluator_ctx = gkyl_malloc(sizeof(struct arcL_evaluator));
   return ctx;
 }
 
@@ -812,6 +928,7 @@ struct gkyl_gyrokinetic_species elc = {
       .world = {ctx.psi_eval, 0.0},
       .mirror_efit_info = &inp,
       .mirror_grid_info = &ginp,
+      .arcL_map_ctx = ctx.arcL_evaluator_ctx
     },
     .num_periodic_dir = 0,
     .periodic_dirs = {},
@@ -882,6 +999,9 @@ struct gkyl_gyrokinetic_species elc = {
   gkyl_gyrokinetic_app_cout(app, stdout, "IO time took %g secs \n", stat.io_tm);
 
   // simulation complete, free app
+  struct arcL_evaluator *gc_release = ctx.arcL_evaluator_ctx;
+  gkyl_array_release(gc_release->map_arcL);
+  gkyl_free(gc_release);
   gkyl_gyrokinetic_app_release(app);
   gkyl_rect_decomp_release(decomp);
   gkyl_comm_release(comm);

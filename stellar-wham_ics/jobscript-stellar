@@ -39,7 +39,7 @@ start_time=$(date +"%s")
 
 echo "Starting Job"
 
-mpirun -n 16 python map_output.py
+mpirun -n 8 python map_output.py
 
 end_time=$(date +"%s")
 elapsed_time=$((end_time - start_time))

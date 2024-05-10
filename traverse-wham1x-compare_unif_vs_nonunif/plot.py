@@ -13,11 +13,12 @@ import postgkyl as pg
 from matplotlib.colors import LogNorm
 import multiprocessing
 
-dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-wham1x-compare_unif_vs_nonunif/outputs/'
+# dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-wham1x-compare_unif_vs_nonunif/outputs/'
+dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-wham1x-compare_unif_vs_nonunif/'
 unifFile = 'gk_wham_unif'
 nonunifFile = 'gk_wham_nonunif'
 reducedFile = 'gk_wham_reduced'
-frame_arr = np.arange(0,20)
+frame_arr = np.array([0])#np.arange(0,1)
 # frame_arr = np.array([1:4])
 save_figure_as_file= 1     #[ If True, save figure to file. If False, display figure on screen.
 
@@ -99,7 +100,9 @@ def process_frame(frameNum):
     axIn.set_ylim(ymin, ymax)
 
   def load_mapped_data(dataName):
+    print('Loading data for frame '+str(frameNum))
     densityFileName_unif = str(dataDir+unifFile + str(dataName) + str(frameNum) + '.gkyl')
+    print(densityFileName_unif)
     pgData_unif = pg.GData(densityFileName_unif)
     pgInterp_unif = pg.GInterpModal(pgData_unif, polyOrder, 'ms')
     x_unif, dataOut_unif = pgInterp_unif.interpolate()
@@ -586,19 +589,21 @@ def process_frame(frameNum):
     for z0 in z_loctions:
       plot_distf_at_z_eq(z0)
 
-# Number of processes to run in parallel
-num_processes = multiprocessing.cpu_count()
-print('Number of processes: ', num_processes)
 
-# Create a pool of processes
-pool = multiprocessing.Pool(processes=num_processes)
+process_frame(0)
+# # Number of processes to run in parallel
+# num_processes = multiprocessing.cpu_count()
+# print('Number of processes: ', num_processes)
 
-# Map the frame_arr to the pool of processes
-pool.map(process_frame, frame_arr)
+# # Create a pool of processes
+# pool = multiprocessing.Pool(processes=num_processes)
 
-# Close the pool to prevent any more tasks from being submitted
-pool.close()
+# # Map the frame_arr to the pool of processes
+# pool.map(process_frame, frame_arr)
 
-# Wait for all processes to finish
-pool.join()
+# # Close the pool to prevent any more tasks from being submitted
+# pool.close()
+
+# # Wait for all processes to finish
+# pool.join()
   

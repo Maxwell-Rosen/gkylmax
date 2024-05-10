@@ -93,6 +93,7 @@ struct gk_mirror_ctx
   // Initial conditions reading
   double *f_dist_ion;
   double *f_dist_elc;
+  double *phi_vals;
   double *psi_grid;
   double *z_grid;
   double *v_grid;
@@ -298,6 +299,7 @@ read_ion_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
 
   double interp_val = LI_4D(dims, psi_grid, z_grid, v_grid, theta_grid, f_dist, interp_pt);
   fout[0] = interp_val;
+  free(interp_pt);
 }
 
 void
@@ -337,6 +339,25 @@ read_elc_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
 
   double interp_val = LI_4D(dims, psi_grid, z_grid, v_grid, theta_grid, f_dist, interp_pt);
   fout[0] = interp_val;
+  free(interp_pt);
+}
+
+read_phi(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  struct gk_mirror_ctx app = *(struct gk_mirror_ctx*)ctx;
+  double* psi_grid = app.psi_grid;
+  double* z_grid = app.z_grid;
+  double* phi_vals = app.phi_vals;
+  int* dims = app.dims;
+  int rank = app.rank;
+
+  double *interp_pt = (double*)malloc(rank * sizeof(double));
+  interp_pt[0] = xn[0];
+  interp_pt[1] = xn[1];
+
+  double interp_val = LI_2D(dims, psi_grid, z_grid, phi_vals, interp_pt);
+  fout[0] = interp_val;
+  free(interp_pt);
 }
 
 void
@@ -353,6 +374,11 @@ load_wham_distf(void* ctx)
   size_t num_elements_f_dist_elc;
   double* f_dist_elc = load_binary_file(filename_f_dist_elc, &num_elements_f_dist_elc);
   app->f_dist_elc = f_dist_elc;
+
+  const char *filename_phiVals = "../binary_files/phi.bin";
+  size_t num_elements_phiVals;
+  double *phi_vals = load_binary_file(filename_phiVals, &num_elements_phiVals);
+  app->phi_vals = phi_vals; // Need to check units. I think this is kV
 
   const char *filename_psiGrid = "../binary_files/psiGrid.bin";
   size_t num_elements_psiGrid;
