@@ -20,7 +20,7 @@ nonunifFile = 'gk_wham_nonunif'
 reducedFile = 'gk_wham_reduced'
 frame_arr = np.array([0])#np.arange(0,1)
 # frame_arr = np.array([1:4])
-save_figure_as_file= 1     #[ If True, save figure to file. If False, display figure on screen.
+save_figure_as_file= 0     #[ If True, save figure to file. If False, display figure on screen.
 
 plot_moments       = 1  # Plot density, potential, upar, tperp, tpar.
 plot_distvpar      = 0  # plot distribution function in vpar.
@@ -100,9 +100,7 @@ def process_frame(frameNum):
     axIn.set_ylim(ymin, ymax)
 
   def load_mapped_data(dataName):
-    print('Loading data for frame '+str(frameNum))
     densityFileName_unif = str(dataDir+unifFile + str(dataName) + str(frameNum) + '.gkyl')
-    print(densityFileName_unif)
     pgData_unif = pg.GData(densityFileName_unif)
     pgInterp_unif = pg.GInterpModal(pgData_unif, polyOrder, 'ms')
     x_unif, dataOut_unif = pgInterp_unif.interpolate()

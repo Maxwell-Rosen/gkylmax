@@ -7,6 +7,7 @@ tags
 *.png
 *.bin
 *.h5
+*.nc
 
 # Ignore compiled binaries and executables
 *.exe
