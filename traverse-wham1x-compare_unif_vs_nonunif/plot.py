@@ -14,13 +14,13 @@ from matplotlib.colors import LogNorm
 import multiprocessing
 
 # dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-wham1x-compare_unif_vs_nonunif/outputs/'
-dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-wham1x-compare_unif_vs_nonunif/'
+dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-wham1x-compare_unif_vs_nonunif/outputs/'
 unifFile = 'gk_wham_unif'
 nonunifFile = 'gk_wham_nonunif'
 reducedFile = 'gk_wham_reduced'
-frame_arr = np.array([0])#np.arange(0,1)
+frame_arr = np.arange(0,21)
 # frame_arr = np.array([1:4])
-save_figure_as_file= 0     #[ If True, save figure to file. If False, display figure on screen.
+save_figure_as_file= 1     #[ If True, save figure to file. If False, display figure on screen.
 
 plot_moments       = 1  # Plot density, potential, upar, tperp, tpar.
 plot_distvpar      = 0  # plot distribution function in vpar.
@@ -170,9 +170,9 @@ def process_frame(frameNum):
     # Create a subfigure that is 2 by 3
     fig, ax = plt.subplots(2, 3, figsize=(20,10))
     # Plot the density
-    ax[0,0].plot(dataOut_unif_mapc2p[:,0], dataOut_unif[:,0],'r', label='Uniform grid')
-    ax[0,0].plot(dataOut_nonunif_mapc2p[:,0], dataOut_nonunif[:,0],'b--', label='Nonuniform grid')
-    ax[0,0].plot(dataOut_reduced_mapc2p[:,0], dataOut_reduced[:,0],'g:', label='Reduced grid')
+    ax[0,0].plot(dataOut_unif_mapc2p[:,0], dataOut_unif[:,0],'r', label='Uniform 280x96x192')
+    ax[0,0].plot(dataOut_nonunif_mapc2p[:,0], dataOut_nonunif[:,0],'b--', label='Nonuniform 280x96x192')
+    ax[0,0].plot(dataOut_reduced_mapc2p[:,0], dataOut_reduced[:,0],'g:', label='Nonuniform 140x96x192')
     ax[0,0].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
     ax[0,0].set_ylabel('$n_i$ (m$^{-3}$)', fontsize=xyLabelFontSize)
     ax[0,0].legend(loc='upper left', fontsize=legendFontSize)
@@ -185,13 +185,14 @@ def process_frame(frameNum):
     dataOut_nonunif *= eV/Te0
     dataOut_reduced *= eV/Te0
 
-    ax[0,1].plot(dataOut_unif_mapc2p[:,0], dataOut_unif[:,0],'r', label='Uniform grid')
-    ax[0,1].plot(dataOut_nonunif_mapc2p[:,0], dataOut_nonunif[:,0],'b--', label='Nonuniform grid')
-    ax[0,1].plot(dataOut_reduced_mapc2p[:,0], dataOut_reduced[:,0],'g:', label='Reduced grid')
+    ax[0,1].plot(dataOut_unif_mapc2p[:,0], dataOut_unif[:,0],'r', label='Uniform 280x96x192')
+    ax[0,1].plot(dataOut_nonunif_mapc2p[:,0], dataOut_nonunif[:,0],'b--', label='Nonuniform 280x96x192')
+    ax[0,1].plot(dataOut_reduced_mapc2p[:,0], dataOut_reduced[:,0],'g:', label='Nonuniform 140x96x192')
     ax[0,1].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
     ax[0,1].set_ylabel('$\phi$ (m$^{-3}$)', fontsize=xyLabelFontSize)
     ax[0,1].legend(loc='upper left', fontsize=legendFontSize)
-    ax[0,1].set_title('Frame '+str(frameNum))
+    # ax[0,1].set_title('Frame '+str(frameNum))
+    ax[0,1].set_title("time = "+str(frameNum*5e-6)+" s")
     setTickFontSize(ax[0,1],tickFontSize)
 
     # Plot uPar
@@ -202,9 +203,9 @@ def process_frame(frameNum):
     upar_nonunif = M1_nonunif[:,0]/M0_nonunif[:,0]
     upar_reduced = M1_reduced[:,0]/M0_reduced[:,0]
 
-    ax[1,0].plot(M0_map[:,0], upar_unif / c_s,'r', label='Uniform grid')
-    ax[1,0].plot(M0_nonunif_map[:,0], upar_nonunif / c_s,'b--', label='Nonuniform grid')
-    ax[1,0].plot(M0_reduced_map[:,0], upar_reduced / c_s,'g:', label='Reduced grid')
+    ax[1,0].plot(M0_map[:,0], upar_unif / c_s,'r', label='Uniform 280x96x192')
+    ax[1,0].plot(M0_nonunif_map[:,0], upar_nonunif / c_s,'b--', label='Nonuniform 280x96x192')
+    ax[1,0].plot(M0_reduced_map[:,0], upar_reduced / c_s,'g:', label='Nonuniform 140x96x192')
     ax[1,0].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
     ax[1,0].set_ylabel('$u_{\parallel} / c_s$ (m/s)', fontsize=xyLabelFontSize)
     ax[1,0].legend(loc='upper left', fontsize=legendFontSize)
@@ -218,9 +219,9 @@ def process_frame(frameNum):
     tPerp_nonunif = M2perp_nonunif[:,0]/M0_nonunif[:,0] * mi / eV
     tPerp_reduced = M2perp_reduced[:,0]/M0_reduced[:,0] * mi / eV
 
-    ax[1,1].plot(M0_map[:,0], tPerp_unif,'r', label='Uniform grid')
-    ax[1,1].plot(M0_nonunif_map[:,0], tPerp_nonunif,'b--', label='Nonuniform grid')
-    ax[1,1].plot(M0_reduced_map[:,0], tPerp_reduced,'g:', label='Reduced grid')
+    ax[1,1].plot(M0_map[:,0], tPerp_unif,'r', label='Uniform 280x96x192')
+    ax[1,1].plot(M0_nonunif_map[:,0], tPerp_nonunif,'b--', label='Nonuniform 280x96x192')
+    ax[1,1].plot(M0_reduced_map[:,0], tPerp_reduced,'g:', label='Nonuniform 140x96x192')
     ax[1,1].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
     ax[1,1].set_ylabel('$T_{\perp}$ (eV)', fontsize=xyLabelFontSize)
     ax[1,1].legend(loc='upper left', fontsize=legendFontSize)
@@ -235,22 +236,23 @@ def process_frame(frameNum):
     tPar_nonunif = (M2par_nonunif[:,0] - M1_nonunif[:,0]**2/M0_nonunif[:,0]) * mi / eV / M0_nonunif[:,0]
     tPar_reduced = (M2par_reduced[:,0] - M1_reduced[:,0]**2/M0_reduced[:,0]) * mi / eV / M0_reduced[:,0]
 
-    ax[1,2].plot(M0_map[:,0], tPar_unif,'r', label='Uniform grid')
-    ax[1,2].plot(M0_nonunif_map[:,0], tPar_nonunif,'b--', label='Nonuniform grid')
-    ax[1,2].plot(M0_reduced_map[:,0], tPar_reduced,'g:', label='Reduced grid')
+    ax[1,2].plot(M0_map[:,0], tPar_unif,'r', label='Uniform 280x96x192')
+    ax[1,2].plot(M0_nonunif_map[:,0], tPar_nonunif,'b--', label='Nonuniform 280x96x192')
+    ax[1,2].plot(M0_reduced_map[:,0], tPar_reduced,'g:', label='Nonuniform 140x96x192')
     ax[1,2].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
     ax[1,2].set_ylabel('$T_{\parallel}$ (eV)', fontsize=xyLabelFontSize)
     ax[1,2].legend(loc='upper left', fontsize=legendFontSize)
     setTickFontSize(ax[1,2],tickFontSize)
 
     # Plot the grid and mapc2p
-    ax[0,2].plot(dataOut_unif_mapc2p[:,0], dataOut_unif_mapc2p[:,0],'r', label='Uniform grid', markersize=0.5)
-    ax[0,2].plot(dataOut_nonunif_mapc2p[:,0], dataOut_nonunif_mapc2p[:,0],'b.', label='Nonuniform grid', markersize=0.5)
-    ax[0,2].plot(dataOut_reduced_mapc2p[:,0], dataOut_reduced_mapc2p[:,0],'g.', label='Reduced grid', markersize=0.5)
-    ax[0,2].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
-    ax[0,2].set_ylabel('Mapped cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
-    ax[0,2].legend(loc='upper left', fontsize=legendFontSize)
-    setTickFontSize(ax[0,2],tickFontSize)
+    # ax[0,2].plot(dataOut_unif_mapc2p[:,0], dataOut_unif_mapc2p[:,0],'r', label='Uniform 280x96x192', markersize=0.5)
+    # ax[0,2].plot(dataOut_nonunif_mapc2p[:,0], dataOut_nonunif_mapc2p[:,0],'b.', label='Nonuniform 280x96x192', markersize=0.5)
+    # ax[0,2].plot(dataOut_reduced_mapc2p[:,0], dataOut_reduced_mapc2p[:,0],'g.', label='Nonuniform 140x96x192', markersize=0.5)
+    # ax[0,2].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
+    # ax[0,2].set_ylabel('Mapped cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
+    # ax[0,2].legend(loc='upper left', fontsize=legendFontSize)
+    # setTickFontSize(ax[0,2],tickFontSize)
+    
     # print("mapc2p uniform grid: ", dataOut_unif_mapc2p[:,0])
     # print("mapc2p nonuniform grid: ", dataOut_nonunif_mapc2p[:,0])
     # print("last cell spacings uniform grid: ", dataOut_unif_mapc2p[-1,0] - dataOut_unif_mapc2p[-2,0])
@@ -588,20 +590,20 @@ def process_frame(frameNum):
       plot_distf_at_z_eq(z0)
 
 
-process_frame(0)
-# # Number of processes to run in parallel
-# num_processes = multiprocessing.cpu_count()
-# print('Number of processes: ', num_processes)
+# process_frame(0)
+# Number of processes to run in parallel
+num_processes = multiprocessing.cpu_count()
+print('Number of processes: ', num_processes)
 
-# # Create a pool of processes
-# pool = multiprocessing.Pool(processes=num_processes)
+# Create a pool of processes
+pool = multiprocessing.Pool(processes=num_processes)
 
-# # Map the frame_arr to the pool of processes
-# pool.map(process_frame, frame_arr)
+# Map the frame_arr to the pool of processes
+pool.map(process_frame, frame_arr)
 
-# # Close the pool to prevent any more tasks from being submitted
-# pool.close()
+# Close the pool to prevent any more tasks from being submitted
+pool.close()
 
-# # Wait for all processes to finish
-# pool.join()
+# Wait for all processes to finish
+pool.join()
   

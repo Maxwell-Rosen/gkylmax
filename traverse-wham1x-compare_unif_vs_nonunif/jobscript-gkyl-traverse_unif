@@ -41,7 +41,7 @@ num_procs=20
 echo "Running on $num_procs cores"
 echo "Starting uniform simulation"
 
-srun -u -n $num_procs ./sim_unif -g -M -c $num_procs 
+srun -u -n $num_procs ./sim_unif -g -M -c $num_procs #-r7
 
 mv *.gkyl outputs/
 

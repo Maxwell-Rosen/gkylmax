@@ -41,7 +41,7 @@ num_procs=20
 echo "Running on $num_procs cores"
 echo "Starting nonuniform sim"
 
-srun -u -n $num_procs ./sim_nonunif -g -M -c $num_procs 
+srun -u -n $num_procs ./sim_nonunif -g -M -c $num_procs #-r16
 
 mv *.gkyl outputs/
 
