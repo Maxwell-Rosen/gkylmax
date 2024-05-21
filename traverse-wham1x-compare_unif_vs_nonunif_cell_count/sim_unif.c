@@ -109,6 +109,7 @@ double Ti_perp0;
   int num_cell_vpar;
   int num_cell_mu;
   int num_cell_z;
+  int unif_z_cells;
   int poly_order;
   double final_time;
   int num_frames;
@@ -520,10 +521,11 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   int num_cell_vpar = 96; // Number of cells in the paralell velocity direction 96
   int num_cell_mu = 192;  // Number of cells in the mu direction 192
-  int num_cell_z = 140;
+  int num_cell_z = 280;
+  int unif_z_cells = 280;
   int poly_order = 1;
   double final_time = 100e-6;
-  int num_frames = 20;
+  int num_frames = 10;
   int int_diag_calc_num = num_frames*100;
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
   int num_failures_max = 20; // Maximum allowable number of consecutive small time-steps.
@@ -618,6 +620,7 @@ create_ctx(void)
     .mu_max_ion = mu_max_ion,
     .mu_max_elc = mu_max_elc,
     .num_cell_z = num_cell_z,
+    .unif_z_cells = unif_z_cells,
     .num_cell_vpar = num_cell_vpar,
     .num_cell_mu = num_cell_mu,
     .poly_order = poly_order,
@@ -833,7 +836,7 @@ struct gkyl_gyrokinetic_species elc = {
     .fem_parbc = GKYL_FEM_PARPROJ_NONE,
   };
   struct gkyl_gk gk = {  // GK app
-    .name = "gk_wham_nonunif",
+    .name = "gk_wham_unif",
     .cdim = 1,
     .vdim = 2,
     .lower = {ctx.z_min},
@@ -847,7 +850,7 @@ struct gkyl_gyrokinetic_species elc = {
       .mirror_efit_info = &inp,
       .mirror_grid_info = &ginp,
       .mirror_geo_c2fa_ctx = ctx.mirror_geo_c2fa_ctx,
-      .nonuniform_mapping_fraction = (1 - (double)NZ / 280),
+      .nonuniform_mapping_fraction = (1 - (double)NZ / ctx.unif_z_cells),
     },
     .num_periodic_dir = 0,
     .periodic_dirs = {},
@@ -861,7 +864,7 @@ struct gkyl_gyrokinetic_species elc = {
       .comm = comm
     }
   };
-  printf("Nonuniform mapping fraction = %f\n", (1 - (double)NZ / 280));
+  printf("Nonuniform mapping fraction = %f\n", (1 - (double)NZ / ctx.unif_z_cells));
 
   // Create app object.
   gkyl_gyrokinetic_app *app = gkyl_gyrokinetic_app_new(&gk);

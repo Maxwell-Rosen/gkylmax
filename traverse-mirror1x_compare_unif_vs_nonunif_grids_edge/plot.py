@@ -24,9 +24,9 @@ frame_arr = np.arange(0,21)
 save_figure_as_file= 1     #[ If True, save figure to file. If False, display figure on screen.
 
 plot_moments       = 1  # Plot density, potential, upar, tperp, tpar.
-plot_distvpar      = 1  # plot distribution function in vpar.
-plot_distmu        = 1  # plot distribution function in mu.
-plot_distf_at_z    = 1
+plot_distvpar      = 0  # plot distribution function in vpar.
+plot_distmu        = 0  # plot distribution function in mu.
+plot_distf_at_z    = 0
 z_loctions = np.array([0, 0.3, 0.98, 2.4])
 
 print(frame_arr)
@@ -171,9 +171,9 @@ def process_frame(frameNum):
     # Create a subfigure that is 2 by 3
     fig, ax = plt.subplots(2, 3, figsize=(20,10))
     # Plot the density
-    ax[0,0].plot(dataOut_unif_mapc2p[:,0], dataOut_unif[:,0],'r', label='Uniform grid')
-    ax[0,0].plot(dataOut_nonunif_mapc2p[:,0], dataOut_nonunif[:,0],'b--', label='Nonuniform grid')
-    ax[0,0].plot(dataOut_reduced_mapc2p[:,0], dataOut_reduced[:,0],'g:', label='Reduced grid')
+    ax[0,0].plot(dataOut_unif_mapc2p[:,0], dataOut_unif[:,0],'r', label='Uniform 280x192x128')
+    ax[0,0].plot(dataOut_nonunif_mapc2p[:,0], dataOut_nonunif[:,0],'b--', label='Nonuniform 280x192x128')
+    ax[0,0].plot(dataOut_reduced_mapc2p[:,0], dataOut_reduced[:,0],'g:', label='Nonuniform 140x192x128')
     ax[0,0].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
     ax[0,0].set_ylabel('$n_i$ (m$^{-3}$)', fontsize=xyLabelFontSize)
     ax[0,0].legend(loc='upper left', fontsize=legendFontSize)
@@ -186,13 +186,15 @@ def process_frame(frameNum):
     dataOut_nonunif *= eV/Te0
     dataOut_reduced *= eV/Te0
 
-    ax[0,1].plot(dataOut_unif_mapc2p[:,0], dataOut_unif[:,0],'r', label='Uniform grid')
-    ax[0,1].plot(dataOut_nonunif_mapc2p[:,0], dataOut_nonunif[:,0],'b--', label='Nonuniform grid')
-    ax[0,1].plot(dataOut_reduced_mapc2p[:,0], dataOut_reduced[:,0],'g:', label='Reduced grid')
+    ax[0,1].plot(dataOut_unif_mapc2p[:,0], dataOut_unif[:,0],'r', label='Uniform 280x192x128')
+    ax[0,1].plot(dataOut_nonunif_mapc2p[:,0], dataOut_nonunif[:,0],'b--', label='Nonuniform 280x192x128')
+    ax[0,1].plot(dataOut_reduced_mapc2p[:,0], dataOut_reduced[:,0],'g:', label='Nonuniform 140x192x128')
     ax[0,1].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
     ax[0,1].set_ylabel('$\phi$ (m$^{-3}$)', fontsize=xyLabelFontSize)
     ax[0,1].legend(loc='upper left', fontsize=legendFontSize)
-    ax[0,1].set_title('Frame '+str(frameNum))
+    # ax[0,1].set_title('Frame '+str(frameNum))
+    ax[0,1].set_title("Time = "+str(frameNum*5e-6)+" s")
+
     setTickFontSize(ax[0,1],tickFontSize)
 
     # Plot uPar
@@ -203,9 +205,9 @@ def process_frame(frameNum):
     upar_nonunif = M1_nonunif[:,0]/M0_nonunif[:,0]
     upar_reduced = M1_reduced[:,0]/M0_reduced[:,0]
 
-    ax[1,0].plot(M0_map[:,0], upar_unif / c_s,'r', label='Uniform grid')
-    ax[1,0].plot(M0_nonunif_map[:,0], upar_nonunif / c_s,'b--', label='Nonuniform grid')
-    ax[1,0].plot(M0_reduced_map[:,0], upar_reduced / c_s,'g:', label='Reduced grid')
+    ax[1,0].plot(M0_map[:,0], upar_unif / c_s,'r', label='Uniform 280x192x128')
+    ax[1,0].plot(M0_nonunif_map[:,0], upar_nonunif / c_s,'b--', label='Nonuniform 280x192x128')
+    ax[1,0].plot(M0_reduced_map[:,0], upar_reduced / c_s,'g:', label='Nonuniform 140x192x128')
     ax[1,0].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
     ax[1,0].set_ylabel('$u_{\parallel} / c_s$ (m/s)', fontsize=xyLabelFontSize)
     ax[1,0].legend(loc='upper left', fontsize=legendFontSize)
@@ -219,9 +221,9 @@ def process_frame(frameNum):
     tPerp_nonunif = M2perp_nonunif[:,0]/M0_nonunif[:,0] * mi / eV
     tPerp_reduced = M2perp_reduced[:,0]/M0_reduced[:,0] * mi / eV
 
-    ax[1,1].plot(M0_map[:,0], tPerp_unif,'r', label='Uniform grid')
-    ax[1,1].plot(M0_nonunif_map[:,0], tPerp_nonunif,'b--', label='Nonuniform grid')
-    ax[1,1].plot(M0_reduced_map[:,0], tPerp_reduced,'g:', label='Reduced grid')
+    ax[1,1].plot(M0_map[:,0], tPerp_unif,'r', label='Uniform 280x192x128')
+    ax[1,1].plot(M0_nonunif_map[:,0], tPerp_nonunif,'b--', label='Nonuniform 280x192x128')
+    ax[1,1].plot(M0_reduced_map[:,0], tPerp_reduced,'g:', label='Nonuniform 140x192x128')
     ax[1,1].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
     ax[1,1].set_ylabel('$T_{\perp}$ (eV)', fontsize=xyLabelFontSize)
     ax[1,1].legend(loc='upper left', fontsize=legendFontSize)
@@ -236,22 +238,23 @@ def process_frame(frameNum):
     tPar_nonunif = (M2par_nonunif[:,0] - M1_nonunif[:,0]**2/M0_nonunif[:,0]) * mi / eV / M0_nonunif[:,0]
     tPar_reduced = (M2par_reduced[:,0] - M1_reduced[:,0]**2/M0_reduced[:,0]) * mi / eV / M0_reduced[:,0]
 
-    ax[1,2].plot(M0_map[:,0], tPar_unif,'r', label='Uniform grid')
-    ax[1,2].plot(M0_nonunif_map[:,0], tPar_nonunif,'b--', label='Nonuniform grid')
-    ax[1,2].plot(M0_reduced_map[:,0], tPar_reduced,'g:', label='Reduced grid')
+    ax[1,2].plot(M0_map[:,0], tPar_unif,'r', label='Uniform 280x192x128')
+    ax[1,2].plot(M0_nonunif_map[:,0], tPar_nonunif,'b--', label='Nonuniform 280x192x128')
+    ax[1,2].plot(M0_reduced_map[:,0], tPar_reduced,'g:', label='Nonuniform 140x192x128')
     ax[1,2].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
     ax[1,2].set_ylabel('$T_{\parallel}$ (eV)', fontsize=xyLabelFontSize)
     ax[1,2].legend(loc='upper left', fontsize=legendFontSize)
     setTickFontSize(ax[1,2],tickFontSize)
 
     # Plot the grid and mapc2p
-    ax[0,2].plot(dataOut_unif_mapc2p[:,0], dataOut_unif_mapc2p[:,0],'r', label='Uniform grid', markersize=0.5)
-    ax[0,2].plot(dataOut_nonunif_mapc2p[:,0], dataOut_nonunif_mapc2p[:,0],'b.', label='Nonuniform grid', markersize=0.5)
-    ax[0,2].plot(dataOut_reduced_mapc2p[:,0], dataOut_reduced_mapc2p[:,0],'g.', label='Reduced grid', markersize=0.5)
-    ax[0,2].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
-    ax[0,2].set_ylabel('Mapped cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
-    ax[0,2].legend(loc='upper left', fontsize=legendFontSize)
-    setTickFontSize(ax[0,2],tickFontSize)
+    # ax[0,2].plot(dataOut_unif_mapc2p[:,0], dataOut_unif_mapc2p[:,0],'r', label='Uniform grid', markersize=0.5)
+    # ax[0,2].plot(dataOut_nonunif_mapc2p[:,0], dataOut_nonunif_mapc2p[:,0],'b.', label='Nonuniform grid', markersize=0.5)
+    # ax[0,2].plot(dataOut_reduced_mapc2p[:,0], dataOut_reduced_mapc2p[:,0],'g.', label='Reduced grid', markersize=0.5)
+    # ax[0,2].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
+    # ax[0,2].set_ylabel('Mapped cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
+    # ax[0,2].legend(loc='upper left', fontsize=legendFontSize)
+    # setTickFontSize(ax[0,2],tickFontSize)
+
     # print("mapc2p uniform grid: ", dataOut_unif_mapc2p[:,0])
     # print("mapc2p nonuniform grid: ", dataOut_nonunif_mapc2p[:,0])
     # print("last cell spacings uniform grid: ", dataOut_unif_mapc2p[-1,0] - dataOut_unif_mapc2p[-2,0])
@@ -348,7 +351,8 @@ def process_frame(frameNum):
     # Label the axes
     ax1.set_ylabel('vpar / vti')
     ax1.set_xlabel('Uniform grid Z, cylindrical coodinate (m)')
-    ax1.set_title('Frame '+str(frameNum))
+    # ax1.set_title('Frame '+str(frameNum))
+    ax1.set_title("Time = "+str(frameNum*5e-6)+" s")
 
     # pcolormesh2 = ax2.pcolormesh(edged_dataOut_nonunif_mapc2p, x_nonunif[1]/vti, dataOut_nonunif.T, cmap='inferno', norm=norm)
     pcolormesh2 = ax2.pcolormesh(edged_dataOut_unif_mapc2p, x_unif[1]/vti, dataOut_nonunif_interp.T, cmap='inferno', norm=norm)
