@@ -94,6 +94,9 @@ struct gk_mirror_ctx
   int mapping_order_center;
   int mapping_order_expander;
   double mapping_frac;
+  int int_diag_calc_num; // Number of integrated diagnostics computations (=INT_MAX for every step).
+  double dt_failure_tol; // Minimum allowable fraction of initial time-step.
+  int num_failures_max; // Maximum allowable number of consecutive small time-steps.
 };
 
 double
@@ -622,10 +625,15 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   int num_cell_vpar = 128; // Number of cells in the paralell velocity direction 96
   int num_cell_mu = 192;  // Number of cells in the mu direction 192
-  int num_cell_z = 140;
+  int num_cell_z = 220;
+  int num_cell_unif = 280;
   int poly_order = 1;
   double final_time = 100e-6;
-  int num_frames = 20;
+  int num_frames = 10;
+  int int_diag_calc_num = num_frames*100;
+  double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
+  int num_failures_max = 20; // Maximum allowable number of consecutive small time-steps.
+
 
   // Bananna tip info. Hardcoad to avoid dependency on ctx
   double B_bt = 1.058278;
@@ -645,7 +653,8 @@ create_ctx(void)
   double Ti_par_m = 1000 * eV;
 
   // Non-uniform z mapping
-  double mapping_frac = 0.7; // 1 is full mapping, 0 is no mapping
+  double mapping_frac = 1 - (double)num_cell_z / (double)num_cell_unif; // 1 is full mapping, 0 is no mapping
+  printf("Mapping fraction: %g\n", mapping_frac);
 
   struct gk_mirror_ctx ctx = {
     .mi = mi,
@@ -698,6 +707,9 @@ create_ctx(void)
     .final_time = final_time,
     .num_frames = num_frames,
     .mapping_frac = mapping_frac, // 1 is full mapping, 0 is no mapping
+    .int_diag_calc_num = int_diag_calc_num,
+    .dt_failure_tol = dt_failure_tol,
+    .num_failures_max = num_failures_max,
   };
   calculate_mirror_throat_location(&ctx);
   // Printing
@@ -727,13 +739,32 @@ create_ctx(void)
 }
 
 void
-write_data(struct gkyl_tm_trigger *iot, gkyl_gyrokinetic_app *app, double tcurr)
+calc_integrated_diagnostics(struct gkyl_tm_trigger* iot, gkyl_gyrokinetic_app* app, double t_curr, bool force_calc)
 {
-  if (gkyl_tm_trigger_check_and_bump(iot, tcurr))
-  {
-    gkyl_gyrokinetic_app_write(app, tcurr, iot->curr - 1);
+  if (gkyl_tm_trigger_check_and_bump(iot, t_curr) || force_calc) {
+    gkyl_gyrokinetic_app_calc_field_energy(app, t_curr);
+    gkyl_gyrokinetic_app_calc_integrated_mom(app, t_curr);
+  }
+}
+
+void
+write_data(struct gkyl_tm_trigger* iot, gkyl_gyrokinetic_app* app, double t_curr, bool force_write)
+{
+  bool trig_now = gkyl_tm_trigger_check_and_bump(iot, t_curr);
+  if (trig_now || force_write) {
+    int frame = (!trig_now) && force_write? iot->curr : iot->curr-1;
+
+    gkyl_gyrokinetic_app_write(app, t_curr, frame);
+
     gkyl_gyrokinetic_app_calc_mom(app);
-    gkyl_gyrokinetic_app_write_mom(app, tcurr, iot->curr - 1);
+    gkyl_gyrokinetic_app_write_mom(app, t_curr, frame);
+    gkyl_gyrokinetic_app_write_source_mom(app, t_curr, frame);
+
+    gkyl_gyrokinetic_app_calc_field_energy(app, t_curr);
+    gkyl_gyrokinetic_app_write_field_energy(app);
+
+    gkyl_gyrokinetic_app_calc_integrated_mom(app, t_curr);
+    gkyl_gyrokinetic_app_write_integrated_mom(app);
   }
 }
 
@@ -871,7 +902,6 @@ int main(int argc, char **argv)
     .electron_mass = ctx.me,
     .electron_charge = ctx.qe,
     .electron_temp = ctx.Te0,
-    .bmag_fac = ctx.B_p, // Issue here. B0 from soloviev, so not sure what to do. Ours is not constant
     .fem_parbc = GKYL_FEM_PARPROJ_NONE,
   };
   struct gkyl_gk gk = {  // GK app
@@ -904,71 +934,123 @@ int main(int argc, char **argv)
     }
   };
   if (my_rank == 0) printf("Creating app object ...\n");
-  gkyl_gyrokinetic_app *app = gkyl_gyrokinetic_app_new(&gk);  // create app object
-  double tcurr = 0.0, tend = ctx.final_time; // start, end and initial time-step
-  double dt = tend - tcurr;
-  int nframe = ctx.num_frames;
-  struct gkyl_tm_trigger io_trig = {.dt = tend / nframe}; // create trigger for IO
-  if (my_rank == 0) printf("Applying initial conditions ...\n");
-  gkyl_gyrokinetic_app_apply_ic(app, tcurr);  // initialize simulation
-  if (my_rank == 0) printf("Computing initial diagnostics ...\n");
-  write_data(&io_trig, app, tcurr);
-  if (my_rank == 0) printf("Computing initial field energy ...\n");
-  gkyl_gyrokinetic_app_calc_field_energy(app, tcurr);
-  if (my_rank == 0) printf("Starting main loop ...\n");
-  long step = 1, num_steps = app_args.num_steps;
-  while ((tcurr < tend) && (step <= num_steps))
-  {
-    gkyl_gyrokinetic_app_cout(app, stdout, "Taking time-step at t = %g ...", tcurr);
+// Create app object.
+  gkyl_gyrokinetic_app *app = gkyl_gyrokinetic_app_new(&gk);
+
+  // Initial and final simulation times.
+  int frame_curr = 0;
+  double t_curr = 0.0, t_end = ctx.final_time;
+  // Initialize simulation.
+  if (app_args.is_restart) {
+    struct gkyl_app_restart_status status = gkyl_gyrokinetic_app_read_from_frame(app, app_args.restart_frame);
+
+    if (status.io_status != GKYL_ARRAY_RIO_SUCCESS) {
+      gkyl_gyrokinetic_app_cout(app, stderr, "*** Failed to read restart file! (%s)\n",
+        gkyl_array_rio_status_msg(status.io_status));
+      goto freeresources;
+    }
+
+    frame_curr = status.frame;
+    t_curr = status.stime;
+
+    gkyl_gyrokinetic_app_cout(app, stdout, "Restarting from frame %d", frame_curr);
+    gkyl_gyrokinetic_app_cout(app, stdout, " at time = %g\n", t_curr);
+  }
+  else {
+    gkyl_gyrokinetic_app_apply_ic(app, t_curr);
+  }  
+
+  // Create triggers for IO.
+  int num_frames = ctx.num_frames, num_int_diag_calc = ctx.int_diag_calc_num;
+  struct gkyl_tm_trigger trig_write = { .dt = t_end/num_frames, .tcurr = t_curr, .curr = frame_curr };
+  struct gkyl_tm_trigger trig_calc_intdiag = { .dt = t_end/GKYL_MAX2(num_frames, num_int_diag_calc),
+    .tcurr = t_curr, .curr = frame_curr };
+
+  // Write out ICs (if restart, it overwrites the restart frame).
+  calc_integrated_diagnostics(&trig_calc_intdiag, app, t_curr, false);
+  write_data(&trig_write, app, t_curr, false);
+
+  double dt = t_end-t_curr; // Initial time step.
+  // Initialize small time-step check.
+  double dt_init = -1.0, dt_failure_tol = ctx.dt_failure_tol;
+  int num_failures = 0, num_failures_max = ctx.num_failures_max;
+
+  long step = 1;
+  while ((t_curr < t_end) && (step <= app_args.num_steps)) {
+    gkyl_gyrokinetic_app_cout(app, stdout, "Taking time-step %ld at t = %g ...", step, t_curr);
     struct gkyl_update_status status = gkyl_gyrokinetic_update(app, dt);
     gkyl_gyrokinetic_app_cout(app, stdout, " dt = %g\n", status.dt_actual);
-    if (step % 100 == 0)
-    {
-      gkyl_gyrokinetic_app_calc_field_energy(app, tcurr);
-    }
-    if (!status.success)
-    {
+
+    if (!status.success) {
       gkyl_gyrokinetic_app_cout(app, stdout, "** Update method failed! Aborting simulation ....\n");
       break;
     }
-    tcurr += status.dt_actual;
+
+    t_curr += status.dt_actual;
     dt = status.dt_suggested;
-    write_data(&io_trig, app, tcurr);
+
+    calc_integrated_diagnostics(&trig_calc_intdiag, app, t_curr, t_curr > t_end);
+    write_data(&trig_write, app, t_curr, t_curr > t_end);
+
+    if (dt_init < 0.0) {
+      dt_init = status.dt_actual;
+    }
+    else if (status.dt_actual < dt_failure_tol * dt_init) {
+      num_failures += 1;
+
+      gkyl_gyrokinetic_app_cout(app, stdout, "WARNING: Time-step dt = %g", status.dt_actual);
+      gkyl_gyrokinetic_app_cout(app, stdout, " is below %g*dt_init ...", dt_failure_tol);
+      gkyl_gyrokinetic_app_cout(app, stdout, " num_failures = %d\n", num_failures);
+      if (num_failures >= num_failures_max) {
+        gkyl_gyrokinetic_app_cout(app, stdout, "ERROR: Time-step was below %g*dt_init ", dt_failure_tol);
+        gkyl_gyrokinetic_app_cout(app, stdout, "%d consecutive times. Aborting simulation ....\n", num_failures_max);
+        calc_integrated_diagnostics(&trig_calc_intdiag, app, t_curr, true);
+        write_data(&trig_write, app, t_curr, true);
+        break;
+      }
+    }
+    else {
+      num_failures = 0;
+    }
+
     step += 1;
   }
-  if (my_rank == 0) printf(" ... finished\n");
-  gkyl_gyrokinetic_app_calc_field_energy(app, tcurr);
-  gkyl_gyrokinetic_app_write_field_energy(app);
+
   gkyl_gyrokinetic_app_stat_write(app);
-  struct gkyl_gyrokinetic_stat stat = gkyl_gyrokinetic_app_stat(app); // fetch simulation statistics
+  
+  struct gkyl_gyrokinetic_stat stat = gkyl_gyrokinetic_app_stat(app);
+
   gkyl_gyrokinetic_app_cout(app, stdout, "\n");
   gkyl_gyrokinetic_app_cout(app, stdout, "Number of update calls %ld\n", stat.nup);
   gkyl_gyrokinetic_app_cout(app, stdout, "Number of forward-Euler calls %ld\n", stat.nfeuler);
   gkyl_gyrokinetic_app_cout(app, stdout, "Number of RK stage-2 failures %ld\n", stat.nstage_2_fail);
-  if (stat.nstage_2_fail > 0)
-  {
-    gkyl_gyrokinetic_app_cout(app, stdout, "Max rel dt diff for RK stage-2 failures %g\n", stat.stage_2_dt_diff[1]);
-    gkyl_gyrokinetic_app_cout(app, stdout, "Min rel dt diff for RK stage-2 failures %g\n", stat.stage_2_dt_diff[0]);
+  if (stat.nstage_2_fail > 0) {
+    gkyl_gyrokinetic_app_cout(app, stdout, "  Max rel dt diff for RK stage-2 failures %g\n", stat.stage_2_dt_diff[1]);
+    gkyl_gyrokinetic_app_cout(app, stdout, "  Min rel dt diff for RK stage-2 failures %g\n", stat.stage_2_dt_diff[0]);
   }
   gkyl_gyrokinetic_app_cout(app, stdout, "Number of RK stage-3 failures %ld\n", stat.nstage_3_fail);
   gkyl_gyrokinetic_app_cout(app, stdout, "Species RHS calc took %g secs\n", stat.species_rhs_tm);
   gkyl_gyrokinetic_app_cout(app, stdout, "Species collisions RHS calc took %g secs\n", stat.species_coll_tm);
   gkyl_gyrokinetic_app_cout(app, stdout, "Field RHS calc took %g secs\n", stat.field_rhs_tm);
   gkyl_gyrokinetic_app_cout(app, stdout, "Species collisional moments took %g secs\n", stat.species_coll_mom_tm);
-  gkyl_gyrokinetic_app_cout(app, stdout, "Updates took %g secs\n", stat.total_tm);
+  gkyl_gyrokinetic_app_cout(app, stdout, "Total updates took %g secs\n", stat.total_tm);
+
   gkyl_gyrokinetic_app_cout(app, stdout, "Number of write calls %ld,\n", stat.nio);
   gkyl_gyrokinetic_app_cout(app, stdout, "IO time took %g secs \n", stat.io_tm);
   
-  // simulation complete, free app
+// Crude and should be moved to a lower layer. Not sure how to access the context there though. It's not in app
+// I think I would at least need to add a property to app->gk_geom with the geometry_id and the arcl_map_ctx
+  freeresources:
+  // Free resources after simulation completion.
   gkyl_gyrokinetic_app_release(app);
 gkyl_rect_decomp_release(decomp);
   gkyl_comm_release(comm);
 
   mpifinalize:
-  ;
 #ifdef GKYL_HAVE_MPI
-  if (app_args.use_mpi)
+  if (app_args.use_mpi) {
     MPI_Finalize();
+  }
 #endif
 
   return 0;

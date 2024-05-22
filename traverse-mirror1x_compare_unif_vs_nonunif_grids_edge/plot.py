@@ -14,12 +14,12 @@ from matplotlib.colors import LogNorm
 import multiprocessing
 
 # dataDir = '/scratch/gpfs/mr1884/scratch/gkylmax/traverse-mirror1x_compare_unif_vs_nonunif_grids/outputs/'
-dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-mirror1x_compare_unif_vs_nonunif_grids_edge/outputs/'
+# dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-mirror1x_compare_unif_vs_nonunif_grids_edge/outputs/'
 dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-mirror1x_compare_unif_vs_nonunif_grids_edge/outputs/'
 unifFile = 'gk_mirror_boltz_uniform'
 nonunifFile = 'gk_mirror_boltz_nonuniform'
 reducedFile = 'gk_mirror_boltz_reduced'
-frame_arr = np.arange(0,21)
+frame_arr = np.arange(0,11)
 # frame_arr = np.array([1:4])
 save_figure_as_file= 1     #[ If True, save figure to file. If False, display figure on screen.
 
@@ -171,9 +171,9 @@ def process_frame(frameNum):
     # Create a subfigure that is 2 by 3
     fig, ax = plt.subplots(2, 3, figsize=(20,10))
     # Plot the density
-    ax[0,0].plot(dataOut_unif_mapc2p[:,0], dataOut_unif[:,0],'r', label='Uniform 280x192x128')
-    ax[0,0].plot(dataOut_nonunif_mapc2p[:,0], dataOut_nonunif[:,0],'b--', label='Nonuniform 280x192x128')
-    ax[0,0].plot(dataOut_reduced_mapc2p[:,0], dataOut_reduced[:,0],'g:', label='Nonuniform 140x192x128')
+    ax[0,0].plot(dataOut_unif_mapc2p[:,0], dataOut_unif[:,0],'r', label='280x192x128')
+    ax[0,0].plot(dataOut_nonunif_mapc2p[:,0], dataOut_nonunif[:,0],'b--', label='140x192x128')
+    ax[0,0].plot(dataOut_reduced_mapc2p[:,0], dataOut_reduced[:,0],'g:', label='220x192x128')
     ax[0,0].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
     ax[0,0].set_ylabel('$n_i$ (m$^{-3}$)', fontsize=xyLabelFontSize)
     ax[0,0].legend(loc='upper left', fontsize=legendFontSize)
@@ -186,9 +186,9 @@ def process_frame(frameNum):
     dataOut_nonunif *= eV/Te0
     dataOut_reduced *= eV/Te0
 
-    ax[0,1].plot(dataOut_unif_mapc2p[:,0], dataOut_unif[:,0],'r', label='Uniform 280x192x128')
-    ax[0,1].plot(dataOut_nonunif_mapc2p[:,0], dataOut_nonunif[:,0],'b--', label='Nonuniform 280x192x128')
-    ax[0,1].plot(dataOut_reduced_mapc2p[:,0], dataOut_reduced[:,0],'g:', label='Nonuniform 140x192x128')
+    ax[0,1].plot(dataOut_unif_mapc2p[:,0], dataOut_unif[:,0],'r')
+    ax[0,1].plot(dataOut_nonunif_mapc2p[:,0], dataOut_nonunif[:,0],'b--')
+    ax[0,1].plot(dataOut_reduced_mapc2p[:,0], dataOut_reduced[:,0],'g:')
     ax[0,1].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
     ax[0,1].set_ylabel('$\phi$ (m$^{-3}$)', fontsize=xyLabelFontSize)
     ax[0,1].legend(loc='upper left', fontsize=legendFontSize)
@@ -205,9 +205,9 @@ def process_frame(frameNum):
     upar_nonunif = M1_nonunif[:,0]/M0_nonunif[:,0]
     upar_reduced = M1_reduced[:,0]/M0_reduced[:,0]
 
-    ax[1,0].plot(M0_map[:,0], upar_unif / c_s,'r', label='Uniform 280x192x128')
-    ax[1,0].plot(M0_nonunif_map[:,0], upar_nonunif / c_s,'b--', label='Nonuniform 280x192x128')
-    ax[1,0].plot(M0_reduced_map[:,0], upar_reduced / c_s,'g:', label='Nonuniform 140x192x128')
+    ax[1,0].plot(M0_map[:,0], upar_unif / c_s,'r')
+    ax[1,0].plot(M0_nonunif_map[:,0], upar_nonunif / c_s,'b--')
+    ax[1,0].plot(M0_reduced_map[:,0], upar_reduced / c_s,'g:')
     ax[1,0].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
     ax[1,0].set_ylabel('$u_{\parallel} / c_s$ (m/s)', fontsize=xyLabelFontSize)
     ax[1,0].legend(loc='upper left', fontsize=legendFontSize)
@@ -221,9 +221,9 @@ def process_frame(frameNum):
     tPerp_nonunif = M2perp_nonunif[:,0]/M0_nonunif[:,0] * mi / eV
     tPerp_reduced = M2perp_reduced[:,0]/M0_reduced[:,0] * mi / eV
 
-    ax[1,1].plot(M0_map[:,0], tPerp_unif,'r', label='Uniform 280x192x128')
-    ax[1,1].plot(M0_nonunif_map[:,0], tPerp_nonunif,'b--', label='Nonuniform 280x192x128')
-    ax[1,1].plot(M0_reduced_map[:,0], tPerp_reduced,'g:', label='Nonuniform 140x192x128')
+    ax[1,1].plot(M0_map[:,0], tPerp_unif,'r')
+    ax[1,1].plot(M0_nonunif_map[:,0], tPerp_nonunif,'b--')
+    ax[1,1].plot(M0_reduced_map[:,0], tPerp_reduced,'g:')
     ax[1,1].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
     ax[1,1].set_ylabel('$T_{\perp}$ (eV)', fontsize=xyLabelFontSize)
     ax[1,1].legend(loc='upper left', fontsize=legendFontSize)
@@ -238,9 +238,9 @@ def process_frame(frameNum):
     tPar_nonunif = (M2par_nonunif[:,0] - M1_nonunif[:,0]**2/M0_nonunif[:,0]) * mi / eV / M0_nonunif[:,0]
     tPar_reduced = (M2par_reduced[:,0] - M1_reduced[:,0]**2/M0_reduced[:,0]) * mi / eV / M0_reduced[:,0]
 
-    ax[1,2].plot(M0_map[:,0], tPar_unif,'r', label='Uniform 280x192x128')
-    ax[1,2].plot(M0_nonunif_map[:,0], tPar_nonunif,'b--', label='Nonuniform 280x192x128')
-    ax[1,2].plot(M0_reduced_map[:,0], tPar_reduced,'g:', label='Nonuniform 140x192x128')
+    ax[1,2].plot(M0_map[:,0], tPar_unif,'r')
+    ax[1,2].plot(M0_nonunif_map[:,0], tPar_nonunif,'b--')
+    ax[1,2].plot(M0_reduced_map[:,0], tPar_reduced,'g:')
     ax[1,2].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
     ax[1,2].set_ylabel('$T_{\parallel}$ (eV)', fontsize=xyLabelFontSize)
     ax[1,2].legend(loc='upper left', fontsize=legendFontSize)

@@ -14,18 +14,20 @@ from matplotlib.colors import LogNorm
 import multiprocessing
 
 # dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-wham1x-compare_unif_vs_nonunif/outputs/'
-dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-wham1x-compare_unif_vs_nonunif_fraction/outputs/'
+dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-wham1x-compare_unif_vs_nonunif_cell_count/outputs/'
 unifFile = 'gk_wham_unif'
 nonunifFile = 'gk_wham_nonunif'
 reducedFile = 'gk_wham_reduced'
-frame_arr = np.arange(20,21)
+coarseFile = 'gk_wham_coarse'
+
+frame_arr = np.arange(0,11)
 # frame_arr = np.array([1:4])
 save_figure_as_file= 1     #[ If True, save figure to file. If False, display figure on screen.
 
 plot_moments       = 1  # Plot density, potential, upar, tperp, tpar.
-plot_distvpar      = 1  # plot distribution function in vpar.
-plot_distmu        = 1  # plot distribution function in mu.
-plot_distf_at_z    = 1
+plot_distvpar      = 0  # plot distribution function in vpar.
+plot_distmu        = 0  # plot distribution function in mu.
+plot_distf_at_z    = 0
 z_loctions = np.array([0, 0.3, 0.98, 2.4])
 
 print(frame_arr)
@@ -115,6 +117,11 @@ def process_frame(frameNum):
     pgInterp_reduced = pg.GInterpModal(pgData_reduced, polyOrder, 'ms')
     x_reduced, dataOut_reduced = pgInterp_reduced.interpolate()
 
+    densityFileName_coarse = str(dataDir+coarseFile + str(dataName) + str(frameNum) + '.gkyl')
+    pgData_coarse = pg.GData(densityFileName_coarse)
+    pgInterp_coarse = pg.GInterpModal(pgData_coarse, polyOrder, 'ms')
+    x_coarse, dataOut_coarse = pgInterp_coarse.interpolate()
+
     nonunif_mapc2p_filename = str(dataDir+nonunifFile+'-mapc2p.gkyl')
     pgData_nonunif_mapc2p = pg.GData(nonunif_mapc2p_filename)
     pgInterp_nonunif_mapc2p = pg.GInterpModal(pgData_nonunif_mapc2p, polyOrder, 'ms')
@@ -130,7 +137,13 @@ def process_frame(frameNum):
     pgInterp_reduced_mapc2p = pg.GInterpModal(pgData_reduced_mapc2p, polyOrder, 'ms')
     x_reduced_mapc2p, dataOut_reduced_mapc2p = pgInterp_reduced_mapc2p.interpolate(2)
 
-    return dataOut_unif, dataOut_unif_mapc2p, dataOut_nonunif, dataOut_nonunif_mapc2p, dataOut_reduced, dataOut_reduced_mapc2p
+    coarse_mapc2p_filename = str(dataDir+coarseFile+'-mapc2p.gkyl')
+    pgData_coarse_mapc2p = pg.GData(coarse_mapc2p_filename)
+    pgInterp_coarse_mapc2p = pg.GInterpModal(pgData_coarse_mapc2p, polyOrder, 'ms')
+    x_coarse_mapc2p, dataOut_coarse_mapc2p = pgInterp_coarse_mapc2p.interpolate(2)
+    
+
+    return dataOut_unif, dataOut_unif_mapc2p, dataOut_nonunif, dataOut_nonunif_mapc2p, dataOut_reduced, dataOut_reduced_mapc2p, dataOut_coarse, dataOut_coarse_mapc2p
   
   def z_xi(xi):
     z_m = 0.983244
@@ -165,83 +178,87 @@ def process_frame(frameNum):
   #................................................................................#
 
   if plot_moments:
-    dataOut_unif, dataOut_unif_mapc2p, dataOut_nonunif, dataOut_nonunif_mapc2p, dataOut_reduced, dataOut_reduced_mapc2p = load_mapped_data('-ion_M0_')
+    dataOut_unif, dataOut_unif_mapc2p, dataOut_nonunif, dataOut_nonunif_mapc2p, dataOut_reduced, dataOut_reduced_mapc2p, dataOut_coarse, dataOut_coarse_mapc2p = load_mapped_data('-ion_M0_')
     
     # Create a subfigure that is 2 by 3
     fig, ax = plt.subplots(2, 3, figsize=(20,10))
     # Plot the density
-    ax[0,0].plot(dataOut_unif_mapc2p[:,0], dataOut_unif[:,0],'r', label='Uniform 280x96x192')
-    ax[0,0].plot(dataOut_nonunif_mapc2p[:,0], dataOut_nonunif[:,0],'b--', label='Nonuniform 280x96x192')
-    ax[0,0].plot(dataOut_reduced_mapc2p[:,0], dataOut_reduced[:,0],'g:', label='Nonuniformity 0.3')
+    ax[0,0].plot(dataOut_unif_mapc2p[:,0], dataOut_unif[:,0],'r', label='280x96x192')
+    ax[0,0].plot(dataOut_reduced_mapc2p[:,0], dataOut_reduced[:,0],'g:', label='220x96x192')
+    ax[0,0].plot(dataOut_nonunif_mapc2p[:,0], dataOut_nonunif[:,0],'b--', label='140x96x192')
+    ax[0,0].plot(dataOut_coarse_mapc2p[:,0], dataOut_coarse[:,0],'k-.', label='80x96x96')
     ax[0,0].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
     ax[0,0].set_ylabel('$n_i$ (m$^{-3}$)', fontsize=xyLabelFontSize)
     ax[0,0].legend(loc='upper left', fontsize=legendFontSize)
     setTickFontSize(ax[0,0],tickFontSize)
 
     # Plot phi
-    dataOut_unif, dataOut_unif_mapc2p, dataOut_nonunif, dataOut_nonunif_mapc2p, dataOut_reduced, dataOut_reduced_mapc2p = load_mapped_data('-field_')
+    dataOut_unif, dataOut_unif_mapc2p, dataOut_nonunif, dataOut_nonunif_mapc2p, dataOut_reduced, dataOut_reduced_mapc2p, dataOut_coarse, dataOut_coarse_mapc2p = load_mapped_data('-field_')
 
     dataOut_unif *= eV/Te0
     dataOut_nonunif *= eV/Te0
     dataOut_reduced *= eV/Te0
 
-    ax[0,1].plot(dataOut_unif_mapc2p[:,0], dataOut_unif[:,0],'r', label='Nonuniformity 0.0')
-    ax[0,1].plot(dataOut_nonunif_mapc2p[:,0], dataOut_nonunif[:,0],'b--', label='Nonuniformity 0.7')
-    ax[0,1].plot(dataOut_reduced_mapc2p[:,0], dataOut_reduced[:,0],'g:', label='Nonuniformity 0.3')
+    ax[0,1].plot(dataOut_unif_mapc2p[:,0], dataOut_unif[:,0],'r')
+    ax[0,1].plot(dataOut_reduced_mapc2p[:,0], dataOut_reduced[:,0],'g:')
+    ax[0,1].plot(dataOut_nonunif_mapc2p[:,0], dataOut_nonunif[:,0],'b--')
+    ax[0,1].plot(dataOut_coarse_mapc2p[:,0], dataOut_coarse[:,0],'k-.')
     ax[0,1].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
     ax[0,1].set_ylabel('$\phi$ (m$^{-3}$)', fontsize=xyLabelFontSize)
-    ax[0,1].legend(loc='upper left', fontsize=legendFontSize)
     # ax[0,1].set_title('Frame '+str(frameNum))
-    ax[0,1].set_title("time = "+str(frameNum*5e-6)+" s")
+    ax[0,1].set_title("time = "+str(frameNum*1e-5)+" s")
     setTickFontSize(ax[0,1],tickFontSize)
 
     # Plot uPar
-    M0_unif, M0_map, M0_nonunif, M0_nonunif_map, M0_reduced, M0_reduced_map = load_mapped_data('-ion_M0_')
-    M1_unif, M1_map, M1_nonunif, M1_nonunif_map, M1_reduced, M1_reduced_map = load_mapped_data('-ion_M1_')
+    M0_unif, M0_map, M0_nonunif, M0_nonunif_map, M0_reduced, M0_reduced_map, M0_coarse, M0_coarse_map = load_mapped_data('-ion_M0_')
+    M1_unif, M1_map, M1_nonunif, M1_nonunif_map, M1_reduced, M1_reduced_map, M1_coarse, M1_coarse_map = load_mapped_data('-ion_M1_')
 
     upar_unif = M1_unif[:,0]/M0_unif[:,0]
     upar_nonunif = M1_nonunif[:,0]/M0_nonunif[:,0]
     upar_reduced = M1_reduced[:,0]/M0_reduced[:,0]
+    upar_coarse = M1_coarse[:,0]/M0_coarse[:,0]
 
-    ax[1,0].plot(M0_map[:,0], upar_unif / c_s,'r', label='Nonuniformity 0.0')
-    ax[1,0].plot(M0_nonunif_map[:,0], upar_nonunif / c_s,'b--', label='Nonuniformity 0.7')
-    ax[1,0].plot(M0_reduced_map[:,0], upar_reduced / c_s,'g:', label='Nonuniformity 0.3')
+    ax[1,0].plot(M0_map[:,0], upar_unif / c_s,'r')
+    ax[1,0].plot(M0_reduced_map[:,0], upar_reduced / c_s,'g:')
+    ax[1,0].plot(M0_nonunif_map[:,0], upar_nonunif / c_s,'b--')
+    ax[1,0].plot(M0_coarse_map[:,0], upar_coarse / c_s,'k-.')
     ax[1,0].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
     ax[1,0].set_ylabel('$u_{\parallel} / c_s$ (m/s)', fontsize=xyLabelFontSize)
-    ax[1,0].legend(loc='upper left', fontsize=legendFontSize)
     setTickFontSize(ax[1,0],tickFontSize)
     
     # Plot tPerp
-    M0_unif, M0_map, M0_nonunif, M0_nonunif_map, M0_reduced, M0_reduced_map = load_mapped_data('-ion_M0_')
-    M2perp_unif, M2perp_map, M2perp_nonunif, M2perp_nonunif_map, M2perp_reduced, M2perp_reduced_map = load_mapped_data('-ion_M2perp_')
+    # M0_unif, M0_map, M0_nonunif, M0_nonunif_map, M0_reduced, M0_reduced_map = load_mapped_data('-ion_M0_')
+    M2perp_unif, M2perp_map, M2perp_nonunif, M2perp_nonunif_map, M2perp_reduced, M2perp_reduced_map, M2perp_coarse, M2perp_coarse_map = load_mapped_data('-ion_M2perp_')
 
     tPerp_unif = M2perp_unif[:,0]/M0_unif[:,0] * mi / eV
     tPerp_nonunif = M2perp_nonunif[:,0]/M0_nonunif[:,0] * mi / eV
     tPerp_reduced = M2perp_reduced[:,0]/M0_reduced[:,0] * mi / eV
+    tPerp_coarse = M2perp_coarse[:,0]/M0_coarse[:,0] * mi / eV
 
-    ax[1,1].plot(M0_map[:,0], tPerp_unif,'r', label='Nonuniformity 0.0')
-    ax[1,1].plot(M0_nonunif_map[:,0], tPerp_nonunif,'b--', label='Nonuniformity 0.7')
-    ax[1,1].plot(M0_reduced_map[:,0], tPerp_reduced,'g:', label='Nonuniformity 0.3')
+    ax[1,1].plot(M0_map[:,0], tPerp_unif,'r')
+    ax[1,1].plot(M0_reduced_map[:,0], tPerp_reduced,'g:')
+    ax[1,1].plot(M0_nonunif_map[:,0], tPerp_nonunif,'b--')
+    ax[1,1].plot(M0_coarse_map[:,0], tPerp_coarse,'k-.')
     ax[1,1].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
     ax[1,1].set_ylabel('$T_{\perp}$ (eV)', fontsize=xyLabelFontSize)
-    ax[1,1].legend(loc='upper left', fontsize=legendFontSize)
     setTickFontSize(ax[1,1],tickFontSize)
 
     # Plot tPar
-    M0_unif, M0_map, M0_nonunif, M0_nonunif_map, M0_reduced, M0_reduced_map = load_mapped_data('-ion_M0_')
-    M1_unif, M1_map, M1_nonunif, M1_nonunif_map, M1_reduced, M1_reduced_map = load_mapped_data('-ion_M1_')
-    M2par_unif, M2par_map, M2par_nonunif, M2par_nonunif_map, M2par_reduced, M2par_reduced_map = load_mapped_data('-ion_M2par_')
+    # M0_unif, M0_map, M0_nonunif, M0_nonunif_map, M0_reduced, M0_reduced_map = load_mapped_data('-ion_M0_')
+    # M1_unif, M1_map, M1_nonunif, M1_nonunif_map, M1_reduced, M1_reduced_map = load_mapped_data('-ion_M1_')
+    M2par_unif, M2par_map, M2par_nonunif, M2par_nonunif_map, M2par_reduced, M2par_reduced_map, M2par_coarse, M2par_coarse_map = load_mapped_data('-ion_M2par_')
 
     tPar_unif = (M2par_unif[:,0] - M1_unif[:,0]**2/M0_unif[:,0]) * mi / eV / M0_unif[:,0]
     tPar_nonunif = (M2par_nonunif[:,0] - M1_nonunif[:,0]**2/M0_nonunif[:,0]) * mi / eV / M0_nonunif[:,0]
     tPar_reduced = (M2par_reduced[:,0] - M1_reduced[:,0]**2/M0_reduced[:,0]) * mi / eV / M0_reduced[:,0]
+    tPar_coarse = (M2par_coarse[:,0] - M1_coarse[:,0]**2/M0_coarse[:,0]) * mi / eV / M0_coarse[:,0]
 
-    ax[1,2].plot(M0_map[:,0], tPar_unif,'r', label='Nonuniformity 0.0')
-    ax[1,2].plot(M0_nonunif_map[:,0], tPar_nonunif,'b--', label='Nonuniformity 0.7')
-    ax[1,2].plot(M0_reduced_map[:,0], tPar_reduced,'g:', label='Nonuniformity 0.3')
+    ax[1,2].plot(M0_map[:,0], tPar_unif,'r')
+    ax[1,2].plot(M0_reduced_map[:,0], tPar_reduced,'g:')
+    ax[1,2].plot(M0_nonunif_map[:,0], tPar_nonunif,'b--')
+    ax[1,2].plot(M0_coarse_map[:,0], tPar_coarse,'k-.')
     ax[1,2].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
     ax[1,2].set_ylabel('$T_{\parallel}$ (eV)', fontsize=xyLabelFontSize)
-    ax[1,2].legend(loc='upper left', fontsize=legendFontSize)
     setTickFontSize(ax[1,2],tickFontSize)
 
     # Plot the grid and mapc2p

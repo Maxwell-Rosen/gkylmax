@@ -39,9 +39,9 @@ export OMPI_MCA_mpi_warn_on_fork=0
 num_procs=20
 
 echo "Running on $num_procs cores"
-echo "Starting uniform simulation"
+echo "Starting coarse simulation"
 
-srun -u -n $num_procs ./sim_unif -g -M -c $num_procs -r9
+srun -u -n $num_procs ./sim_coarse -g -M -c $num_procs -r9
 
 mv *.gkyl outputs/
 
