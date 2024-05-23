@@ -116,4 +116,4 @@ sim: sim.c
 	 ${CC} ${CFLAGS} ${INCLUDES} sim.c -o sim -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
 clean:
 	rm -rf sim
-	 *.dSYM
+	rm *.dSYM

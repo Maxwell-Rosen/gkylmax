@@ -68,6 +68,12 @@ def convert_hdf5_to_binary(hdf5_file, output_dir):
                 # Write the data to binary file
                 with open(output_file, 'wb') as binary_file:
                     binary_file.write(BGrid.tobytes())
+            elif attr_name == 'phi':
+                output_file = f"{output_dir}/phi.bin"
+                data *= 1e3
+                # Write the data to binary file
+                with open(output_file, 'wb') as binary_file:
+                    binary_file.write(data.tobytes())
             else:
                 output_file = f"{output_dir}/{attr_name}.bin"
                 # Write the data to binary file
