@@ -409,6 +409,7 @@ load_wham_distf(void* ctx)
   for (int i = 0; i < num_elements_uGrid; i++) {
     v_grid[i] = u_grid[i] * v_norm[0];
   }
+  free(v_norm); // free v_norm (not needed anymore
   app->v_grid = v_grid;
   size_t num_elements_vGrid = num_elements_uGrid;
 
@@ -430,6 +431,21 @@ load_wham_distf(void* ctx)
   dims[3] = num_elements_theta;
   app->dims = dims;
   app->rank = rank;
+}
+
+void
+free_wham_distf(void* ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  free(app->f_dist_ion);
+  free(app->f_dist_elc);
+  free(app->phi_vals);
+  free(app->psi_grid);
+  free(app->z_grid);
+  free(app->v_grid);
+  free(app->theta_grid);
+  free(app->B_grid);
+  free(app->dims);
 }
 
 struct gk_mirror_ctx
@@ -895,6 +911,7 @@ struct gkyl_gyrokinetic_species elc = {
   freeresources:
   // Free resources after simulation completion.
   gkyl_gyrokinetic_app_release(app);
+  free_wham_distf(&ctx);
   gkyl_rect_decomp_release(decomp);
   gkyl_comm_release(comm);
   mpifinalize:

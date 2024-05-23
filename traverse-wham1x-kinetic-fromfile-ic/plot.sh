@@ -43,11 +43,18 @@ if [ "$species" = "elc" ]; then
     activate -t T0,phi_interp ev -a -t ephiTe "phi_interp T0 /" \
     activate -t ephiTe pl --title "Potential" -y "Field line length (m)" -x "psi" --clabel "e phi / T" \
     --saveas "python-plots/$name-$frame-2d-ephiTe.png" --no-show &
+
   pgkyl "$name-field_$frame.gkyl" interp -b ms -p1 select --z0 $psival pl --title "phi" \
-    -y "Field line length (m)" -x "Psi" --clabel "Electric potential (V)" --saveas "python-plots/$name-"$frame"-2d-field.png" --no-show&
+    -x "Field line length (m)" -y "Electric potential (V)" --saveas "python-plots/$name-"$frame"-1d-field.png" --no-show&
 
   pgkyl "$name-field_$frame.gkyl" interp -b ms -p1 pl --title "phi" \
     -y "Field line length (m)" -x "Psi" --clabel "Electric potential (V)" --saveas "python-plots/$name-"$frame"-2d-field.png" --no-show&
+
+  pgkyl "test_phi_pol.gkyl" interp -b mt -p2 select --z0 $psival pl --title "phi" \
+    -x "Field line length (m)" -y "Electric potential (V)" --saveas "python-plots/test_phi_pol-1d-field.png" --no-show&
+
+  pgkyl "test_phi_pol.gkyl" interp -b mt -p2 pl --title "phi" \
+    -y "Field line length (m)" -x "Psi" --clabel "Electric potential (V)" --saveas "python-plots/test_phi_pol-2d-field.png" --no-show&
 fi
 # # 1D plots of distribution function at a certain psival
 pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 select --z0 $psival integrate 2 pl --title "$species distribution function integrating over vpar"  \

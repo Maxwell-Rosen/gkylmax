@@ -41,7 +41,7 @@ num_procs=20
 echo "Running on $num_procs cores"
 echo "Starting coarse simulation"
 
-srun -u -n $num_procs ./sim_coarse -g -M -c $num_procs -r9
+srun -u -n $num_procs ./sim_coarse -g -M -c $num_procs
 
 mv *.gkyl outputs/
 
