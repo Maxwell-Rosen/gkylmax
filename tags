@@ -2025,6 +2025,7 @@ calc_integrated_diagnostics	traverse-wham1x-compare_unif_vs_nonunif_cell_count/s
 calc_integrated_diagnostics	traverse-wham1x-compare_unif_vs_nonunif_fraction/sim_nonunif.c	/^calc_integrated_diagnostics(struct gkyl_tm_trigger* iot, gkyl_gyrokinetic_app* app, double t_curr, bool force_calc)$/;"	f
 calc_integrated_diagnostics	traverse-wham1x-compare_unif_vs_nonunif_fraction/sim_reduced.c	/^calc_integrated_diagnostics(struct gkyl_tm_trigger* iot, gkyl_gyrokinetic_app* app, double t_curr, bool force_calc)$/;"	f
 calc_integrated_diagnostics	traverse-wham1x-compare_unif_vs_nonunif_fraction/sim_unif.c	/^calc_integrated_diagnostics(struct gkyl_tm_trigger* iot, gkyl_gyrokinetic_app* app, double t_curr, bool force_calc)$/;"	f
+calc_integrated_diagnostics	traverse-wham1x-kinetic-fromfile-ic/sim.c	/^calc_integrated_diagnostics(struct gkyl_tm_trigger* iot, gkyl_gyrokinetic_app* app, double t_curr, bool force_calc)$/;"	f
 calculate_index	traverse-wham1x-kinetic-fromfile-ic/sim.c	/^size_t calculate_index(const size_t* indices, const int* dims, int num_dims) {$/;"	f
 calculate_mirror_throat_location	mirror1x_adiabatic/sim.c	/^calculate_mirror_throat_location(void *ctx)$/;"	f
 calculate_mirror_throat_location	mirror1x_adiabatic_eqdst/sim.c	/^calculate_mirror_throat_location(void *ctx)$/;"	f
@@ -2337,6 +2338,7 @@ dt_failure_tol	traverse-wham1x-compare_unif_vs_nonunif_cell_count/sim_unif.c	/^ 
 dt_failure_tol	traverse-wham1x-compare_unif_vs_nonunif_fraction/sim_nonunif.c	/^  double dt_failure_tol; \/\/ Minimum allowable fraction of initial time-step.$/;"	m	struct:gk_mirror_ctx	file:
 dt_failure_tol	traverse-wham1x-compare_unif_vs_nonunif_fraction/sim_reduced.c	/^  double dt_failure_tol; \/\/ Minimum allowable fraction of initial time-step.$/;"	m	struct:gk_mirror_ctx	file:
 dt_failure_tol	traverse-wham1x-compare_unif_vs_nonunif_fraction/sim_unif.c	/^  double dt_failure_tol; \/\/ Minimum allowable fraction of initial time-step.$/;"	m	struct:gk_mirror_ctx	file:
+dt_failure_tol	traverse-wham1x-kinetic-fromfile-ic/sim.c	/^  double dt_failure_tol; \/\/ Minimum allowable fraction of initial time-step.$/;"	m	struct:gk_mirror_ctx	file:
 dtheta	stellar-wham_ics/map_output.py	/^dtheta = np.pi\/(iy-1) $/;"	v
 eDeltaPhiDTe	postprocessing/mana_plots.py	/^  eDeltaPhiDTe = np.zeros(len(tests))$/;"	v
 ePhiDTe	postprocessing/mana_plots.py	/^  ePhiDTe = eV*phi\/Te0$/;"	v
@@ -2788,19 +2790,7 @@ f_flat	stellar-wham_ics/map_output.py	/^f_flat = np.zeros(N_spec*rDim*zDim*jx*iy
 f_interp	stellar-wham_ics/map_output.py	/^                    f_interp = interp1d(utmp_crop,f_crop[:,iloc],fill_value='extrapolate')$/;"	v
 f_out	stellar-wham_ics/map_output.py	/^    f_out = f_flat.reshape((N_spec,rDim,zDim,jx,iy))$/;"	v
 f_out	stellar-wham_ics/map_output.py	/^    f_out = np.zeros((N_spec,rDim,zDim,jx,iy)) # output f at each point along the field line$/;"	v
-f_slice_0	stellar-wham_ics/plot.py	/^f_slice_0 = f_dist[0, psi, 0, :, :]$/;"	v
 f_slice_0	stellar-wham_ics/plot_density.py	/^  f_slice_0 = f_dist[0, psi, i, :, :]$/;"	v
-f_slice_1	stellar-wham_ics/plot.py	/^f_slice_1 = f_dist[0, psi, -1, :, :]$/;"	v
-f_slice_10	stellar-wham_ics/plot.py	/^f_slice_10 = f_dist[0, psi, 80, :, :]$/;"	v
-f_slice_11	stellar-wham_ics/plot.py	/^f_slice_11 = f_dist[0, psi, 0, :, :]$/;"	v
-f_slice_2	stellar-wham_ics/plot.py	/^f_slice_2 = f_dist[0, psi, 80, :, :]$/;"	v
-f_slice_3	stellar-wham_ics/plot.py	/^f_slice_3 = f_dist[1, psi, 0, :, :]$/;"	v
-f_slice_4	stellar-wham_ics/plot.py	/^f_slice_4 = f_dist[1, psi, -1, :, :]$/;"	v
-f_slice_5	stellar-wham_ics/plot.py	/^f_slice_5 = f_dist[1, psi, 80, :, :]$/;"	v
-f_slice_6	stellar-wham_ics/plot.py	/^f_slice_6 = f_dist[1, psi, -1, :, :]$/;"	v
-f_slice_7	stellar-wham_ics/plot.py	/^f_slice_7 = f_dist[1, psi, 80, :, :]$/;"	v
-f_slice_8	stellar-wham_ics/plot.py	/^f_slice_8 = f_dist[1, psi, 0, :, :]$/;"	v
-f_slice_9	stellar-wham_ics/plot.py	/^f_slice_9 = f_dist[0, psi, -1, :, :]$/;"	v
 f_tmp	stellar-wham_ics/map_output.py	/^f_tmp = np.zeros((N_spec,rDim,zDim,jx,iy)) # output f at each point along the field line$/;"	v
 ff	generate_efit/write_efit_helmholtz_coil.py	/^import fortranformat as ff$/;"	i
 ff	generate_efit/write_eliptical_efit.py	/^import fortranformat as ff$/;"	i
@@ -2953,6 +2943,7 @@ frame_arr	traverse-wham1x-compare_unif_vs_nonunif/plot.py	/^frame_arr = np.arang
 frame_arr	traverse-wham1x-compare_unif_vs_nonunif_cell_count/plot.py	/^frame_arr = np.arange(0,11)$/;"	v
 frame_arr	traverse-wham1x-compare_unif_vs_nonunif_fraction/plot.py	/^frame_arr = np.arange(20,21)$/;"	v
 frame_gk32	postprocessing/mana_plots.py	/^  frame_gk32 = 152$/;"	v
+free_wham_distf	traverse-wham1x-kinetic-fromfile-ic/sim.c	/^free_wham_distf(void* ctx)$/;"	f
 gamma	generate_efit/write_efit_helmholtz_coil.py	/^gamma = 0.124904$/;"	v
 gamma	generate_efit/write_eliptical_efit.py	/^gamma = 0.124904$/;"	v
 gamma	mirror1x_adiabatic/sim.c	/^  double gamma;$/;"	m	struct:gk_mirror_ctx	file:
@@ -3155,6 +3146,7 @@ int_diag_calc_num	traverse-wham1x-compare_unif_vs_nonunif_cell_count/sim_unif.c	
 int_diag_calc_num	traverse-wham1x-compare_unif_vs_nonunif_fraction/sim_nonunif.c	/^  int int_diag_calc_num; \/\/ Number of integrated diagnostics computations (=INT_MAX for every step).$/;"	m	struct:gk_mirror_ctx	file:
 int_diag_calc_num	traverse-wham1x-compare_unif_vs_nonunif_fraction/sim_reduced.c	/^  int int_diag_calc_num; \/\/ Number of integrated diagnostics computations (=INT_MAX for every step).$/;"	m	struct:gk_mirror_ctx	file:
 int_diag_calc_num	traverse-wham1x-compare_unif_vs_nonunif_fraction/sim_unif.c	/^  int int_diag_calc_num; \/\/ Number of integrated diagnostics computations (=INT_MAX for every step).$/;"	m	struct:gk_mirror_ctx	file:
+int_diag_calc_num	traverse-wham1x-kinetic-fromfile-ic/sim.c	/^  int int_diag_calc_num; \/\/ Number of integrated diagnostics computations (=INT_MAX for every step).$/;"	m	struct:gk_mirror_ctx	file:
 integrand_z_psiZ	mirror1x_adiabatic/sim.c	/^integrand_z_psiZ(double ZIn, void *ctx)$/;"	f
 integrand_z_psiZ	mirror1x_adiabatic_eqdst/sim.c	/^integrand_z_psiZ(double ZIn, void *ctx)$/;"	f
 integrand_z_psiZ	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^integrand_z_psiZ(double ZIn, void *ctx)$/;"	f
@@ -3598,6 +3590,7 @@ mirror_geo_c2fa_ctx	traverse-wham1x-compare_unif_vs_nonunif_cell_count/sim_unif.
 mirror_geo_c2fa_ctx	traverse-wham1x-compare_unif_vs_nonunif_fraction/sim_nonunif.c	/^  void *mirror_geo_c2fa_ctx;$/;"	m	struct:gk_mirror_ctx	file:
 mirror_geo_c2fa_ctx	traverse-wham1x-compare_unif_vs_nonunif_fraction/sim_reduced.c	/^  void *mirror_geo_c2fa_ctx;$/;"	m	struct:gk_mirror_ctx	file:
 mirror_geo_c2fa_ctx	traverse-wham1x-compare_unif_vs_nonunif_fraction/sim_unif.c	/^  void *mirror_geo_c2fa_ctx;$/;"	m	struct:gk_mirror_ctx	file:
+mirror_geo_c2fa_ctx	traverse-wham1x-kinetic-fromfile-ic/sim.c	/^  void *mirror_geo_c2fa_ctx;$/;"	m	struct:gk_mirror_ctx	file:
 model	postprocessing/mana_plots.py	/^  model = ['kinElc','adiElc']$/;"	v
 modelPars	postprocessing/mana_plots.py	/^  modelPars = {}$/;"	v
 mpiassign	stellar-wham_ics/map_output.py	/^mpiassign = np.zeros(rDim,dtype=int)$/;"	v
@@ -3965,6 +3958,7 @@ num_failures_max	traverse-wham1x-compare_unif_vs_nonunif_cell_count/sim_unif.c	/
 num_failures_max	traverse-wham1x-compare_unif_vs_nonunif_fraction/sim_nonunif.c	/^  int num_failures_max; \/\/ Maximum allowable number of consecutive small time-steps.$/;"	m	struct:gk_mirror_ctx	file:
 num_failures_max	traverse-wham1x-compare_unif_vs_nonunif_fraction/sim_reduced.c	/^  int num_failures_max; \/\/ Maximum allowable number of consecutive small time-steps.$/;"	m	struct:gk_mirror_ctx	file:
 num_failures_max	traverse-wham1x-compare_unif_vs_nonunif_fraction/sim_unif.c	/^  int num_failures_max; \/\/ Maximum allowable number of consecutive small time-steps.$/;"	m	struct:gk_mirror_ctx	file:
+num_failures_max	traverse-wham1x-kinetic-fromfile-ic/sim.c	/^  int num_failures_max; \/\/ Maximum allowable number of consecutive small time-steps.$/;"	m	struct:gk_mirror_ctx	file:
 num_frames	mirror1x_adiabatic/sim.c	/^  int num_frames;$/;"	m	struct:gk_mirror_ctx	file:
 num_frames	mirror1x_adiabatic_eqdst/sim.c	/^  int num_frames;$/;"	m	struct:gk_mirror_ctx	file:
 num_frames	mirror1x_compare_unif_vs_nonunif_grids/sim_nonunif.c	/^  int num_frames;$/;"	m	struct:gk_mirror_ctx	file:
@@ -4105,6 +4099,7 @@ phi	postprocessing/mana_plots.py	/^  phi = np.zeros((nFrames,nxIntC[0]))$/;"	v
 phi	postprocessing/plot.py	/^  phi = np.zeros((nFrames,nxIntC[0]))$/;"	v
 phi	stellar-wham_ics/map_output.py	/^phi = cql.var['ephiz'][-1,:,:]        # value of electric potential along field line [kV]$/;"	v
 phi	stellar-wham_ics/plot.py	/^phi = hf['phi'][:]$/;"	v
+phi	stellar-wham_ics/plot.py	/^phi = phi * 1e3$/;"	v
 phi	stellar-wham_ics/plot_density.py	/^phi = hf['phi'][:]$/;"	v
 phiFile	postprocessing/mana_plots.py	/^  phiFile = dataDir+fileName+'_phi_%d.bp'    #.Complete file name.$/;"	v
 phiFile	postprocessing/mana_plots.py	/^  phiFile = dataDir+fileName+'_phi_'    #.Complete file name.$/;"	v
@@ -4280,6 +4275,7 @@ psi	stellar-wham_ics/plot_density.py	/^psi = 16$/;"	v
 psiGrid	stellar-wham_ics/converting_flux.py	/^psiGrid = cql.var['equilpsi']  # poloidal flux at radial bin center$/;"	v
 psiGrid	stellar-wham_ics/map_output.py	/^psiGrid = cql.var['equilpsi']  # poloidal flux at radial bin center$/;"	v
 psiGrid	stellar-wham_ics/plot.py	/^psiGrid = hf['psiGrid'][:]$/;"	v
+psiGrid	stellar-wham_ics/plot.py	/^psiGrid = psiGrid * -1e-8$/;"	v
 psiGrid	stellar-wham_ics/plot_density.py	/^psiGrid = hf['psiGrid'][:]$/;"	v
 psiLim	stellar-wham_ics/converting_flux.py	/^psiLim = cql.var['psilim']     # poloidal flux at the limiter$/;"	v
 psiLimMKS	stellar-wham_ics/converting_flux.py	/^psiLimMKS = abs(psiLim - psiGrid[0]) $/;"	v
@@ -4664,7 +4660,6 @@ textFontSize	postprocessing/mana_plots.py	/^textFontSize          = 16$/;"	v
 textFontSize	postprocessing/plot.py	/^textFontSize          = 16$/;"	v
 theta	stellar-wham_ics/map_output.py	/^theta  = np.linspace(0,np.pi,iy)$/;"	v
 theta	stellar-wham_ics/plot.py	/^theta = hf['theta'][:] # Pitch angle. Radians$/;"	v
-theta	stellar-wham_ics/plot.py	/^theta = theta$/;"	v
 theta	stellar-wham_ics/plot_cql3d_convert_regrid.py	/^theta  = np.linspace(0,np.pi,iy)$/;"	v
 theta	stellar-wham_ics/plot_density.py	/^theta = hf['thGrid'][:] # Pitch angle. Radians$/;"	v
 theta_eval	stellar-wham_ics/plot.py	/^theta_eval = theta[theta_ix]$/;"	v
@@ -4743,7 +4738,6 @@ uprp	stellar-wham_ics/plot_cql3d_convert_regrid.py	/^uprp = np.zeros((jx,iy))$/;
 utmp	stellar-wham_ics/map_output.py	/^            utmp = u_loc[ispec,ipsi,il,:]$/;"	v
 utmp0	stellar-wham_ics/map_output.py	/^            utmp0 = np.copy(utmp)$/;"	v
 utmp_crop	stellar-wham_ics/map_output.py	/^            utmp_crop = utmp0[mask]$/;"	v
-v	stellar-wham_ics/plot.py	/^v = uGrid*v_norm$/;"	v
 v0	stellar-wham_ics/map_output.py	/^v0 = u0\/gamma_rel$/;"	v
 vGrid	stellar-wham_ics/plot.py	/^vGrid = hf['vGrid'][:]$/;"	v
 vGrid	stellar-wham_ics/plot_density.py	/^vGrid = hf['vGrid'][:]$/;"	v
@@ -4756,7 +4750,6 @@ v_norm	stellar-wham_ics/plot.py	/^v_norm = hf['v_norm'][()] # Velocity normaliza
 v_norm	stellar-wham_ics/plot_cql3d_convert_regrid.py	/^v_norm = hf['v_norm']$/;"	v
 v_norm	stellar-wham_ics/plot_density.py	/^v_norm = hf['v_norm'][()] # Velocity normalization coefficient. cm\/s$/;"	v
 vloc_flat	stellar-wham_ics/map_output.py	/^    vloc_flat = np.zeros(N_spec*rDim*zDim*jx)     $/;"	v
-vpar	stellar-wham_ics/plot.py	/^vpar = np.outer(v,np.cos(theta))$/;"	v
 vpar_max_elc	traverse-wham1x-compare_unif_vs_nonunif/sim_nonunif.c	/^  double vpar_max_elc;$/;"	m	struct:gk_mirror_ctx	file:
 vpar_max_elc	traverse-wham1x-compare_unif_vs_nonunif/sim_reduced.c	/^  double vpar_max_elc;$/;"	m	struct:gk_mirror_ctx	file:
 vpar_max_elc	traverse-wham1x-compare_unif_vs_nonunif/sim_unif.c	/^  double vpar_max_elc;$/;"	m	struct:gk_mirror_ctx	file:
@@ -4802,7 +4795,6 @@ vpar_max_ion	traverse-wham1x-kinetic-saturation/rt_twostream.c	/^  double vpar_m
 vpar_max_ion	traverse-wham1x-kinetic-strong/rt_twostream.c	/^  double vpar_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
 vpar_max_ion	wham1x_adiabatic/sim.c	/^  double vpar_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
 vpar_max_ion	wham1x_saturation_scaling/rt_twostream.c	/^  double vpar_max_ion;$/;"	m	struct:gk_mirror_ctx	file:
-vperp	stellar-wham_ics/plot.py	/^vperp = np.outer(v,np.sin(theta))**2$/;"	v
 vte	mirror1x_adiabatic/sim.c	/^  double vte;$/;"	m	struct:gk_mirror_ctx	file:
 vte	mirror1x_adiabatic_eqdst/sim.c	/^  double vte;$/;"	m	struct:gk_mirror_ctx	file:
 vte	mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^vte = np.sqrt(Te0\/me)$/;"	v
@@ -4900,7 +4892,7 @@ write_data	traverse-wham1x-compare_unif_vs_nonunif_cell_count/sim_unif.c	/^write
 write_data	traverse-wham1x-compare_unif_vs_nonunif_fraction/sim_nonunif.c	/^write_data(struct gkyl_tm_trigger* iot, gkyl_gyrokinetic_app* app, double t_curr, bool force_write)$/;"	f
 write_data	traverse-wham1x-compare_unif_vs_nonunif_fraction/sim_reduced.c	/^write_data(struct gkyl_tm_trigger* iot, gkyl_gyrokinetic_app* app, double t_curr, bool force_write)$/;"	f
 write_data	traverse-wham1x-compare_unif_vs_nonunif_fraction/sim_unif.c	/^write_data(struct gkyl_tm_trigger* iot, gkyl_gyrokinetic_app* app, double t_curr, bool force_write)$/;"	f
-write_data	traverse-wham1x-kinetic-fromfile-ic/sim.c	/^write_data(struct gkyl_tm_trigger *iot, gkyl_gyrokinetic_app *app, double tcurr)$/;"	f
+write_data	traverse-wham1x-kinetic-fromfile-ic/sim.c	/^write_data(struct gkyl_tm_trigger* iot, gkyl_gyrokinetic_app* app, double t_curr, bool force_write)$/;"	f
 write_data	traverse-wham1x-kinetic-saturation/rt_twostream.c	/^write_data(struct gkyl_tm_trigger *iot, gkyl_gyrokinetic_app *app, double tcurr)$/;"	f
 write_data	traverse-wham1x-kinetic-strong/rt_twostream.c	/^write_data(struct gkyl_tm_trigger *iot, gkyl_gyrokinetic_app *app, double tcurr)$/;"	f
 write_data	wham1x_adiabatic/sim.c	/^write_data(struct gkyl_tm_trigger *iot, gkyl_gyrokinetic_app *app, double tcurr)$/;"	f
@@ -4917,6 +4909,7 @@ y	stellar-wham_ics/map_output.py	/^y = cql.var['y']               # pitch angle 
 zDim	stellar-wham_ics/map_output.py	/^zDim = cql.dim['zdim'] # number of points along flux surface$/;"	v
 zGrid	stellar-wham_ics/map_output.py	/^zGrid = cql.var['z']           # value of z along the field line [cm]$/;"	v
 zGrid	stellar-wham_ics/plot.py	/^zGrid = hf['zGrid'][:]$/;"	v
+zGrid	stellar-wham_ics/plot.py	/^zGrid = zGrid * 1e-2$/;"	v
 zGrid	stellar-wham_ics/plot_density.py	/^zGrid = hf['zGrid'][:]$/;"	v
 z_bt	mirror1x_adiabatic/sim.c	/^  double z_bt;$/;"	m	struct:gk_mirror_ctx	file:
 z_bt	mirror1x_adiabatic_eqdst/sim.c	/^  double z_bt;$/;"	m	struct:gk_mirror_ctx	file:

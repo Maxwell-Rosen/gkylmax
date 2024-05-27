@@ -21,6 +21,10 @@ def convert_hdf5_to_binary(hdf5_file, output_dir):
                 data_ion = data[0,:,:,:,:] * 1e12 # 0 is for ions
                 data_electron = data[1,:,:,:,:] * 1e12 # 1 is for electrons
 
+                # For some reason, CQL3D or the mapping script screw up the 0th z index component
+                data_electron[:,0,:,:] = data_electron[:,1,:,:]
+                data_ion[:,0,:,:] = data_ion[:,1,:,:]
+
                 output_file = f"{output_dir}/f_dist_ion.bin"
                 # Write the data to binary file
                 with open(output_file, 'wb') as binary_file:

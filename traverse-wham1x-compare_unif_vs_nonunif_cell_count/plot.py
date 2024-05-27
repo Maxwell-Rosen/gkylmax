@@ -20,7 +20,7 @@ nonunifFile = 'gk_wham_nonunif'
 reducedFile = 'gk_wham_reduced'
 coarseFile = 'gk_wham_coarse'
 
-frame_arr = np.arange(0,11)
+frame_arr = np.arange(0,10)
 # frame_arr = np.array([1:4])
 save_figure_as_file= 1     #[ If True, save figure to file. If False, display figure on screen.
 

@@ -191,9 +191,8 @@ def process_frame(frameNum):
     ax[0,1].plot(dataOut_reduced_mapc2p[:,0], dataOut_reduced[:,0],'g:')
     ax[0,1].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
     ax[0,1].set_ylabel('$\phi$ (m$^{-3}$)', fontsize=xyLabelFontSize)
-    ax[0,1].legend(loc='upper left', fontsize=legendFontSize)
     # ax[0,1].set_title('Frame '+str(frameNum))
-    ax[0,1].set_title("Time = "+str(frameNum*5e-6)+" s")
+    ax[0,1].set_title("Time = "+str(frameNum*1e-5)+" s")
 
     setTickFontSize(ax[0,1],tickFontSize)
 
@@ -210,7 +209,6 @@ def process_frame(frameNum):
     ax[1,0].plot(M0_reduced_map[:,0], upar_reduced / c_s,'g:')
     ax[1,0].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
     ax[1,0].set_ylabel('$u_{\parallel} / c_s$ (m/s)', fontsize=xyLabelFontSize)
-    ax[1,0].legend(loc='upper left', fontsize=legendFontSize)
     setTickFontSize(ax[1,0],tickFontSize)
     
     # Plot tPerp
@@ -226,7 +224,6 @@ def process_frame(frameNum):
     ax[1,1].plot(M0_reduced_map[:,0], tPerp_reduced,'g:')
     ax[1,1].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
     ax[1,1].set_ylabel('$T_{\perp}$ (eV)', fontsize=xyLabelFontSize)
-    ax[1,1].legend(loc='upper left', fontsize=legendFontSize)
     setTickFontSize(ax[1,1],tickFontSize)
 
     # Plot tPar
@@ -243,7 +240,6 @@ def process_frame(frameNum):
     ax[1,2].plot(M0_reduced_map[:,0], tPar_reduced,'g:')
     ax[1,2].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
     ax[1,2].set_ylabel('$T_{\parallel}$ (eV)', fontsize=xyLabelFontSize)
-    ax[1,2].legend(loc='upper left', fontsize=legendFontSize)
     setTickFontSize(ax[1,2],tickFontSize)
 
     # Plot the grid and mapc2p

@@ -32,19 +32,55 @@ z_eval = zGrid[lineLength]
 v_eval = uGrid[u]
 theta_eval = theta[theta_ix]
 
-print(np.shape(phi))
-print(np.shape(psiGrid))
-print(np.shape(zGrid))
-print(psiGrid)
-print(zGrid)
-plt.pcolormesh(zGrid, psiGrid, phi[1:, 1:])
-# plt.pcolormesh(phi)
-plt.colorbar()
-plt.title("Phi")
-plt.set_cmap("plasma")
-plt.ylabel("psi")
-plt.xlabel("z")
-plt.savefig("python-plots/phi.png")
+# print(np.shape(phi))
+# print(np.shape(psiGrid))
+# print(np.shape(zGrid))
+# print(psiGrid)
+# print(zGrid)
+# plt.pcolormesh(zGrid, psiGrid, phi[1:, 1:])
+# # plt.pcolormesh(phi)
+# plt.colorbar()
+# plt.title("Phi")
+# plt.set_cmap("plasma")
+# plt.ylabel("psi")
+# plt.xlabel("z")
+# plt.savefig("python-plots/phi.png")
+# plt.show()
+
+# zGrid = zGrid * 1e-2
+# phi = phi * 1e3
+# psiGrid = psiGrid * -1e-8
+# print(psiGrid)
+# plt.plot(zGrid, phi[-1, :])
+# plt.title("Phi at psi = " + str(psiGrid[-1]))
+# plt.ylabel("phi, V")
+# plt.xlabel("z, m")
+# plt.savefig("python-plots/phi_98.png")
+# plt.show()
+
+# plt.plot(zGrid, phi[0, :])
+# plt.title("Phi at psi = " + str(psiGrid[0]))
+# plt.ylabel("phi, V")
+# plt.xlabel("z, m")
+# plt.savefig("python-plots/phi_0.png")
+# plt.show()
+
+# Integrate to get density
+print("making the pl")
+fig, axs = plt.subplots(1, 2)
+
+cax0 = axs[0].pcolormesh(f_dist[1, 0, 0, :, :])
+fig.colorbar(cax0, ax=axs[0])
+axs[0].set_title('Subfigure 1')
+axs[0].set_xlabel('x')
+axs[0].set_ylabel('y')
+
+cax1 = axs[1].pcolormesh(f_dist[1, 0, 1, :, :])
+fig.colorbar(cax1, ax=axs[1])
+axs[1].set_title('Subfigure 2')
+axs[1].set_xlabel('x')
+axs[1].set_ylabel('y')
+
 plt.show()
 
 # f_slice_0 = f_dist[0, psi, 0, :, :]

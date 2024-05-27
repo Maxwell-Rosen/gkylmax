@@ -104,6 +104,10 @@ struct gk_mirror_ctx
   double *B_grid;
   int *dims;
   int rank;
+
+  //Nonuniform grid
+  void *mirror_geo_c2fa_ctx;
+
 };
 
 
@@ -123,7 +127,6 @@ struct gkyl_mirror_geo_grid_inp ginp = {
   .zmax =  2.48,
   .write_node_coord_array = true,
   .node_file_nm = "wham_nodes.gkyl",
-  // .nonuniform_mapping_fraction = 0,
 };
 
 // Evaluate collision frequencies
@@ -363,7 +366,7 @@ read_phi(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, v
   interp_pt[1] = z_cord;
 
   double interp_val = LI_2D(dims, psi_grid, z_grid, phi_vals, interp_pt);
-  fout[0] = interp_val;
+  fout[0] = interp_val * (1 - pow((xn[0] - app.psi_min)/(app.psi_max - app.psi_min),1));
 }
 
 void
@@ -410,6 +413,7 @@ load_wham_distf(void* ctx)
     v_grid[i] = u_grid[i] * v_norm[0];
   }
   free(v_norm); // free v_norm (not needed anymore
+  free(u_grid); // free u_grid (not needed anymore)
   app->v_grid = v_grid;
   size_t num_elements_vGrid = num_elements_uGrid;
 
@@ -510,10 +514,10 @@ create_ctx(void)
   // double vpar_max_ion = 20 * vti;
   double vpar_max_ion = 5 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
-  int num_cell_vpar = 42; // Number of cells in the paralell velocity direction 96
-  int num_cell_mu = 128;  // Number of cells in the mu direction 192
-  int num_cell_z = 64;
-  int num_cell_psi = 16;
+  int num_cell_vpar = 32; // Number of cells in the paralell velocity direction 96
+  int num_cell_mu = 32;  // Number of cells in the mu direction 192
+  int num_cell_z = 192;
+  int num_cell_psi = 32;
   int poly_order = 1;
   double final_time = 1e-9;
   int num_frames = 1;
@@ -565,6 +569,7 @@ create_ctx(void)
     .num_failures_max = num_failures_max,
   };
   load_wham_distf(&ctx);
+  ctx.mirror_geo_c2fa_ctx = gkyl_malloc(sizeof(struct gkyl_mirror_geo_c2fa_ctx));
   return ctx;
 }
 
@@ -698,7 +703,7 @@ int main(int argc, char **argv)
   }
 
   if (my_rank == 0) printf("Grid size = %d in psi, %d in Z, %d in Vpar, %d in mu\n", NPSI, NZ, NV, NMU);
-struct gkyl_gyrokinetic_species elc = {
+  struct gkyl_gyrokinetic_species elc = {
     .name = "elc",
     .charge = ctx.qe,
     .mass = ctx.me,
@@ -765,10 +770,10 @@ struct gkyl_gyrokinetic_species elc = {
   struct gkyl_gyrokinetic_field field = {
     .fem_parbc = GKYL_FEM_PARPROJ_NONE,
     .poisson_bcs = {
-      .lo_type = {GKYL_POISSON_NEUMANN, GKYL_POISSON_NEUMANN},
-      .up_type = {GKYL_POISSON_DIRICHLET, GKYL_POISSON_NEUMANN},
-      .lo_value = {0.0, 0.0},
-      .up_value = {0.0, 0.0},
+      .lo_type = {GKYL_POISSON_NEUMANN},
+      .up_type = {GKYL_POISSON_DIRICHLET},
+      .lo_value = {0.0},
+      .up_value = {0.0},
     },
     .polarization_phi = read_phi,
     .polarization_phi_ctx = &ctx,
@@ -788,6 +793,7 @@ struct gkyl_gyrokinetic_species elc = {
       // .world = {0.0},
       // .mirror_efit_info = &inp,
       // .mirror_grid_info = &ginp,
+      // .mirror_geo_c2fa_ctx = ctx.mirror_geo_c2fa_ctx,
     },
     .num_periodic_dir = 0,
     .periodic_dirs = {},
@@ -912,6 +918,10 @@ struct gkyl_gyrokinetic_species elc = {
   // Free resources after simulation completion.
   gkyl_gyrokinetic_app_release(app);
   free_wham_distf(&ctx);
+  struct gkyl_mirror_geo_c2fa_ctx *c2fa_release = ctx.mirror_geo_c2fa_ctx;
+  gkyl_array_release(c2fa_release->c2fa);
+  gkyl_array_release(c2fa_release->c2fa_deflate);
+  gkyl_free(c2fa_release);
   gkyl_rect_decomp_release(decomp);
   gkyl_comm_release(comm);
   mpifinalize:

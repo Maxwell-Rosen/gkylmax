@@ -5,14 +5,14 @@ from matplotlib.colors import LogNorm
 
 
 # Open the HDF5 file
-hf = h5py.File('cql3d_f_RZ_max.h5', 'r')
+hf = h5py.File('cql3d_f_RZ.h5', 'r')
 # Read the datasets
 v_norm = hf['v_norm'][()] # Velocity normalization coefficient. cm/s
 psiGrid = hf['psiGrid'][:]
 zGrid = hf['zGrid'][:]
 uGrid = hf['uGrid'][:] # Normalized spherical velocity
 vGrid = hf['vGrid'][:]
-theta = hf['thGrid'][:] # Pitch angle. Radians
+theta = hf['theta'][:] # Pitch angle. Radians
 charge = hf['charge'][:]
 mass = hf['mass'][:]
 BdB0 = hf['BdB0'][:]
@@ -37,10 +37,10 @@ for i in range(len(zGrid)):
   v_integral_theta = np.multiply(integrate_theta, uGrid*v_norm)
   density[i] = np.trapz(v_integral_theta, uGrid*v_norm) * 2 * np.pi
 
-density[0] = density[1]
+# density[0] = density[1]
 
 plt.plot(zGrid, density*1e8)
 plt.ylabel("Density, cm^-3")
 plt.xlabel("Z, cm")
 plt.title("Density vs Z")
-# plt.show()
+plt.show()
