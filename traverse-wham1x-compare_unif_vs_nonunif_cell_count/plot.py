@@ -20,7 +20,7 @@ nonunifFile = 'gk_wham_nonunif'
 reducedFile = 'gk_wham_reduced'
 coarseFile = 'gk_wham_coarse'
 
-frame_arr = np.arange(0,10)
+frame_arr = np.arange(0,11)
 # frame_arr = np.array([1:4])
 save_figure_as_file= 1     #[ If True, save figure to file. If False, display figure on screen.
 
@@ -186,7 +186,7 @@ def process_frame(frameNum):
     ax[0,0].plot(dataOut_unif_mapc2p[:,0], dataOut_unif[:,0],'r', label='280x96x192')
     ax[0,0].plot(dataOut_reduced_mapc2p[:,0], dataOut_reduced[:,0],'g:', label='220x96x192')
     ax[0,0].plot(dataOut_nonunif_mapc2p[:,0], dataOut_nonunif[:,0],'b--', label='140x96x192')
-    ax[0,0].plot(dataOut_coarse_mapc2p[:,0], dataOut_coarse[:,0],'k-.', label='80x96x96')
+    ax[0,0].plot(dataOut_coarse_mapc2p[:,0], dataOut_coarse[:,0],'k-.', label='100x96x192')
     ax[0,0].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
     ax[0,0].set_ylabel('$n_i$ (m$^{-3}$)', fontsize=xyLabelFontSize)
     ax[0,0].legend(loc='upper left', fontsize=legendFontSize)
@@ -198,13 +198,14 @@ def process_frame(frameNum):
     dataOut_unif *= eV/Te0
     dataOut_nonunif *= eV/Te0
     dataOut_reduced *= eV/Te0
+    dataOut_coarse *= eV/Te0
 
     ax[0,1].plot(dataOut_unif_mapc2p[:,0], dataOut_unif[:,0],'r')
     ax[0,1].plot(dataOut_reduced_mapc2p[:,0], dataOut_reduced[:,0],'g:')
     ax[0,1].plot(dataOut_nonunif_mapc2p[:,0], dataOut_nonunif[:,0],'b--')
     ax[0,1].plot(dataOut_coarse_mapc2p[:,0], dataOut_coarse[:,0],'k-.')
     ax[0,1].set_xlabel('Cylindrical length coordinate, $Z$ (m)', fontsize=xyLabelFontSize)
-    ax[0,1].set_ylabel('$\phi$ (m$^{-3}$)', fontsize=xyLabelFontSize)
+    ax[0,1].set_ylabel('$\phi $(V)$)', fontsize=xyLabelFontSize)
     # ax[0,1].set_title('Frame '+str(frameNum))
     ax[0,1].set_title("time = "+str(frameNum*1e-5)+" s")
     setTickFontSize(ax[0,1],tickFontSize)

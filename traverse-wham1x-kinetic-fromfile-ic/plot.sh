@@ -50,11 +50,14 @@ if [ "$species" = "elc" ]; then
   pgkyl "$name-field_$frame.gkyl" interp -b ms -p1 pl --title "phi" \
     -y "Field line length (m)" -x "Psi" --clabel "Electric potential (V)" --saveas "python-plots/$name-"$frame"-2d-field.png" --no-show&
 
-  # pgkyl "test_phi_pol.gkyl" interp -b mt -p2 select --z0 $psival pl --title "phi" \
-  #   -x "Field line length (m)" -y "Electric potential (V)" --saveas "python-plots/test_phi_pol-1d-field.png" --no-show&
+  pgkyl "test_phi_pol.gkyl" interp -b mt -p2 select --z0 $psival pl --title "phi" \
+    -x "Field line length (m)" -y "Electric potential (V)" --saveas "python-plots/test_phi_pol-1d-field.png" --no-show&
 
-  # pgkyl "test_phi_pol.gkyl" interp -b mt -p2 pl --title "phi" \
-  #   -y "Field line length (m)" -x "Psi" --clabel "Electric potential (V)" --saveas "python-plots/test_phi_pol-2d-field.png" --no-show&
+  pgkyl "test_phi_pol.gkyl" interp -b mt -p2 pl --title "phi" \
+    -y "Field line length (m)" -x "Psi" --clabel "Electric potential (V)" --saveas "python-plots/test_phi_pol-2d-field.png" --no-show&
+
+    pgkyl "$name-field_$frame.gkyl" -t Field test_phi_pol.gkyl -t phi activate -t Field interp -b ms -p1 select -t Field_proj --z1 0.0 activate -t phi interp -b mt -p2 select -t phi_proj --z1 0.0 activate -t phi_proj,Field_proj pl -f0 --title "phi (blue) vs phi_pol (orange) at z=0" -x "Psi" -y "Electric potential (V)" --saveas "python-plots/$name-$frame-1d-center-field.png" --no-show&
+
 fi
 # # 1D plots of distribution function at a certain psival
 pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 select --z0 $psival integrate 2 pl --title "$species distribution function integrating over vpar"  \
@@ -134,7 +137,7 @@ pgkyl "$name-"$species"_M0_$frame.gkyl" interp -b ms -p1 pl --title "$species De
 pgkyl "$name-"$species"_M0_$frame.gkyl" "$name-"$species"_M1_$frame.gkyl" \
   interp -b ms -p1  ev "f[1] f[0] /" pl --title "$species Upar" \
   --yscale 0.79233226837 -y "Field line length (m)" -x "Psi" --clabel "Parallel velocity (m/s)" --saveas "python-plots/$name-"$species"_$frame-2d-upar.png" --no-show &
-sleep 1m
+sleep 30s
 done
 
 # # Plot tperp at all frames

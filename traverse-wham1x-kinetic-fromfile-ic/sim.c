@@ -76,6 +76,7 @@ struct gk_mirror_ctx
   int num_cell_vpar;
   int num_cell_mu;
   int num_cell_z;
+  int unif_z_cells;
   int num_cell_psi;
   int poly_order;
   double final_time;
@@ -283,7 +284,9 @@ read_ion_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   double z_max_geo =  2.48;
   double tmin = app.z_min;
   double tmax = app.z_max;
-  double t_norm_cord = (xn[1] + tmin) / (tmax - tmin);
+  double x_fa[2];
+  gkyl_mirror_geo_comp2fieldalligned_advance(t, xn, x_fa, app.mirror_geo_c2fa_ctx);
+  double t_norm_cord = (x_fa[1] + tmin) / (tmax - tmin);
   double z_cord = fabs(-z_min_geo + t_norm_cord * (z_max_geo - z_min_geo));
 
   // Calculate magnetic field at this point
@@ -322,7 +325,9 @@ read_elc_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   double z_max_geo =  2.48;
   double tmin = app.z_min;
   double tmax = app.z_max;
-  double t_norm_cord = (xn[1] + tmin) / (tmax - tmin);
+  double x_fa[2];
+  gkyl_mirror_geo_comp2fieldalligned_advance(t, xn, x_fa, app.mirror_geo_c2fa_ctx);
+  double t_norm_cord = (x_fa[1] + tmin) / (tmax - tmin);
   double z_cord = fabs(-z_min_geo + t_norm_cord * (z_max_geo - z_min_geo));
 
   double interp_pt[4];
@@ -361,12 +366,14 @@ read_phi(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, v
   double z_max_geo =  2.48;
   double tmin = app.z_min;
   double tmax = app.z_max;
-  double t_norm_cord = (xn[1] + tmin) / (tmax - tmin);
+  double x_fa[2];
+  gkyl_mirror_geo_comp2fieldalligned_advance(t, xn, x_fa, app.mirror_geo_c2fa_ctx);
+  double t_norm_cord = (x_fa[1] + tmin) / (tmax - tmin);
   double z_cord = fabs(-z_min_geo + t_norm_cord * (z_max_geo - z_min_geo));
   interp_pt[1] = z_cord;
 
   double interp_val = LI_2D(dims, psi_grid, z_grid, phi_vals, interp_pt);
-  fout[0] = interp_val * (1 - pow((xn[0] - app.psi_min)/(app.psi_max - app.psi_min),1));
+  fout[0] = interp_val * (1 - pow((xn[0] - app.psi_min)/(app.psi_max - app.psi_min),2));
 }
 
 void
@@ -509,18 +516,19 @@ create_ctx(void)
 
   // Grid parameters
   // double vpar_max_elc = 20 * vte;
-  double vpar_max_elc = 5 * vte;
+  double vpar_max_elc = 20 * vte;
   double mu_max_elc = me * pow(3. * vte, 2.) / (2. * B_p);
   // double vpar_max_ion = 20 * vti;
-  double vpar_max_ion = 5 * vti;
+  double vpar_max_ion = 20 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
-  int num_cell_vpar = 32; // Number of cells in the paralell velocity direction 96
-  int num_cell_mu = 32;  // Number of cells in the mu direction 192
-  int num_cell_z = 192;
-  int num_cell_psi = 32;
+  int num_cell_vpar = 96; // Number of cells in the paralell velocity direction 96
+  int num_cell_mu = 192;  // Number of cells in the mu direction 192
+  int num_cell_z = 140;
+  int unif_z_cells = 280;
+  int num_cell_psi = 16;
   int poly_order = 1;
   double final_time = 1e-9;
-  int num_frames = 1;
+  int num_frames = 10;
   int int_diag_calc_num = num_frames*100;
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
   int num_failures_max = 20; // Maximum allowable number of consecutive small time-steps.
@@ -559,6 +567,7 @@ create_ctx(void)
     .mu_max_elc = mu_max_elc,
     .num_cell_psi = num_cell_psi,
     .num_cell_z = num_cell_z,
+    .unif_z_cells = unif_z_cells,
     .num_cell_vpar = num_cell_vpar,
     .num_cell_mu = num_cell_mu,
     .poly_order = poly_order,
@@ -788,12 +797,13 @@ int main(int argc, char **argv)
     .poly_order = ctx.poly_order,
     .basis_type = app_args.basis_type,
     .geometry = {
-      .geometry_id = GKYL_GEOMETRY_FROMFILE
-      // .geometry_id = GKYL_MIRROR,
-      // .world = {0.0},
-      // .mirror_efit_info = &inp,
-      // .mirror_grid_info = &ginp,
-      // .mirror_geo_c2fa_ctx = ctx.mirror_geo_c2fa_ctx,
+      // .geometry_id = GKYL_GEOMETRY_FROMFILE
+      .geometry_id = GKYL_MIRROR,
+      .world = {0.0},
+      .mirror_efit_info = &inp,
+      .mirror_grid_info = &ginp,
+      .mirror_geo_c2fa_ctx = ctx.mirror_geo_c2fa_ctx,
+      .nonuniform_mapping_fraction = (1 - (double)NZ / ctx.unif_z_cells),
     },
     .num_periodic_dir = 0,
     .periodic_dirs = {},

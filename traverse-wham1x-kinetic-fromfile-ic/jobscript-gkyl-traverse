@@ -15,6 +15,9 @@
 #.Request a GPU. GPU's per node to request
 #SBATCH --gres=gpu:4
 
+#.Request memory
+#SBATCH --mem=244G
+
 #.Request wall time
 #SBATCH -t 1:00:00
 
@@ -40,6 +43,6 @@ num_procs=4
 
 # ./sim_unif -s 1 -g
 
-srun -u -n $num_procs ./sim -M -d $num_procs 
+srun -u -n $num_procs ./sim -g -M -d $num_procs 
 
 exit 0
