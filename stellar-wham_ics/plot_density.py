@@ -30,17 +30,35 @@ print(v_norm)
 print(uGrid)
 
 # f is read f[species, psi, z, v, theta]
-density = np.zeros(len(zGrid))
-for i in range(len(zGrid)):
-  f_slice_0 = f_dist[0, psi, i, :, :]
-  integrate_theta = np.trapz(f_slice_0, theta, axis=1)
-  v_integral_theta = np.multiply(integrate_theta, uGrid*v_norm)
-  density[i] = np.trapz(v_integral_theta, uGrid*v_norm) * 2 * np.pi
+density = np.zeros((len(psiGrid), len(zGrid)))
+for j in range(len(psiGrid)):
+  for i in range(len(zGrid)):
+    f_slice_0 = f_dist[1, j, i, :, :]
+    integrate_theta = np.trapz(f_slice_0, theta, axis=1)
+    v_integral_theta = np.multiply(integrate_theta, uGrid*v_norm)
+    density[j,i] = np.trapz(v_integral_theta, uGrid*v_norm) * 2 * np.pi
 
 # density[0] = density[1]
+density[:,0] = density[:,1]
+psiGrid *= -1e-8
+zGrid *= 1e-2
 
-plt.plot(zGrid, density*1e8)
-plt.ylabel("Density, cm^-3")
+# plt.pcolormesh(zGrid, psiGrid, density)
+# plt.title("Electron Density vs Z and Psi")
+# plt.ylabel("Psi")
+# plt.xlabel("Z, cm")
+# plt.colorbar()
+# plt.show()
+
+plt.pcolormesh(zGrid, psiGrid, phi)
+plt.title("Phi vs Z and Psi")
+plt.ylabel("Psi")
 plt.xlabel("Z, cm")
-plt.title("Density vs Z")
+plt.colorbar()
 plt.show()
+
+# plt.plot(zGrid, density[psi,:]*1e8)
+# plt.ylabel("Density, cm^-3")
+# plt.xlabel("Z, cm")
+# plt.title("Density vs Z")
+# plt.show()

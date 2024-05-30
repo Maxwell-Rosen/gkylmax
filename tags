@@ -25,6 +25,7 @@ ARCH_FLAGS	wham1x_saturation_scaling/Makefile	/^ARCH_FLAGS ?= -march=native$/;"	
 Any	generate_efit/write_efit_helmholtz_coil.py	/^from typing import Any, Generator, Iterable, List, TextIO, Union$/;"	i
 Any	generate_efit/write_eliptical_efit.py	/^from typing import Any, Generator, Iterable, List, TextIO, Union$/;"	i
 B	postprocessing/mana_plots.py	/^  B = np.sqrt(wham.BR()**2 + wham.BZ()**2).reshape(R.shape)$/;"	v
+B0	binary_files/plot.py	/^B0 = np.fromfile("B0.bin")$/;"	v
 B0	generate_efit/write_efit_helmholtz_coil.py	/^B0 = 0.0$/;"	v
 B0	generate_efit/write_eliptical_efit.py	/^B0 = 0.0$/;"	v
 B0	stellar-wham_ics/map_output.py	/^B0 = cql.var['bmidplne']$/;"	v
@@ -130,6 +131,7 @@ B_p	traverse-wham1x-kinetic-saturation/rt_twostream.c	/^  double B_p;$/;"	m	stru
 B_p	traverse-wham1x-kinetic-strong/rt_twostream.c	/^  double B_p;$/;"	m	struct:gk_mirror_ctx	file:
 B_p	wham1x_adiabatic/sim.c	/^  double B_p;$/;"	m	struct:gk_mirror_ctx	file:
 B_p	wham1x_saturation_scaling/rt_twostream.c	/^  double B_p;$/;"	m	struct:gk_mirror_ctx	file:
+BdB0	binary_files/plot.py	/^BdB0 = np.fromfile("BdB0.bin")$/;"	v
 BdB0	stellar-wham_ics/map_output.py	/^BdB0 = cql.var['bbpsi']        # value of B(z)\/B(z=0) along field line$/;"	v
 BdB0	stellar-wham_ics/plot.py	/^BdB0 = hf['BdB0'][:]$/;"	v
 BdB0	stellar-wham_ics/plot_density.py	/^BdB0 = hf['BdB0'][:]$/;"	v
@@ -2057,6 +2059,10 @@ calculate_optimal_mapping	traverse-mirror1x_compare_unif_vs_nonunif_grids_edge/s
 calculate_optimal_mapping	traverse-mirror1x_compare_unif_vs_nonunif_grids_edge/sim_unif.c	/^calculate_optimal_mapping(void *ctx)$/;"	f
 calculate_optimal_mapping	traverse-mirror1x_scaledJacob/sim_nonunif.c	/^calculate_optimal_mapping(void *ctx)$/;"	f
 calculate_optimal_mapping	traverse-mirror1x_scaledJacob/sim_unif.c	/^calculate_optimal_mapping(void *ctx)$/;"	f
+cax0	binary_files/plot.py	/^cax0 = axs[0].pcolormesh(f_dist_elc[0, 0, :, :])$/;"	v
+cax0	stellar-wham_ics/plot.py	/^cax0 = axs[0].pcolormesh(f_dist[1, 0, 0, :, :])$/;"	v
+cax1	binary_files/plot.py	/^cax1 = axs[1].pcolormesh(f_dist_elc[0, 1, :, :])$/;"	v
+cax1	stellar-wham_ics/plot.py	/^cax1 = axs[1].pcolormesh(f_dist[1, 0, 1, :, :])$/;"	v
 cax12Pos	postprocessing/mana_plots.py	/^  cax12Pos  = [[0.855, 0.690, 0.02, 0.285],$/;"	v
 cax13Pos	postprocessing/mana_plots.py	/^  cax13Pos  = [[0.845, 0.59, 0.02, 0.39]]$/;"	v
 cax18Pos	postprocessing/mana_plots.py	/^  cax18Pos  = [[0.855, 0.605, 0.02, 0.39]]$/;"	v
@@ -2084,6 +2090,7 @@ cbar_ax7	postprocessing/mana_plots.py	/^  cbar_ax7 = [fig7.add_axes(pos) for pos
 cbar_ax7	postprocessing/plot.py	/^  cbar_ax7 = [fig7.add_axes(pos) for pos in cax7Pos]$/;"	v
 cbar_ax9	postprocessing/mana_plots.py	/^  cbar_ax9 = [fig9.add_axes(pos) for pos in ca9Pos]$/;"	v
 cellsTot	postprocessing/mana_plots.py	/^  cellsTot = np.size(dataIn)$/;"	v
+charge	binary_files/plot.py	/^charge = np.fromfile("charge.bin")$/;"	v
 charge	stellar-wham_ics/plot.py	/^charge = hf['charge'][:]$/;"	v
 charge	stellar-wham_ics/plot_density.py	/^charge = hf['charge'][:]$/;"	v
 checkDir	postprocessing/pgkylUtil.py	/^def checkDir(dirIn):$/;"	f
@@ -2283,7 +2290,8 @@ denFile	postprocessing/plot.py	/^  denFile = dataDir+fileName+'_ion_gridDiagnost
 denIon	postprocessing/mana_plots.py	/^  denIon   = pgu.getInterpData(fName % ('ion',frame), polyOrder, basisType, varName='M0')$/;"	v
 denIon	postprocessing/mana_plots.py	/^  denIon = pgu.getInterpData(fName % ('ion',frame), polyOrder, basisType, varName='M0')$/;"	v
 den_i	postprocessing/plot.py	/^  den_i = np.squeeze(pgu.getInterpData(denFile % (nFrames-1), polyOrder, basisType, varName='M0'))$/;"	v
-density	stellar-wham_ics/plot_density.py	/^density = np.zeros(len(zGrid))$/;"	v
+density	binary_files/plot.py	/^density = np.zeros(len(zGrid))$/;"	v
+density	stellar-wham_ics/plot_density.py	/^density = np.zeros((len(psiGrid), len(zGrid)))$/;"	v
 densityFileName_nonunif	mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^  densityFileName_nonunif = str(dataDir+nonunifFile + str(dataName) + str(frameNum) + '.gkyl')$/;"	v
 densityFileName_nonunif	mirror1x_scaledJacob/plot.py	/^  densityFileName_nonunif = str(dataDir+nonunifFile + str(dataName) + str(frameNum) + '.gkyl')$/;"	v
 densityFileName_unif	mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^  densityFileName_unif = str(dataDir+unifFile + str(dataName) + str(frameNum) + '.gkyl')$/;"	v
@@ -2783,14 +2791,19 @@ f_crop	stellar-wham_ics/map_output.py	/^            f_crop = f_tmp[ispec,ipsi,il
 f_dist	stellar-wham_ics/plot.py	/^f_dist = hf['f_dist'][:]$/;"	v
 f_dist	stellar-wham_ics/plot_cql3d_convert_regrid.py	/^f_dist = hf['f_dist']$/;"	v
 f_dist	stellar-wham_ics/plot_density.py	/^f_dist = hf['f_dist'][:]$/;"	v
+f_dist_elc	binary_files/plot.py	/^f_dist_elc = f_dist_elc.reshape((len(psiGrid), len(zGrid), len(uGrid), len(theta)))$/;"	v
+f_dist_elc	binary_files/plot.py	/^f_dist_elc = np.fromfile("f_dist_elc.bin")$/;"	v
 f_dist_elc	traverse-wham1x-kinetic-fromfile-ic/sim.c	/^  double *f_dist_elc;$/;"	m	struct:gk_mirror_ctx	file:
+f_dist_ion	binary_files/plot.py	/^f_dist_ion = f_dist_ion.reshape((len(psiGrid), len(zGrid), len(uGrid), len(theta)))$/;"	v
+f_dist_ion	binary_files/plot.py	/^f_dist_ion = np.fromfile("f_dist_ion.bin")$/;"	v
 f_dist_ion	traverse-wham1x-kinetic-fromfile-ic/sim.c	/^  double *f_dist_ion;$/;"	m	struct:gk_mirror_ctx	file:
 f_eval	stellar-wham_ics/plot.py	/^f_eval = f_dist[species, psi, lineLength, u, theta_ix]$/;"	v
 f_flat	stellar-wham_ics/map_output.py	/^f_flat = np.zeros(N_spec*rDim*zDim*jx*iy)     # flattened f for use as reduction target on root$/;"	v
 f_interp	stellar-wham_ics/map_output.py	/^                    f_interp = interp1d(utmp_crop,f_crop[:,iloc],fill_value='extrapolate')$/;"	v
 f_out	stellar-wham_ics/map_output.py	/^    f_out = f_flat.reshape((N_spec,rDim,zDim,jx,iy))$/;"	v
 f_out	stellar-wham_ics/map_output.py	/^    f_out = np.zeros((N_spec,rDim,zDim,jx,iy)) # output f at each point along the field line$/;"	v
-f_slice_0	stellar-wham_ics/plot_density.py	/^  f_slice_0 = f_dist[0, psi, i, :, :]$/;"	v
+f_slice_0	binary_files/plot.py	/^  f_slice_0 = f_dist_elc[psi, i, :, :]$/;"	v
+f_slice_0	stellar-wham_ics/plot_density.py	/^    f_slice_0 = f_dist[1, j, i, :, :]$/;"	v
 f_tmp	stellar-wham_ics/map_output.py	/^f_tmp = np.zeros((N_spec,rDim,zDim,jx,iy)) # output f at each point along the field line$/;"	v
 ff	generate_efit/write_efit_helmholtz_coil.py	/^import fortranformat as ff$/;"	i
 ff	generate_efit/write_eliptical_efit.py	/^import fortranformat as ff$/;"	i
@@ -3073,7 +3086,7 @@ header_fmt	generate_efit/write_eliptical_efit.py	/^header_fmt = "(a48,3i4)"$/;"	
 hf	stellar-wham_ics/map_output.py	/^    hf = h5py.File('cql3d_f_RZ.h5', 'w')$/;"	v
 hf	stellar-wham_ics/plot.py	/^hf = h5py.File('cql3d_f_RZ.h5', 'r')$/;"	v
 hf	stellar-wham_ics/plot_cql3d_convert_regrid.py	/^hf = h5py.File('cql3d_f_RZ.h5','r')$/;"	v
-hf	stellar-wham_ics/plot_density.py	/^hf = h5py.File('cql3d_f_RZ_max.h5', 'r')$/;"	v
+hf	stellar-wham_ics/plot_density.py	/^hf = h5py.File('cql3d_f_RZ.h5', 'r')$/;"	v
 hmag	postprocessing/mana_plots.py	/^  hmag = ax5[0].yaxis.get_offset_text().set_size(tickFontSize)$/;"	v
 hmag	postprocessing/mana_plots.py	/^  hmag = ax82_twin.yaxis.get_offset_text().set_size(tickFontSize)$/;"	v
 hmagx	postprocessing/mana_plots.py	/^  hmagx = ax3[0].xaxis.get_offset_text().set_size(tickFontSize)$/;"	v
@@ -3164,7 +3177,8 @@ integrand_z_psiZ	traverse-mirror1x_scaledJacob/sim_nonunif.c	/^integrand_z_psiZ(
 integrand_z_psiZ	traverse-mirror1x_scaledJacob/sim_unif.c	/^integrand_z_psiZ(double ZIn, void *ctx)$/;"	f
 integrate	generate_efit/write_efit_helmholtz_coil.py	/^import scipy.integrate as integrate$/;"	i
 integrate	generate_efit/write_eliptical_efit.py	/^import scipy.integrate as integrate$/;"	i
-integrate_theta	stellar-wham_ics/plot_density.py	/^  integrate_theta = np.trapz(f_slice_0, theta, axis=1)$/;"	v
+integrate_theta	binary_files/plot.py	/^  integrate_theta = np.trapz(f_slice_0, theta, axis=1)$/;"	v
+integrate_theta	stellar-wham_ics/plot_density.py	/^    integrate_theta = np.trapz(f_slice_0, theta, axis=1)$/;"	v
 interp1d	generate_efit/write_efit_helmholtz_coil.py	/^from scipy.interpolate import pchip_interpolate, interp1d$/;"	i
 interp1d	stellar-wham_ics/map_output.py	/^from scipy.interpolate import interp1d$/;"	i
 ispec	stellar-wham_ics/plot_cql3d_convert_regrid.py	/^ispec = 0$/;"	v
@@ -3458,8 +3472,10 @@ markers	mirror1x_scaledJacob/plot.py	/^markers    = ['None','None','None','None'
 markers	postprocessing/mana_plots.py	/^markers    = ['None','None','None','None','o','d','s','+']$/;"	v
 markers	postprocessing/plot.py	/^markers    = ['None','None','None','None','o','d','s','+']$/;"	v
 mask	stellar-wham_ics/map_output.py	/^            mask = np.insert(np.nonzero(utmp0),0,indx)$/;"	v
+mass	binary_files/plot.py	/^mass = np.fromfile("mass.bin")$/;"	v
 mass	stellar-wham_ics/plot.py	/^mass = hf['mass'][:]$/;"	v
 mass	stellar-wham_ics/plot_density.py	/^mass = hf['mass'][:]$/;"	v
+matplotlib	binary_files/plot.py	/^import matplotlib.pyplot as plt$/;"	i
 matplotlib	generate_efit/write_efit_helmholtz_coil.py	/^import matplotlib.pyplot as plt$/;"	i
 matplotlib	generate_efit/write_eliptical_efit.py	/^import matplotlib.pyplot as plt$/;"	i
 matplotlib	mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^import matplotlib.pyplot as plt$/;"	i
@@ -3752,6 +3768,7 @@ norm	postprocessing/mana_plots.py	/^  norm = mpl.colors.BoundaryNorm(bounds, cma
 normData	postprocessing/mana_plots.py	/^  normData = np.zeros(np.shape(dataIn))$/;"	v
 normPsi1	stellar-wham_ics/converting_flux.py	/^normPsi1 = sqPsiGrid**2$/;"	v
 normPsi2	stellar-wham_ics/converting_flux.py	/^normPsi2 = psiGrid\/psiLim$/;"	v
+np	binary_files/plot.py	/^import numpy as np$/;"	i
 np	generate_efit/write_efit_helmholtz_coil.py	/^import numpy as np$/;"	i
 np	generate_efit/write_eliptical_efit.py	/^import numpy as np$/;"	i
 np	mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^import numpy as np$/;"	i
@@ -4094,12 +4111,12 @@ pgInterp_unif_mapc2p	mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^  pgInterp
 pgInterp_unif_mapc2p	mirror1x_scaledJacob/plot.py	/^  pgInterp_unif_mapc2p = pg.GInterpModal(pgData_unif_mapc2p, polyOrder, 'ms')$/;"	v
 pgu	postprocessing/mana_plots.py	/^import pgkylUtil as pgu$/;"	i
 pgu	postprocessing/plot.py	/^import pgkylUtil as pgu$/;"	i
+phi	binary_files/plot.py	/^phi = np.fromfile("phi.bin")$/;"	v
 phi	postprocessing/mana_plots.py	/^  phi  = np.squeeze(pgu.getInterpData(dataFile,polyOrder,basisType,location='center'))$/;"	v
 phi	postprocessing/mana_plots.py	/^  phi = np.zeros((nFrames,nxIntC[0]))$/;"	v
 phi	postprocessing/plot.py	/^  phi = np.zeros((nFrames,nxIntC[0]))$/;"	v
 phi	stellar-wham_ics/map_output.py	/^phi = cql.var['ephiz'][-1,:,:]        # value of electric potential along field line [kV]$/;"	v
 phi	stellar-wham_ics/plot.py	/^phi = hf['phi'][:]$/;"	v
-phi	stellar-wham_ics/plot.py	/^phi = phi * 1e3$/;"	v
 phi	stellar-wham_ics/plot_density.py	/^phi = hf['phi'][:]$/;"	v
 phiFile	postprocessing/mana_plots.py	/^  phiFile = dataDir+fileName+'_phi_%d.bp'    #.Complete file name.$/;"	v
 phiFile	postprocessing/mana_plots.py	/^  phiFile = dataDir+fileName+'_phi_'    #.Complete file name.$/;"	v
@@ -4199,6 +4216,7 @@ plotz	postprocessing/mana_plots.py	/^  plotz = [0., z_m, xInt_e[0][-1]]$/;"	v
 plotz	postprocessing/mana_plots.py	/^  plotz = [0., z_m, xInt_i[0][-1]]$/;"	v
 plotzIdx	postprocessing/mana_plots.py	/^  plotzIdx = [np.argmin(np.abs(xIntC_e[0]-val)) for val in plotz]$/;"	v
 plotzIdx	postprocessing/mana_plots.py	/^  plotzIdx = [np.argmin(np.abs(xIntC_i[0]-val)) for val in plotz]$/;"	v
+plt	binary_files/plot.py	/^import matplotlib.pyplot as plt$/;"	i
 plt	generate_efit/write_efit_helmholtz_coil.py	/^import matplotlib.pyplot as plt$/;"	i
 plt	generate_efit/write_eliptical_efit.py	/^import matplotlib.pyplot as plt$/;"	i
 plt	mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^import matplotlib.pyplot as plt$/;"	i
@@ -4270,12 +4288,13 @@ process_frame	traverse-mirror1x_scaledJacob/plot.py	/^def process_frame(frameNum
 process_frame	traverse-wham1x-compare_unif_vs_nonunif/plot.py	/^def process_frame(frameNum):$/;"	f
 process_frame	traverse-wham1x-compare_unif_vs_nonunif_cell_count/plot.py	/^def process_frame(frameNum):$/;"	f
 process_frame	traverse-wham1x-compare_unif_vs_nonunif_fraction/plot.py	/^def process_frame(frameNum):$/;"	f
+psi	binary_files/plot.py	/^psi = 0$/;"	v
 psi	stellar-wham_ics/plot.py	/^psi = 16$/;"	v
 psi	stellar-wham_ics/plot_density.py	/^psi = 16$/;"	v
+psiGrid	binary_files/plot.py	/^psiGrid = np.fromfile("psiGrid.bin")$/;"	v
 psiGrid	stellar-wham_ics/converting_flux.py	/^psiGrid = cql.var['equilpsi']  # poloidal flux at radial bin center$/;"	v
 psiGrid	stellar-wham_ics/map_output.py	/^psiGrid = cql.var['equilpsi']  # poloidal flux at radial bin center$/;"	v
 psiGrid	stellar-wham_ics/plot.py	/^psiGrid = hf['psiGrid'][:]$/;"	v
-psiGrid	stellar-wham_ics/plot.py	/^psiGrid = psiGrid * -1e-8$/;"	v
 psiGrid	stellar-wham_ics/plot_density.py	/^psiGrid = hf['psiGrid'][:]$/;"	v
 psiLim	stellar-wham_ics/converting_flux.py	/^psiLim = cql.var['psilim']     # poloidal flux at the limiter$/;"	v
 psiLimMKS	stellar-wham_ics/converting_flux.py	/^psiLimMKS = abs(psiLim - psiGrid[0]) $/;"	v
@@ -4658,10 +4677,11 @@ textFontSize	mirror1x_compare_unif_vs_nonunif_grids/plot.py	/^textFontSize      
 textFontSize	mirror1x_scaledJacob/plot.py	/^textFontSize          = 16$/;"	v
 textFontSize	postprocessing/mana_plots.py	/^textFontSize          = 16$/;"	v
 textFontSize	postprocessing/plot.py	/^textFontSize          = 16$/;"	v
+theta	binary_files/plot.py	/^theta = np.fromfile("theta.bin")$/;"	v
 theta	stellar-wham_ics/map_output.py	/^theta  = np.linspace(0,np.pi,iy)$/;"	v
 theta	stellar-wham_ics/plot.py	/^theta = hf['theta'][:] # Pitch angle. Radians$/;"	v
 theta	stellar-wham_ics/plot_cql3d_convert_regrid.py	/^theta  = np.linspace(0,np.pi,iy)$/;"	v
-theta	stellar-wham_ics/plot_density.py	/^theta = hf['thGrid'][:] # Pitch angle. Radians$/;"	v
+theta	stellar-wham_ics/plot_density.py	/^theta = hf['theta'][:] # Pitch angle. Radians$/;"	v
 theta_eval	stellar-wham_ics/plot.py	/^theta_eval = theta[theta_ix]$/;"	v
 theta_grid	traverse-wham1x-kinetic-fromfile-ic/sim.c	/^  double *theta_grid;$/;"	m	struct:gk_mirror_ctx	file:
 theta_ix	stellar-wham_ics/plot.py	/^theta_ix = 5$/;"	v
@@ -4700,6 +4720,7 @@ u	stellar-wham_ics/plot.py	/^u = 5$/;"	v
 u0	stellar-wham_ics/map_output.py	/^u0 = x*v_norm$/;"	v
 u0	stellar-wham_ics/plot_cql3d_convert_regrid.py	/^u0 = hf['uGrid']$/;"	v
 u02	stellar-wham_ics/map_output.py	/^u02 = u0*u0$/;"	v
+uGrid	binary_files/plot.py	/^uGrid = np.fromfile("uGrid.bin")$/;"	v
 uGrid	stellar-wham_ics/plot.py	/^uGrid = hf['uGrid'][:] # Normalized spherical velocity$/;"	v
 uGrid	stellar-wham_ics/plot_density.py	/^uGrid = hf['uGrid'][:] # Normalized spherical velocity$/;"	v
 u_loc	stellar-wham_ics/map_output.py	/^    u_loc = uloc_flat.reshape((N_spec,rDim,zDim,jx))$/;"	v
@@ -4724,6 +4745,7 @@ unif_z_cells	traverse-wham1x-compare_unif_vs_nonunif_cell_count/sim_coarse.c	/^ 
 unif_z_cells	traverse-wham1x-compare_unif_vs_nonunif_cell_count/sim_nonunif.c	/^  int unif_z_cells;$/;"	m	struct:gk_mirror_ctx	file:
 unif_z_cells	traverse-wham1x-compare_unif_vs_nonunif_cell_count/sim_reduced.c	/^  int unif_z_cells;$/;"	m	struct:gk_mirror_ctx	file:
 unif_z_cells	traverse-wham1x-compare_unif_vs_nonunif_cell_count/sim_unif.c	/^  int unif_z_cells;$/;"	m	struct:gk_mirror_ctx	file:
+unif_z_cells	traverse-wham1x-kinetic-fromfile-ic/sim.c	/^  int unif_z_cells;$/;"	m	struct:gk_mirror_ctx	file:
 upar	postprocessing/mana_plots.py	/^  upar = pgu.getInterpData(fName % ('ion',frame), polyOrder, basisType, varName='Upar')$/;"	v
 upar	stellar-wham_ics/plot_cql3d_convert_regrid.py	/^upar = np.zeros((jx,iy))$/;"	v
 uparElc	postprocessing/mana_plots.py	/^  uparElc = pgu.getInterpData(fName % ('elc',frame), polyOrder, basisType, varName='Upar')$/;"	v
@@ -4739,12 +4761,15 @@ utmp	stellar-wham_ics/map_output.py	/^            utmp = u_loc[ispec,ipsi,il,:]$
 utmp0	stellar-wham_ics/map_output.py	/^            utmp0 = np.copy(utmp)$/;"	v
 utmp_crop	stellar-wham_ics/map_output.py	/^            utmp_crop = utmp0[mask]$/;"	v
 v0	stellar-wham_ics/map_output.py	/^v0 = u0\/gamma_rel$/;"	v
+vGrid	binary_files/plot.py	/^vGrid = np.fromfile("vGrid.bin")$/;"	v
 vGrid	stellar-wham_ics/plot.py	/^vGrid = hf['vGrid'][:]$/;"	v
 vGrid	stellar-wham_ics/plot_density.py	/^vGrid = hf['vGrid'][:]$/;"	v
 v_eval	stellar-wham_ics/plot.py	/^v_eval = uGrid[u]$/;"	v
 v_grid	traverse-wham1x-kinetic-fromfile-ic/sim.c	/^  double *v_grid;$/;"	m	struct:gk_mirror_ctx	file:
-v_integral_theta	stellar-wham_ics/plot_density.py	/^  v_integral_theta = np.multiply(integrate_theta, uGrid*v_norm)$/;"	v
+v_integral_theta	binary_files/plot.py	/^  v_integral_theta = np.multiply(integrate_theta, uGrid*v_norm)$/;"	v
+v_integral_theta	stellar-wham_ics/plot_density.py	/^    v_integral_theta = np.multiply(integrate_theta, uGrid*v_norm)$/;"	v
 v_loc	stellar-wham_ics/map_output.py	/^v_loc = np.zeros((N_spec,rDim,zDim,jx))$/;"	v
+v_norm	binary_files/plot.py	/^v_norm = np.fromfile("v_norm.bin")$/;"	v
 v_norm	stellar-wham_ics/map_output.py	/^v_norm = cql.var['vnorm']      # velocity normalization [cm\/s]$/;"	v
 v_norm	stellar-wham_ics/plot.py	/^v_norm = hf['v_norm'][()] # Velocity normalization coefficient. cm\/s$/;"	v
 v_norm	stellar-wham_ics/plot_cql3d_convert_regrid.py	/^v_norm = hf['v_norm']$/;"	v
@@ -4907,9 +4932,9 @@ xyLabelFontSize	postprocessing/mana_plots.py	/^xyLabelFontSize       = 17$/;"	v
 xyLabelFontSize	postprocessing/plot.py	/^xyLabelFontSize       = 17$/;"	v
 y	stellar-wham_ics/map_output.py	/^y = cql.var['y']               # pitch angle grid [radians]$/;"	v
 zDim	stellar-wham_ics/map_output.py	/^zDim = cql.dim['zdim'] # number of points along flux surface$/;"	v
+zGrid	binary_files/plot.py	/^zGrid = np.fromfile("zGrid.bin")$/;"	v
 zGrid	stellar-wham_ics/map_output.py	/^zGrid = cql.var['z']           # value of z along the field line [cm]$/;"	v
 zGrid	stellar-wham_ics/plot.py	/^zGrid = hf['zGrid'][:]$/;"	v
-zGrid	stellar-wham_ics/plot.py	/^zGrid = zGrid * 1e-2$/;"	v
 zGrid	stellar-wham_ics/plot_density.py	/^zGrid = hf['zGrid'][:]$/;"	v
 z_bt	mirror1x_adiabatic/sim.c	/^  double z_bt;$/;"	m	struct:gk_mirror_ctx	file:
 z_bt	mirror1x_adiabatic_eqdst/sim.c	/^  double z_bt;$/;"	m	struct:gk_mirror_ctx	file:

@@ -5,12 +5,17 @@ name="gk_wham"
 # name="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nosource_nonuniform"
 # species="ion"
 # Make a loop to set species to "ion" and "elc"
+
+# Make a loop over frame values between 0 and 10
+for frame in {0..10}
+do
+  echo "frame $frame"
+
 for species in "elc" "ion"
 do
   echo $species
 
 
-frame=0
 
 if [ "$species" = "elc" ]; then mass=9.11e-31
 elif [ "$species" = "ion" ]; then mass=3.34e-27
@@ -30,7 +35,8 @@ if [ "$species" = "elc" ]; then
     activate -t res3 select -t T0 --z0 0.0 --z1 0.0 \
     activate -t T0,phi_interp ev -a -t ephiTe "phi T0 /" \
     activate -t ephiTe select -t plotfit --z0 $psival \
-    activate -t plotfit pl --title "Potential at psi = $psival" -y "e phi / T" -x "Field line length (m)" --saveas "python-plots/$name-$frame-1d-ephiTe.png" --no-show&
+    activate -t plotfit pl --title "Potential at psi = $psival" -y "e phi / T" -x "Field line length (m)"\
+     --saveas "python-plots/$name-1d-ephiTe-$frame.png" --no-show&
     
   pgkyl "$name-elc_M0_$frame.gkyl" -t M0 "$name-elc_M1_$frame.gkyl" -t M1 \
     "$name-elc_M2par_$frame.gkyl" -t M2par "$name-elc_M2perp_$frame.gkyl" -t M2perp \
@@ -42,60 +48,61 @@ if [ "$species" = "elc" ]; then
     activate -t res3 select -t T0 --z1 0.0 \
     activate -t T0,phi_interp ev -a -t ephiTe "phi_interp T0 /" \
     activate -t ephiTe pl --title "Potential" -y "Field line length (m)" -x "psi" --clabel "e phi / T" \
-    --saveas "python-plots/$name-$frame-2d-ephiTe.png" --no-show &
+    --saveas "python-plots/$name-2d-ephiTe-$frame.png" --no-show &
 
   pgkyl "$name-field_$frame.gkyl" interp -b ms -p1 select --z0 $psival pl --title "phi" \
-    -x "Field line length (m)" -y "Electric potential (V)" --saveas "python-plots/$name-"$frame"-1d-field.png" --no-show&
+    -x "Field line length (m)" -y "Electric potential (V)" --saveas "python-plots/$name-1d-field-$frame.png" --no-show&
 
   pgkyl "$name-field_$frame.gkyl" interp -b ms -p1 pl --title "phi" \
-    -y "Field line length (m)" -x "Psi" --clabel "Electric potential (V)" --saveas "python-plots/$name-"$frame"-2d-field.png" --no-show&
+    -y "Field line length (m)" -x "Psi" --clabel "Electric potential (V)" --saveas "python-plots/$name-2d-field-$frame.png" --no-show&
 
-  pgkyl "test_phi_pol.gkyl" interp -b mt -p2 select --z0 $psival pl --title "phi" \
-    -x "Field line length (m)" -y "Electric potential (V)" --saveas "python-plots/test_phi_pol-1d-field.png" --no-show&
+  # pgkyl "test_phi_pol.gkyl" interp -b mt -p2 select --z0 $psival pl --title "phi" \
+  #   -x "Field line length (m)" -y "Electric potential (V)" --saveas "python-plots/test_phi_pol-1d-field.png" --no-show&
 
-  pgkyl "test_phi_pol.gkyl" interp -b mt -p2 pl --title "phi" \
-    -y "Field line length (m)" -x "Psi" --clabel "Electric potential (V)" --saveas "python-plots/test_phi_pol-2d-field.png" --no-show&
+  # pgkyl "test_phi_pol.gkyl" interp -b mt -p2 pl --title "phi" \
+  #   -y "Field line length (m)" -x "Psi" --clabel "Electric potential (V)" --saveas "python-plots/test_phi_pol-2d-field.png" --no-show&
 
-    pgkyl "$name-field_$frame.gkyl" -t Field test_phi_pol.gkyl -t phi activate -t Field interp -b ms -p1 select -t Field_proj --z1 0.0 activate -t phi interp -b mt -p2 select -t phi_proj --z1 0.0 activate -t phi_proj,Field_proj pl -f0 --title "phi (blue) vs phi_pol (orange) at z=0" -x "Psi" -y "Electric potential (V)" --saveas "python-plots/$name-$frame-1d-center-field.png" --no-show&
-
+  # pgkyl "$name-field_$frame.gkyl" -t Field test_phi_pol.gkyl -t phi activate -t Field interp -b ms -p1 select -t Field_proj \
+  # --z1 0.0 activate -t phi interp -b mt -p2 select -t phi_proj --z1 0.0 activate -t phi_proj,Field_proj pl -f0 --title \
+  # "phi (blue) vs phi_pol (orange)" --saveas "python-plots/$name-$frame-1d-center-field.png" --no-show &
 fi
 # # 1D plots of distribution function at a certain psival
-pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 select --z0 $psival integrate 2 pl --title "$species distribution function integrating over vpar"  \
-  --xscale 0.79233226837 -x "Field line length (m)" -y "Magnetic moment" --saveas "python-plots/$name-"$species"_$frame-1d-vpar.png" --no-show &
-pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 select --z0 $psival integrate 3 pl --title "$species distribution function integrating over magnetic moment" \
-  --xscale 0.79233226837 -x "Field line length (m)" -y "Parallel velocity (m/s)" --saveas "python-plots/$name-"$species"_$frame-1d-mu.png" --no-show &
+# pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 select --z0 $psival integrate 2 pl --title "$species distribution function integrating over vpar"  \
+#   --xscale 0.79233226837 -x "Field line length (m)" -y "Magnetic moment" --saveas "python-plots/$name-"$species"_$frame-1d-vpar.png" --no-show &
+# pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 select --z0 $psival integrate 3 pl --title "$species distribution function integrating over magnetic moment" \
+#   --xscale 0.79233226837 -x "Field line length (m)" -y "Parallel velocity (m/s)" --saveas "python-plots/$name-"$species"_$frame-1d-mu.png" --no-show &
 
-pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 select --z0 $psival --z1 0.0001 pl --title "$species distribution function at z=0.0001" \
-  --xscale 0.79233226837 -x "Parallel velocity (m/s)" -y "Magnetic moment" --logz --saveas "python-plots/$name-"$species"_$frame-1d-log-z=0.0001.png" --no-show &
-pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 select --z0 $psival --z1 0.743 pl --title "$species distribution function at z=0.59 m" \
-  --xscale 0.79233226837 -x "Parallel velocity (m/s)" -y "Magnetic moment" --logz --saveas "python-plots/$name-"$species"_$frame-1d-log-z=0.59.png" --no-show &
-pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 select --z0 $psival --z1 1.224 pl --title "$species distribution function at z=0.97 m" \
-  --xscale 0.79233226837 -x "Parallel velocity (m/s)" -y "Magnetic moment" --logz --saveas "python-plots/$name-"$species"_$frame-1d-log-z=0.97.png" --no-show &
+# pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 select --z0 $psival --z1 0.0001 pl --title "$species distribution function at z=0.0001" \
+#   --xscale 0.79233226837 -x "Parallel velocity (m/s)" -y "Magnetic moment" --logz --saveas "python-plots/$name-"$species"_$frame-1d-log-z=0.0001.png" --no-show &
+# pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 select --z0 $psival --z1 0.743 pl --title "$species distribution function at z=0.59 m" \
+#   --xscale 0.79233226837 -x "Parallel velocity (m/s)" -y "Magnetic moment" --logz --saveas "python-plots/$name-"$species"_$frame-1d-log-z=0.59.png" --no-show &
+# pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 select --z0 $psival --z1 1.224 pl --title "$species distribution function at z=0.97 m" \
+#   --xscale 0.79233226837 -x "Parallel velocity (m/s)" -y "Magnetic moment" --logz --saveas "python-plots/$name-"$species"_$frame-1d-log-z=0.97.png" --no-show &
 
-pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 select --z0 $psival --z1 0.0001 pl --title "$species distribution function at z=0.0001" \
-  --xscale 0.79233226837 -x "Parallel velocity (m/s)" -y "Magnetic moment" --saveas "python-plots/$name-"$species"_$frame-1d-z=0.0001.png" --no-show &
-pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 select --z0 $psival --z1 0.0743 pl --title "$species distribution function at z=0.59 m" \
-  --xscale 0.79233226837 -x "Parallel velocity (m/s)" -y "Magnetic moment" --saveas "python-plots/$name-"$species"_$frame-1d-z=0.59.png" --no-show &
-pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 select --z0 $psival --z1 1.224 pl --title "$species distribution function at z=0.97 m" \
-  --xscale 0.79233226837 -x "Parallel velocity (m/s)" -y "Magnetic moment" --saveas "python-plots/$name-"$species"_$frame-1d-z=0.97.png" --no-show &
+# pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 select --z0 $psival --z1 0.0001 pl --title "$species distribution function at z=0.0001" \
+#   --xscale 0.79233226837 -x "Parallel velocity (m/s)" -y "Magnetic moment" --saveas "python-plots/$name-"$species"_$frame-1d-z=0.0001.png" --no-show &
+# pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 select --z0 $psival --z1 0.0743 pl --title "$species distribution function at z=0.59 m" \
+#   --xscale 0.79233226837 -x "Parallel velocity (m/s)" -y "Magnetic moment" --saveas "python-plots/$name-"$species"_$frame-1d-z=0.59.png" --no-show &
+# pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 select --z0 $psival --z1 1.224 pl --title "$species distribution function at z=0.97 m" \
+#   --xscale 0.79233226837 -x "Parallel velocity (m/s)" -y "Magnetic moment" --saveas "python-plots/$name-"$species"_$frame-1d-z=0.97.png" --no-show &
 
 # 1D plots of moments at a certain psival
 pgkyl "$name-$species"_prim_moms"_$frame.gkyl" interp -b ms -p1 select --z0 $psival pl --title "prim_moms" \
   --xscale 0.79233226837 -x "Field line length (m)" \
-  --saveas "python-plots/$name-"$species"_$frame-1d-prim_moms.png" --no-show&
+  --saveas "python-plots/$name-"$species"-1d-prim_moms-$frame.png" --no-show&
 pgkyl "$name-field_$frame.gkyl" interp -b ms -p1 select --z0 $psival pl --title "phi" \
-  --xscale 0.79233226837 -x "Field line length (m)" -y "Electric potential (V)" --saveas "python-plots/$name-"$frame"-1d-field.png" --no-show &
+  --xscale 0.79233226837 -x "Field line length (m)" -y "Electric potential (V)" --saveas "python-plots/$name-1d-field-$frame.png" --no-show &
 pgkyl "$name-"$species"_M0_$frame.gkyl" -t M0 "$name-"$species"_M1_$frame.gkyl" -t M1 \
   "$name-"$species"_M2par_$frame.gkyl" -t M2par activate -t M0,M1,M2par\
   interp -b ms -p1 select --z0 $psival ev -a -t res "M2par M1 M1 * M0 / - $mass * M0 / 1.6e-19 /" \
   activate -t res pl --title "$species Tpar (eV)" \
   --xscale 0.79233226837 -x "Field line length (m)" -y "Temperature (eV)" --no-show \
-   --saveas "python-plots/$name-"$species"_$frame-1d-Tpar.png" &
+   --saveas "python-plots/$name-"$species"-1d-Tpar-$frame.png" &
 pgkyl "$name-"$species"_M0_$frame.gkyl" -t M0 "$name-"$species"_M2perp_$frame.gkyl" -t M2perp \
   activate -t M0,M2perp interp -b ms -p1 select --z0 $psival ev -a -t res "$mass M2perp M0 / * 1.6e-19 /" \
   activate -t res pl --title "$species Tperp (eV)" \
   --xscale 0.79233226837 -x "Field line length (m)" -y "Temperature (eV)" \
-  --saveas "python-plots/$name-"$species"_$frame-1d-Tperp.png" --no-show&
+  --saveas "python-plots/$name-"$species"-1d-Tperp-$frame.png" --no-show&
 pgkyl "$name-"$species"_M0_$frame.gkyl" -t M0 "$name-"$species"_M1_$frame.gkyl" -t M1 \
   "$name-"$species"_M2par_$frame.gkyl" -t M2par "$name-"$species"_M2perp_$frame.gkyl" -t M2perp \
   activate -t M0,M1,M2par,M2perp interp -b ms -p1 select --z0 $psival ev -a -t res "M2par M1 M1 * M0 / - $mass * M0 / 1.6e-19 /" \
@@ -103,25 +110,25 @@ pgkyl "$name-"$species"_M0_$frame.gkyl" -t M0 "$name-"$species"_M1_$frame.gkyl" 
   activate -t res,res2 ev -a -t res3 "res2 2 * res + 3 /" \
   activate -t res3 pl --title "$species T (eV)" \
   --xscale 0.79233226837 -x "Field line length (m)" -y "Temperature (eV)"\
-   --saveas "python-plots/$name-"$species"_$frame-1d-T.png" --no-show &
+   --saveas "python-plots/$name-"$species"-1d-T-$frame.png" --no-show &
 pgkyl "$name-"$species"_M0_$frame.gkyl" interp -b ms -p1 select --z0 $psival pl --title "$species Density" \
-  --xscale 0.79233226837 -x "Field line length (m)" -y "Density (m^-3)" --saveas "python-plots/$name-"$species"_$frame-1d-density.png" --no-show &
+  --xscale 0.79233226837 -x "Field line length (m)" -y "Density (m^-3)" --saveas "python-plots/$name-"$species"-1d-density-$frame.png" --no-show &
 pgkyl "$name-"$species"_M0_$frame.gkyl" "$name-"$species"_M1_$frame.gkyl" \
   interp -b ms -p1 select --z0 $psival ev "f[1] f[0] /" pl --title "$species Upar" \
-  --xscale 0.79233226837 -x "Field line length (m)" -y "Parallel velocity (m/s)" --saveas "python-plots/$name-"$species"_$frame-1d-upar.png" --no-show &
+  --xscale 0.79233226837 -x "Field line length (m)" -y "Parallel velocity (m/s)" --saveas "python-plots/$name-"$species"-1d-upar-$frame.png" --no-show &
 
 # # 2D plots of moments
 pgkyl "$name-field_$frame.gkyl" interp -b ms -p1 pl --title "phi" \
-  --yscale 0.79233226837 -y "Field line length (m)" -x "Psi" --clabel "Electric potential (V)" --saveas "python-plots/$name-"$frame"-2d-field.png" --no-show &
+  --yscale 0.79233226837 -y "Field line length (m)" -x "Psi" --clabel "Electric potential (V)" --saveas "python-plots/$name-2d-field-$frame.png" --no-show &
 pgkyl "$name-"$species"_M0_$frame.gkyl" -t M0 "$name-"$species"_M1_$frame.gkyl" -t M1 \
   "$name-"$species"_M2par_$frame.gkyl" -t M2par activate -t M0,M1,M2par\
   interp -b ms -p1 ev -a -t res "M2par M1 M1 * M0 / - $mass * M0 / 1.6e-19 /" \
   activate -t res pl --title "$species Tpar (eV)" \
-  --yscale 0.79233226837 -y "Field line length (m)" -x "Psi" --clabel "Temperature (eV)" --saveas "python-plots/$name-"$species"_$frame-2d-Tpar.png" --no-show &
+  --yscale 0.79233226837 -y "Field line length (m)" -x "Psi" --clabel "Temperature (eV)" --saveas "python-plots/$name-"$species"-2d-Tpar-$frame.png" --no-show &
 pgkyl "$name-"$species"_M0_$frame.gkyl" -t M0 "$name-"$species"_M2perp_$frame.gkyl" -t M2perp \
   activate -t M0,M2perp interp -b ms -p1 ev -a -t res "$mass M2perp M0 / * 1.6e-19 /" \
   activate -t res pl --title "$species Tperp (eV)" \
-  --yscale 0.79233226837 -y "Field line length (m)" -x "Psi" --clabel "Temperature (eV)" --saveas "python-plots/$name-"$species"_$frame-2d-Tperp.png" --no-show &
+  --yscale 0.79233226837 -y "Field line length (m)" -x "Psi" --clabel "Temperature (eV)" --saveas "python-plots/$name-"$species"-2d-Tperp-$frame.png" --no-show &
 pgkyl "$name-"$species"_M0_$frame.gkyl" -t M0 "$name-"$species"_M1_$frame.gkyl" -t M1 \
   "$name-"$species"_M2par_$frame.gkyl" -t M2par "$name-"$species"_M2perp_$frame.gkyl" -t M2perp \
   activate -t M0,M1,M2par,M2perp interp -b ms -p1 ev -a -t res "M2par M1 M1 * M0 / - $mass * M0 / 1.6e-19 /" \
@@ -129,15 +136,16 @@ pgkyl "$name-"$species"_M0_$frame.gkyl" -t M0 "$name-"$species"_M1_$frame.gkyl" 
   activate -t res,res2 ev -a -t res3 "res2 2 * res + 3 /" \
   activate -t res3 pl --title "$species T (eV)" \
   --yscale 0.79233226837 -y "Field line length (m)" -x "Psi" --clabel "Temperature (eV)"\
-  --saveas "python-plots/$name-"$species"_$frame-2d-T.png" --no-show &
+  --saveas "python-plots/$name-"$species"-2d-T-$frame.png" --no-show &
 pgkyl "$name-"$species"_M0_$frame.gkyl" interp -b ms -p1 pl --title "$species Density" \
-  --yscale 0.79233226837 -y "Field line length (m)" -x "Psi" --clabel "Density (m^-3)" --logz --saveas "python-plots/$name-"$species"_$frame-2d-log-density.png" --no-show &
+  --yscale 0.79233226837 -y "Field line length (m)" -x "Psi" --clabel "Density (m^-3)" --logz --saveas "python-plots/$name-"$species"-2d-log-density-$frame.png" --no-show &
 pgkyl "$name-"$species"_M0_$frame.gkyl" interp -b ms -p1 pl --title "$species Density" \
-  --yscale 0.79233226837 -y "Field line length (m)" -x "Psi" --clabel "Density (m^-3)" --saveas "python-plots/$name-"$species"_$frame-2d-density.png" --no-show &
+  --yscale 0.79233226837 -y "Field line length (m)" -x "Psi" --clabel "Density (m^-3)" --saveas "python-plots/$name-"$species"-2d-density-$frame.png" --no-show &
 pgkyl "$name-"$species"_M0_$frame.gkyl" "$name-"$species"_M1_$frame.gkyl" \
   interp -b ms -p1  ev "f[1] f[0] /" pl --title "$species Upar" \
-  --yscale 0.79233226837 -y "Field line length (m)" -x "Psi" --clabel "Parallel velocity (m/s)" --saveas "python-plots/$name-"$species"_$frame-2d-upar.png" --no-show &
-sleep 30s
+  --yscale 0.79233226837 -y "Field line length (m)" -x "Psi" --clabel "Parallel velocity (m/s)" --saveas "python-plots/$name-"$species"-2d-upar-$frame.png" --no-show &
+sleep 10s
+done
 done
 
 # # Plot tperp at all frames
@@ -211,6 +219,7 @@ frame=0
 # pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 sel --z0 0.0 pl --logz --zmin 1e-10 --title "frame $frame z=0"&
 
 # Plot geometry quantities
+echo "geometry"
 pgkyl "$name-"jacobgeo.gkyl interp -b ms -p1 pl --title "jacobgeo" --saveas "python-plots/$name-geo-jacobgeo.png" --no-show &
 pgkyl "$name-"jacobtot.gkyl interp -b ms -p1 pl --title "jacobtot" --saveas "python-plots/$name-geo-jacobtot.png" --no-show &
 pgkyl "$name-"jacobtot_inv.gkyl interp -b ms -p1 pl --title "jacobtot_inv" --saveas "python-plots/$name-geo-jacobtot_inv.png" --no-show &

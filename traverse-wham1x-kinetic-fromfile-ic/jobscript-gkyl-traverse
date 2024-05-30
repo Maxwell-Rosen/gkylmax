@@ -4,10 +4,10 @@
 #.it is recommended that this name be kept to 16 characters or less
 #SBATCH -J gkyl-wham
 
-#SBATCH --qos test
+#SBATCH --qos short
 
 #.Number of nodes to request
-#SBATCH -N 1
+#SBATCH -N 5
 
 #. Total number of cores (32 per node).
 #SBATCH --tasks-per-node=32
@@ -19,7 +19,7 @@
 #SBATCH --mem=244G
 
 #.Request wall time
-#SBATCH -t 1:00:00
+#SBATCH -t 4:00:00
 
 #.Mail is sent to you when the job starts and when it terminates or aborts.
 #.SBATCH --mail-user=mhrosen@pppl.gov
@@ -39,10 +39,16 @@ export ALLINEA_FORCE_CUDA_VERSION=12.0
 export OMPI_MCA_btl_openib_allow_ib=1
 export OMPI_MCA_mpi_warn_on_fork=0
 
-num_procs=4
+num_procs=20
 
-# ./sim_unif -s 1 -g
+start_time=$(date +%s)
+echo "Running with $num_procs processes"
 
-srun -u -n $num_procs ./sim -g -M -d $num_procs 
+srun -u -n $num_procs ./sim -g -M -d $num_procs -y 160
+# ./sim
+
+end_time=$(date +%s)
+elapsed_time=$(expr ($end_time - $start_time)/60)
+echo "Execution time was $elapsed_time minutes."
 
 exit 0
