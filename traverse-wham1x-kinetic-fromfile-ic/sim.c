@@ -756,9 +756,16 @@ int main(int argc, char **argv)
       .func = read_ion_distf,
       .ctx_func = &ctx,
     },
+    //Need to make ion and elc ic function
     .bcx = {
-      .lower={.type = GKYL_SPECIES_FIXED_FUNC,},
-      .upper={.type = GKYL_SPECIES_FIXED_FUNC,},
+      .lower = { // reflecting BC should be here
+        .type = GKYL_SPECIES_FIXED_FUNC,
+        .projection = ion_ic,
+      },
+      .upper = { // should use zero flux BC
+        .type = GKYL_SPECIES_FIXED_FUNC,
+        .projection = ion_ic,
+      },
     },
     .bcy = {
       .lower={.type = GKYL_SPECIES_GK_SHEATH,},
