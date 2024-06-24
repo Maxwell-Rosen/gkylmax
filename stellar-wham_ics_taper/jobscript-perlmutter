@@ -1,0 +1,40 @@
+#!/bin/bash -l
+
+#.Declare a name for this job, preferably with 16 or fewer characters.
+#SBATCH -J cql3d-ic-wham
+#SBATCH -A m4414
+
+#.Request the queue (enter the possible names, if omitted, default is the default)
+#.this job is going to use the default
+#SBATCH -q regular
+
+#.Number of nodes to request (Perlmutter has 64 cores and 4 GPUs per node)
+#SBATCH -N 1
+#SBATCH --ntasks 16
+
+#.Request wall time
+#SBATCH -t 4:00:00
+
+
+# CPU Stellar Intel
+module load PrgEnv-gnu/8.5.0
+module load craype-accel-nvidia80
+module load cray-mpich/8.1.28
+module load cudatoolkit/12.0
+module load nccl/2.18.3-cu12
+module load python/3.9-anaconda-2021.11
+
+conda activate pgkyl
+
+# Record the start time
+start_time=$(date +"%s")
+
+echo "Starting Job"
+
+mpirun -n 16 python map_output.py
+
+end_time=$(date +"%s")
+elapsed_time=$((end_time - start_time))
+echo "Elapsed Time: $elapsed_time seconds"
+echo "Finished job"
+exit 0
