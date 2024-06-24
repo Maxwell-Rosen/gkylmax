@@ -538,7 +538,7 @@ create_ctx(void)
   int num_cell_vpar = 32; // 32
   int num_cell_mu = 32;  // 32
   int num_cell_z = 100;  //100
-  int unif_z_cells = 288; //288 for 1d publish
+  int unif_z_cells = 288; //288 for 1d published results
   int num_cell_psi = 16; //16
   int num_cell_angle = 16; //16
   int poly_order = 1;
