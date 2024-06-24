@@ -23,8 +23,8 @@ frame_arr = np.arange(0,11)
 save_figure_as_file= 1     #[ If True, save figure to file. If False, display figure on screen.
 
 plot_moments       = 1  # Plot density, potential, upar, tperp, tpar.
-plot_distvpar      = 0  # plot distribution function in vpar.
-plot_distmu        = 0  # plot distribution function in mu.
+plot_distvpar      = 1  # plot distribution function in vpar.
+plot_distmu        = 1  # plot distribution function in mu.
 plot_distf_at_z    = 0
 z_loctions = np.array([0, 0.3, 0.98, 2.4])
 
@@ -121,6 +121,20 @@ def process_frame(frameNum):
     x_unif_mapc2p, dataOut_unif_mapc2p = pgInterp_unif_mapc2p.interpolate(2)
     
     return dataOut_unif, dataOut_unif_mapc2p, dataOut_nonunif, dataOut_nonunif_mapc2p
+  
+  def mapc2p_vel_vpar(vpc):
+    vp = np.zeros_like(vpc)  # Initialize the output array with the same shape as vpc
+    mask1 = np.abs(vpc) <= 0.5
+    mask2 = vpc < -0.5
+    mask3 = vpc > 0.5
+    vp[mask1] = vpc[mask1]
+    vp[mask2] = -2.0 * (vpc[mask2] ** 2)
+    vp[mask3] = 2.0 * (vpc[mask3] ** 2)
+    return vp
+
+  def mapc2p_vel_mu(muc):
+    return muc ** 2
+  
 
   #................................................................................#
 
@@ -221,13 +235,13 @@ def process_frame(frameNum):
     dataName = '-ion_'
     densityFileName_unif = str(dataDir+unifFile + str(dataName) + str(frameNum) + '.gkyl')
     pgData_unif = pg.GData(densityFileName_unif)
-    pgInterp_unif = pg.GInterpModal(pgData_unif, polyOrder, 'ms')
+    pgInterp_unif = pg.GInterpModal(pgData_unif, polyOrder, 'gkhyb')
     x_unif, dataOut_unif = pgInterp_unif.interpolate()
     dataOut_unif = np.squeeze(dataOut_unif)
 
     densityFileName_nonunif = str(dataDir+nonunifFile + str(dataName) + str(frameNum) + '.gkyl')
     pgData_nonunif = pg.GData(densityFileName_nonunif)
-    pgInterp_nonunif = pg.GInterpModal(pgData_nonunif, polyOrder, 'ms')
+    pgInterp_nonunif = pg.GInterpModal(pgData_nonunif, polyOrder, 'gkhyb')
     x_nonunif, dataOut_nonunif = pgInterp_nonunif.interpolate()
     dataOut_nonunif = np.squeeze(dataOut_nonunif)
 
@@ -284,27 +298,31 @@ def process_frame(frameNum):
     # Interpolate the non-uniform data onto a uniform grid
     dataOut_unif_shape = dataOut_unif.shape
     dataOut_nonunif_interp = np.zeros((dataOut_unif_shape[0], dataOut_unif_shape[1]))
-    for i in range(unif_distf_shape[1]):
+    for i in range(nonunif_distf_shape[1]):
         dataOut_nonunif_interp[:,i] = np.interp(dataOut_unif_mapc2p, dataOut_nonunif_mapc2p, dataOut_nonunif[:,i])
     data_difference = np.abs((dataOut_unif - dataOut_nonunif_interp))
   #   # Need velocity space grids or to convert to edges of z for plotting
 
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10,12))
 
-    norm = LogNorm(vmin = 1e-10, vmax = 1000)  # Create a LogNorm instance
+    norm = LogNorm(vmin = 1e-14, vmax = 1e-4)  # Create a LogNorm instance
 
-    pcolormesh1 = ax1.pcolormesh(edged_dataOut_unif_mapc2p, x_unif[1]/vti, dataOut_unif.T, cmap='inferno', norm=norm)
+    pcolormesh1 = ax1.pcolormesh(edged_dataOut_unif_mapc2p, x_unif[1]*np.sqrt(2), dataOut_unif.T, cmap='inferno', norm=norm)
     fig.colorbar(pcolormesh1, ax=ax1)  # Add a colorbar to the plot
+
     # Label the axes
-    ax1.set_ylabel('vpar / vti')
+    ax1.set_ylabel('vpar / vpar_max')
     ax1.set_xlabel('Uniform grid Z, cylindrical coodinate (m)')
     ax1.set_title('Frame '+str(frameNum))
 
+    # print(x_unif[1]/vti)
+    # print(x_nonunif[1]/vti)
+
     # pcolormesh2 = ax2.pcolormesh(edged_dataOut_nonunif_mapc2p, x_nonunif[1]/vti, dataOut_nonunif.T, cmap='inferno', norm=norm)
-    pcolormesh2 = ax2.pcolormesh(edged_dataOut_unif_mapc2p, x_unif[1]/vti, dataOut_nonunif_interp.T, cmap='inferno', norm=norm)
+    pcolormesh2 = ax2.pcolormesh(edged_dataOut_nonunif_mapc2p, mapc2p_vel_vpar(x_nonunif[1]), dataOut_nonunif.T, cmap='inferno', norm=norm)
     fig.colorbar(pcolormesh2, ax=ax2)  # Add a colorbar to the plot
     # Label the axes
-    ax2.set_ylabel('vpar / vti')
+    ax2.set_ylabel('vpar / vpar_max')
     ax2.set_xlabel('Nonuniform grid Z, cylindrical coodinate (m)') 
     pcolormesh3 = ax3.pcolormesh(edged_dataOut_unif_mapc2p, x_unif[1] / vti, data_difference.T, cmap='inferno', norm=norm)
     fig.colorbar(pcolormesh3, ax=ax3)  # Add a colorbar to the plot
@@ -387,27 +405,28 @@ def process_frame(frameNum):
 
     # Interpolate the non-uniform data onto a uniform grid
     dataOut_unif_shape = dataOut_unif.shape
+    dataOut_nonunif_shape = dataOut_nonunif.shape
     dataOut_nonunif_interp = np.zeros((dataOut_unif_shape[0], dataOut_unif_shape[1]))
-    for i in range(dataOut_unif_shape[1]):
+    for i in range(dataOut_nonunif_shape[1]):
         dataOut_nonunif_interp[:,i] = np.interp(dataOut_unif_mapc2p, dataOut_nonunif_mapc2p, dataOut_nonunif[:,i])
     data_difference = np.abs((dataOut_unif - dataOut_nonunif_interp))
 
     # Need velocity space grids or to convert to edges of z for plotting
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10,12))
 
-    norm = LogNorm(vmin = 1e-4, vmax = 1000)  # Create a LogNorm instance
+    norm = LogNorm(vmin = 1e-15, vmax = 1e-6)  # Create a LogNorm instance
 
-    pcolormesh1 = ax1.pcolormesh(edged_dataOut_unif_mapc2p, x_unif[2]/mui0, dataOut_unif.T, cmap='inferno', norm=norm)
+    pcolormesh1 = ax1.pcolormesh(edged_dataOut_unif_mapc2p, x_unif[2], dataOut_unif.T, cmap='inferno', norm=norm)
     fig.colorbar(pcolormesh1, ax=ax1)  # Add a colorbar to the plot
     # Label the axes
-    ax1.set_ylabel('mu / mui0')
+    ax1.set_ylabel('mu / mu_max')
     ax1.set_xlabel('Uniform grid Z, cylindrical coodinate (m)')
     ax1.set_title('Frame '+str(frameNum))
 
-    pcolormesh2 = ax2.pcolormesh(edged_dataOut_nonunif_mapc2p, x_nonunif[2]/mui0, dataOut_nonunif.T, cmap='inferno', norm=norm)
+    pcolormesh2 = ax2.pcolormesh(edged_dataOut_nonunif_mapc2p, mapc2p_vel_mu(x_nonunif[2]), dataOut_nonunif.T, cmap='inferno', norm=norm)
     fig.colorbar(pcolormesh2, ax=ax2)  # Add a colorbar to the plot
     # Label the axes
-    ax2.set_ylabel('mu / mui0')
+    ax2.set_ylabel('mu / mu_max')
     ax2.set_xlabel('Nonuniform grid Z, cylindrical coodinate (m)')
 
     pcolormesh3 = ax3.pcolormesh(edged_dataOut_unif_mapc2p, x_unif[2] / vti, data_difference.T, cmap='inferno', norm=norm)

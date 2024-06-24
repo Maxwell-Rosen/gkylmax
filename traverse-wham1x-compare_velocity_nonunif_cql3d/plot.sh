@@ -1,9 +1,28 @@
 
 # name1="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nosource_uniform"
 # name2="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nosource_nonuniform"
-name="outputs/gk_wham_nonunif"
+name="outputs/gk_wham_nonunif_tanmap_30vth__b1,4_z80"
 # name="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nosource_nonuniform"
 species="ion"
+
+
+pgkyl "$name"-"$species"_integrated_moms.gkyl -t f\
+ "$name"-"$species"_positivity_shift_integrated_moms.gkyl -t p \
+ activate -t f diff -t df\
+ activate -t df,p ev -t poverf 'p f /' \
+ activate -t poverf pl &
+
+# pgkyl gk_wham_unif-ion_0.gkyl interp -b gkhyb -p1 integrate 2 \
+#   pl --logz --title "Frame 0 unif"&
+# pgkyl gk_wham_unif-ion_0.gkyl interp -b gkhyb -p1 integrate 1 \
+#   pl --logz --title "Frame 0 unif"&
+# pgkyl outputs/gk_wham_unif-ion_1.gkyl interp -b gkhyb -p1 integrate 2 \
+#   pl --logz --zmin 1e-11 --title "Frame 1 unif"&
+# pgkyl outputs/gk_wham_nonunif-ion_10.gkyl interp -b gkhyb -p1 integrate 2 \
+#   pl --logz --zmin 1e-11 --title "Frame 10 nonunif"&
+# pgkyl outputs/gk_wham_unif-ion_10.gkyl interp -b gkhyb -p1 integrate 2 \
+#   pl --logz --zmin 1e-11 --title "Frame 10 unif"&
+
 
 # pgkyl outputs/gk_mirror_adiabatic_elc_1x2v_p1_true_maxwellian-ion_0.gkyl --c2p outputs/mapc2p.gkyl \
 #  interp -b gkhyb -p1 integrate 1 pl &
@@ -35,7 +54,7 @@ species="ion"
 
 # Plot single frames of the distribution function
 # pgkyl "$name-ion_71.gkyl" interp -b gkhyb -p1 integrate 2 ev 'f[:] abs' sel --z0 0.0 pl --logy &
-frame=32
+frame=0
 
 
 # pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 sel --z0 0.0 ev 'f[:] abs' pl --logz --zmin 1e-10 --title "frame $frame z=0"&
@@ -51,16 +70,16 @@ frame=32
 # pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 sel --z0 0.0 pl --logz --zmin 1e-10 --title "frame $frame z=0"&
 
 # Plot geometry quantities
-pgkyl $name-jacobgeo.gkyl interp -b ms -p1 pl --title "jacobgeo"&
-pgkyl $name-jacobtot.gkyl interp -b ms -p1 pl --title "jacobtot"&
-pgkyl $name-jacobtot_inv.gkyl interp -b ms -p1 pl --title "jacobtot_inv"&
-pgkyl $name-jacogeo_inv.gkyl interp -b ms -p1 pl --title "jacobgeo_inv"&
-pgkyl $name-b_i.gkyl interp -b ms -p1 pl --title "b_i"&
-pgkyl $name-mapc2p.gkyl interp -b ms -p1 pl --title "mapc2p"&
-pgkyl $name-bmag.gkyl interp -b ms -p1 pl --title "bmag"&
-pgkyl $name-bmag_inv.gkyl interp -b ms -p1 pl --title "bmag_inv"&
-pgkyl $name-bmag_inv_sq.gkyl interp -b ms -p1 pl --title "bmag_inv_sq"&
-pgkyl $name-cmag.gkyl interp -b ms -p1 pl --title "cmag"&
+# pgkyl $name-jacobgeo.gkyl interp -b ms -p1 pl --title "jacobgeo"&
+# pgkyl $name-jacobtot.gkyl interp -b ms -p1 pl --title "jacobtot"&
+# pgkyl $name-jacobtot_inv.gkyl interp -b ms -p1 pl --title "jacobtot_inv"&
+# pgkyl $name-jacogeo_inv.gkyl interp -b ms -p1 pl --title "jacobgeo_inv"&
+# pgkyl $name-b_i.gkyl interp -b ms -p1 pl --title "b_i"&
+# pgkyl $name-mapc2p.gkyl interp -b ms -p1 pl --title "mapc2p"&
+# pgkyl $name-bmag.gkyl interp -b ms -p1 pl --title "bmag"&
+# pgkyl $name-bmag_inv.gkyl interp -b ms -p1 pl --title "bmag_inv"&
+# pgkyl $name-bmag_inv_sq.gkyl interp -b ms -p1 pl --title "bmag_inv_sq"&
+# pgkyl $name-cmag.gkyl interp -b ms -p1 pl --title "cmag"&
 
 # Distribution function at a single velocity space point at all z
 # "$name-"$species"_[0-9]*.gkyl"\

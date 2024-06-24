@@ -40,8 +40,6 @@ struct gk_mirror_ctx
   double kperpRhos;
   // Parameters controlling initial conditions.
   double alim;
-  double alphaIC0;
-  double alphaIC1;
   double nuFrac;
   // Electron-electron collision freq.
   double logLambdaElc;
@@ -61,47 +59,16 @@ struct gk_mirror_ctx
   // Axial coordinate Z extents. Endure that Z=0 is not on
   double z_min;
   double z_max;
-  double psi_eval;
+  double psi_min;
+  double psi_max;
   // Magnetic equilibrium model.
   double mcB;
   double gamma;
   double Z_m;
   // Bananna tip info. Hardcoad to avoid dependency on ctx
-  double B_bt;
-  double R_bt;
-  double Z_bt;
-  double z_bt;
-  double R_m;
-  double B_m;
   double z_m;
-double Z_m_computational;
+  double Z_m_computational;
   // Physics parameters at mirror throat
-  double n_m;
-  double Te_m;
-  double Ti_m;
-double Ti_perp0;
-  double Ti_par0;
-  double Ti_perp_m;
-  double Ti_par_m;
-  double Te_perp0;
-  double Te_par0;
-  double Te_perp_m;
-  double Te_par_m;
-  double cs_m;
-  // Source parameters
-  double NSrcIon;
-  double lineLengthSrcIon;
-  double sigSrcIon;
-  double NSrcFloorIon;
-  double TSrc0Ion;
-  double TSrcFloorIon;
-  double NSrcElc;
-  double lineLengthSrcElc;
-  double sigSrcElc;
-  double NSrcFloorElc;
-  double TSrc0Elc;
-  double TSrcFloorElc;
-  // Grid parameters
   double vpar_max_ion;
   double vpar_max_elc;
   double mu_max_ion;
@@ -110,6 +77,7 @@ double Ti_perp0;
   int num_cell_mu;
   int num_cell_z;
   int unif_z_cells;
+  int num_cell_psi;
   int poly_order;
   double final_time;
   int num_frames;
@@ -121,11 +89,26 @@ double Ti_perp0;
   int mapping_order_center;
   int mapping_order_expander;
   double mapping_frac;
-  void *arcL_evaluator_ctx;
   int int_diag_calc_num; // Number of integrated diagnostics computations (=INT_MAX for every step).
   double dt_failure_tol; // Minimum allowable fraction of initial time-step.
   int num_failures_max; // Maximum allowable number of consecutive small time-steps.
+
+  
+  // Initial conditions reading
+  double *f_dist_ion;
+  double *f_dist_elc;
+  double *phi_vals;
+  double *psi_grid;
+  double *z_grid;
+  double *v_grid;
+  double *theta_grid;
+  double *B_grid;
+  int *dims;
+  int rank;
+
+  //Nonuniform grid
   void *mirror_geo_c2fa_ctx;
+
 };
 
 
@@ -147,284 +130,6 @@ struct gkyl_mirror_geo_grid_inp ginp = {
   .node_file_nm = "wham_nodes.gkyl",
 };
 
-// -- Source functions.
-void
-eval_density_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  double x_fa[1];
-  gkyl_mirror_geo_comp2fieldalligned_advance(t, xn, x_fa, app->mirror_geo_c2fa_ctx);
-  double z = x_fa[0];
-  double NSrc = app->NSrcElc;
-  double zSrc = app->lineLengthSrcElc;
-  double sigSrc = app->sigSrcElc;
-  double NSrcFloor = app->NSrcFloorElc;
-  if (fabs(z) <= app->z_m)
-  {
-    fout[0] = fmax(NSrcFloor, (NSrc / sqrt(2.0 * M_PI * pow(sigSrc, 2.))) *
-                                  exp(-1 * pow((z - zSrc), 2) / (2.0 * pow(sigSrc, 2.))));
-  }
-  else
-  {
-    fout[0] = 1e-16;
-  }
-}
-
-void
-eval_upar_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  fout[0] = 0.0;
-}
-
-void
-eval_temp_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  double x_fa[1];
-  gkyl_mirror_geo_comp2fieldalligned_advance(t, xn, x_fa, app->mirror_geo_c2fa_ctx);
-  double z = x_fa[0];
-  double sigSrc = app->sigSrcElc;
-  double TSrc0 = app->TSrc0Elc;
-  double Tfloor = app->TSrcFloorElc;
-  if (fabs(z) <= 2.0 * sigSrc)
-  {
-    fout[0] = TSrc0;
-  }
-  else
-  {
-    fout[0] = Tfloor;
-  }
-}
-
-void
-eval_density_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  double x_fa[1];
-  gkyl_mirror_geo_comp2fieldalligned_advance(t, xn, x_fa, app->mirror_geo_c2fa_ctx);
-  double z = x_fa[0];
-  double NSrc = app->NSrcIon;
-  double zSrc = app->lineLengthSrcIon;
-  double sigSrc = app->sigSrcIon;
-  double NSrcFloor = app->NSrcFloorIon;
-  if (fabs(z) <= app->z_m)
-  {
-    fout[0] = fmax(NSrcFloor, (NSrc / sqrt(2.0 * M_PI * pow(sigSrc, 2))) *
-                                  exp(-1 * pow((z - zSrc), 2) / (2.0 * pow(sigSrc, 2))));
-  }
-  else
-  {
-    fout[0] = 1e-16;
-  }
-}
-
-void
-eval_upar_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  fout[0] = 0.0;
-}
-
-void
-eval_temp_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  double x_fa[1];
-  gkyl_mirror_geo_comp2fieldalligned_advance(t, xn, x_fa, app->mirror_geo_c2fa_ctx);
-  double z = x_fa[0];
-  double sigSrc = app->sigSrcIon;
-  double TSrc0 = app->TSrc0Ion;
-  double Tfloor = app->TSrcFloorIon;
-  if (fabs(z) <= 2.0 * sigSrc)
-  {
-    fout[0] = TSrc0;
-  }
-  else
-  {
-    fout[0] = Tfloor;
-  }
-}
-
-// Electrons initial conditions
-void
-eval_density_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  double x_fa[1];
-  gkyl_mirror_geo_comp2fieldalligned_advance(t, xn, x_fa, app->mirror_geo_c2fa_ctx);
-  double z = x_fa[0];
-  double z_m = app->z_m;
-  double sigma = 0.9*z_m;
-  if (fabs(z) <= sigma)
-  {
-    fout[0] = 0.5*app->n0*(1. + tanh(10. * sigma * fabs(sigma - fabs(z))));
-  }
-  else
-  {
-    fout[0] = 0.5*app->n0*exp(-5 * (fabs(sigma - fabs(z))));
-  }
-}
-
-void
-eval_upar_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  double x_fa[1];
-  gkyl_mirror_geo_comp2fieldalligned_advance(t, xn, x_fa, app->mirror_geo_c2fa_ctx);
-  double z = x_fa[0];
-  double cs_m = app->cs_m;
-  double z_m = app->z_m;
-  double z_max = app->z_max;
-  if (fabs(z) <= z_m)
-  {
-    fout[0] = 0.0;
-  }
-  else
-  {
-    fout[0] = fabs(z) / z * cs_m * tanh(3 * (z_max - z_m) * fabs(fabs(z) - z_m)); // Maybe put a 5 here
-  }
-}
-
-void
-eval_temp_par_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  double x_fa[1];
-  gkyl_mirror_geo_comp2fieldalligned_advance(t, xn, x_fa, app->mirror_geo_c2fa_ctx);
-  double z = x_fa[0];
-  double z_m = app->z_m;
-  double Te_par0 = app->Te_par0;
-  double Te_par_m = app->Te_par_m;
-  if (fabs(z) <= z_m)
-  {
-    fout[0] = Te_par_m+(Te_par0-Te_par_m)*tanh(4 * fabs(z_m - fabs(z)));
-  }
-  else
-  {
-    fout[0] = Te_par_m;
-  }
-}
-
-void
-eval_temp_perp_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  double x_fa[1];
-  gkyl_mirror_geo_comp2fieldalligned_advance(t, xn, x_fa, app->mirror_geo_c2fa_ctx);
-  double z = x_fa[0];
-  double z_m = app->z_m;
-  double Te_perp0 = app->Te_perp0;
-  double Te_perp_m = app->Te_perp_m;
-  if (fabs(z) <= z_m)
-  {
-    fout[0] = Te_perp_m - Te_perp0*tanh(3.*fabs(z_m-fabs(z)));
-  }
-  else
-  {
-    fout[0] = Te_perp_m * GKYL_MAX2(1.e-3, exp(-5. * (fabs(z_m - fabs(z)))));
-  }
-}
-
-void
-eval_temp_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  eval_temp_par_elc(t, xn, fout, ctx);
-  double Tpar = fout[0];
-  eval_temp_perp_elc(t, xn, fout, ctx);
-  double Tperp = fout[0];
-  fout[0] = (Tpar + 2 * Tperp) / 3;
-}
-
-
-// Ion initial conditions
-void
-eval_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  double x_fa[1];
-  gkyl_mirror_geo_comp2fieldalligned_advance(t, xn, x_fa, app->mirror_geo_c2fa_ctx);
-  double z = x_fa[0];
-  double z_m = app->z_m;
-  double sigma = 0.9*z_m;
-  if (fabs(z) <= sigma)
-  {
-    fout[0] = 0.5*app->n0*(1. + tanh(10. * sigma * fabs(sigma - fabs(z))));
-  }
-  else
-  {
-    fout[0] = 0.5*app->n0*exp(-5 * (fabs(sigma - fabs(z))));
-  }
-}
-
-void
-eval_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  double x_fa[1];
-  gkyl_mirror_geo_comp2fieldalligned_advance(t, xn, x_fa, app->mirror_geo_c2fa_ctx);
-  double z = x_fa[0];
-  double cs_m = app->cs_m;
-  double z_m = app->z_m;
-  double z_max = app->z_max;
-  if (fabs(z) <= z_m)
-  {
-    fout[0] = 0.0;
-  }
-  else
-  {
-    fout[0] = fabs(z) / z * cs_m * tanh(3 * (z_max - z_m) * fabs(fabs(z) - z_m)); // Maybe put a 5 here
-  }
-}
-
-void
-eval_temp_par_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  double x_fa[1];
-  gkyl_mirror_geo_comp2fieldalligned_advance(t, xn, x_fa, app->mirror_geo_c2fa_ctx);
-  double z = x_fa[0];
-  double z_m = app->z_m;
-  double Ti_par0 = app->Ti_par0;
-  double Ti_par_m = app->Ti_par_m;
-  if (fabs(z) <= z_m)
-  {
-    fout[0] = Ti_par_m + (Ti_par0 - Ti_par_m) * tanh(4 * fabs(z_m - fabs(z)));
-  }
-  else
-  {
-    fout[0] = Ti_par_m * GKYL_MAX2(1.e-2, 4 * log(fabs(fabs(z) - z_m) + 1));
-  }
-}
-
-void
-eval_temp_perp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  double x_fa[1];
-  gkyl_mirror_geo_comp2fieldalligned_advance(t, xn, x_fa, app->mirror_geo_c2fa_ctx);
-  double z = x_fa[0];
-  double z_m = app->z_m;
-  double Ti_perp0 = app->Ti_perp0;
-  double Ti_perp_m = app->Ti_perp_m;
-  if (fabs(z) <= z_m)
-  {
-    fout[0] = Ti_perp_m + (Ti_perp0 - Ti_perp_m) * tanh(3. * fabs(z_m - fabs(z)));
-  }
-  else
-  {
-    fout[0] = Ti_perp_m * GKYL_MAX2(1.e-3, exp(-5. * (fabs(z_m - fabs(z)))));
-  }
-}
-
-void
-eval_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  eval_temp_par_ion(t, xn, fout, ctx);
-  double Tpar = fout[0];
-  eval_temp_perp_ion(t, xn, fout, ctx);
-  double Tperp = fout[0];
-  fout[0] = (Tpar + 2 * Tperp) / 3;
-}
-
 // Evaluate collision frequencies
 void
 evalNuElc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
@@ -440,23 +145,318 @@ evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, 
   fout[0] = app->nuIon;
 }
 
-void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *ctx)
+int get_lower_index(const int nx, const double *x, const double xP)
+  //  nx: number of cells in the dimension
+  //  x: grid points in the dimension
+  //  xP: point to interpolate at
+{
+  if(xP < x[0])
+      return 0;
+  else if(xP > x[nx-1])
+      return nx-2;
+  else
+  {
+    // Return the rounded down index of the point we are closest to in x
+    // use midpoint rule to find the right index
+    int i = 0;
+    int j = nx-1;
+    while(j-i > 1)
+    {
+      int k = (i+j)/2;
+      if(xP < x[k])
+        j = k;
+      else
+        i = k;
+    }
+    return i;
+  }
+}
+
+double LI_2D(const int *ncells,  // array of number of cells
+             const double *x,            // x grid values
+             const double *y,            // y grid values
+             const double *f,            // field of function values over the x, y grid (1-D row major)
+             const double *pt           // point to interpolate at
+             )
+{
+    int i = get_lower_index(ncells[0],x,pt[0]);
+    int j = get_lower_index(ncells[1],y,pt[1]);
+    int ip = i+1;
+    int jp = j+1;
+    double xWta = fmax(0, fmin(1, (pt[0] - x[i])/(x[i+1]-x[i])));
+    double yWta = fmax(0, fmin(1, (pt[1] - y[j])/(y[j+1]-y[j])));
+    double xWtb = 1-xWta;
+    double yWtb = 1-yWta;
+    return (f[i *ncells[1] +j ]*xWtb +                    // return f[i ][j ]*xWtb*yWtb +
+            f[ip*ncells[1] +j ]*xWta) * yWtb +            //        f[ip][j ]*xWta*yWtb +
+           (f[i *ncells[1] +jp]*xWtb +                    //        f[i ][jp]*xWtb*yWta +
+            f[ip*ncells[1] +jp]*xWta) * yWta;             //        f[ip][jp]*xWta*yWta;
+}
+
+double LI_4D(const int *ncells, // array of number of cells
+             const double *x, // psi grid for data
+             const double *y, // z grid for data
+             const double *z, // vpar grid for data
+             const double *w, // mu grid for data
+             const double *f, // distribution function at grid locations
+             const double *pt // point to interpolate at
+             )
+{
+  // Heavily inspired by  yet adapted from the algorythm at 
+  // https://github.com/BYUignite/multilinear_interpolation
+  int i = get_lower_index(ncells[0],x,pt[0]); //16
+  int j = get_lower_index(ncells[1],y,pt[1]);
+  int k = get_lower_index(ncells[2],z,pt[2]);
+  int l = get_lower_index(ncells[3],w,pt[3]);
+
+  // Linear interpolate
+  int ip = i+1;
+  int jp = j+1;
+  int kp = k+1;
+  int lp = l+1;
+  double xWta = fmax(0, fmin(1, (pt[0] - x[i])/(x[i+1]-x[i])));
+  double yWta = fmax(0, fmin(1, (pt[1] - y[j])/(y[j+1]-y[j])));
+  double zWta = fmax(0, fmin(1, (pt[2] - z[k])/(z[k+1]-z[k])));
+  double wWta = fmax(0, fmin(1, (pt[3] - w[l])/(w[l+1]-w[l])));
+  double xWtb = 1-xWta;
+  double yWtb = 1-yWta;
+  double zWtb = 1-zWta;
+  double wWtb = 1-wWta;
+  int nwzy = ncells[3]*ncells[2]*ncells[1];
+  int nwz = ncells[3]*ncells[2];
+  int nw = ncells[3];
+  return (((f[i *nwzy + j *nwz + k *nw + l ]*xWtb +                                // return f[i ][j ][k ][l ]*xWtb*yWtb*zWtb*wWtb +
+            f[ip*nwzy + j *nwz + k *nw + l ]*xWta) * yWtb +                        //        f[ip][j ][k ][l ]*xWta*yWtb*zWtb*wWtb +
+            (f[i *nwzy + jp*nwz + k *nw + l ]*xWtb +                                //        f[i ][jp][k ][l ]*xWtb*yWta*zWtb*wWtb +
+            f[ip*nwzy + jp*nwz + k *nw + l ]*xWta) * yWta) * zWtb +                //        f[ip][jp][k ][l ]*xWta*yWta*zWtb*wWtb +
+          ((f[i *nwzy + j *nwz + kp*nw + l ]*xWtb +                                //        f[i ][j ][kp][l ]*xWtb*yWtb*zWta*wWtb +
+            f[ip*nwzy + j *nwz + kp*nw + l ]*xWta) * yWtb +                        //        f[ip][j ][kp][l ]*xWta*yWtb*zWta*wWtb +    
+            (f[i *nwzy + jp*nwz + kp*nw + l ]*xWtb +                                //        f[i ][jp][kp][l ]*xWtb*yWta*zWta*wWtb +
+            f[ip*nwzy + jp*nwz + kp*nw + l ]*xWta) * yWta) * zWta) * wWtb +        //        f[ip][jp][kp][l ]*xWta*yWta*zWta*wWtb +
+          (((f[i *nwzy + j *nwz + k *nw + lp]*xWtb +                                //        f[i ][j ][k ][lp]*xWtb*yWtb*zWtb*wWta +
+            f[ip*nwzy + j *nwz + k *nw + lp]*xWta) * yWtb +                        //        f[ip][j ][k ][lp]*xWta*yWtb*zWtb*wWta +
+            (f[i *nwzy + jp*nwz + k *nw + lp]*xWtb +                                //        f[i ][jp][k ][lp]*xWtb*yWta*zWtb*wWta +
+            f[ip*nwzy + jp*nwz + k *nw + lp]*xWta) * yWta) * zWtb +                //        f[ip][jp][k ][lp]*xWta*yWta*zWtb*wWta +
+          ((f[i *nwzy + j *nwz + kp*nw + lp]*xWtb +                                //        f[i ][j ][kp][lp]*xWtb*yWtb*zWta*wWta +
+            f[ip*nwzy + j *nwz + kp*nw + lp]*xWta) * yWtb +                        //        f[ip][j ][kp][lp]*xWta*yWtb*zWta*wWta +    
+            (f[i *nwzy + jp*nwz + kp*nw + lp]*xWtb +                                //        f[i ][jp][kp][lp]*xWtb*yWta*zWta*wWta +
+            f[ip*nwzy + jp*nwz + kp*nw + lp]*xWta) * yWta) * zWta) * wWta;         //        f[ip][jp][kp][lp]*xWta*yWta*zWta*wWta;
+}
+
+
+// Function to calculate the linear index from multi-dimensional indices
+size_t calculate_index(const size_t* indices, const int* dims, int num_dims) {
+    size_t index = 0;
+    size_t multiplier = 1; // Multiplier to calculate the linear index
+    for (int i = num_dims - 1; i >= 0; --i) {
+        index += indices[i] * multiplier;
+        multiplier *= dims[i];
+    }
+    return index;
+}
+
+double* load_binary_file(const char* filename, size_t* num_elements) {
+    FILE* file = fopen(filename, "rb");
+    // Determine the size of the file
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    rewind(file);
+    *num_elements = file_size / sizeof(double);
+    double* data = (double*)malloc(file_size);
+    size_t elements_read = fread(data, sizeof(double), *num_elements, file);
+    fclose(file);
+    return data;
+}
+
+void
+read_ion_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  struct gk_mirror_ctx app = *(struct gk_mirror_ctx*)ctx;
+  double* f_dist = app.f_dist_ion;
+  double* psi_grid = app.psi_grid;
+  double* z_grid = app.z_grid;
+  double* v_grid = app.v_grid;
+  double* theta_grid = app.theta_grid;
+  int* dims = app.dims;
+
+  // FROM GEOMETRY INPUT HARDCOPY
+  double z_min_geo = -2.48;
+  double z_max_geo =  2.48;
+  double tmin = app.z_min;
+  double tmax = app.z_max;
+  double x_fa[2];
+  gkyl_mirror_geo_comp2fieldalligned_advance(t, xn, x_fa, app.mirror_geo_c2fa_ctx);
+  double t_norm_cord = (x_fa[1] + tmin) / (tmax - tmin);
+  double z_cord = fabs(-z_min_geo + t_norm_cord * (z_max_geo - z_min_geo));
+
+  // Calculate magnetic field at this point
+  double interp_pt[4];
+  interp_pt[0] = xn[0];
+  interp_pt[1] = z_cord;
+  double B_val = LI_2D(dims, psi_grid, z_grid, app.B_grid, interp_pt);
+
+  // Must convert the point xn from cartesian to polar
+  double vpar = xn[2];
+  double mu = xn[3];
+  double vperp = sqrt((2.0 * B_val * mu) / app.mi);
+  double v = sqrt(pow(vpar, 2) + pow(vperp, 2));
+  double theta = atan2(vperp, vpar);
+
+  interp_pt[2] = v;
+  interp_pt[3] = theta;
+
+  double interp_val = LI_4D(dims, psi_grid, z_grid, v_grid, theta_grid, f_dist, interp_pt);
+  fout[0] = interp_val;
+}
+
+void
+read_elc_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  struct gk_mirror_ctx app = *(struct gk_mirror_ctx*)ctx;
+  double* f_dist = app.f_dist_elc;
+  double* psi_grid = app.psi_grid;
+  double* z_grid = app.z_grid;
+  double* v_grid = app.v_grid;
+  double* theta_grid = app.theta_grid;
+  int* dims = app.dims;
+
+  // FROM GEOMETRY INPUT HARDCOPY
+  double z_min_geo = -2.48;
+  double z_max_geo =  2.48;
+  double tmin = app.z_min;
+  double tmax = app.z_max;
+  double x_fa[2];
+  gkyl_mirror_geo_comp2fieldalligned_advance(t, xn, x_fa, app.mirror_geo_c2fa_ctx);
+  double t_norm_cord = (x_fa[1] + tmin) / (tmax - tmin);
+  double z_cord = fabs(-z_min_geo + t_norm_cord * (z_max_geo - z_min_geo));
+
+  double interp_pt[4];
+  interp_pt[0] = xn[0];
+  interp_pt[1] = z_cord;
+  double B_val = LI_2D(dims, psi_grid, z_grid, app.B_grid, interp_pt);
+
+  // Must convert the point xn from cartesian to polar
+  double vpar = xn[2];
+  double mu = xn[3];
+  double vperp = sqrt((2.0 * B_val * mu) / app.me);
+  double v = sqrt(pow(vpar, 2) + pow(vperp, 2));
+  double theta = atan2(vperp, vpar);
+
+  interp_pt[2] = v;
+  interp_pt[3] = theta;
+
+  double interp_val = LI_4D(dims, psi_grid, z_grid, v_grid, theta_grid, f_dist, interp_pt);
+  fout[0] = interp_val;
+}
+
+void
+read_phi(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  struct gk_mirror_ctx app = *(struct gk_mirror_ctx*)ctx;
+  double* psi_grid = app.psi_grid;
+  double* z_grid = app.z_grid;
+  double* phi_vals = app.phi_vals;
+  int* dims = app.dims;
+
+  double interp_pt[2];
+  interp_pt[0] = xn[0];
+
+  // FROM GEOMETRY INPUT HARDCOPY
+  double z_min_geo = -2.48;
+  double z_max_geo =  2.48;
+  double tmin = app.z_min;
+  double tmax = app.z_max;
+  double x_fa[2];
+  gkyl_mirror_geo_comp2fieldalligned_advance(t, xn, x_fa, app.mirror_geo_c2fa_ctx);
+  double t_norm_cord = (x_fa[1] + tmin) / (tmax - tmin);
+  double z_cord = fabs(-z_min_geo + t_norm_cord * (z_max_geo - z_min_geo));
+  interp_pt[1] = z_cord;
+
+  double interp_val = LI_2D(dims, psi_grid, z_grid, phi_vals, interp_pt);
+  fout[0] = interp_val * (1 - pow((xn[0] - app.psi_min)/(app.psi_max - app.psi_min),2));
+}
+
+void
+load_wham_distf(void* ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  double vpar_max_ion = app->vpar_max_ion;
-  double mu_max_ion = app->mu_max_ion;
 
-  double cvpar = vc[0], cmu = vc[1];
-  // Linear map up to vpar_max/2, then quadratic.
-  if (fabs(cvpar) <= 0.5)
-    vp[0] = vpar_max_ion*cvpar;
-  else if (cvpar < -0.5)
-    vp[0] = -vpar_max_ion*2.0*pow(cvpar,2);
-  else
-    vp[0] =  vpar_max_ion*2.0*pow(cvpar,2);
+  const char* filename_f_dist_ion = "../binary_files/f_dist_ion.bin";
+  size_t num_elements_f_dist_ion;
+  double* f_dist_ion = load_binary_file(filename_f_dist_ion, &num_elements_f_dist_ion);
+  app->f_dist_ion = f_dist_ion;
 
-  // Quadratic map in mu.
-  vp[1] = mu_max_ion*pow(cmu,2);
+  const char* filename_f_dist_elc = "../binary_files/f_dist_elc.bin";
+  size_t num_elements_f_dist_elc;
+  double* f_dist_elc = load_binary_file(filename_f_dist_elc, &num_elements_f_dist_elc);
+  app->f_dist_elc = f_dist_elc;
+
+  const char *filename_phiVals = "../binary_files/phi.bin";
+  size_t num_elements_phiVals;
+  double *phi_vals = load_binary_file(filename_phiVals, &num_elements_phiVals);
+  app->phi_vals = phi_vals; // Need to check units. I think this is kV
+
+  const char *filename_psiGrid = "../binary_files/psiGrid.bin";
+  size_t num_elements_psiGrid;
+  double *psi_grid = load_binary_file(filename_psiGrid, &num_elements_psiGrid);
+  app->psi_grid = psi_grid;
+
+  const char *filename_zGrid = "../binary_files/zGrid.bin";
+  size_t num_elements_zGrid;
+  double *z_grid = load_binary_file(filename_zGrid, &num_elements_zGrid);
+  app->z_grid = z_grid;
+
+  const char *filename_uGrid = "../binary_files/uGrid.bin";
+  size_t num_elements_uGrid;
+  double *u_grid = load_binary_file(filename_uGrid, &num_elements_uGrid);
+
+  const char *filename_v_norm = "../binary_files/v_norm.bin";
+  size_t num_elements_v_norm;
+  double *v_norm = load_binary_file(filename_v_norm, &num_elements_v_norm);
+
+  // multiply every element of u_grid with v_norm and call it v_grid
+  double *v_grid = (double*)malloc(num_elements_uGrid * sizeof(double));
+  for (int i = 0; i < num_elements_uGrid; i++) {
+    v_grid[i] = u_grid[i] * v_norm[0];
+  }
+  free(v_norm); // free v_norm (not needed anymore
+  free(u_grid); // free u_grid (not needed anymore)
+  app->v_grid = v_grid;
+  size_t num_elements_vGrid = num_elements_uGrid;
+
+  const char *filename_theta = "../binary_files/theta.bin";
+  size_t num_elements_theta;
+  double *theta_grid = load_binary_file(filename_theta, &num_elements_theta);
+  app->theta_grid = theta_grid;
+
+  const char *filename_BGrid = "../binary_files/BGrid.bin";
+  size_t num_elements_BGrid;
+  double *B_grid = load_binary_file(filename_BGrid, &num_elements_BGrid);
+  app->B_grid = B_grid;
+
+  int rank = 4;
+  int *dims = (int*)malloc(rank * sizeof(int));
+  dims[0] = num_elements_psiGrid;
+  dims[1] = num_elements_zGrid;
+  dims[2] = num_elements_vGrid;
+  dims[3] = num_elements_theta;
+  app->dims = dims;
+  app->rank = rank;
+}
+
+void
+free_wham_distf(void* ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  free(app->f_dist_ion);
+  free(app->f_dist_elc);
+  free(app->phi_vals);
+  free(app->psi_grid);
+  free(app->z_grid);
+  free(app->v_grid);
+  free(app->theta_grid);
+  free(app->B_grid);
+  free(app->dims);
 }
 
 struct gk_mirror_ctx
@@ -509,69 +509,27 @@ create_ctx(void)
   double kperp = kperpRhos / rho_s;
 
   // Geometry parameters.
-  double RatZeq0 = 0.10; // Radius of the field line at Z=0.
   double z_min = -M_PI + 1e-1;
   double z_max = M_PI - 1e-1;
-  double psi_eval = 0.0026530898059565;
-
-  // Parameters controlling the magnetic equilibrium model.
-  double mcB = 6.51292;
-  double gamma = 0.124904;
-  double Z_m = 0.98;
-
-  // Source parameters
-  double NSrcIon = 3.1715e23 / 8.0;
-  double lineLengthSrcIon = 0.0;
-  double sigSrcIon = Z_m / 4.0;
-  double NSrcFloorIon = 0.05 * NSrcIon;
-  double TSrc0Ion = Ti0 * 1.25;
-  double TSrcFloorIon = TSrc0Ion / 8.0;
-  double NSrcElc = NSrcIon;
-  double lineLengthSrcElc = lineLengthSrcIon;
-  double sigSrcElc = sigSrcIon;
-  double NSrcFloorElc = NSrcFloorIon;
-  double TSrc0Elc = TSrc0Ion / tau;
-  double TSrcFloorElc = TSrcFloorIon / tau;
+  double psi_min = 1e-3; // Go smaller. 1e-4 might be too small
+  double psi_max = 3e-3; // aim for 2e-2
 
   // Grid parameters
-  double vpar_max_elc = 20 * vte;
+  double vpar_max_elc = 4 * vte;
   double mu_max_elc = me * pow(3. * vte, 2.) / (2. * B_p);
-  double vpar_max_ion = 20 * vti;
+  double vpar_max_ion = 4 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
-  int num_cell_vpar = 64; // Number of cells in the paralell velocity direction 96
-  int num_cell_mu = 64;  // Number of cells in the mu direction 192
-  int num_cell_z = 100;
-  int unif_z_cells = 280;
+  int num_cell_vpar = 32; // 96
+  int num_cell_mu = 32;  // 192
+  int num_cell_z = 160;
+  int unif_z_cells = 160;
+  int num_cell_psi = 16;
   int poly_order = 1;
-  double final_time = 100e-6;
-  int num_frames = 10;
+  double final_time = 1e-9;
+  int num_frames = 1;
   int int_diag_calc_num = num_frames*100;
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
   int num_failures_max = 20; // Maximum allowable number of consecutive small time-steps.
-
-
-  // Bananna tip info. Hardcoad to avoid dependency on ctx
-  double B_bt = 1.058278;
-  double R_bt = 0.071022;
-  double Z_bt = 0.467101;
-  double z_bt = 0.468243;
-
-  // Physics parameters at mirror throat
-  double n_m = 1.105617e19;
-  double Te_m = 346.426583 * eV;
-  double Ti_m = 3081.437703 * eV;
-  double cs_m = 4.037740e5;
-
-// Initial conditions parameters
-  double Ti_perp0 = 10000 * eV;
-  double Ti_perp_m = 15000 * eV;
-  double Ti_par0 = 7500 * eV;
-  double Ti_par_m = 1000 * eV;
-
-  double Te_par0 = 1800 * eV;  
-  double Te_par_m = 300 * eV;
-  double Te_perp0 = 2000 * eV;
-  double Te_perp_m = 3000 * eV;
 
   struct gk_mirror_ctx ctx = {
     .mi = mi,
@@ -586,8 +544,6 @@ create_ctx(void)
     .Ti0 = Ti0,
     .kperpRhos = kperpRhos,
     .alim = alim,
-    .alphaIC0 = alphaIC0,
-    .alphaIC1 = alphaIC1,
     .nuFrac = nuFrac,
     .logLambdaElc = logLambdaElc,
     .nuElc = nuElc,
@@ -599,45 +555,15 @@ create_ctx(void)
     .omega_ci = omega_ci,
     .rho_s = rho_s,
     .kperp = kperp, 
-    .RatZeq0 = RatZeq0,
     .z_min = z_min,
     .z_max = z_max,
-    .psi_eval = psi_eval,
-    .mcB = mcB,
-    .gamma = gamma,
-    .Z_m = Z_m,
-    .B_bt = B_bt,
-    .R_bt = R_bt,
-    .Z_bt = Z_bt,
-    .z_bt = z_bt,
-    .n_m = n_m,
-    .Te_m = Te_m,
-    .Ti_m = Ti_m,
-    .Ti_perp0 = Ti_perp0,
-    .Ti_par0 = Ti_par0,
-    .Ti_perp_m = Ti_perp_m,
-    .Ti_par_m = Ti_par_m,
-    .Te_par0 = Te_par0,
-    .Te_par_m = Te_par_m,
-    .Te_perp0 = Te_perp0,
-    .Te_perp_m = Te_perp_m,
-    .cs_m = cs_m,
-    .NSrcIon = NSrcIon,
-    .lineLengthSrcIon = lineLengthSrcIon,
-    .sigSrcIon = sigSrcIon,
-    .NSrcFloorIon = NSrcFloorIon,
-    .TSrc0Ion = TSrc0Ion,
-    .TSrcFloorIon = TSrcFloorIon,
-    .NSrcElc = NSrcElc,
-    .lineLengthSrcElc = lineLengthSrcElc,
-    .sigSrcElc = sigSrcElc,
-    .NSrcFloorElc = NSrcFloorElc,
-    .TSrc0Elc = TSrc0Elc,
-    .TSrcFloorElc = TSrcFloorElc,
+    .psi_min = psi_min,
+    .psi_max = psi_max,
     .vpar_max_ion = vpar_max_ion,
     .vpar_max_elc = vpar_max_elc,
     .mu_max_ion = mu_max_ion,
     .mu_max_elc = mu_max_elc,
+    .num_cell_psi = num_cell_psi,
     .num_cell_z = num_cell_z,
     .unif_z_cells = unif_z_cells,
     .num_cell_vpar = num_cell_vpar,
@@ -649,7 +575,7 @@ create_ctx(void)
     .dt_failure_tol = dt_failure_tol,
     .num_failures_max = num_failures_max,
   };
-  ctx.z_m = 1;
+  load_wham_distf(&ctx);
   ctx.mirror_geo_c2fa_ctx = gkyl_malloc(sizeof(struct gkyl_mirror_geo_c2fa_ctx));
   return ctx;
 }
@@ -699,8 +625,9 @@ int main(int argc, char **argv)
     gkyl_mem_debug_set(true);
   }
   struct gk_mirror_ctx ctx = create_ctx(); // context for init functions
-  int NZ = APP_ARGS_CHOOSE(app_args.xcells[0], ctx.num_cell_z);
-  int NVPAR = APP_ARGS_CHOOSE(app_args.vcells[0], ctx.num_cell_vpar);
+  int NPSI = APP_ARGS_CHOOSE(app_args.xcells[0], ctx.num_cell_psi);
+  int NZ = APP_ARGS_CHOOSE(app_args.xcells[1], ctx.num_cell_z);
+  int NV = APP_ARGS_CHOOSE(app_args.vcells[0], ctx.num_cell_vpar);
   int NMU = APP_ARGS_CHOOSE(app_args.vcells[1], ctx.num_cell_mu);
 
   int nrank = 1; // number of processors in simulation
@@ -710,7 +637,7 @@ int main(int argc, char **argv)
 #endif  
 
   // create global range
-  int ccells[] = { NZ };
+  int ccells[] = { NPSI, NZ };
   int cdim = sizeof(ccells)/sizeof(ccells[0]);
   struct gkyl_range cglobal_r;
   gkyl_create_global_range(cdim, ccells, &cglobal_r);
@@ -782,97 +709,114 @@ int main(int argc, char **argv)
     }
   }
 
-  if (my_rank == 0) printf("Grid size = %d in Z, %d in Vpar, %d in mu\n", NZ, NVPAR, NMU);
-struct gkyl_gyrokinetic_species elc = {
+  if (my_rank == 0) printf("Grid size = %d in psi, %d in Z, %d in Vpar, %d in mu\n", NPSI, NZ, NV, NMU);
+  struct gkyl_gyrokinetic_projection elc_ic = {
+      .proj_id = GKYL_PROJ_FUNC,
+      .func = read_elc_distf,
+      .ctx_func = &ctx,  
+  };
+  struct gkyl_gyrokinetic_species elc = {
     .name = "elc",
     .charge = ctx.qe,
     .mass = ctx.me,
-    .lower = {-1.0/sqrt(2.), 0.0},
-    .upper = { 1.0/sqrt(2.), 1.0},
-    .cells = {NVPAR, NMU},
+    .lower = {-ctx.vpar_max_elc, 0.0},
+    .upper = {ctx.vpar_max_elc, ctx.mu_max_elc},
+    .cells = {NV, NMU},
     .polarization_density = ctx.n0,
-    .no_by = true,
     .projection = {
-      .proj_id = GKYL_PROJ_BIMAXWELLIAN, 
-      .ctx_density = &ctx,
-      .density = eval_density_elc,
-      .ctx_upar = &ctx,
-      .upar= eval_upar_elc,
-      .ctx_temppar = &ctx,
-      .temppar = eval_temp_par_elc,
-      .ctx_tempperp = &ctx,
-      .tempperp = eval_temp_perp_elc,     
+      .proj_id = GKYL_PROJ_FUNC, 
+      .func = read_elc_distf,
+      .ctx_func = &ctx, 
     },
-    .collisions =  {
+    .bcx = {
+      .lower = { // reflecting BC should be here
+        .type = GKYL_SPECIES_FIXED_FUNC,
+        .projection = elc_ic,
+      },
+      .upper = { // should use zero flux BC
+        .type = GKYL_SPECIES_FIXED_FUNC,
+        .projection = elc_ic,
+      },
+    },
+    .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
       .ctx = &ctx,
       .self_nu = evalNuElc,
       .num_cross_collisions = 1,
-      .collide_with = { "ion" },
+      .collide_with = {"ion"},
     },
-    .bcx = {
-      .lower={.type = GKYL_SPECIES_GK_SHEATH,},
-      .upper={.type = GKYL_SPECIES_GK_SHEATH,},
-    },
-    .num_diag_moments = 7, // Copied from GKsoloviev, but
+    .num_diag_moments = 7,
     .diag_moments = {"M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp"},
   };
-    struct gkyl_gyrokinetic_species ion = {
+  struct gkyl_gyrokinetic_projection ion_ic = {
+      .proj_id = GKYL_PROJ_FUNC,
+      .func = read_ion_distf,
+      .ctx_func = &ctx,  
+  };
+  struct gkyl_gyrokinetic_species ion = {
     .name = "ion",
     .charge = ctx.qi,
     .mass = ctx.mi,
-    .lower = {-1.0/sqrt(2.), 0.0},
-    .upper = { 1.0/sqrt(2.), 1.0},
-    .cells = {NVPAR, NMU},
+    .lower = {-ctx.vpar_max_ion, 0.0},
+    .upper = { ctx.vpar_max_ion, ctx.mu_max_ion},
+    .cells = {NV, NMU},
     .polarization_density = ctx.n0,
     .no_by = true,
-    .enforce_positivity = true,
-    .mapc2p = {
-      .mapping = mapc2p_vel_ion,
-      .ctx = &ctx,
-    },
+    //.nG_from_npol = true,
     .projection = {
-      .proj_id = GKYL_PROJ_BIMAXWELLIAN, 
-      .ctx_density = &ctx,
-      .density = eval_density_ion,
-      .ctx_upar = &ctx,
-      .upar= eval_upar_ion,
-      .ctx_temppar = &ctx,
-      .temppar = eval_temp_par_ion,      
-      .ctx_tempperp = &ctx,
-      .tempperp = eval_temp_perp_ion,    
+      .proj_id = GKYL_PROJ_FUNC,
+      .func = read_ion_distf,
+      .ctx_func = &ctx,
     },
+    //Need to make ion and elc ic function
     .bcx = {
+      .lower = { // reflecting BC should be here
+        .type = GKYL_SPECIES_FIXED_FUNC,
+        .projection = ion_ic,
+      },
+      .upper = { // should use zero flux BC
+        .type = GKYL_SPECIES_FIXED_FUNC,
+        .projection = ion_ic,
+      },
+    },
+    .bcy = {
       .lower={.type = GKYL_SPECIES_GK_SHEATH,},
       .upper={.type = GKYL_SPECIES_GK_SHEATH,},
-    }, 
-   .collisions = {
+    },    
+    .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
       .ctx = &ctx,
       .self_nu = evalNuIon,
+      .num_cross_collisions = 1,
+      .collide_with = {"elc"},
     },
     .num_diag_moments = 7,
     .diag_moments = {"M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp"},
   };
   struct gkyl_gyrokinetic_field field = {
-    .gkfield_id = GKYL_GK_FIELD_BOLTZMANN,
-    .electron_mass = ctx.me,
-    .electron_charge = ctx.qe,
-    .electron_temp = ctx.Te0,
     .fem_parbc = GKYL_FEM_PARPROJ_NONE,
+    .poisson_bcs = {
+      .lo_type = {GKYL_POISSON_NEUMANN},
+      .up_type = {GKYL_POISSON_DIRICHLET},
+      .lo_value = {0.0},
+      .up_value = {0.0},
+    },
+    .polarization_phi = read_phi,
+    .polarization_phi_ctx = &ctx,
   };
   struct gkyl_gk gk = {  // GK app
-    .name = "gk_wham_nonunif",
-    .cdim = 1,
+    .name = "gk_wham",
+    .cdim = 2,
     .vdim = 2,
-    .lower = {ctx.z_min},
-    .upper = {ctx.z_max},
-    .cells = {NZ},
+    .lower = {ctx.psi_min, ctx.z_min},
+    .upper = {ctx.psi_max, ctx.z_max},
+    .cells = {NPSI, NZ},
     .poly_order = ctx.poly_order,
     .basis_type = app_args.basis_type,
     .geometry = {
+      // .geometry_id = GKYL_GEOMETRY_FROMFILE
       .geometry_id = GKYL_MIRROR,
-      .world = {ctx.psi_eval, 0.0},
+      .world = {0.0},
       .mirror_efit_info = &inp,
       .mirror_grid_info = &ginp,
       .mirror_geo_c2fa_ctx = ctx.mirror_geo_c2fa_ctx,
@@ -880,8 +824,8 @@ struct gkyl_gyrokinetic_species elc = {
     },
     .num_periodic_dir = 0,
     .periodic_dirs = {},
-    .num_species = 1,
-    .species = {ion},
+    .num_species = 2,
+    .species = {elc, ion},
     .field = field,
     .use_gpu = app_args.use_gpu,
     .has_low_inp = true,
@@ -890,8 +834,7 @@ struct gkyl_gyrokinetic_species elc = {
       .comm = comm
     }
   };
-  printf("Nonuniform mapping fraction = %f\n", (1 - (double)NZ / ctx.unif_z_cells));
-
+  
   // Create app object.
   gkyl_gyrokinetic_app *app = gkyl_gyrokinetic_app_new(&gk);
 
@@ -1001,13 +944,13 @@ struct gkyl_gyrokinetic_species elc = {
   freeresources:
   // Free resources after simulation completion.
   gkyl_gyrokinetic_app_release(app);
+  free_wham_distf(&ctx);
   struct gkyl_mirror_geo_c2fa_ctx *c2fa_release = ctx.mirror_geo_c2fa_ctx;
   gkyl_array_release(c2fa_release->c2fa);
   gkyl_array_release(c2fa_release->c2fa_deflate);
   gkyl_free(c2fa_release);
   gkyl_rect_decomp_release(decomp);
   gkyl_comm_release(comm);
-  
   mpifinalize:
 #ifdef GKYL_HAVE_MPI
   if (app_args.use_mpi) {

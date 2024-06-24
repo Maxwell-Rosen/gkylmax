@@ -7,7 +7,7 @@ name="gk_wham"
 # Make a loop to set species to "ion" and "elc"
 
 # Make a loop over frame values between 0 and 10
-for frame in {0..10}
+for frame in {0..0}
 do
   echo "frame $frame"
 

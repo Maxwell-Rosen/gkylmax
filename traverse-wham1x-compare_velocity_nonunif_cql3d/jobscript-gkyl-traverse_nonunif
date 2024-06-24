@@ -4,7 +4,7 @@
 #.it is recommended that this name be kept to 16 characters or less
 #SBATCH -J gkyl-wham
 
-#SBATCH --qos short
+#SBATCH --qos medium
 
 #.Number of nodes to request
 #SBATCH -N 5
@@ -15,11 +15,8 @@
 #.Request a GPU. GPU's per node to request
 #SBATCH --gres=gpu:4
 
-#.Request memory
-#SBATCH --mem=244G
-
 #.Request wall time
-#SBATCH -t 4:00:00
+#SBATCH -t 24:00:00
 
 #.Mail is sent to you when the job starts and when it terminates or aborts.
 #.SBATCH --mail-user=mhrosen@pppl.gov
@@ -41,14 +38,11 @@ export OMPI_MCA_mpi_warn_on_fork=0
 
 num_procs=20
 
-start_time=$(date +%s)
-echo "Running with $num_procs processes"
+echo "Running on $num_procs cores"
+echo "Starting nonuniform sim"
 
-srun -u -n $num_procs ./sim -g -M -d $num_procs -y 160
-# ./sim
+srun -u -n $num_procs ./sim_nonunif -g -M -c $num_procs 
 
-end_time=$(date +%s)
-elapsed_time=$(expr ($end_time - $start_time)/60)
-echo "Execution time was $elapsed_time minutes."
+mv gk_wham_nonunif* outputs/
 
 exit 0

@@ -459,6 +459,46 @@ free_wham_distf(void* ctx)
   free(app->dims);
 }
 
+void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  double vpar_max_ion = app->vpar_max_ion;
+  double mu_max_ion = app->mu_max_ion;
+
+  double cvpar = vc[0], cmu = vc[1];
+  // Linear map up to vpar_max/2, then quadratic.
+  if (fabs(cvpar) <= 0.5)
+    vp[0] = vpar_max_ion*cvpar;
+  else if (cvpar < -0.5)
+    vp[0] = -vpar_max_ion*2.0*pow(cvpar,2);
+  else
+    vp[0] =  vpar_max_ion*2.0*pow(cvpar,2);
+
+  // Quadratic map in mu.
+  vp[1] = mu_max_ion*pow(cmu,2);
+}
+
+void mapc2p_vel_elc(double t, const double *vc, double* GKYL_RESTRICT vp, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  double vpar_max_elc = app->vpar_max_elc;
+  double mu_max_elc = app->mu_max_elc;
+
+  double cvpar = vc[0], cmu = vc[1];
+  // Linear map up to vpar_max/2, then quadratic.
+  if (fabs(cvpar) <= 0.5)
+    vp[0] = vpar_max_elc*cvpar;
+  else if (cvpar < -0.5)
+    vp[0] = -vpar_max_elc*2.0*pow(cvpar,2);
+  else
+    vp[0] =  vpar_max_elc*2.0*pow(cvpar,2);
+
+  // Quadratic map in mu.
+  vp[1] = mu_max_elc*pow(cmu,2);
+}
+
+
+
 struct gk_mirror_ctx
 create_ctx(void)
 {
@@ -519,14 +559,14 @@ create_ctx(void)
   double mu_max_elc = me * pow(3. * vte, 2.) / (2. * B_p);
   double vpar_max_ion = 20 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
-  int num_cell_vpar = 96; // 96
-  int num_cell_mu = 192;  // 192
+  int num_cell_vpar = 64; // 96 uniform
+  int num_cell_mu = 96;  // 192 uniform
   int num_cell_z = 144;
   int unif_z_cells = 288;
   int num_cell_psi = 16;
   int poly_order = 1;
-  double final_time = 1e-9;
-  int num_frames = 10;
+  double final_time = 1e-11;
+  int num_frames = 2;
   int int_diag_calc_num = num_frames*100;
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
   int num_failures_max = 20; // Maximum allowable number of consecutive small time-steps.
@@ -710,22 +750,28 @@ int main(int argc, char **argv)
   }
 
   if (my_rank == 0) printf("Grid size = %d in psi, %d in Z, %d in Vpar, %d in mu\n", NPSI, NZ, NV, NMU);
+
+  struct gkyl_gyrokinetic_projection elc_ic = {
+      .proj_id = GKYL_PROJ_FUNC,
+      .func = read_elc_distf,
+      .ctx_func = &ctx,  
+  };
   struct gkyl_gyrokinetic_species elc = {
     .name = "elc",
     .charge = ctx.qe,
     .mass = ctx.me,
-    .lower = {-ctx.vpar_max_elc, 0.0},
-    .upper = {ctx.vpar_max_elc, ctx.mu_max_elc},
+    .lower = {-1.0/sqrt(2.), 0.0},
+    .upper = { 1.0/sqrt(2.), 1.0},
     .cells = {NV, NMU},
     .polarization_density = ctx.n0,
-    .projection = {
-      .proj_id = GKYL_PROJ_FUNC, 
-      .func = read_elc_distf,
-      .ctx_func = &ctx, 
+    .projection = elc_ic,
+    .mapc2p = {
+      .mapping = mapc2p_vel_elc,
+      .ctx = &ctx,
     },
     .bcx = {
-      .lower={.type = GKYL_SPECIES_FIXED_FUNC,},
-      .upper={.type = GKYL_SPECIES_FIXED_FUNC,},
+      .lower = {.type = GKYL_SPECIES_REFLECT,},
+      .upper = {.type = GKYL_SPECIES_ZERO_FLUX,},
     },
     .bcy = {
       .lower={.type = GKYL_SPECIES_GK_SHEATH,},
@@ -741,31 +787,29 @@ int main(int argc, char **argv)
     .num_diag_moments = 7,
     .diag_moments = {"M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp"},
   };
+  struct gkyl_gyrokinetic_projection ion_ic = {
+      .proj_id = GKYL_PROJ_FUNC,
+      .func = read_ion_distf,
+      .ctx_func = &ctx,  
+  };
   struct gkyl_gyrokinetic_species ion = {
     .name = "ion",
     .charge = ctx.qi,
     .mass = ctx.mi,
-    .lower = {-ctx.vpar_max_ion, 0.0},
-    .upper = { ctx.vpar_max_ion, ctx.mu_max_ion},
+    .lower = {-1.0/sqrt(2.), 0.0},
+    .upper = { 1.0/sqrt(2.), 1.0},
     .cells = {NV, NMU},
     .polarization_density = ctx.n0,
     .no_by = true,
     .nG_from_npol = true,
-    .projection = {
-      .proj_id = GKYL_PROJ_FUNC,
-      .func = read_ion_distf,
-      .ctx_func = &ctx,
+    .projection = ion_ic,
+    .mapc2p = {
+      .mapping = mapc2p_vel_ion,
+      .ctx = &ctx,
     },
-    //Need to make ion and elc ic function
     .bcx = {
-      .lower = { // reflecting BC should be here
-        .type = GKYL_SPECIES_FIXED_FUNC,
-        .projection = ion_ic,
-      },
-      .upper = { // should use zero flux BC
-        .type = GKYL_SPECIES_FIXED_FUNC,
-        .projection = ion_ic,
-      },
+      .lower = {.type = GKYL_SPECIES_REFLECT},
+      .upper = {.type = GKYL_SPECIES_ZERO_FLUX},
     },
     .bcy = {
       .lower={.type = GKYL_SPECIES_GK_SHEATH,},
