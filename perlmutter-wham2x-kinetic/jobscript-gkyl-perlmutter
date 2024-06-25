@@ -9,12 +9,12 @@
 #SBATCH -q regular
 
 #.Number of nodes to request (Perlmutter has 64 cores and 4 GPUs per node)
-#SBATCH -N 25
-#SBATCH --ntasks 100
+#SBATCH -N 13
+#SBATCH --ntasks 52
 
 #.Specify GPU needs:
 #SBATCH --constraint gpu
-#SBATCH --gpus 100
+#SBATCH --gpus 52
 
 #.Request wall time
 #SBATCH -t 24:00:00
@@ -41,5 +41,5 @@ export MPICH_MPIIO_DVS_MAXNODES=24
 #.in the present directory. If it isn't, change `./` to point to the
 #.directory containing the executable.
 
-echo "srun -u -n 100 ./sim -g -M -d 100"
-srun -u -n 100 ./sim -g -M -d 100
+echo "srun -u -n 52 ./sim -g -M -d 52"
+srun -u -n 52 ./sim -g -M -d 52

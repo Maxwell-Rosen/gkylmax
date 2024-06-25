@@ -536,7 +536,7 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   int num_cell_vpar = 32; // 96 uniform
   int num_cell_mu = 32;  // 192 uniform
-  int num_cell_z = 100;
+  int num_cell_z = 104;
   int unif_z_cells = 288;
   int num_cell_psi = 16;
   int poly_order = 1;
