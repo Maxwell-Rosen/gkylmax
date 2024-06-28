@@ -42,4 +42,4 @@ export MPICH_MPIIO_DVS_MAXNODES=24
 #.directory containing the executable.
 
 echo "srun -u -n 52 ./sim -g -M -d 52"
-srun -u -n 52 ./sim -g -M -d 52
+srun -u -n 52 ./sim -g -M -d 52 -r34

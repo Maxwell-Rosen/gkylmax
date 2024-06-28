@@ -887,9 +887,11 @@ int main(int argc, char **argv)
 
   long step = 1;
   while ((t_curr < t_end) && (step <= app_args.num_steps)) {
-    gkyl_gyrokinetic_app_cout(app, stdout, "Taking time-step %ld at t = %g ...", step, t_curr);
-      struct gkyl_update_status status = gkyl_gyrokinetic_update(app, dt);
+    struct gkyl_update_status status = gkyl_gyrokinetic_update(app, dt);    
+    if (step % 1000 == 0) {
+      gkyl_gyrokinetic_app_cout(app, stdout, "Taking time-step %ld at t = %g ...", step, t_curr);
       gkyl_gyrokinetic_app_cout(app, stdout, " dt = %g\n", status.dt_actual);
+    }
 
     if (!status.success) {
       gkyl_gyrokinetic_app_cout(app, stdout, "** Update method failed! Aborting simulation ....\n");
