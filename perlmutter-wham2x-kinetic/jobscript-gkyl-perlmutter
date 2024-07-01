@@ -41,5 +41,16 @@ export MPICH_MPIIO_DVS_MAXNODES=24
 #.in the present directory. If it isn't, change `./` to point to the
 #.directory containing the executable.
 
+max_number=-1
+matching_files=$(ls gk_wham-elc_M0_*)
+for file in $matching_files; do
+  # # Extract the number between the prefix and suffix
+  number=$(echo "$file" | sed 's/gk_wham-elc_M0_//; s/\.gkyl//')
+  # If the number is greater than the current max_number, update max_number and max_file
+  if [ "$number" -gt "$max_number" ]; then
+    max_number="$number"
+  fi
+done
+
 echo "srun -u -n 52 ./sim -g -M -d 52"
-srun -u -n 52 ./sim -g -M -d 52 -r34
+srun -u -n 52 ./sim -g -M -d 52 -r $max_number
