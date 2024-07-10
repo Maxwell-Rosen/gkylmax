@@ -6,10 +6,11 @@ def model(x, s):
     return 1 / (s + (1 - s) / x)
 
 # Read the data from the text file into a numpy array
-num_procs = np.loadtxt('num_procs.txt')
-execution_times = np.loadtxt('execution_times.txt')
+# num_procs = np.loadtxt('num_procs.txt')
+# execution_times = np.loadtxt('execution_times.txt')
 
-
+execution_times = np.array([ .1638, .0835, .0440, 0.0228, 0.0152, .0076, .0057])
+num_procs = np.array([1, 2, 4, 8, 13, 52, 104])
 
 speedup = execution_times[0]/execution_times
 
@@ -31,6 +32,8 @@ plt.ylabel('Fractional speedup relative to 1 proces')
 # plt.title('Strong scaling of WHAM2x. GPU fraction is (1-s)=', s_optimal)
 plt.title('Strong scaling of WHAM2x\n The code is ' + f"{1-s_optimal:.4f}" + ' fraction paralellized')
 plt.legend()
+plt.xscale('log')
+plt.yscale('log')
 plt.savefig('wham2x-strong-scaling.png')
 plt.close()
 

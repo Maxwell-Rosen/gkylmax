@@ -6,18 +6,18 @@
 
 #.Request the queue (enter the possible names, if omitted, default is the default)
 #.this job is going to use the default
-#SBATCH -q regular
+#SBATCH -q debug
 
 #.Number of nodes to request (Perlmutter has 64 cores and 4 GPUs per node)
-#SBATCH -N 26
-#SBATCH --ntasks 104
+#SBATCH -N 7
+#SBATCH --ntasks 28
 
 #.Specify GPU needs:
 #SBATCH --constraint gpu
-#SBATCH --gpus 104
+#SBATCH --gpus 28
 
 #.Request wall time
-#SBATCH -t 1:00:00
+#SBATCH -t 0:05:00
 
 #.Load modules (this must match those in the machines/configure script).
 module load PrgEnv-gnu/8.5.0
@@ -43,7 +43,7 @@ export MPICH_MPIIO_DVS_MAXNODES=24
 
 # num_procs=(1 4 8 12 16 20 24 28 32 36 40 44 48 52)
 # num_procs=(1 2 3 4 6 8 12 16 24 48)
-num_procs=(1 2 4 13 26 52 104)
+num_procs=(26)
 Nz=104
 
 start_time=$(date +%s)
@@ -57,7 +57,8 @@ do
   echo "Starting job for $procs processors on $num_nodes nodes" 
   echo "Running simulation"
 
-  srun --nodes=$num_nodes --ntasks=$procs --gpus=$procs ./sim -g -s 100 -y $Nz -M -d $procs > "$output_file"
+  # srun --nodes=$num_nodes --ntasks=$procs --gpus=$procs ./sim -g -s 100 -y $Nz -M -d $procs > "$output_file"
+  srun -n $procs ./sim -g -s 100 -y $Nz -M -d $procs > "$output_file"
   cat "$output_file"
   elapsedTime=$(awk '/Total updates took/ {print $4}' "$output_file")
   eulerCalls=$(awk '/Number of forward-Euler calls/ {print $5}' "$output_file")
@@ -80,6 +81,4 @@ mv *.gkyl outputs/
 
 end_time=$(date +%s)
 echo "Elapsed time: $((end_time-start_time)) seconds"
-
-
 exit 0
