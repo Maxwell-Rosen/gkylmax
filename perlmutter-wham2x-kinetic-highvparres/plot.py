@@ -14,11 +14,13 @@ from matplotlib.colors import LogNorm
 import multiprocessing
 
 # dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-wham1x-compare_unif_vs_nonunif/outputs/'
-dataDir = '/global/homes/m/mhrosen/scratch/gkylmax/perlmutter-wham2x-kinetic/'
+dataDir = '/global/homes/m/mhrosen/scratch/gkylmax/perlmutter-wham2x-kinetic-highvparres/'
 unifFile = 'gk_wham'
-frame_max = 60
+frame_max_plus1 = 5
+time_per_frame = 1e-6
 
 plot_potential_trace = 1
+plot_bimax_moms = 0
 
 # frame_arr = np.arange(0,11)
 # frame_arr = np.array([1:4])
@@ -99,45 +101,6 @@ def plot_verticalLinesPM(xIn, axIn):
   axIn.plot([-xIn, -xIn], [ymin-eps, ymax+eps], linestyle=":", color='grey')
   axIn.set_ylim(ymin, ymax)
 
-#   def load_mapped_data(dataName):
-#     densityFileName_unif = str(dataDir+unifFile + str(dataName) + str(frameNum) + '.gkyl')
-#     pgData_unif = pg.GData(densityFileName_unif)
-#     pgInterp_unif = pg.GInterpModal(pgData_unif, polyOrder, 'ms')
-#     x_unif, dataOut_unif = pgInterp_unif.interpolate()
-
-#     densityFileName_nonunif = str(dataDir+nonunifFile + str(dataName) + str(frameNum) + '.gkyl')
-#     pgData_nonunif = pg.GData(densityFileName_nonunif)
-#     pgInterp_nonunif = pg.GInterpModal(pgData_nonunif, polyOrder, 'ms')
-#     x_nonunif, dataOut_nonunif = pgInterp_nonunif.interpolate()
-
-#     nonunif_mapc2p_filename = str(dataDir+nonunifFile+'-mapc2p.gkyl')
-#     pgData_nonunif_mapc2p = pg.GData(nonunif_mapc2p_filename)
-#     pgInterp_nonunif_mapc2p = pg.GInterpModal(pgData_nonunif_mapc2p, polyOrder, 'ms')
-#     x_nonunif_mapc2p, dataOut_nonunif_mapc2p = pgInterp_nonunif_mapc2p.interpolate(2)
-
-#     unif_mapc2p_filename = str(dataDir+unifFile+'-mapc2p.gkyl')
-#     pgData_unif_mapc2p = pg.GData(unif_mapc2p_filename)
-#     pgInterp_unif_mapc2p = pg.GInterpModal(pgData_unif_mapc2p, polyOrder, 'ms')
-#     x_unif_mapc2p, dataOut_unif_mapc2p = pgInterp_unif_mapc2p.interpolate(2)
-    
-#     return dataOut_unif, dataOut_unif_mapc2p, dataOut_nonunif, dataOut_nonunif_mapc2p
-  
-#   def mapc2p_vel_vpar(vpc):
-#     # vp = np.zeros_like(vpc)  # Initialize the output array with the same shape as vpc
-#     # mask1 = np.abs(vpc) <= 0.5
-#     # mask2 = vpc < -0.5
-#     # mask3 = vpc > 0.5
-#     # vp[mask1] = vpc[mask1]
-#     # vp[mask2] = -2.0 * (vpc[mask2] ** 2)
-#     # vp[mask3] = 2.0 * (vpc[mask3] ** 2)
-#     b = 1.25
-#     vp = np.tan(vpc*b)/np.tan(b)
-#     return vp
-
-#   def mapc2p_vel_mu(muc):
-#     return muc ** 2
-  
-
 #   #................................................................................#
 
 if plot_potential_trace:
@@ -152,80 +115,172 @@ if plot_potential_trace:
   peak = np.argmax(upperhalf)
   peak_idx = midpoint+peak
 
-  print("Bmag at midpoint: ", dataOut_bmag[0,midpoint])
-  print("Bmag at peak: ", dataOut_bmag[0,peak_idx])
-
   def loadphi(frame_number):
     filename_phi = str(dataDir+unifFile+'-field_'+str(frame_number)+'.gkyl')
     pgData_phi = pg.GData(filename_phi)
     pgInterp_phi = pg.GInterpModal(pgData_phi, polyOrder, 'ms')
     x_phi, dataOut_phi = pgInterp_phi.interpolate()
     return dataOut_phi
-
-#     # Plot tPar
-#     # M0_unif, M0_map, M0_nonunif, M0_nonunif_map, M0_reduced, M0_reduced_map = load_mapped_data('-ion_M0_')
-#     # M1_unif, M1_map, M1_nonunif, M1_nonunif_map, M1_reduced, M1_reduced_map = load_mapped_data('-ion_M1_')
-#     M2par_unif, M2par_map, M2par_nonunif, M2par_nonunif_map = load_mapped_data('-ion_M2par_')
-
-#     tPar_unif = (M2par_unif[:,0] - M1_unif[:,0]**2/M0_unif[:,0]) * mi / eV / M0_unif[:,0]
-#     tPar_nonunif = (M2par_nonunif[:,0] - M1_nonunif[:,0]**2/M0_nonunif[:,0]) * mi / eV / M0_nonunif[:,0]
-
-#     # Plot tPerp
-#     # M0_unif, M0_map, M0_nonunif, M0_nonunif_map, M0_reduced, M0_reduced_map = load_mapped_data('-ion_M0_')
-#     M2perp_unif, M2perp_map, M2perp_nonunif, M2perp_nonunif_map = load_mapped_data('-ion_M2perp_')
-
-#     tPerp_unif = M2perp_unif[:,0]/M0_unif[:,0] * mi / eV
-#     tPerp_nonunif = M2perp_nonunif[:,0]/M0_nonunif[:,0] * mi / eV
-
-# upar (in m/s) = M1/M0
-# Temp (in J) = m*(M2 - upar*M1)/(3*n)
-
-# Load moments
+  
   def get_temp(frame_number):
-    filename_M0 = str(dataDir+unifFile+'-elc_M0_'+str(frame_number)+'.gkyl')
-    pgData_M0 = pg.GData(filename_M0)
-    pgInterp_M0 = pg.GInterpModal(pgData_M0, polyOrder, 'ms')
-    x_M0, dataOut_M0 = pgInterp_M0.interpolate()
-    M0_mid = dataOut_M0[0,midpoint]
-
-    filename_M1 = str(dataDir+unifFile+'-elc_M1_'+str(frame_number)+'.gkyl')
-    pgData_M1 = pg.GData(filename_M1)
-    pgInterp_M1 = pg.GInterpModal(pgData_M1, polyOrder, 'ms')
-    x_M1, dataOut_M1 = pgInterp_M1.interpolate()
-    M1_mid = dataOut_M1[0,midpoint]
-
-    filename_M2 = str(dataDir+unifFile+'-elc_M2_'+str(frame_number)+'.gkyl')
-    pgData_M2 = pg.GData(filename_M2)
-    pgInterp_M2 = pg.GInterpModal(pgData_M2, polyOrder, 'ms')
-    x_M2, dataOut_M2 = pgInterp_M2.interpolate()
-    M2_mid = dataOut_M2[0,midpoint]
-
-    upar = M1_mid[0]/M0_mid[0]
-    Temp = me*(M2_mid[0] - upar*M1_mid[0])/(3*M0_mid[0])
+    filename_elc = str(dataDir+unifFile+'-elc_BiMaxwellianMoments_'+str(frame_number)+'.gkyl')
+    pgData_elc = pg.GData(filename_elc)
+    pgInterp_elc = pg.GInterpModal(pgData_elc, polyOrder, 'ms')
+    coords, Tpar_elc = pgInterp_elc.interpolate(2)
+    coords, Tperp_elc = pgInterp_elc.interpolate(3)
+    Temp = (Tpar_elc[0,midpoint,0] + 2*Tperp_elc[0,midpoint,0])/3 * me / eV
     return Temp
 
-  potential = np.zeros(frame_max)
-  Temp = np.zeros(frame_max)
-  for i in range(frame_max):
+  potential = np.zeros(frame_max_plus1)
+  Temp = np.zeros(frame_max_plus1)
+  for i in range(frame_max_plus1):
     dataOut_phi = loadphi(i)
     Temp[i] = get_temp(i)
     midphi = dataOut_phi[0,midpoint]
     phi_peak = dataOut_phi[0,peak_idx]
-    potential[i] = eV * (midphi[0] - phi_peak[0]) / Temp[i]
+    potential[i] = (midphi[0] - phi_peak[0]) / Temp[i]
 
-  plt.plot(np.arange(frame_max)*1e-6, potential)
+  Temp = Temp*eV
+
+  plt.plot(np.arange(frame_max_plus1)*1e-6, potential)
   plt.xlabel('Time, seconds')
   plt.ylabel('Potential difference, $e \phi / T_e(\psi_{min},z=0)$')
   plt.title('Potential difference between midplane and peak magnetic field')
   plt.savefig(outDir+'potential_trace'+figureFileFormat)
   plt.close()
 
-  plt.plot(np.arange(frame_max)*1e-6, Temp/eV)
+  plt.plot(np.arange(frame_max_plus1)*1e-6, Temp/eV)
   plt.xlabel('Time, seconds')
   plt.ylabel('Temperature, $T_e(\psi_{min},z=0)$')
   plt.title('Temperature at midplane')
   plt.savefig(outDir+'temperature_trace'+figureFileFormat)
   plt.close()
+
+if plot_bimax_moms:
+  def make_moms(frame_number):
+    print("Getting moments for frame ", frame_number)
+    filename_elc = str(dataDir+unifFile+'-elc_BiMaxwellianMoments_'+str(frame_number)+'.gkyl')
+    pgData_elc = pg.GData(filename_elc)
+    pgInterp_elc = pg.GInterpModal(pgData_elc, polyOrder, 'ms')
+    coords, n_elc = pgInterp_elc.interpolate(0)
+    coords, u_elc = pgInterp_elc.interpolate(1)
+    coords, Tpar_elc = pgInterp_elc.interpolate(2)
+    coords, Tperp_elc = pgInterp_elc.interpolate(3)
+
+    filename_ion = str(dataDir+unifFile+'-ion_BiMaxwellianMoments_'+str(frame_number)+'.gkyl')
+    pgData_ion = pg.GData(filename_ion)
+    pgInterp_ion = pg.GInterpModal(pgData_ion, polyOrder, 'ms')
+    coords, n_ion = pgInterp_ion.interpolate(0)
+    coords, u_ion = pgInterp_ion.interpolate(1)
+    coords, Tpar_ion = pgInterp_ion.interpolate(2)
+    coords, Tperp_ion = pgInterp_ion.interpolate(3)
+
+    filename_field = str(dataDir+unifFile+'-field_'+str(frame_number)+'.gkyl')
+    pgData_field = pg.GData(filename_field)
+    pgInterp_field = pg.GInterpModal(pgData_field, polyOrder, 'ms')
+    coords, phi = pgInterp_field.interpolate()
+
+
+    filename_mc2p = str(dataDir+unifFile+'-mapc2p.gkyl')
+    pgData_mc2p = pg.GData(filename_mc2p)
+    pgInterp_mc2p = pg.GInterpModal(pgData_mc2p, polyOrder, 'ms')
+    x_mc2p, mc2p_z = pgInterp_mc2p.interpolate(2) ## Cylindrical axis Z
+    y_mc2p, mc2p_x = pgInterp_mc2p.interpolate(0) ## Cylindrical axis Y
+    
+
+    def center_data_2d(arr):
+      shape = arr.shape
+      res = np.zeros([shape[0]+1, shape[1]+1])
+      for i in range(shape[0]):
+        lin = arr[i,:]
+        arr_min = lin[0]
+        arr_max = lin[-1]
+        diffs  = lin[0:-1] + np.diff(lin)/2
+        centered = np.insert(diffs, 0, arr_min)
+        centered = np.append(centered, arr_max)
+        res[i,:] = centered
+      res[-1,:] = res[-2,:]
+      return res
+        
+    mc2p_z = center_data_2d(mc2p_z[:,:,0])
+    mc2p_x = center_data_2d(mc2p_x[:,:,0])
+
+    n_elc = n_elc[:,:,0]
+    u_elc = u_elc[:,:,0]
+    Tpar_elc = Tpar_elc[:,:,0] * me / eV
+    Tperp_elc = Tperp_elc[:,:,0] * me / eV
+    T_elc = (Tpar_elc + 2*Tperp_elc)/3
+    n_ion = n_ion[:,:,0]
+    u_ion = u_ion[:,:,0]
+    Tpar_ion = Tpar_ion[:,:,0] * mi / eV
+    Tperp_ion = Tperp_ion[:,:,0] * mi / eV
+    T_ion = (Tpar_ion + 2*Tperp_ion)/3
+    phi = phi[:,:,0]
+    midplane_Te = T_elc[:,T_elc.shape[1]//2]
+    ephioTe =  phi / midplane_Te[:,None]
+
+    # make an array grid that is the size of coords
+
+    X = mc2p_z[0,:]
+    Y = coords[0]
+    # X = mc2p_z
+    # Y = mc2p_x
+
+    
+    fig, ax = plt.subplots(5, 3, figsize=(12,12))
+    fig.suptitle(str(frame_number*time_per_frame)+' seconds', fontsize=20)
+
+    def plot_moment_data(data, ax, fig, title, locx, locy):
+      ax[locx,locy].pcolormesh(X,Y,data,cmap='inferno')
+      ax[locx,locy].set_xlabel('Z cylindrical axis, m')
+      ax[locx,locy].set_ylabel('Psi')
+      ax[locx,locy].set_title(title, fontsize=16)
+      fig.colorbar(ax[locx,locy].pcolormesh(X,Y,data,cmap='inferno'), ax=ax[locx,locy])
+
+    plot_moment_data(n_elc, ax, fig, '$n_e$, $m^{-3}$', 0, 0)
+    plot_moment_data(u_elc, ax, fig, '$U_{e,||}$, $m/s$', 0, 2)
+    plot_moment_data(Tpar_elc, ax, fig, '$T_{e,||}$, $eV$', 1, 0)
+    plot_moment_data(Tperp_elc, ax, fig, '$T_{e,\perp}$, $eV$', 1, 1)
+    plot_moment_data(T_elc, ax, fig, '$T_e$, $eV$', 1, 2)
+    plot_moment_data(n_ion, ax, fig, '$n_i$, $m^{-3}$', 2, 0)
+    plot_moment_data(u_ion, ax, fig, '$U_{i,||}$, $m/s$', 2, 2)
+    plot_moment_data(Tpar_ion, ax, fig, '$T_{i,||}$, $eV$', 3, 0)
+    plot_moment_data(Tperp_ion, ax, fig, '$T_{i,\perp}$, $eV$', 3, 1)
+    plot_moment_data(T_ion, ax, fig, '$T_i$, $eV$', 3, 2)
+
+    # Plot electron density on a log scale
+    ax[0,1].pcolormesh(X,Y,n_elc,norm=LogNorm(),cmap='inferno')
+    ax[0,1].set_xlabel('Z cylindrical axis, m')
+    ax[0,1].set_ylabel('Psi')
+    ax[0,1].set_title('$n_e$ (log scale) $m^{-3}$', fontsize=16)
+    fig.colorbar(ax[0,1].pcolormesh(X,Y,n_elc,norm=LogNorm(),cmap='inferno'), ax=ax[0,1])
+
+    # Plot the ion density on a log scale
+    ax[2,1].pcolormesh(X,Y,n_ion,norm=LogNorm(),cmap='inferno')
+    ax[2,1].set_xlabel('Z cylindrical axis, m')
+    ax[2,1].set_ylabel('Psi')
+    ax[2,1].set_title('$n_i$ (log scale) $m^{-3}$', fontsize=16)
+    fig.colorbar(ax[2,1].pcolormesh(X,Y,n_ion,norm=LogNorm(),cmap='inferno'), ax=ax[2,1])
+
+    plot_moment_data(phi, ax, fig, '$\phi$, V', 4, 0)
+    plot_moment_data(ephioTe, ax, fig, '$e \phi / T_e$', 4, 1)
+
+    plt.tight_layout()
+    plt.savefig(outDir+'moments_'+str(frame_number)+figureFileFormat, dpi=600)
+    plt.close()
+
+  # Number of processes to run in parallel
+  # make_moms(0)
+  frame_arr = np.arange(0,frame_max_plus1)
+  num_processes = multiprocessing.cpu_count()
+  print('Number of processes: ', num_processes)
+  pool = multiprocessing.Pool(processes=num_processes)
+  pool.map(make_moms, frame_arr)
+  pool.close()
+  pool.join()
+  
+
+#   #....................................DEPRICATED CODE............................................#
 
 #     densityFileName_unif = str(dataDir+unifFile + str(dataName) + str(frameNum) + '.gkyl')
 #     pgData_unif = pg.GData(densityFileName_unif)

@@ -52,5 +52,10 @@ for file in $matching_files; do
   fi
 done
 
-echo "srun -u -n 52 ./sim -g -M -d 52"
-srun -u -n 52 ./sim -g -M -d 52 -r 37#$max_number
+
+for num in $(seq 0 $max_number); do
+  echo "srun -u -n 52 ./sim -g -M -d 52 -r $num"
+  srun -u -n 52 ./sim -g -M -d 52 -r $num -s0
+done
+# echo "srun -u -n 52 ./sim -g -M -d 52"
+# srun -u -n 52 ./sim -g -M -d 52 -r 37#$max_number
