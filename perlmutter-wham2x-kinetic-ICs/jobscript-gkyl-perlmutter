@@ -6,18 +6,18 @@
 
 #.Request the queue (enter the possible names, if omitted, default is the default)
 #.this job is going to use the default
-#SBATCH -q regular
+#SBATCH -q debug
 
 #.Number of nodes to request (Perlmutter has 64 cores and 4 GPUs per node)
-#SBATCH -N 13
-#SBATCH --ntasks 52
+#SBATCH -N 5
+#SBATCH --ntasks 20
 
 #.Specify GPU needs:
 #SBATCH --constraint gpu
-#SBATCH --gpus 52
+#SBATCH --gpus 20
 
 #.Request wall time
-#SBATCH -t 24:00:00
+#SBATCH -t 00:20:00
 
 #.Load modules (this must match those in the machines/configure script).
 module load PrgEnv-gnu/8.5.0
@@ -54,5 +54,5 @@ export MPICH_MPIIO_DVS_MAXNODES=24
 # echo "srun -u -n 52 ./sim -g -M -d 52 -r $max_number"
 # srun -u -n 52 ./sim -g -M -d 52 -r $max_number
 
-echo "srun -u -n 52 ./sim -g -M -d 52"
-srun -u -n 52 ./sim -g -M -d 52
+echo "srun -u -n 20 ./sim -g -M -d 20"
+srun -u -n 20 ./sim -g -M -d 20 -s1

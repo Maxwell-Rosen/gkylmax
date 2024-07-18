@@ -295,6 +295,9 @@ read_ion_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   interp_pt[3] = theta;
 
   double interp_val = LI_4D(dims, psi_grid, z_grid, v_grid, theta_grid, f_dist, interp_pt);
+  if (interp_val < 0.0) {
+    interp_val = 0.0;
+  }
   fout[0] = interp_val;
 }
 
@@ -335,7 +338,10 @@ read_elc_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   interp_pt[3] = theta;
 
   double interp_val = LI_4D(dims, psi_grid, z_grid, v_grid, theta_grid, f_dist, interp_pt);
-  fout[0] = interp_val;
+  if (interp_val < 0.0){
+    interp_val = 0.0;
+  }
+  fout[0] = interp_val * (1 - 0.9 * pow((xn[0] - app.psi_min)/(app.psi_max - app.psi_min),2));
 }
 
 void
@@ -455,8 +461,16 @@ void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *
   double mu_max_ion = app->mu_max_ion;
 
   double cvpar = vc[0], cmu = vc[1];
-  double b = 1.4;
-  vp[0] = vpar_max_ion*tan(cvpar*b)/tan(b);
+  double b = 1.45;
+  double linear_velocity_threshold = 1./6.;
+  double frac_linear = 1/b*atan(linear_velocity_threshold*tan(b));
+  if (fabs(cvpar) < frac_linear) {
+    double func_frac = tan(frac_linear*b) / tan(b);
+    vp[0] = vpar_max_ion*func_frac*cvpar/frac_linear;
+  }
+  else {
+    vp[0] = vpar_max_ion*tan(cvpar*b)/tan(b);
+  }
   // Quadratic map in mu.
   vp[1] = mu_max_ion*pow(cmu,2);
 }
@@ -468,9 +482,17 @@ void mapc2p_vel_elc(double t, const double *vc, double* GKYL_RESTRICT vp, void *
   double mu_max_elc = app->mu_max_elc;
 
   double cvpar = vc[0], cmu = vc[1];
-  double b = 1.4;
-  vp[0] = vpar_max_elc*tan(cvpar*b)/tan(b);
-
+  double b = 1.45;
+  double linear_velocity_threshold = 1./6.;
+  double frac_linear = 1/b*atan(linear_velocity_threshold*tan(b));
+  if (fabs(cvpar) < frac_linear) {
+    double func_frac = tan(frac_linear*b) / tan(b);
+    vp[0] = vpar_max_elc*func_frac*cvpar/frac_linear;
+  }
+  else {
+    vp[0] = vpar_max_elc*tan(cvpar*b)/tan(b);
+  }
+  // vp[0] = vc[0];
   // Quadratic map in mu.
   vp[1] = mu_max_elc*pow(cmu,2);
 }
@@ -528,7 +550,7 @@ create_ctx(void)
   double z_min = -M_PI + 1e-1;
   double z_max = M_PI - 1e-1;
   double psi_min = 1e-3; // Go smaller. 1e-4 might be too small
-  double psi_max = 1e-2; // aim for 2e-2
+  double psi_max = 3e-3; // aim for 2e-2
 
   // Grid parameters
   double vpar_max_elc = 30 * vte;
@@ -537,13 +559,13 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   int num_cell_vpar = 32; // 32
   int num_cell_mu = 32;  // 32
-  int num_cell_z = 100;  //100
+  int num_cell_z = 288;  //100
   int unif_z_cells = 288; //288 for 1d published results
   int num_cell_psi = 16; //16
   int num_cell_angle = 16; //16
   int poly_order = 1;
-  double final_time = 100e-6;
-  int num_frames = 100;
+  double final_time = 500e-6;
+  int num_frames = 500;
   int int_diag_calc_num = num_frames*100;
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
   int num_failures_max = 20; // Maximum allowable number of consecutive small time-steps.
@@ -764,8 +786,8 @@ int main(int argc, char **argv)
       .num_cross_collisions = 1,
       .collide_with = {"ion"},
     },
-    .num_diag_moments = 7,
-    .diag_moments = {"M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp"},
+    .num_diag_moments = 1,
+    .diag_moments = {"BiMaxwellianMoments"},
   };
   struct gkyl_gyrokinetic_projection ion_ic = {
       .proj_id = GKYL_PROJ_FUNC,
@@ -803,8 +825,8 @@ int main(int argc, char **argv)
       .num_cross_collisions = 1,
       .collide_with = {"elc"},
     },
-    .num_diag_moments = 7,
-    .diag_moments = {"M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp"},
+    .num_diag_moments = 1,
+    .diag_moments = {"BiMaxwellianMoments"},
   };
   struct gkyl_gyrokinetic_field field = {
     .fem_parbc = GKYL_FEM_PARPROJ_NONE,
@@ -890,9 +912,11 @@ int main(int argc, char **argv)
 
   long step = 1;
   while ((t_curr < t_end) && (step <= app_args.num_steps)) {
-    gkyl_gyrokinetic_app_cout(app, stdout, "Taking time-step %ld at t = %g ...", step, t_curr);
-      struct gkyl_update_status status = gkyl_gyrokinetic_update(app, dt);
+    struct gkyl_update_status status = gkyl_gyrokinetic_update(app, dt);    
+    if (step % 1000 == 0) {
+      gkyl_gyrokinetic_app_cout(app, stdout, "Taking time-step %ld at t = %g ...", step, t_curr);
       gkyl_gyrokinetic_app_cout(app, stdout, " dt = %g\n", status.dt_actual);
+    }
 
     if (!status.success) {
       gkyl_gyrokinetic_app_cout(app, stdout, "** Update method failed! Aborting simulation ....\n");

@@ -294,6 +294,9 @@ read_ion_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   interp_pt[3] = theta;
 
   double interp_val = LI_4D(dims, psi_grid, z_grid, v_grid, theta_grid, f_dist, interp_pt);
+  if (interp_val < 0.0){
+    interp_val = 0.0;
+  }
   fout[0] = interp_val;
 }
 
@@ -334,6 +337,9 @@ read_elc_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   interp_pt[3] = theta;
 
   double interp_val = LI_4D(dims, psi_grid, z_grid, v_grid, theta_grid, f_dist, interp_pt);
+  if (interp_val < 0.0){
+    interp_val = 0.0;
+  }
   fout[0] = interp_val * (1 - 0.9 * pow((xn[0] - app.psi_min)/(app.psi_max - app.psi_min),2));
 }
 
@@ -552,7 +558,7 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   int num_cell_vpar = 32; // 96 uniform
   int num_cell_mu = 32;  // 192 uniform
-  int num_cell_z = 156;
+  int num_cell_z = 288;
   int unif_z_cells = 288;
   int num_cell_psi = 16;
   int poly_order = 1;

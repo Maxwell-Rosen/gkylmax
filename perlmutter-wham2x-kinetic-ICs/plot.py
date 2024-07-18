@@ -14,9 +14,9 @@ from matplotlib.colors import LogNorm
 import multiprocessing
 
 # dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-wham1x-compare_unif_vs_nonunif/outputs/'
-dataDir = '/global/homes/m/mhrosen/scratch/gkylmax/perlmutter-wham2x-kinetic-highvparres/'
+dataDir = './'
 unifFile = 'gk_wham'
-frame_max_plus1 = 7
+frame_max_plus1 = 1
 time_per_frame = 1e-6
 
 plot_potential_trace = 1

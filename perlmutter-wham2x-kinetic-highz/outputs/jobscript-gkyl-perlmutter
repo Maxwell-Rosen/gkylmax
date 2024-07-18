@@ -41,7 +41,7 @@ export MPICH_MPIIO_DVS_MAXNODES=24
 #.in the present directory. If it isn't, change `./` to point to the
 #.directory containing the executable.
 
-max_number=0
+max_number=-1
 matching_files=$(ls gk_wham-elc_BiMaxwellianMoments_*)
 for file in $matching_files; do
   # # Extract the number between the prefix and suffix
@@ -52,4 +52,5 @@ for file in $matching_files; do
   fi
 done
 echo "srun -u -n 144 ./sim -g -M -d 144 -r $max_number"
-srun -u -n 144 ./sim -g -M -d 144 -r $max_number
+# srun -u -n 144 ./sim -g -M -d 144 -r $max_number
+28257515

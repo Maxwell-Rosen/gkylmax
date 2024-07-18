@@ -3,148 +3,159 @@
 # name2="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nosource_nonuniform"
 name="gk_wham"
 # name="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nosource_nonuniform"
-# species="ion"
+species="ion"
 # Make a loop to set species to "ion" and "elc"
+frame=0
+pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 sel --z0 0.002 --z1 0.0 pl --title "frame $frame z=0" \
+  --saveas "python-plots/$name-$species-$frame-1d-z=0.png" --no-show &
+pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 sel --z0 0.002 --z1 1.18 pl --title "frame $frame z=1.18" \
+  --saveas "python-plots/$name-$species-$frame-1d-z=1,18.png" --no-show &
+
+pgkyl "$name-"$species"_[0-3]*.gkyl" interp -b gkhyb -p1 sel --z0 0.001 --z1 1.18 \
+  animate --saveas "python-plots/$name-$species-1d-z=1,18.mp4" --no-show &
+# pgkyl "$name-ion_[0-9]*.gkyl"\
+#   interp -b gkhyb -p1 integrate 2 ev 'f[:] abs' animate --logz --zmin 1e-20 --fps 4 \
+#   --saveas "vpar.mp4" &
 
 # Make a loop over frame values between 0 and 10
-for frame in {59..60}
-do
-  echo "frame $frame"
-
-for species in "elc" "ion"
-do
-  echo $species
-saveLoc="python-plots/gk_wham-$frame"
-# saveLoc='python-plots/gk_wham'
-
-frame_per_microsec=1
-currtime=$(echo "$frame * $frame_per_microsec" | bc)
-
-if [ "$species" = "elc" ]; then mass=9.11e-31
-elif [ "$species" = "ion" ]; then mass=3.34e-27
-else echo "species must be ion or elc"
-fi
-psival=0.001
-
-### Positivity moments ###
-pgkyl "$name"-"$species"_integrated_moms.gkyl -t f\
- "$name"-"$species"_positivity_shift_integrated_moms.gkyl -t p \
- activate -t f,p ev -t poverf 'p f /' \
- activate -t poverf pl --title "Mp/Mf" --saveas "$saveLoc-positivity-moms-over-f.png" --no-show&
-
-if [ "$species" = "elc" ]; then
-  # pgkyl "$name-elc_M0_$frame.gkyl" -t M0 "$name-elc_M1_$frame.gkyl" -t M1 \
-  #   "$name-elc_M2par_$frame.gkyl" -t M2par "$name-elc_M2perp_$frame.gkyl" -t M2perp \
-  #   "$name-field_$frame.gkyl" -t phi \
-  #   activate -t M0,M1,M2par,M2perp interp -b ms -p1 select --z0 $psival ev -a -t res "M2par M1 M1 * M0 / - $mass * M0 / 1.6e-19 /" \
-  #   activate -t M0,M2perp ev -a -t res2 "$mass M2perp M0 / * 1.6e-19 /"\
-  #   activate -t res,res2 ev -a -t res3 "res2 2 * res + 3 /" \
-  #   activate -t phi interp -b ms -p1 select -t phi_interp --z0 $psival \
-  #   activate -t res3 select -t T0 --z0 0.0 --z1 0.0 \
-  #   activate -t T0,phi_interp ev -a -t ephiTe "phi T0 /" \
-  #   activate -t ephiTe select -t plotfit --z0 $psival \
-  #   activate -t plotfit pl --title "Potential at psi = $psival, $currtime microseconds" -y "e phi / T" -x "Field line length (m)"\
-  #    --saveas "$saveLoc-1d-ephiTe-$frame.png" --no-show&
-  pgkyl "$name-elc_M0_$frame.gkyl" -t M0 "$name-elc_M1_$frame.gkyl" -t M1 \
-    "$name-elc_M2par_$frame.gkyl" -t M2par "$name-elc_M2perp_$frame.gkyl" -t M2perp \
-    "$name-field_$frame.gkyl" -t phi \
-    activate -t M0,M1,M2par,M2perp interp -b ms -p1 ev -a -t res "M2par M1 M1 * M0 / - $mass * M0 / 1.6e-19 /" \
-    activate -t M0,M2perp ev -a -t res2 "$mass M2perp M0 / * 1.6e-19 /" \
-    activate -t res,res2 ev -a -t res3 "res2 2 * res + 3 /" \
-    activate -t phi interp -t phi_interp -b ms -p1  \
-    activate -t res3 select -t T0 --z1 0.0 \
-    activate -t T0,phi_interp ev -a -t ephiTe "phi_interp T0 /" \
-    activate -t ephiTe pl --title "Potential, $currtime microseconds" -y "Field line length (m)" -x "psi" --clabel "e phi / T" \
-    --saveas "$saveLoc-2d-ephiTe-$frame.png" --no-show &
-  # pgkyl "$name-field_$frame.gkyl" interp -b ms -p1 select --z0 $psival pl --title "phi, $currtime microseconds" \
-  #   -x "Field line length (m)" -y "Electric potential (V)" --saveas "$saveLoc-1d-field-$frame.png" --no-show&
-  pgkyl "$name-field_$frame.gkyl" interp -b ms -p1 pl --title "phi, $currtime microseconds" \
-    -y "Field line length (m)" -x "Psi" --clabel "Electric potential (V)" --saveas "$saveLoc-2d-field-$frame.png" --no-show&
-  # pgkyl "test_phi_pol.gkyl" interp -b mt -p2 select --z0 $psival pl --title "phi, $currtime microseconds" \
-  #   -x "Field line length (m)" -y "Electric potential (V)" --saveas "python-plots/test_phi_pol-1d-field.png" --no-show&
-  # pgkyl "test_phi_pol.gkyl" interp -b mt -p2 pl --title "phi, $currtime microseconds" \
-  #   -y "Field line length (m)" -x "Psi" --clabel "Electric potential (V)" --saveas "python-plots/test_phi_pol-2d-field.png" --no-show&
-  # pgkyl "$name-field_$frame.gkyl" -t Field test_phi_pol.gkyl -t phi activate -t Field interp -b ms -p1 select -t Field_proj \
-  # --z1 0.0 activate -t phi interp -b mt -p2 select -t phi_proj --z1 0.0 activate -t phi_proj,Field_proj pl -f0 --title \
-  # "phi (blue) vs phi_pol (orange), $currtime microseconds" --saveas "$saveLoc-$frame-1d-center-field.png" --no-show &
-fi
-
-### 1D plots of distribution function at a certain psival ###
-# pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 select --z0 $psival integrate 2 pl --title "$species distribution function integrating over vpar, $currtime microseconds"  \
-#   --xscale 0.79233226837 -x "Field line length (m)" -y "Magnetic moment" --saveas "$saveLoc-"$species"_$frame-1d-vpar.png" --no-show &
-# pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 select --z0 $psival integrate 3 pl --title "$species distribution function integrating over magnetic moment, $currtime microseconds" \
-#   --xscale 0.79233226837 -x "Field line length (m)" -y "Parallel velocity (m/s)" --saveas "$saveLoc-"$species"_$frame-1d-mu.png" --no-show &
-# for pos in 0.0001 0.59 0.97
+# for frame in {59..60}
 # do
-# for psipl in 0.0011 0.002 0.0029
-# do
-#   pos_map=$(echo "$pos * 0.79233226837" | bc)
-#   pgkyl "$name-$species"_"$frame.gkyl" interp -b gkhyb -p1 select --z0 $psipl --z1 $pos_map pl --title "$species distribution function at z=$pos psi=$psipl, $currtime microseconds" \
-#     --xscale 0.79233226837 -x "Parallel velocity (m/s)" -y "Magnetic moment" --saveas "$saveLoc-$species"_"$frame-1d-psi=$psipl-z=$pos.png" --no-show &
-# done
-# done
+#   echo "frame $frame"
 
-### 1D plots of moments at a certain psival ###
-# pgkyl "$name-$species"_prim_moms"_$frame.gkyl" interp -b ms -p1 select --z0 $psival pl --title "prim_moms, $currtime microseconds" \
-#   --xscale 0.79233226837 -x "Field line length (m)" \
-#   --saveas "$saveLoc-"$species"-1d-prim_moms-$frame.png" --no-show&
-# pgkyl "$name-field_$frame.gkyl" interp -b ms -p1 select --z0 $psival pl --title "phi, $currtime microseconds" \
-#   --xscale 0.79233226837 -x "Field line length (m)" -y "Electric potential (V)" --saveas "$saveLoc-1d-field-$frame.png" --no-show &
+# for species in "elc" "ion"
+# do
+#   echo $species
+# saveLoc="python-plots/gk_wham-$frame"
+# # saveLoc='python-plots/gk_wham'
+
+# frame_per_microsec=1
+# currtime=$(echo "$frame * $frame_per_microsec" | bc)
+
+# if [ "$species" = "elc" ]; then mass=9.11e-31
+# elif [ "$species" = "ion" ]; then mass=3.34e-27
+# else echo "species must be ion or elc"
+# fi
+# psival=0.001
+
+# ### Positivity moments ###
+# pgkyl "$name"-"$species"_integrated_moms.gkyl -t f\
+#  "$name"-"$species"_positivity_shift_integrated_moms.gkyl -t p \
+#  activate -t f,p ev -t poverf 'p f /' \
+#  activate -t poverf pl --title "Mp/Mf" --saveas "$saveLoc-positivity-moms-over-f.png" --no-show&
+
+# if [ "$species" = "elc" ]; then
+#   # pgkyl "$name-elc_M0_$frame.gkyl" -t M0 "$name-elc_M1_$frame.gkyl" -t M1 \
+#   #   "$name-elc_M2par_$frame.gkyl" -t M2par "$name-elc_M2perp_$frame.gkyl" -t M2perp \
+#   #   "$name-field_$frame.gkyl" -t phi \
+#   #   activate -t M0,M1,M2par,M2perp interp -b ms -p1 select --z0 $psival ev -a -t res "M2par M1 M1 * M0 / - $mass * M0 / 1.6e-19 /" \
+#   #   activate -t M0,M2perp ev -a -t res2 "$mass M2perp M0 / * 1.6e-19 /"\
+#   #   activate -t res,res2 ev -a -t res3 "res2 2 * res + 3 /" \
+#   #   activate -t phi interp -b ms -p1 select -t phi_interp --z0 $psival \
+#   #   activate -t res3 select -t T0 --z0 0.0 --z1 0.0 \
+#   #   activate -t T0,phi_interp ev -a -t ephiTe "phi T0 /" \
+#   #   activate -t ephiTe select -t plotfit --z0 $psival \
+#   #   activate -t plotfit pl --title "Potential at psi = $psival, $currtime microseconds" -y "e phi / T" -x "Field line length (m)"\
+#   #    --saveas "$saveLoc-1d-ephiTe-$frame.png" --no-show&
+#   pgkyl "$name-elc_M0_$frame.gkyl" -t M0 "$name-elc_M1_$frame.gkyl" -t M1 \
+#     "$name-elc_M2par_$frame.gkyl" -t M2par "$name-elc_M2perp_$frame.gkyl" -t M2perp \
+#     "$name-field_$frame.gkyl" -t phi \
+#     activate -t M0,M1,M2par,M2perp interp -b ms -p1 ev -a -t res "M2par M1 M1 * M0 / - $mass * M0 / 1.6e-19 /" \
+#     activate -t M0,M2perp ev -a -t res2 "$mass M2perp M0 / * 1.6e-19 /" \
+#     activate -t res,res2 ev -a -t res3 "res2 2 * res + 3 /" \
+#     activate -t phi interp -t phi_interp -b ms -p1  \
+#     activate -t res3 select -t T0 --z1 0.0 \
+#     activate -t T0,phi_interp ev -a -t ephiTe "phi_interp T0 /" \
+#     activate -t ephiTe pl --title "Potential, $currtime microseconds" -y "Field line length (m)" -x "psi" --clabel "e phi / T" \
+#     --saveas "$saveLoc-2d-ephiTe-$frame.png" --no-show &
+#   # pgkyl "$name-field_$frame.gkyl" interp -b ms -p1 select --z0 $psival pl --title "phi, $currtime microseconds" \
+#   #   -x "Field line length (m)" -y "Electric potential (V)" --saveas "$saveLoc-1d-field-$frame.png" --no-show&
+#   pgkyl "$name-field_$frame.gkyl" interp -b ms -p1 pl --title "phi, $currtime microseconds" \
+#     -y "Field line length (m)" -x "Psi" --clabel "Electric potential (V)" --saveas "$saveLoc-2d-field-$frame.png" --no-show&
+#   # pgkyl "test_phi_pol.gkyl" interp -b mt -p2 select --z0 $psival pl --title "phi, $currtime microseconds" \
+#   #   -x "Field line length (m)" -y "Electric potential (V)" --saveas "python-plots/test_phi_pol-1d-field.png" --no-show&
+#   # pgkyl "test_phi_pol.gkyl" interp -b mt -p2 pl --title "phi, $currtime microseconds" \
+#   #   -y "Field line length (m)" -x "Psi" --clabel "Electric potential (V)" --saveas "python-plots/test_phi_pol-2d-field.png" --no-show&
+#   # pgkyl "$name-field_$frame.gkyl" -t Field test_phi_pol.gkyl -t phi activate -t Field interp -b ms -p1 select -t Field_proj \
+#   # --z1 0.0 activate -t phi interp -b mt -p2 select -t phi_proj --z1 0.0 activate -t phi_proj,Field_proj pl -f0 --title \
+#   # "phi (blue) vs phi_pol (orange), $currtime microseconds" --saveas "$saveLoc-$frame-1d-center-field.png" --no-show &
+# fi
+
+# ### 1D plots of distribution function at a certain psival ###
+# # pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 select --z0 $psival integrate 2 pl --title "$species distribution function integrating over vpar, $currtime microseconds"  \
+# #   --xscale 0.79233226837 -x "Field line length (m)" -y "Magnetic moment" --saveas "$saveLoc-"$species"_$frame-1d-vpar.png" --no-show &
+# # pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 select --z0 $psival integrate 3 pl --title "$species distribution function integrating over magnetic moment, $currtime microseconds" \
+# #   --xscale 0.79233226837 -x "Field line length (m)" -y "Parallel velocity (m/s)" --saveas "$saveLoc-"$species"_$frame-1d-mu.png" --no-show &
+# # for pos in 0.0001 0.59 0.97
+# # do
+# # for psipl in 0.0011 0.002 0.0029
+# # do
+# #   pos_map=$(echo "$pos * 0.79233226837" | bc)
+# #   pgkyl "$name-$species"_"$frame.gkyl" interp -b gkhyb -p1 select --z0 $psipl --z1 $pos_map pl --title "$species distribution function at z=$pos psi=$psipl, $currtime microseconds" \
+# #     --xscale 0.79233226837 -x "Parallel velocity (m/s)" -y "Magnetic moment" --saveas "$saveLoc-$species"_"$frame-1d-psi=$psipl-z=$pos.png" --no-show &
+# # done
+# # done
+
+# ### 1D plots of moments at a certain psival ###
+# # pgkyl "$name-$species"_prim_moms"_$frame.gkyl" interp -b ms -p1 select --z0 $psival pl --title "prim_moms, $currtime microseconds" \
+# #   --xscale 0.79233226837 -x "Field line length (m)" \
+# #   --saveas "$saveLoc-"$species"-1d-prim_moms-$frame.png" --no-show&
+# # pgkyl "$name-field_$frame.gkyl" interp -b ms -p1 select --z0 $psival pl --title "phi, $currtime microseconds" \
+# #   --xscale 0.79233226837 -x "Field line length (m)" -y "Electric potential (V)" --saveas "$saveLoc-1d-field-$frame.png" --no-show &
+# # pgkyl "$name-"$species"_M0_$frame.gkyl" -t M0 "$name-"$species"_M1_$frame.gkyl" -t M1 \
+# #   "$name-"$species"_M2par_$frame.gkyl" -t M2par activate -t M0,M1,M2par\
+# #   interp -b ms -p1 select --z0 $psival ev -a -t res "M2par M1 M1 * M0 / - $mass * M0 / 1.6e-19 /" \
+# #   activate -t res pl --title "$species Tpar (eV), $currtime microseconds" \
+# #   --xscale 0.79233226837 -x "Field line length (m)" -y "Temperature (eV)" --no-show \
+# #    --saveas "$saveLoc-"$species"-1d-Tpar-$frame.png" &
+# # pgkyl "$name-"$species"_M0_$frame.gkyl" -t M0 "$name-"$species"_M2perp_$frame.gkyl" -t M2perp \
+# #   activate -t M0,M2perp interp -b ms -p1 select --z0 $psival ev -a -t res "$mass M2perp M0 / * 1.6e-19 /" \
+# #   activate -t res pl --title "$species Tperp (eV), $currtime microseconds" \
+# #   --xscale 0.79233226837 -x "Field line length (m)" -y "Temperature (eV)" \
+# #   --saveas "$saveLoc-"$species"-1d-Tperp-$frame.png" --no-show&
+# # pgkyl "$name-"$species"_M0_$frame.gkyl" -t M0 "$name-"$species"_M1_$frame.gkyl" -t M1 \
+# #   "$name-"$species"_M2par_$frame.gkyl" -t M2par "$name-"$species"_M2perp_$frame.gkyl" -t M2perp \
+# #   activate -t M0,M1,M2par,M2perp interp -b ms -p1 select --z0 $psival ev -a -t res "M2par M1 M1 * M0 / - $mass * M0 / 1.6e-19 /" \
+# #   activate -t M0,M2perp ev -a -t res2 "$mass M2perp M0 / * 1.6e-19 /"\
+# #   activate -t res,res2 ev -a -t res3 "res2 2 * res + 3 /" \
+# #   activate -t res3 pl --title "$species T (eV), $currtime microseconds" \
+# #   --xscale 0.79233226837 -x "Field line length (m)" -y "Temperature (eV)"\
+# #    --saveas "$saveLoc-"$species"-1d-T-$frame.png" --no-show &
+# # pgkyl "$name-"$species"_M0_$frame.gkyl" interp -b ms -p1 select --z0 $psival pl --title "$species Density, $currtime microseconds" \
+# #   --xscale 0.79233226837 -x "Field line length (m)" -y "Density (m^-3)" --saveas "$saveLoc-"$species"-1d-density-$frame.png" --no-show &
+# # pgkyl "$name-"$species"_M0_$frame.gkyl" "$name-"$species"_M1_$frame.gkyl" \
+# #   interp -b ms -p1 select --z0 $psival ev "f[1] f[0] /" pl --title "$species Upar, $currtime microseconds" \
+# #   --xscale 0.79233226837 -x "Field line length (m)" -y "Parallel velocity (m/s)" --saveas "$saveLoc-"$species"-1d-upar-$frame.png" --no-show &
+
+# ### 2D plots of moments ###
 # pgkyl "$name-"$species"_M0_$frame.gkyl" -t M0 "$name-"$species"_M1_$frame.gkyl" -t M1 \
 #   "$name-"$species"_M2par_$frame.gkyl" -t M2par activate -t M0,M1,M2par\
-#   interp -b ms -p1 select --z0 $psival ev -a -t res "M2par M1 M1 * M0 / - $mass * M0 / 1.6e-19 /" \
+#   interp -b ms -p1 ev -a -t res "M2par M1 M1 * M0 / - $mass * M0 / 1.6e-19 /" \
 #   activate -t res pl --title "$species Tpar (eV), $currtime microseconds" \
-#   --xscale 0.79233226837 -x "Field line length (m)" -y "Temperature (eV)" --no-show \
-#    --saveas "$saveLoc-"$species"-1d-Tpar-$frame.png" &
+#   --yscale 0.79233226837 -y "Field line length (m)" -x "Psi" --clabel "Temperature (eV)" --saveas "$saveLoc-"$species"-2d-Tpar-$frame.png" --no-show &
 # pgkyl "$name-"$species"_M0_$frame.gkyl" -t M0 "$name-"$species"_M2perp_$frame.gkyl" -t M2perp \
-#   activate -t M0,M2perp interp -b ms -p1 select --z0 $psival ev -a -t res "$mass M2perp M0 / * 1.6e-19 /" \
+#   activate -t M0,M2perp interp -b ms -p1 ev -a -t res "$mass M2perp M0 / * 1.6e-19 / 2 /" \
 #   activate -t res pl --title "$species Tperp (eV), $currtime microseconds" \
-#   --xscale 0.79233226837 -x "Field line length (m)" -y "Temperature (eV)" \
-#   --saveas "$saveLoc-"$species"-1d-Tperp-$frame.png" --no-show&
+#   --yscale 0.79233226837 -y "Field line length (m)" -x "Psi" --clabel "Temperature (eV)" --saveas "$saveLoc-"$species"-2d-Tperp-$frame.png" --no-show &
 # pgkyl "$name-"$species"_M0_$frame.gkyl" -t M0 "$name-"$species"_M1_$frame.gkyl" -t M1 \
 #   "$name-"$species"_M2par_$frame.gkyl" -t M2par "$name-"$species"_M2perp_$frame.gkyl" -t M2perp \
-#   activate -t M0,M1,M2par,M2perp interp -b ms -p1 select --z0 $psival ev -a -t res "M2par M1 M1 * M0 / - $mass * M0 / 1.6e-19 /" \
-#   activate -t M0,M2perp ev -a -t res2 "$mass M2perp M0 / * 1.6e-19 /"\
+#   activate -t M0,M1,M2par,M2perp interp -b ms -p1 ev -a -t res "M2par M1 M1 * M0 / - $mass * M0 / 1.6e-19 /" \
+#   activate -t M0,M2perp ev -a -t res2 "$mass M2perp M0 / * 1.6e-19 / 2 /" \
+#   ## m/e (m2perp / m0) = Tperp (2?)
+#   ## Tpar = (M2par - M1^2 / M0) * mass / (e M0)
 #   activate -t res,res2 ev -a -t res3 "res2 2 * res + 3 /" \
 #   activate -t res3 pl --title "$species T (eV), $currtime microseconds" \
-#   --xscale 0.79233226837 -x "Field line length (m)" -y "Temperature (eV)"\
-#    --saveas "$saveLoc-"$species"-1d-T-$frame.png" --no-show &
-# pgkyl "$name-"$species"_M0_$frame.gkyl" interp -b ms -p1 select --z0 $psival pl --title "$species Density, $currtime microseconds" \
-#   --xscale 0.79233226837 -x "Field line length (m)" -y "Density (m^-3)" --saveas "$saveLoc-"$species"-1d-density-$frame.png" --no-show &
+#   --yscale 0.79233226837 -y "Field line length (m)" -x "Psi" --clabel "Temperature (eV)"\
+#   --saveas "$saveLoc-"$species"-2d-T-$frame.png" --no-show &
+# pgkyl "$name-"$species"_M0_$frame.gkyl" interp -b ms -p1 pl --title "$species Density, $currtime microseconds" \
+#   --yscale 0.79233226837 -y "Field line length (m)" -x "Psi" --clabel "Density (m^-3)" --logz --saveas "$saveLoc-"$species"-2d-log-density-$frame.png" --no-show &
+# pgkyl "$name-"$species"_M0_$frame.gkyl" interp -b ms -p1 pl --title "$species Density, $currtime microseconds" \
+#   --yscale 0.79233226837 -y "Field line length (m)" -x "Psi" --clabel "Density (m^-3)" --saveas "$saveLoc-"$species"-2d-density-$frame.png" --no-show &
 # pgkyl "$name-"$species"_M0_$frame.gkyl" "$name-"$species"_M1_$frame.gkyl" \
-#   interp -b ms -p1 select --z0 $psival ev "f[1] f[0] /" pl --title "$species Upar, $currtime microseconds" \
-#   --xscale 0.79233226837 -x "Field line length (m)" -y "Parallel velocity (m/s)" --saveas "$saveLoc-"$species"-1d-upar-$frame.png" --no-show &
-
-### 2D plots of moments ###
-pgkyl "$name-"$species"_M0_$frame.gkyl" -t M0 "$name-"$species"_M1_$frame.gkyl" -t M1 \
-  "$name-"$species"_M2par_$frame.gkyl" -t M2par activate -t M0,M1,M2par\
-  interp -b ms -p1 ev -a -t res "M2par M1 M1 * M0 / - $mass * M0 / 1.6e-19 /" \
-  activate -t res pl --title "$species Tpar (eV), $currtime microseconds" \
-  --yscale 0.79233226837 -y "Field line length (m)" -x "Psi" --clabel "Temperature (eV)" --saveas "$saveLoc-"$species"-2d-Tpar-$frame.png" --no-show &
-pgkyl "$name-"$species"_M0_$frame.gkyl" -t M0 "$name-"$species"_M2perp_$frame.gkyl" -t M2perp \
-  activate -t M0,M2perp interp -b ms -p1 ev -a -t res "$mass M2perp M0 / * 1.6e-19 / 2 /" \
-  activate -t res pl --title "$species Tperp (eV), $currtime microseconds" \
-  --yscale 0.79233226837 -y "Field line length (m)" -x "Psi" --clabel "Temperature (eV)" --saveas "$saveLoc-"$species"-2d-Tperp-$frame.png" --no-show &
-pgkyl "$name-"$species"_M0_$frame.gkyl" -t M0 "$name-"$species"_M1_$frame.gkyl" -t M1 \
-  "$name-"$species"_M2par_$frame.gkyl" -t M2par "$name-"$species"_M2perp_$frame.gkyl" -t M2perp \
-  activate -t M0,M1,M2par,M2perp interp -b ms -p1 ev -a -t res "M2par M1 M1 * M0 / - $mass * M0 / 1.6e-19 /" \
-  activate -t M0,M2perp ev -a -t res2 "$mass M2perp M0 / * 1.6e-19 / 2 /" \
-  ## m/e (m2perp / m0) = Tperp (2?)
-  ## Tpar = (M2par - M1^2 / M0) * mass / (e M0)
-  activate -t res,res2 ev -a -t res3 "res2 2 * res + 3 /" \
-  activate -t res3 pl --title "$species T (eV), $currtime microseconds" \
-  --yscale 0.79233226837 -y "Field line length (m)" -x "Psi" --clabel "Temperature (eV)"\
-  --saveas "$saveLoc-"$species"-2d-T-$frame.png" --no-show &
-pgkyl "$name-"$species"_M0_$frame.gkyl" interp -b ms -p1 pl --title "$species Density, $currtime microseconds" \
-  --yscale 0.79233226837 -y "Field line length (m)" -x "Psi" --clabel "Density (m^-3)" --logz --saveas "$saveLoc-"$species"-2d-log-density-$frame.png" --no-show &
-pgkyl "$name-"$species"_M0_$frame.gkyl" interp -b ms -p1 pl --title "$species Density, $currtime microseconds" \
-  --yscale 0.79233226837 -y "Field line length (m)" -x "Psi" --clabel "Density (m^-3)" --saveas "$saveLoc-"$species"-2d-density-$frame.png" --no-show &
-pgkyl "$name-"$species"_M0_$frame.gkyl" "$name-"$species"_M1_$frame.gkyl" \
-  interp -b ms -p1  ev "f[1] f[0] /" pl --title "$species Upar, $currtime microseconds" \
-  --yscale 0.79233226837 -y "Field line length (m)" -x "Psi" --clabel "Parallel velocity (m/s)" --saveas "$saveLoc-"$species"-2d-upar-$frame.png" --no-show &
-sleep 5s
-done
-done
+#   interp -b ms -p1  ev "f[1] f[0] /" pl --title "$species Upar, $currtime microseconds" \
+#   --yscale 0.79233226837 -y "Field line length (m)" -x "Psi" --clabel "Parallel velocity (m/s)" --saveas "$saveLoc-"$species"-2d-upar-$frame.png" --no-show &
+# sleep 5s
+# done
+# done
 
 # # Plot tperp at all frames
 # pgkyl "$name-"$species"_M0_[0-9]*.gkyl" -t M0 "$name-"$species"_M2perp_[0-9]*.gkyl" -t M2perp\
@@ -218,16 +229,16 @@ frame=0
 
 # Plot geometry quantities
 # echo "geometry"
-pgkyl "$name-"jacobgeo.gkyl interp -b ms -p1 pl --title "jacobgeo" --saveas "$saveLoc-geo-jacobgeo.png" --no-show &
-pgkyl "$name-"jacobtot.gkyl interp -b ms -p1 pl --title "jacobtot" --saveas "$saveLoc-geo-jacobtot.png" --no-show &
-pgkyl "$name-"jacobtot_inv.gkyl interp -b ms -p1 pl --title "jacobtot_inv" --saveas "$saveLoc-geo-jacobtot_inv.png" --no-show &
-pgkyl "$name-"jacobgeo_inv.gkyl interp -b ms -p1 pl --title "jacobgeo_inv" --saveas "$saveLoc-geo-jacobgeo_inv.png" --no-show &
-pgkyl "$name-"b_i.gkyl interp -b ms -p1 pl --title "b_i" --saveas "$saveLoc-geo-b_i.png" --no-show &
-pgkyl "$name-"mapc2p.gkyl interp -b ms -p1 pl --title "mapc2p" --saveas "$saveLoc-geo-mapc2p.png" --no-show &
-pgkyl "$name-"bmag.gkyl interp -b ms -p1 pl --title "bmag" --saveas "$saveLoc-geo-bmag.png" --no-show &
-pgkyl "$name-"bmag_inv.gkyl interp -b ms -p1 pl --title "bmag_inv" --saveas "$saveLoc-geo-bmag_inv.png" --no-show &
-pgkyl "$name-"bmag_inv_sq.gkyl interp -b ms -p1 pl --title "bmag_inv_sq" --saveas "$saveLoc-geo-bmag_inv_sq.png" --no-show &
-pgkyl "$name-"cmag.gkyl interp -b ms -p1 pl --title "cmag" --saveas "$saveLoc-geo-cmag.png" --no-show &
+# pgkyl "$name-"jacobgeo.gkyl interp -b ms -p1 pl --title "jacobgeo" --saveas "$saveLoc-geo-jacobgeo.png" --no-show &
+# pgkyl "$name-"jacobtot.gkyl interp -b ms -p1 pl --title "jacobtot" --saveas "$saveLoc-geo-jacobtot.png" --no-show &
+# pgkyl "$name-"jacobtot_inv.gkyl interp -b ms -p1 pl --title "jacobtot_inv" --saveas "$saveLoc-geo-jacobtot_inv.png" --no-show &
+# pgkyl "$name-"jacobgeo_inv.gkyl interp -b ms -p1 pl --title "jacobgeo_inv" --saveas "$saveLoc-geo-jacobgeo_inv.png" --no-show &
+# pgkyl "$name-"b_i.gkyl interp -b ms -p1 pl --title "b_i" --saveas "$saveLoc-geo-b_i.png" --no-show &
+# pgkyl "$name-"mapc2p.gkyl interp -b ms -p1 pl --title "mapc2p" --saveas "$saveLoc-geo-mapc2p.png" --no-show &
+# pgkyl "$name-"bmag.gkyl interp -b ms -p1 pl --title "bmag" --saveas "$saveLoc-geo-bmag.png" --no-show &
+# pgkyl "$name-"bmag_inv.gkyl interp -b ms -p1 pl --title "bmag_inv" --saveas "$saveLoc-geo-bmag_inv.png" --no-show &
+# pgkyl "$name-"bmag_inv_sq.gkyl interp -b ms -p1 pl --title "bmag_inv_sq" --saveas "$saveLoc-geo-bmag_inv_sq.png" --no-show &
+# pgkyl "$name-"cmag.gkyl interp -b ms -p1 pl --title "cmag" --saveas "$saveLoc-geo-cmag.png" --no-show &
 
 # Distribution function at a single velocity space point at all z
 # "$name-"$species"_[0-9]*.gkyl"\

@@ -12,15 +12,18 @@ import matplotlib.pyplot as plt
 import postgkyl as pg
 from matplotlib.colors import LogNorm
 import multiprocessing
+import imageio.v2 as imageio
+
 
 # dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-wham1x-compare_unif_vs_nonunif/outputs/'
 dataDir = '/global/homes/m/mhrosen/scratch/gkylmax/perlmutter-wham2x-kinetic/'
 unifFile = 'gk_wham'
-frame_max_plus1 = 34
+frame_max_plus1 = 72
 time_per_frame = 1e-6
 
-plot_potential_trace = 1
+plot_potential_trace = 0
 plot_bimax_moms = 1
+plot_integrate_positivity = 0
 
 # frame_arr = np.arange(0,11)
 # frame_arr = np.array([1:4])
@@ -266,7 +269,7 @@ if plot_bimax_moms:
     plot_moment_data(ephioTe, ax, fig, '$e \phi / T_e$', 4, 1)
 
     plt.tight_layout()
-    plt.savefig(outDir+'moments_'+str(frame_number)+figureFileFormat, dpi=600)
+    plt.savefig(outDir+'moments_'+str(frame_number)+figureFileFormat, dpi=300)
     plt.close()
 
   # Number of processes to run in parallel
@@ -278,7 +281,121 @@ if plot_bimax_moms:
   pool.map(make_moms, frame_arr)
   pool.close()
   pool.join()
+
+
+  # Define the filenames in order
+  # filenames = [f'moments_{i}.png' for i in range(0, frame_max_plus1)]
+  filenames = [outDir+f'moments_{i}.png' for i in range(0, frame_max_plus1)]
+
+  # Create a writer object specifying the output file name and frame rate
+  with imageio.get_writer(outDir+'moments_movie.mp4', mode='I', fps=5) as writer:
+      for filename in filenames:
+          image = imageio.imread(filename)
+          writer.append_data(image)
+  print("Movie created successfully.")
+
   
+if plot_integrate_positivity:
+    
+#     pgkyl "$name"-"$species"_integrated_moms.gkyl -t f\
+#  "$name"-"$species"_positivity_shift_integrated_moms.gkyl -t p \
+#  activate -t f,p ev -t poverf 'p f /' \
+#  activate -t poverf pl --title "Mp/Mf" --saveas "$saveLoc-positivity-moms-over-f.png" --no-show&
+
+    filename_elc = str(dataDir+unifFile+'-elc_integrated_moms.gkyl')
+    pgData_elc = pg.GData(filename_elc)
+    M_elc = pgData_elc.get_values()
+    M0_elc = np.array(M_elc[:,0])
+    M1_elc = np.array(M_elc[:,1])
+    M2par_elc = np.array(M_elc[:,2])
+    M2perp_elc = np.array(M_elc[:,3])
+    time = np.squeeze(np.array(pgData_elc.get_grid()))
+
+    n_elc = M0_elc
+    u_elc = M1_elc / M0_elc
+    Tpar_elc = (M2par_elc - u_elc / M0_elc) * me / eV / M0_elc
+    Tperp_elc = M2perp_elc / M0_elc * me / eV / 2.0
+    T_elc = (Tpar_elc + 2*Tperp_elc)/3
+
+    filename_elc_positivity = str(dataDir+unifFile+'-elc_positivity_shift_integrated_moms.gkyl')
+    pgData_elc_positivity = pg.GData(filename_elc_positivity)
+    M_elc_positivity = pgData_elc_positivity.get_values()
+    M0_elc_positivity = np.array(M_elc_positivity[:,0])
+    M1_elc_positivity = np.array(M_elc_positivity[:,1])
+    M2par_elc_positivity = np.array(M_elc_positivity[:,2])
+    M2perp_elc_positivity = np.array(M_elc_positivity[:,3])
+
+    n_elc_positivity = M0_elc_positivity
+    u_elc_positivity = M1_elc_positivity / M0_elc_positivity
+    Tpar_elc_positivity = (M2par_elc_positivity - u_elc_positivity / M0_elc_positivity) * me / eV / M0_elc_positivity
+    Tperp_elc_positivity = M2perp_elc_positivity / M0_elc_positivity * me / eV / 2.0
+    T_elc_positivity = (Tpar_elc_positivity + 2*Tperp_elc_positivity)/3
+
+    filename_ion = str(dataDir+unifFile+'-ion_integrated_moms.gkyl')
+    pgData_ion = pg.GData(filename_ion)
+    M_ion = pgData_ion.get_values()
+    M0_ion = np.array(M_ion[:,0])
+    M1_ion = np.array(M_ion[:,1])
+    M2par_ion = np.array(M_ion[:,2])
+    M2perp_ion = np.array(M_ion[:,3])
+
+    n_ion = M0_ion
+    u_ion = M1_ion / M0_ion
+    Tpar_ion = (M2par_ion - u_ion / M0_ion) * mi / eV / M0_ion
+    Tperp_ion = M2perp_ion / M0_ion * mi / eV / 2.0
+    T_ion = (Tpar_ion + 2*Tperp_ion)/3
+
+    filename_ion_positivity = str(dataDir+unifFile+'-ion_positivity_shift_integrated_moms.gkyl')
+    pgData_ion_positivity = pg.GData(filename_ion_positivity)
+    M_ion_positivity = pgData_ion_positivity.get_values()
+    M0_ion_positivity = np.array(M_ion_positivity[:,0])
+    M1_ion_positivity = np.array(M_ion_positivity[:,1])
+    M2par_ion_positivity = np.array(M_ion_positivity[:,2])
+    M2perp_ion_positivity = np.array(M_ion_positivity[:,3])
+
+    n_ion_positivity = M0_ion_positivity
+    u_ion_positivity = M1_ion_positivity / M0_ion_positivity
+    Tpar_ion_positivity = (M2par_ion_positivity - u_ion_positivity / M0_ion_positivity) * mi / eV / M0_ion_positivity
+    Tperp_ion_positivity = M2perp_ion_positivity / M0_ion_positivity * mi / eV / 2.0
+    T_ion_positivity = (Tpar_ion_positivity + 2*Tperp_ion_positivity)/3
+
+    fig, ax = plt.subplots(8, 3, figsize=(12,20))
+    fig.suptitle('Integrated moments', fontsize=20)
+
+    def plot_moment_data(data, ax, fig, title, locx, locy):
+      ax[locx,locy].plot(time, data)
+      ax[locx,locy].set_xlabel('Time, seconds')
+      ax[locx,locy].set_title(title)
+
+    plot_moment_data(n_elc, ax, fig, '$n_e$, $m^{-3}$', 0, 0)
+    plot_moment_data(u_elc, ax, fig, '$U_{e,||}$, $m/s$', 0, 2)
+    plot_moment_data(Tpar_elc, ax, fig, '$T_{e,||}$, $eV$', 1, 0)
+    plot_moment_data(Tperp_elc, ax, fig, '$T_{e,\perp}$, $eV$', 1, 1)
+    plot_moment_data(T_elc, ax, fig, '$T_e$, $eV$', 1, 2)
+
+    plot_moment_data(n_elc_positivity, ax, fig, 'Positivity $n_e$, $m^{-3}$', 2, 0)
+    plot_moment_data(u_elc_positivity, ax, fig, 'Positivity $U_{e,||}$, $m/s$', 2, 2)
+    plot_moment_data(Tpar_elc_positivity, ax, fig, 'Positivity $T_{e,||}$, $eV$', 3, 0)
+    plot_moment_data(Tperp_elc_positivity, ax, fig, 'Positivity $T_{e,\perp}$, $eV$', 3, 1)
+    plot_moment_data(T_elc_positivity, ax, fig, 'Positivity $T_e$, $eV$', 3, 2)
+
+    plot_moment_data(n_ion, ax, fig, '$n_i$, $m^{-3}$', 4, 0)
+    plot_moment_data(u_ion, ax, fig, '$U_{i,||}$, $m/s$', 4, 2)
+    plot_moment_data(Tpar_ion, ax, fig, '$T_{i,||}$, $eV$', 5, 0)
+    plot_moment_data(Tperp_ion, ax, fig, '$T_{i,\perp}$, $eV$', 5, 1)
+    plot_moment_data(T_ion, ax, fig, '$T_i$, $eV$', 5, 2)
+
+    plot_moment_data(n_ion_positivity, ax, fig, 'Positivity $n_i$, $m^{-3}$', 6, 0)
+    plot_moment_data(u_ion_positivity, ax, fig, 'Positivity $U_{i,||}$, $m/s$', 6, 2)
+    plot_moment_data(Tpar_ion_positivity, ax, fig, 'Positivity $T_{i,||}$, $eV$', 7, 0)
+    plot_moment_data(Tperp_ion_positivity, ax, fig, 'Positivity $T_{i,\perp}$, $eV$', 7, 1)
+    plot_moment_data(T_ion_positivity, ax, fig, 'Positivity $T_i$, $eV$', 7, 2)
+
+    plt.tight_layout()
+    plt.savefig(outDir+'integrated_moments'+figureFileFormat, dpi=600)
+    plt.close()
+
+
 
 #   #....................................DEPRICATED CODE............................................#
 

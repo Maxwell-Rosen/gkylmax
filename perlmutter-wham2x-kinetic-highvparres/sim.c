@@ -294,6 +294,9 @@ read_ion_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   interp_pt[3] = theta;
 
   double interp_val = LI_4D(dims, psi_grid, z_grid, v_grid, theta_grid, f_dist, interp_pt);
+  if (interp_val < 0.0) {
+    printf("Initilizing negative value for elc distf at t = %f, x = %f, y = %f, z = %f, vpar = %f, mu = %f\n", t, xn[0], xn[1], xn[2], xn[3]);
+  }
   fout[0] = interp_val;
 }
 
@@ -334,6 +337,9 @@ read_elc_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   interp_pt[3] = theta;
 
   double interp_val = LI_4D(dims, psi_grid, z_grid, v_grid, theta_grid, f_dist, interp_pt);
+  if (interp_val < 0.0) {
+    printf("Initilizing negative value for elc distf at t = %f, x = %f, y = %f, z = %f, vpar = %f, mu = %f\n", t, xn[0], xn[1], xn[2], xn[3]);
+  }
   fout[0] = interp_val * (1 - 0.9 * pow((xn[0] - app.psi_min)/(app.psi_max - app.psi_min),2));
 }
 
@@ -475,17 +481,17 @@ void mapc2p_vel_elc(double t, const double *vc, double* GKYL_RESTRICT vp, void *
   double mu_max_elc = app->mu_max_elc;
 
   double cvpar = vc[0], cmu = vc[1];
-  // double b = 1.45;
-  // double linear_velocity_threshold = 1./6.;
-  // double frac_linear = 1/b*atan(linear_velocity_threshold*tan(b));
-  // if (fabs(cvpar) < frac_linear) {
-  //   double func_frac = tan(frac_linear*b) / tan(b);
-  //   vp[0] = vpar_max_elc*func_frac*cvpar/frac_linear;
-  // }
-  // else {
-  //   vp[0] = vpar_max_elc*tan(cvpar*b)/tan(b);
-  // }
-  vp[0] = vc[0];
+  double b = 1.45;
+  double linear_velocity_threshold = 1./6.;
+  double frac_linear = 1/b*atan(linear_velocity_threshold*tan(b));
+  if (fabs(cvpar) < frac_linear) {
+    double func_frac = tan(frac_linear*b) / tan(b);
+    vp[0] = vpar_max_elc*func_frac*cvpar/frac_linear;
+  }
+  else {
+    vp[0] = vpar_max_elc*tan(cvpar*b)/tan(b);
+  }
+  // vp[0] = vc[0];
   // Quadratic map in mu.
   vp[1] = mu_max_elc*pow(cmu,2);
 }
@@ -546,7 +552,7 @@ create_ctx(void)
   double psi_max = 3e-3; // aim for 2e-2
 
   // Grid parameters
-  double vpar_max_elc = 6 * vte;
+  double vpar_max_elc = 30 * vte;
   double mu_max_elc = me * pow(3. * vte, 2.) / (2. * B_p);
   double vpar_max_ion = 30 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);

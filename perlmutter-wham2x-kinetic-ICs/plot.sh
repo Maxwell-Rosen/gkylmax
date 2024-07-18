@@ -3,8 +3,6 @@
 # name2="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nosource_nonuniform"
 name="gk_wham"
 # name="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nosource_nonuniform"
-# species="ion"
-# Make a loop to set species to "ion" and "elc"
 species="ion"
 # Make a loop to set species to "ion" and "elc"
 frame=0
@@ -13,34 +11,11 @@ pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 sel --z0 0.002 --z1 0.0
 pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 sel --z0 0.002 --z1 1.18 pl --title "$species frame $frame z=1.18" \
   --saveas "python-plots/$name-$species-$frame-1d-z=1,18.png" --no-show -x "vpar" -y "mu" &
 
-logzmin=1e-15
-pgkyl "$name-"$species"_[0-9]*.gkyl" \
-  interp -b gkhyb -p1 sel --z0 0.001 --z1 1.18 \
-  animate --saveas "python-plots/$name-$species-1d-z=1,18_log.mp4" --no-show -x "vpar" -y "mu" \
-   --title "$species distf at psi=0.001,z=1.18" \
-  --logz --zmin $logzmin 
-pgkyl "$name-"$species"_[0-9]*.gkyl" \
-  interp -b gkhyb -p1 sel --z0 0.001 --z1 0.0 \
-  animate --saveas "python-plots/$name-$species-1d-z=0_log.mp4" --no-show -x "vpar" -y "mu" \
-  --title "$species distf at psi=0.001,z=0" \
-  --logz --zmin $logzmin 
-
-pgkyl "$name-"$species"_[0-9]*.gkyl" \
-  interp -b gkhyb -p1 sel --z0 0.001 --z1 1.18 \
-  animate --saveas "python-plots/$name-$species-1d-z=1,18.mp4" --no-show -x "vpar" -y "mu" \
-   --title "$species distf at psi=0.001,z=1.18"
-pgkyl "$name-"$species"_[0-9]*.gkyl" \
-  interp -b gkhyb -p1 sel --z0 0.001 --z1 0.0 \
-  animate --saveas "python-plots/$name-$species-1d-z=0.mp4" --no-show -x "vpar" -y "mu" \
-  --title "$species distf at psi=0.001,z=0"
-pgkyl "$name-"$species"_[0-9]*.gkyl" \
-  interp -b gkhyb -p1 sel --z0 0.001 integrate 2 \
-  animate --saveas "python-plots/$name-$species-1d-psi=0,001-mu.mp4" --no-show -x "z, field line length" -y "mu" --title "$species distf at psi=0.001, integrating over vpar" \
-  --logz --zmin $logzmin
-pgkyl "$name-"$species"_[0-9]*.gkyl" \
-  interp -b gkhyb -p1 sel --z0 0.001 integrate 3 \
-  animate --saveas "python-plots/$name-$species-1d-psi=0,001-vpar.mp4" --no-show -x "z, field line length" -y "vpar" --title "$species distf at psi=0.001, integrating over mu" \
-  --logz --zmin $logzmin
+# pgkyl "$name-"$species"_[0-3]*.gkyl" interp -b gkhyb -p1 sel --z0 0.001 --z1 1.18 \
+#   animate --saveas "python-plots/$name-$species-1d-z=1,18.mp4" --no-show &
+# pgkyl "$name-ion_[0-9]*.gkyl"\
+#   interp -b gkhyb -p1 integrate 2 ev 'f[:] abs' animate --logz --zmin 1e-20 --fps 4 \
+#   --saveas "vpar.mp4" &
 
 # Make a loop over frame values between 0 and 10
 # for frame in {59..60}
