@@ -1,7 +1,7 @@
 #!/bin/bash -l
 
 #.Declare a name for this job, preferably with 16 or fewer characters.
-#SBATCH -J gkyl-wham
+#SBATCH -J wham2x-z
 #SBATCH -A m4414
 
 #.Request the queue (enter the possible names, if omitted, default is the default)
@@ -51,5 +51,13 @@ for file in $matching_files; do
     max_number="$number"
   fi
 done
-echo "srun -u -n 144 ./sim -g -M -d 144 -r $max_number"
-srun -u -n 144 ./sim -g -M -d 144 -r $max_number
+
+if (max_number=0); then
+  echo "No matching files found. Starting from the begining"
+  echo "srun -u -n 144 ./sim -g -M -d 144"
+  srun -u -n 144 ./sim -g -M -d 144
+else
+  echo "Resuming from file $max_number"
+  echo "srun -u -n 144 ./sim -g -M -d 144 -r $max_number"
+  srun -u -n 144 ./sim -g -M -d 144 -r $max_number
+fi

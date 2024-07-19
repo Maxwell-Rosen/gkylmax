@@ -1,7 +1,7 @@
 #!/bin/bash -l
 
 #.Declare a name for this job, preferably with 16 or fewer characters.
-#SBATCH -J gkyl-wham
+#SBATCH -J wham3x
 #SBATCH -A m4414
 
 #.Request the queue (enter the possible names, if omitted, default is the default)
@@ -9,12 +9,12 @@
 #SBATCH -q regular
 
 #.Number of nodes to request (Perlmutter has 64 cores and 4 GPUs per node)
-#SBATCH -N 25
-#SBATCH --ntasks 100
+#SBATCH -N 36
+#SBATCH --ntasks 144
 
 #.Specify GPU needs:
 #SBATCH --constraint gpu
-#SBATCH --gpus 100
+#SBATCH --gpus 144
 
 #.Request wall time
 #SBATCH -t 24:00:00
@@ -41,5 +41,23 @@ export MPICH_MPIIO_DVS_MAXNODES=24
 #.in the present directory. If it isn't, change `./` to point to the
 #.directory containing the executable.
 
-echo "srun -u -n 100 ./sim -g -M -d 100"
-srun -u -n 100 ./sim -g -M -e 100
+max_number=0
+matching_files=$(ls gk_wham-elc_BiMaxwellianMoments_*)
+for file in $matching_files; do
+  # # Extract the number between the prefix and suffix
+  number=$(echo "$file" | sed 's/gk_wham-elc_BiMaxwellianMoments_//; s/\.gkyl//')
+  # If the number is greater than the current max_number, update max_number and max_file
+  if [ "$number" -gt "$max_number" ]; then
+    max_number="$number"
+  fi
+done
+
+if (max_number=0); then
+  echo "No matching files found. Starting from the begining"
+  echo "srun -u -n 144 ./sim -g -M -d 144"
+  srun -u -n 144 ./sim -g -M -d 144
+else
+  echo "Resuming from file $max_number"
+  echo "srun -u -n 144 ./sim -g -M -d 144 -r $max_number"
+  srun -u -n 144 ./sim -g -M -d 144 -r $max_number
+fi

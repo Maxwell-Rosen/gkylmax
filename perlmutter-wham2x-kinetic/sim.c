@@ -272,9 +272,7 @@ read_ion_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   double z_max_geo =  2.48;
   double tmin = app.z_min;
   double tmax = app.z_max;
-  double x_fa[2];
-  gkyl_mirror_geo_comp2fieldalligned_advance(t, xn, x_fa, app.mirror_geo_c2fa_ctx);
-  double t_norm_cord = (x_fa[1] + tmin) / (tmax - tmin);
+  double t_norm_cord = (xn[1] + tmin) / (tmax - tmin);
   double z_cord = fabs(-z_min_geo + t_norm_cord * (z_max_geo - z_min_geo));
 
   // Calculate magnetic field at this point
@@ -294,6 +292,9 @@ read_ion_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   interp_pt[3] = theta;
 
   double interp_val = LI_4D(dims, psi_grid, z_grid, v_grid, theta_grid, f_dist, interp_pt);
+  if (interp_val < 0.0) {
+    interp_val = 0.0;
+  }
   fout[0] = interp_val;
 }
 
@@ -313,9 +314,7 @@ read_elc_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   double z_max_geo =  2.48;
   double tmin = app.z_min;
   double tmax = app.z_max;
-  double x_fa[2];
-  gkyl_mirror_geo_comp2fieldalligned_advance(t, xn, x_fa, app.mirror_geo_c2fa_ctx);
-  double t_norm_cord = (x_fa[1] + tmin) / (tmax - tmin);
+  double t_norm_cord = (xn[1] + tmin) / (tmax - tmin);
   double z_cord = fabs(-z_min_geo + t_norm_cord * (z_max_geo - z_min_geo));
 
   double interp_pt[4];
@@ -334,7 +333,10 @@ read_elc_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   interp_pt[3] = theta;
 
   double interp_val = LI_4D(dims, psi_grid, z_grid, v_grid, theta_grid, f_dist, interp_pt);
-  fout[0] = interp_val;
+  if (interp_val < 0.0){
+    interp_val = 0.0;
+  }
+  fout[0] = interp_val * (1 - 0.9 * pow((xn[0] - app.psi_min)/(app.psi_max - app.psi_min),2));
 }
 
 void
@@ -354,9 +356,7 @@ read_phi(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, v
   double z_max_geo =  2.48;
   double tmin = app.z_min;
   double tmax = app.z_max;
-  double x_fa[2];
-  gkyl_mirror_geo_comp2fieldalligned_advance(t, xn, x_fa, app.mirror_geo_c2fa_ctx);
-  double t_norm_cord = (x_fa[1] + tmin) / (tmax - tmin);
+  double t_norm_cord = (xn[1] + tmin) / (tmax - tmin);
   double z_cord = fabs(-z_min_geo + t_norm_cord * (z_max_geo - z_min_geo));
   interp_pt[1] = z_cord;
 
@@ -454,8 +454,16 @@ void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *
   double mu_max_ion = app->mu_max_ion;
 
   double cvpar = vc[0], cmu = vc[1];
-  double b = 1.4;
-  vp[0] = vpar_max_ion*tan(cvpar*b)/tan(b);
+  double b = 1.45;
+  double linear_velocity_threshold = 1./6.;
+  double frac_linear = 1/b*atan(linear_velocity_threshold*tan(b));
+  if (fabs(cvpar) < frac_linear) {
+    double func_frac = tan(frac_linear*b) / tan(b);
+    vp[0] = vpar_max_ion*func_frac*cvpar/frac_linear;
+  }
+  else {
+    vp[0] = vpar_max_ion*tan(cvpar*b)/tan(b);
+  }
   // Quadratic map in mu.
   vp[1] = mu_max_ion*pow(cmu,2);
 }
@@ -467,9 +475,17 @@ void mapc2p_vel_elc(double t, const double *vc, double* GKYL_RESTRICT vp, void *
   double mu_max_elc = app->mu_max_elc;
 
   double cvpar = vc[0], cmu = vc[1];
-  double b = 1.4;
-  vp[0] = vpar_max_elc*tan(cvpar*b)/tan(b);
-
+  double b = 1.45;
+  double linear_velocity_threshold = 1./6.;
+  double frac_linear = 1/b*atan(linear_velocity_threshold*tan(b));
+  if (fabs(cvpar) < frac_linear) {
+    double func_frac = tan(frac_linear*b) / tan(b);
+    vp[0] = vpar_max_elc*func_frac*cvpar/frac_linear;
+  }
+  else {
+    vp[0] = vpar_max_elc*tan(cvpar*b)/tan(b);
+  }
+  // vp[0] = vc[0];
   // Quadratic map in mu.
   vp[1] = mu_max_elc*pow(cmu,2);
 }
@@ -591,7 +607,6 @@ create_ctx(void)
     .num_failures_max = num_failures_max,
   };
   load_wham_distf(&ctx);
-  ctx.mirror_geo_c2fa_ctx = gkyl_malloc(sizeof(struct gkyl_mirror_geo_c2fa_ctx));
   return ctx;
 }
 
@@ -828,8 +843,6 @@ int main(int argc, char **argv)
       .world = {0.0},
       .mirror_efit_info = &inp,
       .mirror_grid_info = &ginp,
-      .mirror_geo_c2fa_ctx = ctx.mirror_geo_c2fa_ctx,
-      .nonuniform_mapping_fraction = (1 - (double)NZ / ctx.unif_z_cells),
     },
     .num_periodic_dir = 0,
     .periodic_dirs = {},
@@ -956,10 +969,6 @@ int main(int argc, char **argv)
   // Free resources after simulation completion.
   gkyl_gyrokinetic_app_release(app);
   free_wham_distf(&ctx);
-  struct gkyl_mirror_geo_c2fa_ctx *c2fa_release = ctx.mirror_geo_c2fa_ctx;
-  gkyl_array_release(c2fa_release->c2fa);
-  gkyl_array_release(c2fa_release->c2fa_deflate);
-  gkyl_free(c2fa_release);
   gkyl_rect_decomp_release(decomp);
   gkyl_comm_release(comm);
   mpifinalize:

@@ -13,13 +13,13 @@ import postgkyl as pg
 from matplotlib.colors import LogNorm
 import multiprocessing
 from scipy.integrate import cumulative_trapezoid as cumtrapz
+import imageio.v2 as imageio
 
 # dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-wham1x-compare_unif_vs_nonunif/outputs/'
 dataDir = './'
 unifFile = 'gk_wham'
 frame_max_plus1 = 7
 time_per_frame = 1e-6
-timestep = 4.4654e-12
 
 plot_potential_trace = 0
 plot_bimax_moms = 0
@@ -59,6 +59,7 @@ beta      = 0.4                              #[ Ratio of plasma to magnetic pres
 tau       = (B_p**2)*beta/(2*mu0*n0*Te0)-1    #[ Ti/Te ratio.
 Ti0       = tau*Te0
 
+timestep = 8.42244e-12
 
 #[ Thermal speeds.
 vti = np.sqrt(Ti0/mi)
@@ -108,6 +109,7 @@ def plot_verticalLinesPM(xIn, axIn):
 #   #................................................................................#
 
 if plot_potential_trace:
+  print("Plotting potential trace")
   filename_bmag = str(dataDir+unifFile+'-bmag.gkyl')
   pgData_bmag = pg.GData(filename_bmag)
   pgInterp_bmag = pg.GInterpModal(pgData_bmag, polyOrder, 'ms')
@@ -282,11 +284,23 @@ if plot_bimax_moms:
   pool.map(make_moms, frame_arr)
   pool.close()
   pool.join()
+
+
+  # Define the filenames in order
+  # filenames = [f'moments_{i}.png' for i in range(0, frame_max_plus1)]
+  filenames = [outDir+f'moments_{i}.png' for i in range(0, frame_max_plus1)]
+
+  # Create a writer object specifying the output file name and frame rate
+  with imageio.get_writer(outDir+'moments_movie.mp4', mode='I', fps=5) as writer:
+      for filename in filenames:
+          image = imageio.imread(filename)
+          writer.append_data(image)
+  print("Movie created successfully.")
   
 if plot_integrate_positivity:
     print("Getting integrated moments")
     
-#     pgkyl "$name"-"$species"_integrated_moms.gkyl -t f\
+#  pgkyl "$name"-"$species"_integrated_moms.gkyl -t f\
 #  "$name"-"$species"_positivity_shift_integrated_moms.gkyl -t p \
 #  activate -t f,p ev -t poverf 'p f /' \
 #  activate -t poverf pl --title "Mp/Mf" --saveas "$saveLoc-positivity-moms-over-f.png" --no-show&

@@ -13,15 +13,16 @@ import postgkyl as pg
 from matplotlib.colors import LogNorm
 import multiprocessing
 from scipy.integrate import cumulative_trapezoid as cumtrapz
+import imageio.v2 as imageio
 
 # dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-wham1x-compare_unif_vs_nonunif/outputs/'
 dataDir = './'
 unifFile = 'gk_wham'
-frame_max_plus1 = 26
+frame_max_plus1 = 4
 time_per_frame = 1e-6
 
-plot_potential_trace = 0
-plot_bimax_moms = 0
+plot_potential_trace = 1
+plot_bimax_moms = 1
 plot_integrate_positivity = 1
 
 # frame_arr = np.arange(0,11)
@@ -108,6 +109,7 @@ def plot_verticalLinesPM(xIn, axIn):
 #   #................................................................................#
 
 if plot_potential_trace:
+  print("Plotting potential trace")
   filename_bmag = str(dataDir+unifFile+'-bmag.gkyl')
   pgData_bmag = pg.GData(filename_bmag)
   pgInterp_bmag = pg.GInterpModal(pgData_bmag, polyOrder, 'ms')
@@ -282,6 +284,18 @@ if plot_bimax_moms:
   pool.map(make_moms, frame_arr)
   pool.close()
   pool.join()
+
+
+  # Define the filenames in order
+  # filenames = [f'moments_{i}.png' for i in range(0, frame_max_plus1)]
+  filenames = [outDir+f'moments_{i}.png' for i in range(0, frame_max_plus1)]
+
+  # Create a writer object specifying the output file name and frame rate
+  with imageio.get_writer(outDir+'moments_movie.mp4', mode='I', fps=5) as writer:
+      for filename in filenames:
+          image = imageio.imread(filename)
+          writer.append_data(image)
+  print("Movie created successfully.")
   
 if plot_integrate_positivity:
     print("Getting integrated moments")

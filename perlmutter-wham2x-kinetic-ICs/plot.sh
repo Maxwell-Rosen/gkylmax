@@ -6,10 +6,16 @@ name="gk_wham"
 species="ion"
 # Make a loop to set species to "ion" and "elc"
 frame=0
-pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 sel --z0 0.002 --z1 0.0 pl --title "$species frame $frame z=0" \
-  --saveas "python-plots/$name-$species-$frame-1d-z=0.png" --no-show -x "vpar" -y "mu" &
-pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 sel --z0 0.002 --z1 1.18 pl --title "$species frame $frame z=1.18" \
-  --saveas "python-plots/$name-$species-$frame-1d-z=1,18.png" --no-show -x "vpar" -y "mu" &
+saveLoc="python-plots/$name"
+# pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 sel --z0 0.002 --z1 0.0 pl --title "$species frame $frame z=0" \
+#   --saveas "python-plots/$name-$species-$frame-1d-z=0.png" --no-show -x "vpar" -y "mu" &
+# pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 sel --z0 0.002 --z1 1.18 pl --title "$species frame $frame z=1.18" \
+#   --saveas "python-plots/$name-$species-$frame-1d-z=1,18.png" --no-show -x "vpar" -y "mu" &
+
+pgkyl $name-npol.gkyl interp -b ms -p1 pl --title 'npol' \
+  --saveas "python-plots/$name-npol.png" --no-show -x "psi" -y "z"&
+pgkyl $name-den_mod.gkyl interp -b ms -p1 pl --title 'den_mod' \
+  --saveas "python-plots/$name-den_mod.png" --no-show  -x "psi" -y "z"&
 
 # pgkyl "$name-"$species"_[0-3]*.gkyl" interp -b gkhyb -p1 sel --z0 0.001 --z1 1.18 \
 #   animate --saveas "python-plots/$name-$species-1d-z=1,18.mp4" --no-show &
@@ -229,16 +235,15 @@ frame=0
 
 # Plot geometry quantities
 # echo "geometry"
-# pgkyl "$name-"jacobgeo.gkyl interp -b ms -p1 pl --title "jacobgeo" --saveas "$saveLoc-geo-jacobgeo.png" --no-show &
-# pgkyl "$name-"jacobtot.gkyl interp -b ms -p1 pl --title "jacobtot" --saveas "$saveLoc-geo-jacobtot.png" --no-show &
-# pgkyl "$name-"jacobtot_inv.gkyl interp -b ms -p1 pl --title "jacobtot_inv" --saveas "$saveLoc-geo-jacobtot_inv.png" --no-show &
-# pgkyl "$name-"jacobgeo_inv.gkyl interp -b ms -p1 pl --title "jacobgeo_inv" --saveas "$saveLoc-geo-jacobgeo_inv.png" --no-show &
-# pgkyl "$name-"b_i.gkyl interp -b ms -p1 pl --title "b_i" --saveas "$saveLoc-geo-b_i.png" --no-show &
-# pgkyl "$name-"mapc2p.gkyl interp -b ms -p1 pl --title "mapc2p" --saveas "$saveLoc-geo-mapc2p.png" --no-show &
-# pgkyl "$name-"bmag.gkyl interp -b ms -p1 pl --title "bmag" --saveas "$saveLoc-geo-bmag.png" --no-show &
-# pgkyl "$name-"bmag_inv.gkyl interp -b ms -p1 pl --title "bmag_inv" --saveas "$saveLoc-geo-bmag_inv.png" --no-show &
-# pgkyl "$name-"bmag_inv_sq.gkyl interp -b ms -p1 pl --title "bmag_inv_sq" --saveas "$saveLoc-geo-bmag_inv_sq.png" --no-show &
-# pgkyl "$name-"cmag.gkyl interp -b ms -p1 pl --title "cmag" --saveas "$saveLoc-geo-cmag.png" --no-show &
+pgkyl "$name-"b_i.gkyl interp -b ms -p1 pl --title "b_i" --saveas "$saveLoc-geo-b_i.png" --no-show &
+pgkyl "$name-"bmag_inv_sq.gkyl interp -b ms -p1 pl --title "bmag_inv_sq" --saveas "$saveLoc-geo-bmag_inv_sq.png" --no-show &
+pgkyl "$name-"bmag_inv.gkyl interp -b ms -p1 pl --title "bmag_inv" --saveas "$saveLoc-geo-bmag_inv.png" --no-show &
+pgkyl "$name-"bmag.gkyl interp -b ms -p1 pl --title "bmag" --saveas "$saveLoc-geo-bmag.png" --no-show &
+pgkyl "$name-"cmag.gkyl interp -b ms -p1 pl --title "cmag" --saveas "$saveLoc-geo-cmag.png" --no-show &
+pgkyl "$name-"jacobtot_inv.gkyl interp -b ms -p1 pl --title "jacobtot_inv" --saveas "$saveLoc-geo-jacobtot_inv.png" --no-show &
+pgkyl "$name-"jacobgeo.gkyl interp -b ms -p1 pl --title "jacobgeo" --saveas "$saveLoc-geo-jacobgeo.png" --no-show &
+pgkyl "$name-"jacobtot.gkyl interp -b ms -p1 pl --title "jacobtot" --saveas "$saveLoc-geo-jacobtot.png" --no-show &
+pgkyl "$name-"mapc2p.gkyl interp -b ms -p1 pl --title "mapc2p" --saveas "$saveLoc-geo-mapc2p.png" --no-show &
 
 # Distribution function at a single velocity space point at all z
 # "$name-"$species"_[0-9]*.gkyl"\
