@@ -57,7 +57,7 @@ create_ctx(void)
   double B0 = 1.0; // Reference magnetic field strength.
   double n0 = 1.0; // Reference number density.
   double vt = 1.0; // Reference thermal velocity. 
-  double nu = 100.0; // Collision frequency.
+  double nu = 10000.0; // Collision frequency.
 
   // Simulation parameters.
   int Nz = 64; // Cell count (configuration space: z-direction).
@@ -178,8 +178,8 @@ mapc2p(double t, const double* GKYL_RESTRICT zc, double* GKYL_RESTRICT xp, void*
 {
   // Set physical coordinates (X, Y, Z) from computational coordinates (x, y, z).
   xp[0] = zc[0]; xp[1] = zc[1]; 
-  xp[2] = map_theta_to_z(zc[2]);
-  // xp[2] = zc[2];
+  // xp[2] = map_theta_to_z(zc[2]);
+  xp[2] = zc[2];
 }
 
 void
@@ -305,7 +305,7 @@ main(int argc, char **argv)
 
   // GK app.
   struct gkyl_gk app_inp = {
-    .name = "gk_bgk_periodic_sod_shock_1x2v_p1_nonunif",
+    .name = "gk_bgk_periodic_sod_shock_1x2v_p1_unif",
 
     .cdim = 1, .vdim = 2,
     .lower = { -ctx.Lz },

@@ -55,9 +55,9 @@ done
 if (max_number=0); then
   echo "No matching files found. Starting from the begining"
   echo "srun -u -n 144 ./sim -g -M -d 144"
-  srun -u -n 144 ./sim -g -M -d 144
+  srun -u -n 144 ./sim -g -M -e 144
 else
   echo "Resuming from file $max_number"
   echo "srun -u -n 144 ./sim -g -M -d 144 -r $max_number"
-  srun -u -n 144 ./sim -g -M -d 144 -r $max_number
+  srun -u -n 144 ./sim -g -M -e 144 -r $max_number
 fi

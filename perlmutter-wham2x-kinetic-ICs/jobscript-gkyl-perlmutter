@@ -54,5 +54,6 @@ export MPICH_MPIIO_DVS_MAXNODES=24
 # echo "srun -u -n 52 ./sim -g -M -d 52 -r $max_number"
 # srun -u -n 52 ./sim -g -M -d 52 -r $max_number
 
-echo "srun -u -n 4 ./sim -g -M -d 4"
-srun -u -n 4 ./sim -g -M -d 4 -s1
+# echo "srun -u -n 32 ./sim -g -M -d 32"
+# srun -u -n 32 ./sim -g -M -d 32 -s1
+./sim -g -s1

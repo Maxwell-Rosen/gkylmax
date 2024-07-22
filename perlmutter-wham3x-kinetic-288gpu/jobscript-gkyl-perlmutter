@@ -58,6 +58,6 @@ if (max_number=0); then
   srun -u -n 288 ./sim -g -M -d 288
 else
   echo "Resuming from file $max_number"
-  echo "srun -u -n 144 ./sim -g -M -d 144 -r $max_number"
-  srun -u -n 288 ./sim -g -M -d 288 -r $max_number
+  echo "srun -u -n 288 ./sim -g -M -e 288 -r $max_number"
+  srun -u -n 288 ./sim -g -M -e 288 -r $max_number
 fi

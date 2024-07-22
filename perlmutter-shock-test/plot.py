@@ -5,8 +5,8 @@ from matplotlib.colors import LogNorm
 import multiprocessing
 from scipy.integrate import cumulative_trapezoid as cumtrapz
 
-dataDir = './outputs/'
-unifFile = 'gk_bgk_periodic_sod_shock_1x2v_p1'
+dataDir = './'
+unifFile = 'gk_bgk_periodic_sod_shock_1x2v_p1_unif'
 nonunifFile = 'gk_bgk_periodic_sod_shock_1x2v_p1_nonunif'
 outDir = './python-plots/'
 polyOrder = 1

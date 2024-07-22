@@ -114,7 +114,7 @@ struct gk_mirror_ctx
 
 struct gkyl_mirror_geo_efit_inp inp = {
   // psiRZ and related inputs
-  .filepath = "../eqdsk/wham_dia_hires.geqdsk",
+  .filepath = "../eqdsk/wham_vac_hires.geqdsk",
   // .filepath = "../eqdsk/wham.geqdsk",
   .rzpoly_order = 2,
   .fluxpoly_order = 1,
@@ -551,11 +551,11 @@ create_ctx(void)
   double mu_max_elc = me * pow(3. * vte, 2.) / (2. * B_p);
   double vpar_max_ion = 30 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
-  int num_cell_vpar = 8; // 96 uniform
-  int num_cell_mu = 8;  // 192 uniform
-  int num_cell_z = 16;
+  int num_cell_vpar = 2; // 96 uniform
+  int num_cell_mu = 2;  // 192 uniform
+  int num_cell_z = 288;
   int unif_z_cells = 288;
-  int num_cell_psi = 2;
+  int num_cell_psi = 16;
   int poly_order = 1;
   double final_time = 500e-6;
   int num_frames = 500;
