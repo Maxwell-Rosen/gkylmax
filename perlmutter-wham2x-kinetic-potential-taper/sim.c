@@ -78,7 +78,6 @@ struct gk_mirror_ctx
   int num_cell_z;
   int unif_z_cells;
   int num_cell_psi;
-  int num_cell_angle;
   int poly_order;
   double final_time;
   int num_frames;
@@ -271,7 +270,7 @@ read_ion_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   double z_max_geo =  2.48;
   double tmin = app.z_min;
   double tmax = app.z_max;
-  double t_norm_cord = (xn[2] + tmin) / (tmax - tmin);
+  double t_norm_cord = (xn[1] + tmin) / (tmax - tmin);
   double z_cord = fabs(-z_min_geo + t_norm_cord * (z_max_geo - z_min_geo));
 
   // Calculate magnetic field at this point
@@ -281,8 +280,8 @@ read_ion_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   double B_val = LI_2D(dims, psi_grid, z_grid, app.B_grid, interp_pt);
 
   // Must convert the point xn from cartesian to polar
-  double vpar = xn[3];
-  double mu = xn[4];
+  double vpar = xn[2];
+  double mu = xn[3];
   double vperp = sqrt((2.0 * B_val * mu) / app.mi);
   double v = sqrt(pow(vpar, 2) + pow(vperp, 2));
   double theta = atan2(vperp, vpar);
@@ -313,7 +312,7 @@ read_elc_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   double z_max_geo =  2.48;
   double tmin = app.z_min;
   double tmax = app.z_max;
-  double t_norm_cord = (xn[2] + tmin) / (tmax - tmin);
+  double t_norm_cord = (xn[1] + tmin) / (tmax - tmin);
   double z_cord = fabs(-z_min_geo + t_norm_cord * (z_max_geo - z_min_geo));
 
   double interp_pt[4];
@@ -322,8 +321,8 @@ read_elc_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   double B_val = LI_2D(dims, psi_grid, z_grid, app.B_grid, interp_pt);
 
   // Must convert the point xn from cartesian to polar
-  double vpar = xn[3];
-  double mu = xn[4];
+  double vpar = xn[2];
+  double mu = xn[3];
   double vperp = sqrt((2.0 * B_val * mu) / app.me);
   double v = sqrt(pow(vpar, 2) + pow(vperp, 2));
   double theta = atan2(vperp, vpar);
@@ -353,14 +352,17 @@ read_phi(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, v
   // FROM GEOMETRY INPUT HARDCOPY
   double z_min_geo = -2.48;
   double z_max_geo =  2.48;
+  double z_throat_approx = 1.0;
   double tmin = app.z_min;
   double tmax = app.z_max;
-  double t_norm_cord = (xn[2] + tmin) / (tmax - tmin);
+  double t_norm_cord = (xn[1] + tmin) / (tmax - tmin);
   double z_cord = fabs(-z_min_geo + t_norm_cord * (z_max_geo - z_min_geo));
   interp_pt[1] = z_cord;
 
   double interp_val = LI_2D(dims, psi_grid, z_grid, phi_vals, interp_pt);
-  fout[0] = interp_val * (1 - pow((xn[0] - app.psi_min)/(app.psi_max - app.psi_min),2));
+  double radial_scaling = 1 - pow((xn[0] - app.psi_min)/(app.psi_max - app.psi_min),2);
+  double z_scaling = fmax(0, fmin(1, 1 - pow(fabs(z_cord)/z_throat_approx,2)));
+  fout[0] = interp_val * radial_scaling * z_scaling;
 }
 
 void
@@ -549,15 +551,14 @@ create_ctx(void)
   double mu_max_elc = me * pow(3. * vte, 2.) / (2. * B_p);
   double vpar_max_ion = 30 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
-  int num_cell_vpar = 32; // 32
-  int num_cell_mu = 32;  // 32
-  int num_cell_z = 288;  //100
-  int unif_z_cells = 288; //288 for 1d published results
-  int num_cell_psi = 16; //16
-  int num_cell_angle = 16; //16
+  int num_cell_vpar = 32; // 96 uniform
+  int num_cell_mu = 32;  // 192 uniform
+  int num_cell_z = 288;
+  int unif_z_cells = 288;
+  int num_cell_psi = 16;
   int poly_order = 1;
   double final_time = 500e-6;
-  int num_frames = 5000;
+  int num_frames = 500;
   int int_diag_calc_num = num_frames*100;
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
   int num_failures_max = 20; // Maximum allowable number of consecutive small time-steps.
@@ -597,7 +598,6 @@ create_ctx(void)
     .num_cell_psi = num_cell_psi,
     .num_cell_z = num_cell_z,
     .unif_z_cells = unif_z_cells,
-    .num_cell_angle = num_cell_angle,
     .num_cell_vpar = num_cell_vpar,
     .num_cell_mu = num_cell_mu,
     .poly_order = poly_order,
@@ -657,8 +657,7 @@ int main(int argc, char **argv)
   }
   struct gk_mirror_ctx ctx = create_ctx(); // context for init functions
   int NPSI = APP_ARGS_CHOOSE(app_args.xcells[0], ctx.num_cell_psi);
-  int NTHETA = APP_ARGS_CHOOSE(app_args.xcells[1], ctx.num_cell_angle);
-  int NZ = APP_ARGS_CHOOSE(app_args.xcells[2], ctx.num_cell_z);
+  int NZ = APP_ARGS_CHOOSE(app_args.xcells[1], ctx.num_cell_z);
   int NV = APP_ARGS_CHOOSE(app_args.vcells[0], ctx.num_cell_vpar);
   int NMU = APP_ARGS_CHOOSE(app_args.vcells[1], ctx.num_cell_mu);
 
@@ -669,7 +668,7 @@ int main(int argc, char **argv)
 #endif  
 
   // create global range
-  int ccells[] = { NPSI, NTHETA, NZ };
+  int ccells[] = { NPSI, NZ };
   int cdim = sizeof(ccells)/sizeof(ccells[0]);
   struct gkyl_range cglobal_r;
   gkyl_create_global_range(cdim, ccells, &cglobal_r);
@@ -766,7 +765,7 @@ int main(int argc, char **argv)
       .lower = {.type = GKYL_SPECIES_REFLECT,},
       .upper = {.type = GKYL_SPECIES_ZERO_FLUX,},
     },
-    .bcz = {
+    .bcy = {
       .lower={.type = GKYL_SPECIES_GK_SHEATH,},
       .upper={.type = GKYL_SPECIES_GK_SHEATH,},
     },
@@ -805,7 +804,7 @@ int main(int argc, char **argv)
       .lower = {.type = GKYL_SPECIES_REFLECT},
       .upper = {.type = GKYL_SPECIES_ZERO_FLUX},
     },
-    .bcz = {
+    .bcy = {
       .lower={.type = GKYL_SPECIES_GK_SHEATH,},
       .upper={.type = GKYL_SPECIES_GK_SHEATH,},
     },    
@@ -822,31 +821,32 @@ int main(int argc, char **argv)
   struct gkyl_gyrokinetic_field field = {
     .fem_parbc = GKYL_FEM_PARPROJ_NONE,
     .poisson_bcs = {
-      .lo_type = {GKYL_POISSON_NEUMANN,   GKYL_POISSON_PERIODIC},
-      .up_type = {GKYL_POISSON_DIRICHLET, GKYL_POISSON_PERIODIC},
-      .lo_value = {0.0, 0.0},
-      .up_value = {0.0, 0.0},
+      .lo_type = {GKYL_POISSON_NEUMANN},
+      .up_type = {GKYL_POISSON_DIRICHLET},
+      .lo_value = {0.0},
+      .up_value = {0.0},
     },
     .polarization_phi = read_phi,
     .polarization_phi_ctx = &ctx,
   };
   struct gkyl_gk gk = {  // GK app
     .name = "gk_wham",
-    .cdim = 3,
+    .cdim = 2,
     .vdim = 2,
-    .lower = {ctx.psi_min, -M_PI, ctx.z_min},
-    .upper = {ctx.psi_max,  M_PI, ctx.z_max},
-    .cells = {NPSI, NTHETA, NZ},
+    .lower = {ctx.psi_min, ctx.z_min},
+    .upper = {ctx.psi_max, ctx.z_max},
+    .cells = {NPSI, NZ},
     .poly_order = ctx.poly_order,
     .basis_type = app_args.basis_type,
     .geometry = {
       // .geometry_id = GKYL_GEOMETRY_FROMFILE
       .geometry_id = GKYL_MIRROR,
+      .world = {0.0},
       .mirror_efit_info = &inp,
       .mirror_grid_info = &ginp,
     },
-    .num_periodic_dir = 1,
-    .periodic_dirs = {1},
+    .num_periodic_dir = 0,
+    .periodic_dirs = {},
     .num_species = 2,
     .species = {elc, ion},
     .field = field,

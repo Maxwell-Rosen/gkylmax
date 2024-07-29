@@ -16,6 +16,14 @@ pgkyl $name-npol.gkyl interp -b ms -p1 pl --title 'npol' \
   --saveas "python-plots/$name-npol.png" --no-show -x "psi" -y "z"&
 pgkyl $name-den_mod.gkyl interp -b ms -p1 pl --title 'den_mod' \
   --saveas "python-plots/$name-den_mod.png" --no-show  -x "psi" -y "z"&
+pgkyl $name-m0.gkyl interp -b ms -p1 pl --title 'm0' \
+  --saveas "python-plots/$name-m0.png" --no-show  -x "psi" -y "z"&
+pgkyl $name-npol.gkyl interp -b ms -p1 pl --title 'npol' \
+  --saveas "python-plots/$name-npol-logz.png" --no-show -x "psi" -y "z" --logz &
+pgkyl $name-den_mod.gkyl interp -b ms -p1 pl --title 'den_mod' \
+  --saveas "python-plots/$name-den_mod-logz.png" --no-show  -x "psi" -y "z" --logz &
+pgkyl $name-m0.gkyl interp -b ms -p1 pl --title 'm0' \
+  --saveas "python-plots/$name-m0-logz.png" --no-show  -x "psi" -y "z" --logz &
 
 # pgkyl "$name-"$species"_[0-3]*.gkyl" interp -b gkhyb -p1 sel --z0 0.001 --z1 1.18 \
 #   animate --saveas "python-plots/$name-$species-1d-z=1,18.mp4" --no-show &

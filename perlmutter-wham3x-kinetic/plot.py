@@ -18,8 +18,8 @@ import imageio.v2 as imageio
 # dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-wham1x-compare_unif_vs_nonunif/outputs/'
 dataDir = './'
 unifFile = 'gk_wham'
-frame_max_plus1 = 1
-time_per_frame = 1e-6
+frame_max_plus1 = 15
+time_per_frame = 1e-7
 
 plot_potential_trace = 0
 plot_bimax_moms = 1
@@ -116,8 +116,9 @@ if plot_potential_trace:
   x_bmag, dataOut_bmag = pgInterp_bmag.interpolate()
 
   bmag_shape = dataOut_bmag.shape
-  midpoint = int(bmag_shape[1]/2)
-  upperhalf = dataOut_bmag[0,midpoint:]
+  print(bmag_shape)
+  midpoint = int(bmag_shape[2]/2)
+  upperhalf = dataOut_bmag[0,0,midpoint:,0]
   peak = np.argmax(upperhalf)
   peak_idx = midpoint+peak
 
@@ -134,7 +135,7 @@ if plot_potential_trace:
     pgInterp_elc = pg.GInterpModal(pgData_elc, polyOrder, 'ms')
     coords, Tpar_elc = pgInterp_elc.interpolate(2)
     coords, Tperp_elc = pgInterp_elc.interpolate(3)
-    Temp = (Tpar_elc[0,midpoint,0] + 2*Tperp_elc[0,midpoint,0])/3 * me / eV
+    Temp = (Tpar_elc[0,0,midpoint,0] + 2*Tperp_elc[0,0,midpoint,0])/3 * me / eV
     return Temp
 
   potential = np.zeros(frame_max_plus1)
@@ -142,20 +143,20 @@ if plot_potential_trace:
   for i in range(frame_max_plus1):
     dataOut_phi = loadphi(i)
     Temp[i] = get_temp(i)
-    midphi = dataOut_phi[0,midpoint]
-    phi_peak = dataOut_phi[0,peak_idx]
+    midphi = dataOut_phi[0,0,midpoint]
+    phi_peak = dataOut_phi[0,0,peak_idx]
     potential[i] = (midphi[0] - phi_peak[0]) / Temp[i]
 
   Temp = Temp*eV
 
-  plt.plot(np.arange(frame_max_plus1)*1e-6, potential)
+  plt.plot(np.arange(frame_max_plus1)*time_per_frame, potential)
   plt.xlabel('Time, seconds')
   plt.ylabel('Potential difference, $e \phi / T_e(\psi_{min},z=0)$')
   plt.title('Potential difference between midplane and peak magnetic field')
   plt.savefig(outDir+'potential_trace'+figureFileFormat)
   plt.close()
 
-  plt.plot(np.arange(frame_max_plus1)*1e-6, Temp/eV)
+  plt.plot(np.arange(frame_max_plus1)*time_per_frame, Temp/eV)
   plt.xlabel('Time, seconds')
   plt.ylabel('Temperature, $T_e(\psi_{min},z=0)$')
   plt.title('Temperature at midplane')
@@ -186,11 +187,13 @@ if plot_bimax_moms:
     pgInterp_field = pg.GInterpModal(pgData_field, polyOrder, 'ms')
     coords, phi = pgInterp_field.interpolate()
 
+
+
     data = pg.GData(str(dataDir+unifFile+"-nodes.gkyl"))
     vals = data.get_values()
-    nodes_R = vals[:,:,0]
-    nodes_Z = vals[:,:,1]
-    nodes_phi = vals[:,:,2]
+    nodes_X = vals[:,:,:,0]
+    nodes_Y = vals[:,:,:,1]
+    nodes_Z = vals[:,:,:,2]
 
     def expand_1D_array(original_array):
       new_length = 2 * len(original_array) - 1
@@ -259,73 +262,153 @@ if plot_bimax_moms:
       new_array[0,:,:] = expand_2D_array(original_array[0,:,:])
       new_array[-1,:,:] = expand_2D_array(original_array[-1,:,:])
       return new_array
-
     
-    nodes_Z = expand_2D_array(nodes_Z)
+    mc2p_R = expand_3D_array(nodes_X)
+    mc2p_Z = expand_3D_array(nodes_Y)
+    mc2p_phi = expand_3D_array(nodes_Z)
+    mc2p_x = mc2p_R * np.cos(mc2p_phi)
+    mc2p_y = mc2p_R * np.sin(mc2p_phi)
+    mc2p_z = mc2p_Z
 
-
-    n_elc = n_elc[:,:,0]
-    u_elc = u_elc[:,:,0]
-    Tpar_elc = Tpar_elc[:,:,0] * me / eV
-    Tperp_elc = Tperp_elc[:,:,0] * me / eV
+    n_elc = n_elc[:,:,:,0]
+    u_elc = u_elc[:,:,:,0]
+    Tpar_elc = Tpar_elc[:,:,:,0] * me / eV
+    Tperp_elc = Tperp_elc[:,:,:,0] * me / eV
     T_elc = (Tpar_elc + 2*Tperp_elc)/3
-    n_ion = n_ion[:,:,0]
-    u_ion = u_ion[:,:,0]
-    Tpar_ion = Tpar_ion[:,:,0] * mi / eV
-    Tperp_ion = Tperp_ion[:,:,0] * mi / eV
+    n_ion = n_ion[:,:,:,0]
+    u_ion = u_ion[:,:,:,0]
+    Tpar_ion = Tpar_ion[:,:,:,0] * mi / eV
+    Tperp_ion = Tperp_ion[:,:,:,0] * mi / eV
     T_ion = (Tpar_ion + 2*Tperp_ion)/3
-    phi = phi[:,:,0]
-    midplane_Te = T_elc[:,T_elc.shape[1]//2]
-    ephioTe =  phi / midplane_Te[:,None]
+    phi = phi[:,:,:,0]
+    midplane_Te = T_elc[:,:,T_elc.shape[1]//2]
+    ephioTe =  phi / midplane_Te[:,:,None]
+
+    shape_arr = np.shape(n_elc)
+    z_midpoint = shape_arr[2]//2    
 
     # make an array grid that is the size of coords
 
-    X = nodes_Z[0,:]
-    Y = coords[0]
 
+    # X = mc2p_z
+    # Y = mc2p_x
+
+    def make_2d_plot(dimms, val):
+      
+      if dimms[0] == 0:
+        n_elc_slice = n_elc[val,:,:]
+        u_elc_slice = u_elc[val,:,:]
+        Tpar_elc_slice = Tpar_elc[val,:,:]
+        Tperp_elc_slice = Tperp_elc[val,:,:]
+        T_elc_slice = T_elc[val,:,:]
+        n_ion_slice = n_ion[val,:,:]
+        u_ion_slice = u_ion[val,:,:]
+        Tpar_ion_slice = Tpar_ion[val,:,:]
+        Tperp_ion_slice = Tperp_ion[val,:,:]
+        T_ion_slice = T_ion[val,:,:]
+        phi_slice = phi[val,:,:]
+        ephioTe_slice = ephioTe[val,:,:]
+        X = mc2p_z[val,0,:]
+        Y = coords[1]
+      elif dimms[1] == 0:
+        n_elc_slice = n_elc[:,val,:]
+        u_elc_slice = u_elc[:,val,:]
+        Tpar_elc_slice = Tpar_elc[:,val,:]
+        Tperp_elc_slice = Tperp_elc[:,val,:]
+        T_elc_slice = T_elc[:,val,:]
+        n_ion_slice = n_ion[:,val,:]
+        u_ion_slice = u_ion[:,val,:]
+        Tpar_ion_slice = Tpar_ion[:,val,:]
+        Tperp_ion_slice = Tperp_ion[:,val,:]
+        T_ion_slice = T_ion[:,val,:]
+        phi_slice = phi[:,val,:]
+        ephioTe_slice = ephioTe[:,val,:]
+        X = mc2p_z[0,val,:]
+        Y = coords[0]
+      elif dimms[2] == 0:
+        n_elc_slice = n_elc[:,:,val]
+        u_elc_slice = u_elc[:,:,val]
+        Tpar_elc_slice = Tpar_elc[:,:,val]
+        Tperp_elc_slice = Tperp_elc[:,:,val]
+        T_elc_slice = T_elc[:,:,val]
+        n_ion_slice = n_ion[:,:,val]
+        u_ion_slice = u_ion[:,:,val]
+        Tpar_ion_slice = Tpar_ion[:,:,val]
+        Tperp_ion_slice = Tperp_ion[:,:,val]
+        T_ion_slice = T_ion[:,:,val]
+        phi_slice = phi[:,:,val]
+        ephioTe_slice = ephioTe[:,:,val]
+        X = mc2p_x[:,:,val]
+        Y = mc2p_y[:,:,val]
+
+
+      fig, ax = plt.subplots(5, 3, figsize=(12,12))
+
+      if dimms[0] == 0:
+        fig.suptitle(str(frame_number*time_per_frame)+' seconds, psi = '+str(coords[0][val]), fontsize=20)
+      elif dimms[1] == 0:
+        fig.suptitle(str(frame_number*time_per_frame)+' seconds, theta = '+str(coords[1][val]), fontsize=20)
+      elif dimms[2] == 0:
+        fig.suptitle(str(frame_number*time_per_frame)+' seconds, z = '+str(mc2p_z[0,0,val]), fontsize=20)
+
+      def plot_moment_data(data, ax, fig, title, locx, locy):
+        ax[locx,locy].pcolormesh(X,Y,data,cmap='inferno')
+        if dimms[0] == 0:
+          ax[locx,locy].set_xlabel('Z cylindrical axis, m')
+          ax[locx,locy].set_ylabel('Theta, radians')
+        elif dimms[1] == 0:
+          ax[locx,locy].set_xlabel('Z cylindrical axis, m')
+          ax[locx,locy].set_ylabel('Psi')
+        elif dimms[2] == 0:
+          ax[locx,locy].set_xlabel('X cartesian axis, m')
+          ax[locx,locy].set_ylabel('Y cartesian axis, m')
+        ax[locx,locy].set_title(title, fontsize=16)
+        fig.colorbar(ax[locx,locy].pcolormesh(X,Y,data,cmap='inferno'), ax=ax[locx,locy])
+
+
+
+      plot_moment_data(n_elc_slice, ax, fig, '$n_e$, $m^{-3}$', 0, 0)
+      plot_moment_data(u_elc_slice, ax, fig, '$U_{e,||}$, $m/s$', 0, 2)
+      plot_moment_data(Tpar_elc_slice, ax, fig, '$T_{e,||}$, $eV$', 1, 0)
+      plot_moment_data(Tperp_elc_slice, ax, fig, '$T_{e,\perp}$, $eV$', 1, 1)
+      plot_moment_data(T_elc_slice, ax, fig, '$T_e$, $eV$', 1, 2)
+      plot_moment_data(n_ion_slice, ax, fig, '$n_i$, $m^{-3}$', 2, 0)
+      plot_moment_data(u_ion_slice, ax, fig, '$U_{i,||}$, $m/s$', 2, 2)
+      plot_moment_data(Tpar_ion_slice, ax, fig, '$T_{i,||}$, $eV$', 3, 0)
+      plot_moment_data(Tperp_ion_slice, ax, fig, '$T_{i,\perp}$, $eV$', 3, 1)
+      plot_moment_data(T_ion_slice, ax, fig, '$T_i$, $eV$', 3, 2)
+
+      # Plot electron density on a log scale
+      ax[0,1].pcolormesh(X,Y,n_elc_slice,norm=LogNorm(),cmap='inferno')
+      ax[0,1].set_xlabel('Z cylindrical axis, m')
+      ax[0,1].set_ylabel('Psi')
+      ax[0,1].set_title('$n_e$ (log scale) $m^{-3}$', fontsize=16)
+      fig.colorbar(ax[0,1].pcolormesh(X,Y,n_elc_slice,norm=LogNorm(),cmap='inferno'), ax=ax[0,1])
+
+      # Plot the ion density on a log scale
+      ax[2,1].pcolormesh(X,Y,n_ion_slice,norm=LogNorm(),cmap='inferno')
+      ax[2,1].set_xlabel('Z cylindrical axis, m')
+      ax[2,1].set_ylabel('Psi')
+      ax[2,1].set_title('$n_i$ (log scale) $m^{-3}$', fontsize=16)
+      fig.colorbar(ax[2,1].pcolormesh(X,Y,n_ion_slice,norm=LogNorm(),cmap='inferno'), ax=ax[2,1])
+
+      plot_moment_data(phi_slice, ax, fig, '$\phi$, V', 4, 0)
+      plot_moment_data(ephioTe_slice, ax, fig, '$e \phi / T_e$', 4, 1)
+      ax[4,2].remove()
+
+      plt.tight_layout()
+      if dimms[0] == 0:
+        plt.savefig(outDir+'moments_psi='+str(val)+'_'+str(frame_number)+figureFileFormat, dpi=600)
+      elif dimms[1] == 0:
+        plt.savefig(outDir+'moments_theta='+str(val)+'_'+str(frame_number)+figureFileFormat, dpi=600)
+      elif dimms[2] == 0:
+        plt.savefig(outDir+'moments_z='+str(val)+'_'+str(frame_number)+figureFileFormat, dpi=600)
+      plt.close()
     
-    fig, ax = plt.subplots(5, 3, figsize=(12,12))
-    fig.suptitle(str(frame_number*time_per_frame)+' seconds', fontsize=20)
+    make_2d_plot([1,0,1],0)
+    make_2d_plot([1,1,0],z_midpoint)
+    make_2d_plot([0,1,1],0)
 
-    def plot_moment_data(data, ax, fig, title, locx, locy):
-      ax[locx,locy].pcolormesh(X,Y,data,cmap='inferno')
-      ax[locx,locy].set_xlabel('Z cylindrical axis, m')
-      ax[locx,locy].set_ylabel('Psi')
-      ax[locx,locy].set_title(title, fontsize=16)
-      fig.colorbar(ax[locx,locy].pcolormesh(X,Y,data,cmap='inferno'), ax=ax[locx,locy])
-
-    plot_moment_data(n_elc, ax, fig, '$n_e$, $m^{-3}$', 0, 0)
-    plot_moment_data(u_elc, ax, fig, '$U_{e,||}$, $m/s$', 0, 2)
-    plot_moment_data(Tpar_elc, ax, fig, '$T_{e,||}$, $eV$', 1, 0)
-    plot_moment_data(Tperp_elc, ax, fig, '$T_{e,\perp}$, $eV$', 1, 1)
-    plot_moment_data(T_elc, ax, fig, '$T_e$, $eV$', 1, 2)
-    plot_moment_data(n_ion, ax, fig, '$n_i$, $m^{-3}$', 2, 0)
-    plot_moment_data(u_ion, ax, fig, '$U_{i,||}$, $m/s$', 2, 2)
-    plot_moment_data(Tpar_ion, ax, fig, '$T_{i,||}$, $eV$', 3, 0)
-    plot_moment_data(Tperp_ion, ax, fig, '$T_{i,\perp}$, $eV$', 3, 1)
-    plot_moment_data(T_ion, ax, fig, '$T_i$, $eV$', 3, 2)
-
-    # Plot electron density on a log scale
-    ax[0,1].pcolormesh(X,Y,n_elc,norm=LogNorm(),cmap='inferno')
-    ax[0,1].set_xlabel('Z cylindrical axis, m')
-    ax[0,1].set_ylabel('Psi')
-    ax[0,1].set_title('$n_e$ (log scale) $m^{-3}$', fontsize=16)
-    fig.colorbar(ax[0,1].pcolormesh(X,Y,n_elc,norm=LogNorm(),cmap='inferno'), ax=ax[0,1])
-
-    # Plot the ion density on a log scale
-    ax[2,1].pcolormesh(X,Y,n_ion,norm=LogNorm(),cmap='inferno')
-    ax[2,1].set_xlabel('Z cylindrical axis, m')
-    ax[2,1].set_ylabel('Psi')
-    ax[2,1].set_title('$n_i$ (log scale) $m^{-3}$', fontsize=16)
-    fig.colorbar(ax[2,1].pcolormesh(X,Y,n_ion,norm=LogNorm(),cmap='inferno'), ax=ax[2,1])
-
-    plot_moment_data(phi, ax, fig, '$\phi$, V', 4, 0)
-    plot_moment_data(ephioTe, ax, fig, '$e \phi / T_e$', 4, 1)
-    ax[4,2].remove()
-
-    plt.tight_layout()
-    plt.savefig(outDir+'moments_'+str(frame_number)+figureFileFormat, dpi=600)
-    plt.close()
 
   # Number of processes to run in parallel
   make_moms(0)

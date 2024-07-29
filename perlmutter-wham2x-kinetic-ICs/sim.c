@@ -114,8 +114,8 @@ struct gk_mirror_ctx
 
 struct gkyl_mirror_geo_efit_inp inp = {
   // psiRZ and related inputs
-  .filepath = "../eqdsk/wham_vac_hires.geqdsk",
-  // .filepath = "../eqdsk/wham.geqdsk",
+  // .filepath = "../eqdsk/wham_dia_hires.geqdsk",
+  .filepath = "../eqdsk/wham.geqdsk",
   .rzpoly_order = 2,
   .fluxpoly_order = 1,
   .plate_spec = false,
@@ -127,8 +127,6 @@ struct gkyl_mirror_geo_grid_inp ginp = {
   .rclose = 0.2,
   .zmin = -2.48,
   .zmax =  2.48,
-  .write_node_coord_array = true,
-  .node_file_nm = "wham_nodes.gkyl",
 };
 
 // Evaluate collision frequencies
@@ -355,6 +353,7 @@ read_phi(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, v
   // FROM GEOMETRY INPUT HARDCOPY
   double z_min_geo = -2.48;
   double z_max_geo =  2.48;
+  double z_throat_approx = 1.0;
   double tmin = app.z_min;
   double tmax = app.z_max;
   double t_norm_cord = (xn[1] + tmin) / (tmax - tmin);
@@ -362,7 +361,9 @@ read_phi(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, v
   interp_pt[1] = z_cord;
 
   double interp_val = LI_2D(dims, psi_grid, z_grid, phi_vals, interp_pt);
-  fout[0] = interp_val * (1 - pow((xn[0] - app.psi_min)/(app.psi_max - app.psi_min),2));
+  double radial_scaling = 1 - pow((xn[0] - app.psi_min)/(app.psi_max - app.psi_min),2);
+  double z_scaling = fmax(0, fmin(1, 1 - pow(fabs(z_cord)/z_throat_approx,2)));
+  fout[0] = interp_val * radial_scaling * z_scaling;
 }
 
 void
@@ -551,8 +552,8 @@ create_ctx(void)
   double mu_max_elc = me * pow(3. * vte, 2.) / (2. * B_p);
   double vpar_max_ion = 30 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
-  int num_cell_vpar = 2; // 96 uniform
-  int num_cell_mu = 2;  // 192 uniform
+  int num_cell_vpar = 32; // 96 uniform
+  int num_cell_mu = 32;  // 192 uniform
   int num_cell_z = 288;
   int unif_z_cells = 288;
   int num_cell_psi = 16;

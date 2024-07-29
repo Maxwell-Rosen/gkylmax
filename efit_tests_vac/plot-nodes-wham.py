@@ -4,16 +4,15 @@ from matplotlib.collections import LineCollection
 import postgkyl as pg
 
 plt.figure()
-simNames = ['wham']
+simNames = ['gk_wham']
 #simNames = ['steppfupl', 'steppfupr']
 for simName in simNames:
     dir = "./"
-    data = pg.GData(dir+"xyz"+simName+"_nodes.gkyl")
+    data = pg.GData(dir+simName+"-nodes.gkyl")
     vals = data.get_values()
-    print(np.shape(vals))
-    X = vals[:,0,:,0]
-    Y = vals[:,0,:,1]
-    Z = vals[:,0,:,2]
+    X = vals[:,:,0]
+    Y = vals[:,:,1]
+    Z = vals[:,:,2]
     R=np.sqrt(X**2+Y**2)
     
     psid = pg.GData("wham_psi.gkyl")
@@ -36,7 +35,7 @@ for simName in simNames:
     #clevels = np.linspace(psi_min-3*dpsi, psi_max, npsi+4)
     #plt.contour(grid[0], grid[1], psi[:,:,0].transpose(), levels=clevels, colors="r")
     
-    plt.plot(R,Z,marker=".", color="k", linestyle="none")
+    plt.plot(R,Z,marker=".", color="k", linestyle="none", markersize=1)
     plt.scatter(R,Z, marker=".")
     segs1 = np.stack((R,Z), axis=2)
     segs2 = segs1.transpose(1,0,2)
