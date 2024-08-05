@@ -18,7 +18,7 @@ import imageio.v2 as imageio
 # dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-wham1x-compare_unif_vs_nonunif/outputs/'
 dataDir = './'
 unifFile = 'gk_wham'
-frame_max_plus1 = 15
+frame_max_plus1 = 17
 time_per_frame = 1e-7
 
 plot_potential_trace = 0
@@ -398,11 +398,11 @@ if plot_bimax_moms:
 
       plt.tight_layout()
       if dimms[0] == 0:
-        plt.savefig(outDir+'moments_psi='+str(val)+'_'+str(frame_number)+figureFileFormat, dpi=600)
+        plt.savefig(outDir+'moments_psi='+str(val)+'_'+str(frame_number)+figureFileFormat, dpi=300)
       elif dimms[1] == 0:
-        plt.savefig(outDir+'moments_theta='+str(val)+'_'+str(frame_number)+figureFileFormat, dpi=600)
+        plt.savefig(outDir+'moments_theta='+str(val)+'_'+str(frame_number)+figureFileFormat, dpi=300)
       elif dimms[2] == 0:
-        plt.savefig(outDir+'moments_z='+str(val)+'_'+str(frame_number)+figureFileFormat, dpi=600)
+        plt.savefig(outDir+'moments_z='+str(val)+'_'+str(frame_number)+figureFileFormat, dpi=300)
       plt.close()
     
     make_2d_plot([1,0,1],0)
@@ -411,26 +411,30 @@ if plot_bimax_moms:
 
 
   # Number of processes to run in parallel
-  make_moms(0)
-  # frame_arr = np.arange(0,frame_max_plus1)
-  # num_processes = multiprocessing.cpu_count()
-  # print('Number of processes: ', num_processes)
-  # pool = multiprocessing.Pool(processes=num_processes)
-  # pool.map(make_moms, frame_arr)
-  # pool.close()
-  # pool.join()
+  # make_moms(0)
+  frame_arr = np.arange(0,frame_max_plus1)
+  num_processes = multiprocessing.cpu_count()
+  print('Number of processes: ', num_processes)
+  pool = multiprocessing.Pool(processes=num_processes)
+  pool.map(make_moms, frame_arr)
+  pool.close()
+  pool.join()
 
 
   # Define the filenames in order
-  # filenames = [f'moments_{i}.png' for i in range(0, frame_max_plus1)]
-  # filenames = [outDir+f'moments_{i}.png' for i in range(0, frame_max_plus1)]
+  def make_movie(name):
+    filenames = ['moments_'+str(name)+f'{i}.png' for i in range(0, frame_max_plus1)]
+    filenames = [outDir+'moments_'+str(name)+f'{i}.png' for i in range(0, frame_max_plus1)]
 
-  # # Create a writer object specifying the output file name and frame rate
-  # with imageio.get_writer(outDir+'moments_movie.mp4', mode='I', fps=5) as writer:
-  #     for filename in filenames:
-  #         image = imageio.imread(filename)
-  #         writer.append_data(image)
-  # print("Movie created successfully.")
+    # Create a writer object specifying the output file name and frame rate
+    with imageio.get_writer(outDir+'moments_'+str(name)+'_movie.mp4', mode='I', fps=5) as writer:
+        for filename in filenames:
+            image = imageio.imread(filename)
+            writer.append_data(image)
+    print("Movie "+str(name)+" created successfully.")
+  make_movie('psi=0_')
+  make_movie('theta=0_')
+  make_movie('z=288_')
   
 if plot_integrate_positivity:
     print("Getting integrated moments")

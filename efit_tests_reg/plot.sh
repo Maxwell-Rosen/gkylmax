@@ -1,0 +1,1 @@
+pgkyl "wham_psi.gkyl" interp -b ms -p2 pl --saveas "wham_psi.png" &

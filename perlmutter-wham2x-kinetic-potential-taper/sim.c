@@ -114,7 +114,8 @@ struct gk_mirror_ctx
 
 struct gkyl_mirror_geo_efit_inp inp = {
   // psiRZ and related inputs
-  .filepath = "../eqdsk/wham.geqdsk",
+  // .filepath = "../eqdsk/wham_dia_hires.geqdsk",
+  .filepath = "../eqdsk/wham_vac_hires.geqdsk",
   .rzpoly_order = 2,
   .fluxpoly_order = 1,
   .plate_spec = false,
@@ -124,8 +125,8 @@ struct gkyl_mirror_geo_efit_inp inp = {
 
 struct gkyl_mirror_geo_grid_inp ginp = {
   .rclose = 0.2,
-  .zmin = -2.48,
-  .zmax =  2.48,
+  .zmin = -2.0,
+  .zmax =  2.0,
 };
 
 // Evaluate collision frequencies
@@ -266,8 +267,8 @@ read_ion_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   int* dims = app.dims;
 
   // FROM GEOMETRY INPUT HARDCOPY
-  double z_min_geo = -2.48;
-  double z_max_geo =  2.48;
+  double z_min_geo = -2.0;
+  double z_max_geo =  2.0;
   double tmin = app.z_min;
   double tmax = app.z_max;
   double t_norm_cord = (xn[1] + tmin) / (tmax - tmin);
@@ -308,8 +309,8 @@ read_elc_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   int* dims = app.dims;
 
   // FROM GEOMETRY INPUT HARDCOPY
-  double z_min_geo = -2.48;
-  double z_max_geo =  2.48;
+  double z_min_geo = -2.0;
+  double z_max_geo =  2.0;
   double tmin = app.z_min;
   double tmax = app.z_max;
   double t_norm_cord = (xn[1] + tmin) / (tmax - tmin);
@@ -334,7 +335,7 @@ read_elc_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   if (interp_val < 0.0){
     interp_val = 0.0;
   }
-  fout[0] = interp_val * (1 - 0.9 * pow((xn[0] - app.psi_min)/(app.psi_max - app.psi_min),2));
+  fout[0] = interp_val * (1 - 0.9 * pow((xn[0] - app.psi_min)/(app.psi_max - app.psi_min),5));
 }
 
 void
@@ -350,8 +351,8 @@ read_phi(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, v
   interp_pt[0] = xn[0];
 
   // FROM GEOMETRY INPUT HARDCOPY
-  double z_min_geo = -2.48;
-  double z_max_geo =  2.48;
+  double z_min_geo = -2.0;
+  double z_max_geo =  2.0;
   double z_throat_approx = 1.0;
   double tmin = app.z_min;
   double tmax = app.z_max;
@@ -543,7 +544,7 @@ create_ctx(void)
   // Geometry parameters.
   double z_min = -M_PI + 1e-1;
   double z_max = M_PI - 1e-1;
-  double psi_min = 1e-3; // Go smaller. 1e-4 might be too small
+  double psi_min = 2e-4; // Go smaller. 1e-4 might be too small
   double psi_max = 3e-3; // aim for 2e-2
 
   // Grid parameters

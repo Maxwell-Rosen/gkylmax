@@ -9,12 +9,12 @@
 #SBATCH -q regular
 
 #.Number of nodes to request (Perlmutter has 64 cores and 4 GPUs per node)
-#SBATCH -N 36
-#SBATCH --ntasks 144
+#SBATCH -N 9
+#SBATCH --ntasks 36
 
 #.Specify GPU needs:
 #SBATCH --constraint gpu
-#SBATCH --gpus 144
+#SBATCH --gpus 36
 
 #.Request wall time
 #SBATCH -t 24:00:00
@@ -55,9 +55,9 @@ done
 if (max_number=0); then
   echo "No matching files found. Starting from the begining"
   echo "srun -u -n 144 ./sim -g -M -d 144"
-  srun -u -n 144 ./sim -g -M -d 144
+  srun -u -n 36 ./sim -g -M -d 36
 else
   echo "Resuming from file $max_number"
   echo "srun -u -n 144 ./sim -g -M -d 144 -r $max_number"
-  srun -u -n 144 ./sim -g -M -d 144 -r $max_number
+  srun -u -n 36 ./sim -g -M -d 36 -r $max_number
 fi

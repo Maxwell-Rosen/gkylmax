@@ -192,6 +192,16 @@ if plot_bimax_moms:
     nodes_Z = vals[:,:,1]
     nodes_phi = vals[:,:,2]
 
+    shape_R = np.shape(nodes_R)
+    midplane_R_min = nodes_R[0,shape_R[1]//2]
+    midplane_R_max = nodes_R[-1,shape_R[1]//2]
+    print("Midplane R min: ", midplane_R_min)
+    print("Midplane R max: ", midplane_R_max)
+    throat_R_min = nodes_R[0,shape_R[1]//4]
+    throat_R_max = nodes_R[-1,shape_R[1]//4]
+    print("Throat R min: ", throat_R_min)
+    print("Throat R max: ", throat_R_max)
+
     def expand_1D_array(original_array):
       new_length = 2 * len(original_array) - 1
       new_array = np.zeros(new_length)
