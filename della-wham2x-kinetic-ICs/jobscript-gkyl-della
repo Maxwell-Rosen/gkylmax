@@ -1,0 +1,56 @@
+#!/bin/bash -l
+
+#.Declare a name for this job, preferably with 16 or fewer characters.
+#SBATCH -J w2x-IC
+
+
+#.Request the queue (enter the possible names, if omitted, default is the default)
+#.this job is going to use the default
+#SBATCH -q gpu-test
+
+#.Number of nodes to request (Perlmutter has 64 cores and 4 GPUs per node)
+#SBATCH -N 6
+#SBATCH --ntasks-per-node 2
+#SBATCH --mem=500G
+
+#.Specify GPU needs:
+#SBATCH --gpus-per-node=2
+
+#.Request wall time
+#SBATCH -t 00:30:00
+num_gpu=12
+
+
+#.Load modules (this must match those in the machines/configure script).
+export PATH="$HOME/scratch/gkylsoft-amd-gtwo/gkyl/bin:$PATH"
+module load gcc/8
+module load openmpi/cuda-11.1/gcc/4.1.1
+module load cudatoolkit/12.0
+module load anaconda3/2021.11
+
+max_number=0
+matching_files=$(ls gk_wham-elc_BiMaxwellianMoments_*)
+for file in $matching_files; do
+  # # Extract the number between the prefix and suffix
+  number=$(echo "$file" | sed 's/gk_wham-elc_BiMaxwellianMoments_//; s/\.gkyl//')
+  # If the number is greater than the current max_number, update max_number and max_file
+  if [ "$number" -gt "$max_number" ]; then
+    max_number="$number"
+  fi
+done
+
+# Time the script execution
+start=$(date +%s)
+echo "srun -u -n $num_gpu ./sim -g -M -d $num_gpu -s1"
+srun -u -n $num_gpu ./sim -g -M -d $num_gpu -s1
+end=$(date +%s)
+echo "Elapsed time: $((end-start)) seconds"
+# if (max_number=0); then
+#   echo "No matching files found. Starting from the begining"
+#   echo "srun -u -n $num_gpu ./sim -g -M -d $num_gpu"
+#   srun -u -n $num_gpu ./sim -g -M -d $num_gpu -s1
+# else
+#   echo "Resuming from file $max_number"
+#   echo "srun -u -n $num_gpu ./sim -g -M -d $num_gpu -r $max_number"
+#   srun -u -n $num_gpu ./sim -g -M -d $num_gpu -r $max_number -s1
+# fi
