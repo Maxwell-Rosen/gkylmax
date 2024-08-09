@@ -361,7 +361,7 @@ read_phi(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, v
   interp_pt[1] = z_cord;
 
   double interp_val = LI_2D(dims, psi_grid, z_grid, phi_vals, interp_pt);
-  double radial_scaling = 1 - pow((xn[0] - app.psi_min)/(app.psi_max - app.psi_min),2);
+  double radial_scaling = 1 - pow((xn[0] - app.psi_min)/(app.psi_max - app.psi_min),1.5);
   double z_scaling = fmax(0, fmin(1, 1 - pow(fabs(z_cord)/z_throat_approx,2)));
   fout[0] = interp_val * radial_scaling * z_scaling;
 }
@@ -544,7 +544,7 @@ create_ctx(void)
   // Geometry parameters.
   double z_min = -M_PI + 1e-1;
   double z_max = M_PI - 1e-1;
-  double psi_min = 2e-4; // Go smaller. 1e-4 might be too small
+  double psi_min = 5e-4; // Go smaller. 1e-4 might be too small
   double psi_max = 3e-3; // aim for 2e-2
 
   // Grid parameters
@@ -741,7 +741,21 @@ int main(int argc, char **argv)
     }
   }
 
-  if (my_rank == 0) printf("Grid size = %d in psi, %d in Z, %d in Vpar, %d in mu\n", NPSI, NZ, NV, NMU);
+  if (my_rank == 0) {
+    printf("Grid size = %d in psi, %d in Z, %d in Vpar, %d in mu\n", NPSI, NZ, NV, NMU);
+    if (app_args.use_mpi)
+      printf("Number of MPI ranks: %d\n", comm_sz);
+    if (app_args.use_gpu)
+      printf("Number of GPUs: %d\n", comm_sz);
+    printf("psi_min = %g, psi_max = %g\n", ctx.psi_min, ctx.psi_max);
+    printf("z_min = %g, z_max = %g\n", ctx.z_min, ctx.z_max);
+    printf("vpar_max_ion/vti = %g, mu_max_ion/mu_ti = %g\n", ctx.vpar_max_ion/ctx.vti, sqrt(ctx.mu_max_ion/ctx.mi*2.0*ctx.B_p)/ctx.vti);
+    printf("vpar_max_elc/vte = %g, mu_max_elc/mu_te = %g\n", ctx.vpar_max_elc/ctx.vte, sqrt(ctx.mu_max_elc/ctx.me*2.0*ctx.B_p)/ctx.vte);
+    printf("vti = %.4e, vte = %.4e, c_s = %.4e, mu_ti = %.4e, mu_te = %.4e\n", ctx.vti, ctx.vte, ctx.c_s, ctx.mi * pow(ctx.vti, 2.) / (2. * ctx.B_p),
+     ctx.me * pow(ctx.vte, 2.) / (2. * ctx.B_p));
+    printf("omega_ci = %.4e, rho_s = %.4e, kperp = %.4e\n", ctx.omega_ci, ctx.rho_s, ctx.kperp);
+    printf("1/nuElc = %.4e, 1/nuIon = %.4e\n", 1./ctx.nuElc, 1./ctx.nuIon);
+  }
 
   struct gkyl_gyrokinetic_projection elc_ic = {
       .proj_id = GKYL_PROJ_FUNC,

@@ -544,7 +544,7 @@ create_ctx(void)
   // Geometry parameters.
   double z_min = -M_PI + 1e-1;
   double z_max = M_PI - 1e-1;
-  double psi_min = 5e-4; // Go smaller. 1e-4 might be too small
+  double psi_min = 1e-3; // Go smaller. 1e-4 might be too small
   double psi_max = 3e-3; // aim for 2e-2
 
   // Grid parameters

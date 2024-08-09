@@ -15,11 +15,11 @@
 
 #.Specify GPU needs:
 #SBATCH --gpus-per-node=2
+#SBATCH --constraint=amd
 
 #.Request wall time
 #SBATCH -t 00:30:00
 num_gpu=12
-
 
 #.Load modules (this must match those in the machines/configure script).
 export PATH="$HOME/scratch/gkylsoft-amd-gtwo/gkyl/bin:$PATH"
