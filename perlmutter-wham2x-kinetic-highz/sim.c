@@ -825,6 +825,7 @@ int main(int argc, char **argv)
     },
     .polarization_phi = read_phi,
     .polarization_phi_ctx = &ctx,
+    .polarization_bmag = ctx.B_p,
   };
   struct gkyl_gk gk = {  // GK app
     .name = "gk_wham",
