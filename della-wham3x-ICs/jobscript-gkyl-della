@@ -2,11 +2,11 @@
 ### This job script is for the 2 GPU node part of della-gpu
 
 #.Declare a name for this job, preferably with 16 or fewer characters.
-#SBATCH -J w2x-IC
+#SBATCH -J w3x-IC
 
 #.Request the queue (enter the possible names, if omitted, default is the default)
 #.this job is going to use the default
-#SBATCH -q gpu-test
+#SBATCH -q gpu-short
 
 #.Number of nodes to request (Perlmutter has 64 cores and 4 GPUs per node)
 #SBATCH -N 3
@@ -18,7 +18,7 @@
 #SBATCH --constraint=amd
 
 #.Request wall time
-#SBATCH -t 00:60:00
+#SBATCH -t 24:00:00
 num_gpu=6
 
 #.Load modules (this must match those in the machines/configure script).
@@ -41,11 +41,10 @@ done
 
 # Time the script execution
 start=$(date +%s)
-echo "srun -u -n $num_gpu ./sim -g -M -d $num_gpu -s1"
-srun -u -n $num_gpu ./sim -g -M -d $num_gpu -s1
+echo "srun -n $num_gpu ./sim -g -M -e $num_gpu -s10"
+srun -n $num_gpu ./sim -g -M -e $num_gpu -s10
 end=$(date +%s)
 echo "Elapsed time: $((end-start)) seconds"
-echo "Elapsed time: $((end-start)/60) minutes"
 # if (max_number=0); then
 #   echo "No matching files found. Starting from the begining"
 #   echo "srun -u -n $num_gpu ./sim -g -M -d $num_gpu"
