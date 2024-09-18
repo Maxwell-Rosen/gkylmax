@@ -9,7 +9,7 @@
 #SBATCH -q gpu-test
 
 #.Number of nodes to request (Perlmutter has 64 cores and 4 GPUs per node)
-#SBATCH -N 3
+#SBATCH -N 1
 #SBATCH --ntasks-per-node 2
 #SBATCH --mem=500G
 
@@ -19,7 +19,7 @@
 
 #.Request wall time
 #SBATCH -t 00:60:00
-num_gpu=6
+num_gpu=2
 
 #.Load modules (this must match those in the machines/configure script).
 export PATH="$HOME/scratch/gkylsoft-amd-gtwo/gkyl/bin:$PATH"
@@ -45,7 +45,7 @@ echo "srun -u -n $num_gpu ./sim -g -M -d $num_gpu -s1"
 srun -u -n $num_gpu ./sim -g -M -d $num_gpu -s1
 end=$(date +%s)
 echo "Elapsed time: $((end-start)) seconds"
-echo "Elapsed time: $((end-start)/60) minutes"
+echo "Elapsed time: $(echo "scale=2; ($end-$start)/60" | bc) minutes"
 # if (max_number=0); then
 #   echo "No matching files found. Starting from the begining"
 #   echo "srun -u -n $num_gpu ./sim -g -M -d $num_gpu"

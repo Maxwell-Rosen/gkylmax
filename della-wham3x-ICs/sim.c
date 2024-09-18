@@ -226,11 +226,11 @@ create_ctx(void)
   double mu_max_elc = me * pow(3. * vte, 2.) / (2. * B_p);
   double vpar_max_ion = 30 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
-  int Nvpar = 32; // 96 uniform
-  int Nmu = 32;  // 192 uniform
-  int Nz = 288;
+  int Nvpar = 16; // 96 uniform
+  int Nmu = 16;  // 192 uniform
+  int Nz = 16;
   int Ny = 4;
-  int Nx = 16;
+  int Nx = 4;
   int poly_order = 1;
   double t_end = 500e-6;
   int num_frames = 5000;
@@ -274,7 +274,7 @@ create_ctx(void)
     .Nz = Nz,
     .Nvpar = Nvpar,
     .Nmu = Nmu,
-    .cells = {Nx, Nz, Nvpar, Nmu},
+    .cells = {Nx, Ny, Nz, Nvpar, Nmu},
     .poly_order = poly_order,
     .t_end = t_end,
     .num_frames = num_frames,
@@ -381,7 +381,7 @@ int main(int argc, char **argv)
     .enforce_positivity = true,
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
-      .file_name = "gk_wham2x-elc_0.gkyl",
+      .file_name = "gk_wham2x-elc_0_lores.gkyl",
       // .conf_scale = ic_conf_fac,
       // .conf_scale_ctx = &ctx,
     },
@@ -420,7 +420,7 @@ int main(int argc, char **argv)
     .enforce_positivity = true,
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
-      .file_name = "gk_wham2x-ion_0.gkyl",
+      .file_name = "gk_wham2x-ion_0_lores.gkyl",
       // .conf_scale = ic_conf_fac,
       // .conf_scale_ctx = &ctx,
     },
@@ -480,9 +480,15 @@ int main(int argc, char **argv)
       .comm = comm
     }
   };
+
+  // start timer
+  clock_t start_time = clock();
   
   // Create app object.
   gkyl_gyrokinetic_app *app = gkyl_gyrokinetic_app_new(&app_inp);
+
+  clock_t end_time = clock();
+  printf("Time to create app object: %g\n", (double)(end_time - start_time) / CLOCKS_PER_SEC);
 
   // Initial and final simulation times.
   int frame_curr = 0;
@@ -504,9 +510,13 @@ int main(int argc, char **argv)
     gkyl_gyrokinetic_app_cout(app, stdout, " at time = %g\n", t_curr);
   }
   else {
+    start_time = clock();
     gkyl_gyrokinetic_app_apply_ic(app, t_curr);
+    end_time = clock();
+    printf("Time to apply IC: %g\n", (double)(end_time - start_time) / CLOCKS_PER_SEC);
   }  
 
+  start_time = clock();
   // Create triggers for IO.
   int num_frames = ctx.num_frames, num_int_diag_calc = ctx.int_diag_calc_num;
   struct gkyl_tm_trigger trig_write = { .dt = t_end/num_frames, .tcurr = t_curr, .curr = frame_curr };
@@ -521,14 +531,16 @@ int main(int argc, char **argv)
   // Initialize small time-step check.
   double dt_init = -1.0, dt_failure_tol = ctx.dt_failure_tol;
   int num_failures = 0, num_failures_max = ctx.num_failures_max;
+  end_time = clock();
+  printf("Time to write IC: %g\n", (double)(end_time - start_time) / CLOCKS_PER_SEC);
 
   long step = 1;
   while ((t_curr < t_end) && (step <= app_args.num_steps)) {
     struct gkyl_update_status status = gkyl_gyrokinetic_update(app, dt);    
-    if (step % 1000 == 0) {
-      gkyl_gyrokinetic_app_cout(app, stdout, "Taking time-step %ld at t = %g ...", step, t_curr);
-      gkyl_gyrokinetic_app_cout(app, stdout, " dt = %g\n", status.dt_actual);
-    }
+    // if (step % 1000 == 0) {
+    gkyl_gyrokinetic_app_cout(app, stdout, "Taking time-step %ld at t = %g ...", step, t_curr);
+    gkyl_gyrokinetic_app_cout(app, stdout, " dt = %g\n", status.dt_actual);
+    // }
 
     if (!status.success) {
       gkyl_gyrokinetic_app_cout(app, stdout, "** Update method failed! Aborting simulation ....\n");

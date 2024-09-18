@@ -187,14 +187,6 @@ if plot_bimax_moms:
     pgInterp_field = pg.GInterpModal(pgData_field, polyOrder, 'ms')
     coords, phi = pgInterp_field.interpolate()
 
-
-
-    data = pg.GData(str(dataDir+unifFile+"-nodes.gkyl"))
-    vals = data.get_values()
-    nodes_X = vals[:,:,:,0]
-    nodes_Y = vals[:,:,:,1]
-    nodes_Z = vals[:,:,:,2]
-
     def expand_1D_array(original_array):
       new_length = 2 * len(original_array) - 1
       new_array = np.zeros(new_length)
@@ -262,6 +254,13 @@ if plot_bimax_moms:
       new_array[0,:,:] = expand_2D_array(original_array[0,:,:])
       new_array[-1,:,:] = expand_2D_array(original_array[-1,:,:])
       return new_array
+    
+    data = pg.GData(str(dataDir+unifFile+"-nodes.gkyl"))
+    vals = data.get_values()
+    print(np.shape(vals))
+    nodes_X = vals[:,:,:,0]
+    nodes_Y = vals[:,:,:,1]
+    nodes_Z = vals[:,:,:,2]
     
     mc2p_R = expand_3D_array(nodes_X)
     mc2p_Z = expand_3D_array(nodes_Y)
