@@ -53,13 +53,6 @@ struct gk_mirror_ctx
   double z_max;
   double psi_min;
   double psi_max;
-  // Magnetic equilibrium model.
-  double mcB;
-  double gamma;
-  double Z_m;
-  // Bananna tip info. Hardcoad to avoid dependency on ctx
-  double z_m;
-  double Z_m_computational;
   // Physics parameters at mirror throat
   double vpar_max_ion;
   double vpar_max_elc;
@@ -89,30 +82,6 @@ struct gk_mirror_ctx
   double *B_grid;
   int *dims;
   int rank;
-
-  //Nonuniform grid
-  void *mirror_geo_c2fa_ctx;
-
-};
-
-
-struct gkyl_mirror_geo_efit_inp inp = {
-  // psiRZ and related inputs
-  // .filepath = "../eqdsk/wham_dia_hires.geqdsk",
-  .filepath = "../eqdsk/wham_vac_hires.geqdsk",
-  .rzpoly_order = 2,
-  .fluxpoly_order = 1,
-  .plate_spec = false,
-  .quad_param = {  .eps = 1e-10 }
-};
-
-
-struct gkyl_mirror_geo_grid_inp ginp = {
-  .rclose = 0.2,
-  .zmin = -2.0,
-  .zmax =  2.0,
-  .write_node_coord_array = true,
-  .node_file_nm = "wham_nodes.gkyl",
 };
 
 // Evaluate collision frequencies
@@ -321,7 +290,9 @@ read_elc_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   if (interp_val < 0.0){
     interp_val = 0.0;
   }
-  fout[0] = interp_val * (1 - 0.9 * pow((xn[0] - app.psi_min)/(app.psi_max - app.psi_min),5));
+  double radial_scaling = 1 - 0.9*pow((xn[0] - app.psi_min)/(app.psi_max - app.psi_min), 1.);
+  fout[0] = interp_val * radial_scaling;
+  // fout[0] = interp_val;
 }
 
 void
@@ -348,8 +319,9 @@ read_phi(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, v
 
   double interp_val = LI_2D(dims, psi_grid, z_grid, phi_vals, interp_pt);
   double radial_scaling = 1 - pow((xn[0] - app.psi_min)/(app.psi_max - app.psi_min),1.5);
-  double z_scaling = fmax(0, fmin(1, 1 - pow(fabs(z_cord)/z_throat_approx,2)));
-  fout[0] = interp_val * radial_scaling * z_scaling;
+  // double z_scaling = fmax(0, fmin(1, 1 - pow(fabs(z_cord)/z_throat_approx,2.0)));
+  // fout[0] = interp_val * radial_scaling * z_scaling;
+  fout[0] = interp_val*radial_scaling;
 }
 
 void
@@ -532,7 +504,7 @@ create_ctx(void)
   // Geometry parameters.
   double z_min = -M_PI + 1e-1;
   double z_max = M_PI - 1e-1;
-  double psi_min = 5e-4; // Go smaller. 1e-4 might be too small
+  double psi_min = 4.5e-5; // Go smaller. 1e-4 might be too small
   double psi_max = 3e-3; // aim for 2e-2
 
   // Grid parameters
@@ -772,6 +744,18 @@ int main(int argc, char **argv)
     .polarization_potential = read_phi,
     .polarization_potential_ctx = &ctx,
   };
+
+struct gkyl_efit_inp efit_inp = {
+    .filepath = "../eqdsk/wham.geqdsk",
+    .rz_poly_order = 2,                     // polynomial order for psi(R,Z) used for field line tracing
+    .flux_poly_order = 1,                   // polynomial order for fpol(psi)
+  };
+
+  struct gkyl_mirror_geo_grid_inp grid_inp = {
+    .rclose = 0.2, // closest R to region of interest
+    .zmin = -2.0,  // Z of lower boundary
+    .zmax =  2.0,  // Z of upper boundary 
+  };
   struct gkyl_gk app_inp = {  // GK app
     .name = "gk_wham",
     .cdim = 2,  .vdim = 2,
@@ -783,8 +767,8 @@ int main(int argc, char **argv)
     .geometry = {
       .geometry_id = GKYL_MIRROR,
       .world = {0.0},
-      .mirror_efit_info = &inp,
-      .mirror_grid_info = &ginp,
+      .efit_info = efit_inp,
+      .mirror_grid_info = grid_inp,
     },
     .num_periodic_dir = 0,
     .periodic_dirs = {},
@@ -800,9 +784,14 @@ int main(int argc, char **argv)
   };
   
   // Create app object.
+  clock_t start_time = clock();
   gkyl_gyrokinetic_app *app = gkyl_gyrokinetic_app_new(&app_inp);
+  clock_t end_time = clock();
+  if (my_rank == 0)
+    printf("Time to create app object: %g\n", (double)(end_time - start_time) / CLOCKS_PER_SEC);
 
   // Initial and final simulation times.
+  start_time = clock();
   int frame_curr = 0;
   double t_curr = 0.0, t_end = ctx.t_end;
   // Initialize simulation.
@@ -824,6 +813,10 @@ int main(int argc, char **argv)
   else {
     gkyl_gyrokinetic_app_apply_ic(app, t_curr);
   }  
+  end_time = clock();
+  if (my_rank == 0)
+    printf("Time to load initial conditions: %g\n", (double)(end_time - start_time) / CLOCKS_PER_SEC);
+  start_time = clock();
 
   // Create triggers for IO.
   int num_frames = ctx.num_frames, num_int_diag_calc = ctx.int_diag_calc_num;
@@ -841,6 +834,9 @@ int main(int argc, char **argv)
   int num_failures = 0, num_failures_max = ctx.num_failures_max;
 
   long step = 1;
+  end_time = clock();
+  if (my_rank == 0)
+    printf("Time to write diagnostics: %g\n", (double)(end_time - start_time) / CLOCKS_PER_SEC);
   while ((t_curr < t_end) && (step <= app_args.num_steps)) {
     struct gkyl_update_status status = gkyl_gyrokinetic_update(app, dt);    
     if (step % 1000 == 0) {

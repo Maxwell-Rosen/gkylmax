@@ -16,6 +16,7 @@ from scipy.integrate import cumulative_trapezoid as cumtrapz
 import imageio.v2 as imageio
 
 # dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-wham1x-compare_unif_vs_nonunif/outputs/'
+# dataDir = './data-hires-lorad/'
 dataDir = './'
 unifFile = 'gk_wham'
 frame_max_plus1 = 1
@@ -58,6 +59,7 @@ B_p       = 0.53
 beta      = 0.4                              #[ Ratio of plasma to magnetic pressure.
 tau       = (B_p**2)*beta/(2*mu0*n0*Te0)-1    #[ Ti/Te ratio.
 Ti0       = tau*Te0
+n_pol     = 3e19
 
 timestep = 8.42244e-12
 
@@ -272,6 +274,7 @@ if plot_bimax_moms:
 
     
     nodes_Z = expand_2D_array(nodes_Z)
+    nodes_R = expand_2D_array(nodes_R)
 
 
     n_elc = n_elc[:,:,0]
@@ -288,10 +291,44 @@ if plot_bimax_moms:
     midplane_Te = T_elc[:,T_elc.shape[1]//2]
     ephioTe =  phi / midplane_Te[:,None]
 
+    # Compute polarization density for ions
+    # Read in the magnetic field
+    filename_bmag = str(dataDir+unifFile+'-bmag.gkyl')
+    pgData_bmag = pg.GData(filename_bmag)
+    pgInterp_bmag = pg.GInterpModal(pgData_bmag, polyOrder, 'ms')
+    coords, bmag = pgInterp_bmag.interpolate()
+    bmag_shape = bmag.shape
+
+    # Checked in gkyl_gk_geometry_bmag_mid that this is how it's done
+    epsilon_i = mi * n_pol / bmag[bmag_shape[0]//2,bmag_shape[1]//2,0]**2
+
+    filename_jacobgeo = str(dataDir+unifFile+'-jacobgeo.gkyl')
+    pgData_jacobgeo = pg.GData(filename_jacobgeo)
+    pgInterp_jacobgeo = pg.GInterpModal(pgData_jacobgeo, polyOrder, 'ms')
+    coords, jacobgeo = pgInterp_jacobgeo.interpolate()
+    jacobgeo = jacobgeo[:,:,0]
+
+    filename_gxx = str(dataDir+unifFile+'-gxxj.gkyl')
+    pgData_gxx = pg.GData(filename_gxx)
+    pgInterp_gxx = pg.GInterpModal(pgData_gxx, polyOrder, 'ms')
+    coords, gxxj = pgInterp_gxx.interpolate()
+    gxxj = gxxj[:,:,0]
+
+    D =  gxxj * epsilon_i
+    dpsi = coords[1][0] - coords[0][0]
+    ni_pol = np.zeros(D.shape)
+    for i in range (D.shape[0]-1):
+      ni_pol[i,:] = -1/jacobgeo[i,:] / dpsi * (((D[i+1,:]+D[i,:])/2) * ((phi[i+1,:]-phi[i,:])/dpsi) - \
+                                               ((D[i-1,:]+D[i,:])/2) * ((phi[i,:]-phi[i-1,:])/dpsi))
+    ni_pol[0,:] = 0.0
+
     # make an array grid that is the size of coords
 
     X = nodes_Z[0,:]
     Y = coords[0]
+
+    # X = nodes_Z[:,:]
+    # Y = nodes_R[:,:]
 
     # Print where n_ion is nan
     print(np.argwhere(np.isnan(n_ion)))
@@ -317,6 +354,7 @@ if plot_bimax_moms:
     plot_moment_data(Tpar_ion, ax, fig, '$T_{i,||}$, $eV$', 3, 0)
     plot_moment_data(Tperp_ion, ax, fig, '$T_{i,\perp}$, $eV$', 3, 1)
     plot_moment_data(T_ion, ax, fig, '$T_i$, $eV$', 3, 2)
+    plot_moment_data(ni_pol, ax, fig, '$n_{i,pol}$, $m^{-3}$', 4, 2)
 
     # Plot electron density on a log scale
     ax[0,1].pcolormesh(X,Y,n_elc,norm=LogNorm(),cmap='inferno')
@@ -334,7 +372,7 @@ if plot_bimax_moms:
 
     plot_moment_data(phi, ax, fig, '$\phi$, V', 4, 0)
     plot_moment_data(ephioTe, ax, fig, '$e \phi / T_e$', 4, 1)
-    ax[4,2].remove()
+    # ax[4,2].remove()
 
     plt.tight_layout()
     plt.savefig(outDir+'moments_'+str(frame_number)+figureFileFormat, dpi=600)
