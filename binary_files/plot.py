@@ -22,7 +22,7 @@ zGrid = np.fromfile("zGrid.bin")
 f_dist_elc = f_dist_elc.reshape((len(psiGrid), len(zGrid), len(uGrid), len(theta)))
 f_dist_ion = f_dist_ion.reshape((len(psiGrid), len(zGrid), len(uGrid), len(theta)))
 phi = phi.reshape((len(psiGrid), len(zGrid)))
-
+BdB0 = BdB0.reshape((len(psiGrid), len(zGrid)))
 # plt.pcolormesh(f_dist_elc[:,:,0,0])
 # plt.colorbar()
 # plt.show()
@@ -75,13 +75,21 @@ for i in range(1, len(zGrid)):
   zGrid_interp[i] = (zGrid[i] + zGrid[i-1]) / 2
   
 
-plt.pcolormesh(phi) 
-plt.colorbar()
-plt.show()
+# plt.pcolormesh(phi) 
+# plt.colorbar()
+# plt.show()
 
-plt.plot(phi[:,-1],'r',label='index -1')
-plt.plot(phi[:,-2],'b',label='index -2')
-plt.plot(phi[:,-3],'g',label='index -3')
-plt.plot(phi[:,-4],'y',label='index -4')
-plt.legend()
+# plt.plot(phi[:,-1],'r',label='index -1')
+# plt.plot(phi[:,-2],'b',label='index -2')
+# plt.plot(phi[:,-3],'g',label='index -3')
+# plt.plot(phi[:,-4],'y',label='index -4')
+# phi_shape = phi.shape
+# plt.plot(psiGrid,phi[:, phi_shape[1]//2],'r',label='index 0')
+# plt.xscale('log')
+# plt.legend()
+# plt.show()
+
+
+plt.pcolormesh(BdB0)
+plt.colorbar()
 plt.show()

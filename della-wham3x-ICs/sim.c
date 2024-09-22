@@ -99,7 +99,7 @@ struct gk_mirror_ctx
 struct gkyl_mirror_geo_efit_inp inp = {
   // psiRZ and related inputs
   // .filepath = "../eqdsk/wham_dia_hires.geqdsk",
-  .filepath = "../eqdsk/wham_vac_hires.geqdsk",
+  .filepath = "../eqdsk/wham.geqdsk",
   .rzpoly_order = 2,
   .fluxpoly_order = 1,
   .plate_spec = false,
@@ -218,7 +218,7 @@ create_ctx(void)
   // Geometry parameters.
   double z_min = -M_PI + 1e-1;
   double z_max = M_PI - 1e-1;
-  double psi_min = 5e-4; // Go smaller. 1e-4 might be too small
+  double psi_min = 1e-6; // Go smaller. 1e-4 might be too small
   double psi_max = 3e-3; // aim for 2e-2
 
   // Grid parameters
@@ -226,11 +226,11 @@ create_ctx(void)
   double mu_max_elc = me * pow(3. * vte, 2.) / (2. * B_p);
   double vpar_max_ion = 30 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
-  int Nvpar = 16; // 96 uniform
-  int Nmu = 16;  // 192 uniform
-  int Nz = 16;
-  int Ny = 4;
-  int Nx = 4;
+  int Nvpar = 32; // 96 uniform
+  int Nmu = 32;  // 192 uniform
+  int Nz = 288;
+  int Ny = 16;
+  int Nx = 16;
   int poly_order = 1;
   double t_end = 500e-6;
   int num_frames = 5000;
@@ -381,7 +381,7 @@ int main(int argc, char **argv)
     .enforce_positivity = true,
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
-      .file_name = "gk_wham2x-elc_0_lores.gkyl",
+      .file_name = "gk_wham-elc_IC.gkyl",
       // .conf_scale = ic_conf_fac,
       // .conf_scale_ctx = &ctx,
     },
@@ -420,7 +420,7 @@ int main(int argc, char **argv)
     .enforce_positivity = true,
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
-      .file_name = "gk_wham2x-ion_0_lores.gkyl",
+      .file_name = "gk_wham-ion_IC.gkyl",
       // .conf_scale = ic_conf_fac,
       // .conf_scale_ctx = &ctx,
     },
