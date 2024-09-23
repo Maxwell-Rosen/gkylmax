@@ -28,7 +28,7 @@ for simName in simNames:
     for d in range(len(grid)):
         grid[d] = 0.5*(grid[d][:-1] + grid[d][1:])
     
-    psisep= 0.0026
+    psisep= 0.003
     psi_min = 0.001
     psi_max =  0.003
     npsi = 3
@@ -42,13 +42,20 @@ for simName in simNames:
     #plt.contour(grid[0], grid[1], psi[:,:,0].transpose(), levels=clevels, colors="r")
     
     plt.plot(R,Z,marker=".", color="k", linestyle="none")
-    plt.scatter(R,Z, marker=".")
+    # plt.scatter(R,Z, marker=".", )
     segs1 = np.stack((R,Z), axis=2)
-    segs2 = segs1.transpose(1,0,2)
-    plt.gca().add_collection(LineCollection(segs1))
-    plt.gca().add_collection(LineCollection(segs2))
+    segs1_reduced = np.stack((R[:, ::6],Z[:, ::6]), axis=2)
+    segs2 = segs1_reduced.transpose(1,0,2)
+    plt.gca().add_collection(LineCollection(segs1_reduced, linewidths=1))
+    plt.gca().add_collection(LineCollection(segs2, linewidths=1))
+    ## Set the linestyle to be thin
     plt.grid()
     #plt.axis("tight")
     #plt.axis("image")
-plt.savefig("step-dn.png", dpi=300)
+plt.xlim(0.0, .1)
+plt.ylim(-2, 2)
+plt.title("WHAM nodes")
+plt.xlabel("R, m")
+plt.ylabel("Z, m")
+plt.savefig("wham-nodes.png", dpi=1000)
 plt.show()

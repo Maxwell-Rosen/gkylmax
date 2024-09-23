@@ -11,6 +11,7 @@
 #include <gkyl_gyrokinetic.h>
 #include <gkyl_mirror_geo.h>
 #include <gkyl_math.h>
+
 #include <rt_arg_parse.h>
 
 // Define the context of the simulation. This is basically all the globals
@@ -52,13 +53,6 @@ struct gk_mirror_ctx
   double z_max;
   double psi_min;
   double psi_max;
-  // Magnetic equilibrium model.
-  double mcB;
-  double gamma;
-  double Z_m;
-  // Bananna tip info. Hardcoad to avoid dependency on ctx
-  double z_m;
-  double Z_m_computational;
   // Physics parameters at mirror throat
   double vpar_max_ion;
   double vpar_max_elc;
@@ -89,30 +83,18 @@ struct gk_mirror_ctx
   double *B_grid;
   int *dims;
   int rank;
-
-  //Nonuniform grid
-  void *mirror_geo_c2fa_ctx;
-
 };
 
-
-struct gkyl_mirror_geo_efit_inp inp = {
-  // psiRZ and related inputs
-  // .filepath = "../eqdsk/wham_dia_hires.geqdsk",
+struct gkyl_efit_inp inp = {
   .filepath = "../eqdsk/wham.geqdsk",
-  .rzpoly_order = 2,
-  .fluxpoly_order = 1,
-  .plate_spec = false,
-  .quad_param = {  .eps = 1e-10 }
+  .rz_poly_order = 2,
+  .flux_poly_order = 1,
 };
-
 
 struct gkyl_mirror_geo_grid_inp ginp = {
   .rclose = 0.2,
   .zmin = -2.0,
   .zmax =  2.0,
-  .write_node_coord_array = true,
-  .node_file_nm = "wham_nodes.gkyl",
 };
 
 // Evaluate collision frequencies
@@ -128,6 +110,12 @@ evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, 
 {
   struct gk_mirror_ctx *app = ctx;
   fout[0] = app->nuIon;
+}
+
+void
+angular_noise(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  fout[0] = 1. + 0.5 * sin(xn[1]*5.0);
 }
 
 void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *ctx)
@@ -197,9 +185,10 @@ create_ctx(void)
   double Ti0 = tau * Te0;
 
   double nuFrac = 1.0;
+  double elc_nuFrac = 1/4.425;
   // Electron-electron collision freq.
   double logLambdaElc = 6.6 - 0.5 * log(n0 / 1e20) + 1.5 * log(Te0 / eV);
-  double nuElc = nuFrac * logLambdaElc * pow(eV, 4.) * n0 /
+  double nuElc = elc_nuFrac * nuFrac * logLambdaElc * pow(eV, 4.) * n0 /
                  (6. * sqrt(2.) * pow(M_PI, 3. / 2.) * pow(eps0, 2.) * sqrt(me) * pow(Te0, 3. / 2.));
   // Ion-ion collision freq.
   double logLambdaIon = 6.6 - 0.5 * log(n0 / 1e20) + 1.5 * log(Ti0 / eV);
@@ -378,12 +367,11 @@ int main(int argc, char **argv)
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
     .no_by = true,
-    .enforce_positivity = true,
     .init_from_file = {
-      .type = GKYL_IC_IMPORT_F,
-      .file_name = "gk_wham-elc_IC.gkyl",
-      // .conf_scale = ic_conf_fac,
-      // .conf_scale_ctx = &ctx,
+      .type = GKYL_IC_IMPORT_AF,
+      .file_name = "./initial-conditions/gk_wham-elc_0.gkyl",
+      .conf_scale = angular_noise,
+      .conf_scale_ctx = &ctx,
     },
     .mapc2p = {
       .mapping = mapc2p_vel_elc,
@@ -417,12 +405,11 @@ int main(int argc, char **argv)
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
     .no_by = true,
-    .enforce_positivity = true,
     .init_from_file = {
-      .type = GKYL_IC_IMPORT_F,
-      .file_name = "gk_wham-ion_IC.gkyl",
-      // .conf_scale = ic_conf_fac,
-      // .conf_scale_ctx = &ctx,
+      .type = GKYL_IC_IMPORT_AF,
+      .file_name = "./initial-conditions/gk_wham-ion_0.gkyl",
+      .conf_scale = angular_noise,
+      .conf_scale_ctx = &ctx,
     },
     .mapc2p = {
       .mapping = mapc2p_vel_ion,
@@ -465,14 +452,15 @@ int main(int argc, char **argv)
     .basis_type = app_args.basis_type,
     .geometry = {
       .geometry_id = GKYL_MIRROR,
-      .mirror_efit_info = &inp,
-      .mirror_grid_info = &ginp,
+      .efit_info = inp,
+      .mirror_grid_info = ginp,
     },
     .num_periodic_dir = 1,
     .periodic_dirs = {1},
     .num_species = 2,
     .species = {elc, ion},
     .field = field,
+    .enforce_positivity = true,
     .use_gpu = app_args.use_gpu,
     .has_low_inp = true,
     .low_inp = {

@@ -645,9 +645,9 @@ int main(int argc, char **argv)
   if (my_rank == 0) {
     printf("Grid size = %d in psi, %d in Z, %d in Vpar, %d in mu\n", cells_x[0], cells_x[1], cells_v[0], cells_v[1]);
     if (app_args.use_mpi)
-      printf("Number of MPI ranks: %d\n", comm_sz);
+      printf("Number of MPI ranks: %d\n", decomp->ndecomp);
     if (app_args.use_gpu)
-      printf("Number of GPUs: %d\n", comm_sz);
+      printf("Number of GPUs: %d\n", decomp->ndecomp);
     printf("psi_min = %g, psi_max = %g\n", ctx.psi_min, ctx.psi_max);
     printf("z_min = %g, z_max = %g\n", ctx.z_min, ctx.z_max);
     printf("vpar_max_ion/vti = %g, mu_max_ion/mu_ti = %g\n", ctx.vpar_max_ion/ctx.vti, sqrt(ctx.mu_max_ion/ctx.mi*2.0*ctx.B_p)/ctx.vti);

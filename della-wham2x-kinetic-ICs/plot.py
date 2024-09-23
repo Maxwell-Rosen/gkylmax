@@ -23,7 +23,8 @@ frame_max_plus1 = 1
 time_per_frame = 1e-6
 
 plot_potential_trace = 0
-plot_bimax_moms = 1
+plot_bimax_moms = 0
+plot_bimax_moms_condensed = 1
 plot_integrate_positivity = 0
 
 # frame_arr = np.arange(0,11)
@@ -585,6 +586,222 @@ if plot_integrate_positivity:
     plt.savefig(outDir+'integrated_Ms_ratios_in_time'+figureFileFormat, dpi=600)
     plt.close()
 
+
+if plot_bimax_moms_condensed:
+  def make_moms(frame_number):
+    print("Getting moments for frame ", frame_number)
+    filename_elc = str(dataDir+unifFile+'-elc_BiMaxwellianMoments_'+str(frame_number)+'.gkyl')
+    pgData_elc = pg.GData(filename_elc)
+    pgInterp_elc = pg.GInterpModal(pgData_elc, polyOrder, 'ms')
+    coords, n_elc = pgInterp_elc.interpolate(0)
+    coords, u_elc = pgInterp_elc.interpolate(1)
+    coords, Tpar_elc = pgInterp_elc.interpolate(2)
+    coords, Tperp_elc = pgInterp_elc.interpolate(3)
+
+    filename_ion = str(dataDir+unifFile+'-ion_BiMaxwellianMoments_'+str(frame_number)+'.gkyl')
+    pgData_ion = pg.GData(filename_ion)
+    pgInterp_ion = pg.GInterpModal(pgData_ion, polyOrder, 'ms')
+    coords, n_ion = pgInterp_ion.interpolate(0)
+    coords, u_ion = pgInterp_ion.interpolate(1)
+    coords, Tpar_ion = pgInterp_ion.interpolate(2)
+    coords, Tperp_ion = pgInterp_ion.interpolate(3)
+
+    filename_field = str(dataDir+unifFile+'-field_'+str(frame_number)+'.gkyl')
+    pgData_field = pg.GData(filename_field)
+    pgInterp_field = pg.GInterpModal(pgData_field, polyOrder, 'ms')
+    coords, phi = pgInterp_field.interpolate()
+
+    data = pg.GData(str(dataDir+unifFile+"-nodes.gkyl"))
+    vals = data.get_values()
+    nodes_R = vals[:,:,0]
+    nodes_Z = vals[:,:,1]
+    nodes_phi = vals[:,:,2]
+
+    shape_R = np.shape(nodes_R)
+    midplane_R_min = nodes_R[0,shape_R[1]//2]
+    midplane_R_max = nodes_R[-1,shape_R[1]//2]
+    print("Midplane R min: ", midplane_R_min)
+    print("Midplane R max: ", midplane_R_max)
+    throat_R_min = nodes_R[0,shape_R[1]//4]
+    throat_R_max = nodes_R[-1,shape_R[1]//4]
+    print("Throat R min: ", throat_R_min)
+    print("Throat R max: ", throat_R_max)
+
+    def expand_1D_array(original_array):
+      new_length = 2 * len(original_array) - 1
+      new_array = np.zeros(new_length)
+      new_array[0] = original_array[0]
+      for i in range(1, len(original_array)):
+          new_array[2*i - 1] = (original_array[i - 1] + original_array[i]) / 2
+          new_array[2*i] = original_array[i]
+      return new_array
+    
+    def expand_2D_array(original_array):
+      original_shape = np.shape(original_array)
+      new_shape = (2*original_shape[0]-1, 2*original_shape[1]-1)
+      new_array = np.zeros(new_shape)
+      for i in range(1, original_shape[0]-1):
+        for j in range(1, original_shape[1]-1):
+          new_array[2*i, 2*j] = original_array[i, j]
+          new_array[2*i, 2*j+1] = (original_array[i, j] + original_array[i, j+1]) / 2
+          new_array[2*i, 2*j-1] = (original_array[i, j] + original_array[i, j-1]) / 2
+          new_array[2*i+1, 2*j] = (original_array[i, j] + original_array[i+1, j]) / 2
+          new_array[2*i-1, 2*j] = (original_array[i, j] + original_array[i-1, j]) / 2
+          new_array[2*i+1, 2*j+1] = (original_array[i, j] + original_array[i+1, j+1]) / 2
+          new_array[2*i-1, 2*j-1] = (original_array[i, j] + original_array[i-1, j-1]) / 2
+          new_array[2*i+1, 2*j-1] = (original_array[i, j] + original_array[i+1, j-1]) / 2
+          new_array[2*i-1, 2*j+1] = (original_array[i, j] + original_array[i-1, j+1]) / 2
+      new_array[:,0] = expand_1D_array(original_array[:,0])
+      new_array[:,-1] = expand_1D_array(original_array[:,-1])
+      new_array[0,:] = expand_1D_array(original_array[0,:])
+      new_array[-1,:] = expand_1D_array(original_array[-1,:])
+      return new_array
+    
+    def expand_3D_array(original_array):
+      original_shape = np.shape(original_array)
+      new_shape = (2*original_shape[0]-1, 2*original_shape[1]-1, 2*original_shape[2]-1)
+      new_array = np.zeros(new_shape)
+      for i in range(1, original_shape[0]-1):
+        for j in range(1, original_shape[1]-1):
+          for k in range(1, original_shape[2]-1):
+            new_array[2*i, 2*j, 2*k] = original_array[i, j, k]
+
+            new_array[2*i, 2*j, 2*k+1] = (original_array[i, j, k] + original_array[i, j, k+1]) / 2
+            new_array[2*i, 2*j, 2*k-1] = (original_array[i, j, k] + original_array[i, j, k-1]) / 2
+            new_array[2*i, 2*j+1, 2*k] = (original_array[i, j, k] + original_array[i, j+1, k]) / 2
+            new_array[2*i, 2*j-1, 2*k] = (original_array[i, j, k] + original_array[i, j-1, k]) / 2
+            new_array[2*i+1, 2*j, 2*k] = (original_array[i, j, k] + original_array[i+1, j, k]) / 2
+            new_array[2*i-1, 2*j, 2*k] = (original_array[i, j, k] + original_array[i-1, j, k]) / 2
+
+            new_array[2*i+1, 2*j+1, 2*k] = (original_array[i, j, k] + original_array[i+1, j+1, k]) / 2
+            new_array[2*i-1, 2*j-1, 2*k] = (original_array[i, j, k] + original_array[i-1, j-1, k]) / 2
+            new_array[2*i+1, 2*j-1, 2*k] = (original_array[i, j, k] + original_array[i+1, j-1, k]) / 2
+            new_array[2*i-1, 2*j+1, 2*k] = (original_array[i, j, k] + original_array[i-1, j+1, k]) / 2
+
+            new_array[2*i+1, 2*j, 2*k+1] = (original_array[i, j, k] + original_array[i+1, j, k+1]) / 2
+            new_array[2*i-1, 2*j, 2*k-1] = (original_array[i, j, k] + original_array[i-1, j, k-1]) / 2
+            new_array[2*i+1, 2*j, 2*k-1] = (original_array[i, j, k] + original_array[i+1, j, k-1]) / 2
+            new_array[2*i-1, 2*j, 2*k+1] = (original_array[i, j, k] + original_array[i-1, j, k+1]) / 2
+
+            new_array[2*i, 2*j+1, 2*k+1] = (original_array[i, j, k] + original_array[i, j+1, k+1]) / 2
+            new_array[2*i, 2*j-1, 2*k-1] = (original_array[i, j, k] + original_array[i, j-1, k-1]) / 2
+            new_array[2*i, 2*j+1, 2*k-1] = (original_array[i, j, k] + original_array[i, j+1, k-1]) / 2
+            new_array[2*i, 2*j-1, 2*k+1] = (original_array[i, j, k] + original_array[i, j-1, k+1]) / 2
+      new_array[:,0,:] = expand_2D_array(original_array[:,0,:])
+      new_array[:,-1,:] = expand_2D_array(original_array[:,-1,:])
+      new_array[:,:,0] = expand_2D_array(original_array[:,:,0])
+      new_array[:,:,-1] = expand_2D_array(original_array[:,:,-1])
+      new_array[0,:,:] = expand_2D_array(original_array[0,:,:])
+      new_array[-1,:,:] = expand_2D_array(original_array[-1,:,:])
+      return new_array
+
+    
+    nodes_Z = expand_2D_array(nodes_Z)
+    nodes_R = expand_2D_array(nodes_R)
+
+
+    n_elc = n_elc[:,:,0]
+    u_elc = u_elc[:,:,0]
+    Tpar_elc = Tpar_elc[:,:,0] * me / eV
+    Tperp_elc = Tperp_elc[:,:,0] * me / eV
+    T_elc = (Tpar_elc + 2*Tperp_elc)/3
+    n_ion = n_ion[:,:,0]
+    u_ion = u_ion[:,:,0]
+    Tpar_ion = Tpar_ion[:,:,0] * mi / eV
+    Tperp_ion = Tperp_ion[:,:,0] * mi / eV
+    T_ion = (Tpar_ion + 2*Tperp_ion)/3
+    phi = phi[:,:,0]
+    midplane_Te = T_elc[:,T_elc.shape[1]//2]
+    ephioTe =  phi / midplane_Te[:,None]
+
+    # Compute polarization density for ions
+    # Read in the magnetic field
+    filename_bmag = str(dataDir+unifFile+'-bmag.gkyl')
+    pgData_bmag = pg.GData(filename_bmag)
+    pgInterp_bmag = pg.GInterpModal(pgData_bmag, polyOrder, 'ms')
+    coords, bmag = pgInterp_bmag.interpolate()
+    bmag_shape = bmag.shape
+
+    # Checked in gkyl_gk_geometry_bmag_mid that this is how it's done
+    epsilon_i = mi * n_pol / bmag[bmag_shape[0]//2,bmag_shape[1]//2,0]**2
+
+    filename_jacobgeo = str(dataDir+unifFile+'-jacobgeo.gkyl')
+    pgData_jacobgeo = pg.GData(filename_jacobgeo)
+    pgInterp_jacobgeo = pg.GInterpModal(pgData_jacobgeo, polyOrder, 'ms')
+    coords, jacobgeo = pgInterp_jacobgeo.interpolate()
+    jacobgeo = jacobgeo[:,:,0]
+
+    filename_gxx = str(dataDir+unifFile+'-gxxj.gkyl')
+    pgData_gxx = pg.GData(filename_gxx)
+    pgInterp_gxx = pg.GInterpModal(pgData_gxx, polyOrder, 'ms')
+    coords, gxxj = pgInterp_gxx.interpolate()
+    gxxj = gxxj[:,:,0]
+
+    D =  gxxj * epsilon_i
+    dpsi = coords[1][0] - coords[0][0]
+    ni_pol = np.zeros(D.shape)
+    for i in range (D.shape[0]-1):
+      ni_pol[i,:] = -1/jacobgeo[i,:] / dpsi * (((D[i+1,:]+D[i,:])/2) * ((phi[i+1,:]-phi[i,:])/dpsi) - \
+                                               ((D[i-1,:]+D[i,:])/2) * ((phi[i,:]-phi[i-1,:])/dpsi))
+    ni_pol[0,:] = 0.0
+
+    # make an array grid that is the size of coords
+
+    # X = nodes_Z[0,:]
+    # Y = coords[0]
+
+    X = nodes_Z[:,:]
+    Y = nodes_R[:,:]
+
+    # Print where n_ion is nan
+    print(np.argwhere(np.isnan(n_ion)))
+
+    
+    fig, ax = plt.subplots(3, 2, figsize=(8,8))
+    fig.suptitle(str(frame_number*time_per_frame)+' seconds', fontsize=20)
+
+    def plot_moment_data(data, ax, fig, title, locx, locy):
+      ax[locx,locy].pcolormesh(X,Y,data,cmap='inferno')
+      ax[locx,locy].set_xlabel('Z, m')
+      ax[locx,locy].set_ylabel('R, m')
+      ax[locx,locy].set_title(title, fontsize=16)
+      ax[locx,locy].set_ylim([0, 0.1])
+      fig.colorbar(ax[locx,locy].pcolormesh(X,Y,data,cmap='inferno'), ax=ax[locx,locy])
+
+    plot_moment_data(n_elc, ax, fig, '$n_e$, $m^{-3}$', 0, 0)
+    plot_moment_data(T_elc, ax, fig, '$T_e$, $eV$', 0, 1)
+    plot_moment_data(n_ion, ax, fig, '$n_i$, $m^{-3}$', 1, 0)
+    plot_moment_data(T_ion, ax, fig, '$T_i$, $eV$', 1, 1)
+
+    plot_moment_data(ephioTe, ax, fig, '$e \phi / T_e$', 2, 0)
+    ax[2,1].remove()
+
+    plt.tight_layout()
+    plt.savefig(outDir+'moments_condensed_'+str(frame_number)+figureFileFormat, dpi=1000)
+    plt.close()
+
+  # Number of processes to run in parallel
+  make_moms(0)
+  # frame_arr = np.arange(0,frame_max_plus1)
+  # num_processes = multiprocessing.cpu_count()
+  # print('Number of processes: ', num_processes)
+  # pool = multiprocessing.Pool(processes=num_processes)
+  # pool.map(make_moms, frame_arr)
+  # pool.close()
+  # pool.join()
+
+
+  # Define the filenames in order
+  # filenames = [f'moments_{i}.png' for i in range(0, frame_max_plus1)]
+  # filenames = [outDir+f'moments_{i}.png' for i in range(0, frame_max_plus1)]
+
+  # # Create a writer object specifying the output file name and frame rate
+  # with imageio.get_writer(outDir+'moments_movie.mp4', mode='I', fps=5) as writer:
+  #     for filename in filenames:
+  #         image = imageio.imread(filename)
+  #         writer.append_data(image)
+  # print("Movie created successfully.")
+  
 
 #   #....................................DEPRICATED CODE............................................#
 
