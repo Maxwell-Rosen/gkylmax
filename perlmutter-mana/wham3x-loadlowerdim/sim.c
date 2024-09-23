@@ -86,7 +86,7 @@ struct gk_mirror_ctx
 };
 
 struct gkyl_efit_inp inp = {
-  .filepath = "../eqdsk/wham.geqdsk",
+  .filepath = "../../eqdsk/wham.geqdsk",
   .rz_poly_order = 2,
   .flux_poly_order = 1,
 };

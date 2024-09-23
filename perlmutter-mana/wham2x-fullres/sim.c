@@ -329,36 +329,36 @@ load_wham_distf(void* ctx)
 {
   struct gk_mirror_ctx *app = ctx;
 
-  const char* filename_f_dist_ion = "../binary_files/f_dist_ion.bin";
+  const char* filename_f_dist_ion = "../../binary_files/f_dist_ion.bin";
   size_t num_elements_f_dist_ion;
   double* f_dist_ion = load_binary_file(filename_f_dist_ion, &num_elements_f_dist_ion);
   app->f_dist_ion = f_dist_ion;
 
-  const char* filename_f_dist_elc = "../binary_files/f_dist_elc.bin";
+  const char* filename_f_dist_elc = "../../binary_files/f_dist_elc.bin";
   size_t num_elements_f_dist_elc;
   double* f_dist_elc = load_binary_file(filename_f_dist_elc, &num_elements_f_dist_elc);
   app->f_dist_elc = f_dist_elc;
 
-  const char *filename_phiVals = "../binary_files/phi.bin";
+  const char *filename_phiVals = "../../binary_files/phi.bin";
   size_t num_elements_phiVals;
   double *phi_vals = load_binary_file(filename_phiVals, &num_elements_phiVals);
   app->phi_vals = phi_vals; // Need to check units. I think this is kV
 
-  const char *filename_psiGrid = "../binary_files/psiGrid.bin";
+  const char *filename_psiGrid = "../../binary_files/psiGrid.bin";
   size_t num_elements_psiGrid;
   double *psi_grid = load_binary_file(filename_psiGrid, &num_elements_psiGrid);
   app->psi_grid = psi_grid;
 
-  const char *filename_zGrid = "../binary_files/zGrid.bin";
+  const char *filename_zGrid = "../../binary_files/zGrid.bin";
   size_t num_elements_zGrid;
   double *z_grid = load_binary_file(filename_zGrid, &num_elements_zGrid);
   app->z_grid = z_grid;
 
-  const char *filename_uGrid = "../binary_files/uGrid.bin";
+  const char *filename_uGrid = "../../binary_files/uGrid.bin";
   size_t num_elements_uGrid;
   double *u_grid = load_binary_file(filename_uGrid, &num_elements_uGrid);
 
-  const char *filename_v_norm = "../binary_files/v_norm.bin";
+  const char *filename_v_norm = "../../binary_files/v_norm.bin";
   size_t num_elements_v_norm;
   double *v_norm = load_binary_file(filename_v_norm, &num_elements_v_norm);
 
@@ -372,12 +372,12 @@ load_wham_distf(void* ctx)
   app->v_grid = v_grid;
   size_t num_elements_vGrid = num_elements_uGrid;
 
-  const char *filename_theta = "../binary_files/theta.bin";
+  const char *filename_theta = "../../binary_files/theta.bin";
   size_t num_elements_theta;
   double *theta_grid = load_binary_file(filename_theta, &num_elements_theta);
   app->theta_grid = theta_grid;
 
-  const char *filename_BGrid = "../binary_files/BGrid.bin";
+  const char *filename_BGrid = "../../binary_files/BGrid.bin";
   size_t num_elements_BGrid;
   double *B_grid = load_binary_file(filename_BGrid, &num_elements_BGrid);
   app->B_grid = B_grid;
@@ -745,7 +745,7 @@ int main(int argc, char **argv)
   };
 
 struct gkyl_efit_inp efit_inp = {
-    .filepath = "../eqdsk/wham.geqdsk",
+    .filepath = "../../eqdsk/wham.geqdsk",
     .rz_poly_order = 2,                     // polynomial order for psi(R,Z) used for field line tracing
     .flux_poly_order = 1,                   // polynomial order for fpol(psi)
   };
