@@ -207,7 +207,7 @@ create_ctx(void)
   // Geometry parameters.
   double z_min = -M_PI + 1e-1;
   double z_max = M_PI - 1e-1;
-  double psi_min = 1e-6; // Go smaller. 1e-4 might be too small
+  double psi_min = 7e-6; // Go smaller. 1e-4 might be too small
   double psi_max = 3e-3; // aim for 2e-2
 
   // Grid parameters
@@ -326,11 +326,8 @@ int main(int argc, char **argv)
   for (int d=0; d<ctx.vdim; d++)
     cells_v[d] = APP_ARGS_CHOOSE(app_args.vcells[d], ctx.cells[ctx.cdim+d]);
 
-  // Create decomposition.
-  struct gkyl_rect_decomp *decomp = gkyl_gyrokinetic_comms_decomp_new(ctx.cdim, cells_x, app_args.cuts, app_args.use_mpi, stderr);
-
   // Construct communicator for use in app.
-  struct gkyl_comm *comm = gkyl_gyrokinetic_comms_new(app_args.use_mpi, app_args.use_gpu, decomp, stderr);
+  struct gkyl_comm *comm = gkyl_gyrokinetic_comms_new(app_args.use_mpi, app_args.use_gpu, stderr);
 
   int my_rank = 0;
   int comm_sz = 1;
@@ -345,9 +342,9 @@ int main(int argc, char **argv)
   if (my_rank == 0) {
     printf("Grid size = %d in psi, %d in theta, %d in Z, %d in Vpar, %d in mu\n", cells_x[0], cells_x[1], cells_x[2], cells_v[0], cells_v[1]);
     if (app_args.use_mpi)
-      printf("Number of MPI ranks: %d\n", decomp->ndecomp);
+      printf("Number of MPI ranks: %d by %d\n", app_args.cuts[0], app_args.cuts[1]);
     if (app_args.use_gpu)
-      printf("Number of GPUs: %d\n", decomp->ndecomp);
+      printf("Number of GPUs: %d by %d\n", app_args.cuts[0], app_args.cuts[1]);
     printf("psi_min = %g, psi_max = %g\n", ctx.psi_min, ctx.psi_max);
     printf("z_min = %g, z_max = %g\n", ctx.z_min, ctx.z_max);
     printf("vpar_max_ion/vti = %g, mu_max_ion/mu_ti = %g\n", ctx.vpar_max_ion/ctx.vti, sqrt(ctx.mu_max_ion/ctx.mi*2.0*ctx.B_p)/ctx.vti);
@@ -357,6 +354,7 @@ int main(int argc, char **argv)
     printf("omega_ci = %.4e, rho_s = %.4e, kperp = %.4e\n", ctx.omega_ci, ctx.rho_s, ctx.kperp);
     printf("1/nuElc = %.4e, 1/nuIon = %.4e\n", 1./ctx.nuElc, 1./ctx.nuIon);
   }
+  
 
   struct gkyl_gyrokinetic_species elc = {
     .name = "elc",
@@ -369,7 +367,7 @@ int main(int argc, char **argv)
     .no_by = true,
     .init_from_file = {
       .type = GKYL_IC_IMPORT_AF,
-      .file_name = "./initial-conditions/gk_wham-elc_0.gkyl",
+      .file_name = "/home/mr1884/scratch/gkylmax/della-wham3x-ICs/initial-conditions/gk_wham-elc_0.gkyl",
       .conf_scale = angular_noise,
       .conf_scale_ctx = &ctx,
     },
@@ -407,7 +405,7 @@ int main(int argc, char **argv)
     .no_by = true,
     .init_from_file = {
       .type = GKYL_IC_IMPORT_AF,
-      .file_name = "./initial-conditions/gk_wham-ion_0.gkyl",
+      .file_name = "/home/mr1884/scratch/gkylmax/della-wham3x-ICs/initial-conditions/gk_wham-ion_0.gkyl",
       .conf_scale = angular_noise,
       .conf_scale_ctx = &ctx,
     },
@@ -461,12 +459,11 @@ int main(int argc, char **argv)
     .species = {elc, ion},
     .field = field,
     .enforce_positivity = true,
-    .use_gpu = app_args.use_gpu,
-    .has_low_inp = true,
-    .low_inp = {
-      .local_range = decomp->ranges[my_rank],
-      .comm = comm
-    }
+    .parallelism = {
+      .use_gpu = app_args.use_gpu,
+      .cuts = { app_args.cuts[0], app_args.cuts[1], app_args.cuts[2] },
+      .comm = comm,
+    },
   };
 
   // start timer
@@ -589,7 +586,7 @@ int main(int argc, char **argv)
   freeresources:
   // Free resources after simulation completion.
   gkyl_gyrokinetic_app_release(app);
-  gkyl_gyrokinetic_comms_release(decomp, comm);
+  gkyl_gyrokinetic_comms_release(comm);
 
 #ifdef GKYL_HAVE_MPI
   if (app_args.use_mpi) {

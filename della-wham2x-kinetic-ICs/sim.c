@@ -505,7 +505,7 @@ create_ctx(void)
   // Geometry parameters.
   double z_min = -M_PI + 1e-1;
   double z_max = M_PI - 1e-1;
-  double psi_min = 1e-6; // Go smaller. 1e-4 might be too small
+  double psi_min = 7e-6; // Go smaller. 1e-4 might be too small
   double psi_max = 3e-3; // aim for 2e-2
 
   // Grid parameters
@@ -514,9 +514,9 @@ create_ctx(void)
   double vpar_max_ion = 30 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   int Nvpar = 32; // 96 uniform
-  int Nmu = 32;  // 192 uniform
+  int Nmu = 16;  // 192 uniform
   int Nz = 288;
-  int Nx = 16;
+  int Nx = 8;
   int poly_order = 1;
   double t_end = 500e-6;
   int num_frames = 500;
