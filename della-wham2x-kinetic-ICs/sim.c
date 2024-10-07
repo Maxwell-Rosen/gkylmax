@@ -222,8 +222,8 @@ read_ion_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   int* dims = app.dims;
 
   // FROM GEOMETRY INPUT HARDCOPY
-  double z_min_geo = -2.0;
-  double z_max_geo =  2.0;
+  double z_min_geo = -0.98;
+  double z_max_geo =  0.98;
   double tmin = app.z_min;
   double tmax = app.z_max;
   double t_norm_cord = (xn[1] + tmin) / (tmax - tmin);
@@ -249,7 +249,7 @@ read_ion_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   if (interp_val < 0.0) {
     interp_val = 0.0;
   }
-  fout[0] = interp_val*1.2688; //*1.0786, 1.01802 phi 8
+  fout[0] = interp_val; //*1.0786, 1.01802 phi 8
 }
 
 void
@@ -264,8 +264,8 @@ read_elc_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   int* dims = app.dims;
 
   // FROM GEOMETRY INPUT HARDCOPY
-  double z_min_geo = -2.0;
-  double z_max_geo =  2.0;
+  double z_min_geo = -0.98;
+  double z_max_geo =  0.98;
   double tmin = app.z_min;
   double tmax = app.z_max;
   double t_norm_cord = (xn[1] + tmin) / (tmax - tmin);
@@ -290,8 +290,8 @@ read_elc_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   if (interp_val < 0.0){
     interp_val = 0.0;
   }
-  // double radial_scaling = 1 - 0.9*pow((xn[0] - app.psi_min)/(app.psi_max - app.psi_min), 1.);
-  fout[0] = interp_val;
+  double radial_scaling = 1 - 0.9*pow((xn[0] - app.psi_min)/(app.psi_max - app.psi_min), 1.);
+  fout[0] = interp_val * radial_scaling;
   // fout[0] = interp_val;
 }
 
@@ -308,8 +308,8 @@ read_phi(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, v
   interp_pt[0] = xn[0];
 
   // FROM GEOMETRY INPUT HARDCOPY
-  double z_min_geo = -2.0;
-  double z_max_geo =  2.0;
+  double z_min_geo = -0.98;
+  double z_max_geo =  0.98;
   double z_throat_approx = 1.0;
   double tmin = app.z_min;
   double tmax = app.z_max;
@@ -318,7 +318,7 @@ read_phi(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, v
   interp_pt[1] = z_cord;
 
   double interp_val = LI_2D(dims, psi_grid, z_grid, phi_vals, interp_pt);
-  double radial_scaling = 1 - pow((xn[0] - app.psi_min)/(app.psi_max - app.psi_min),8.);
+  double radial_scaling = 1 - pow((xn[0] - app.psi_min)/(app.psi_max - app.psi_min),1.5);
   // double z_scaling = fmax(0, fmin(1, 1 - pow(fabs(z_cord)/z_throat_approx,2.0)));
   // fout[0] = interp_val * radial_scaling * z_scaling;
   fout[0] = interp_val*radial_scaling;
@@ -626,11 +626,8 @@ int main(int argc, char **argv)
   for (int d=0; d<ctx.vdim; d++)
     cells_v[d] = APP_ARGS_CHOOSE(app_args.vcells[d], ctx.cells[ctx.cdim+d]);
 
-  // Create decomposition.
-  struct gkyl_rect_decomp *decomp = gkyl_gyrokinetic_comms_decomp_new(ctx.cdim, cells_x, app_args.cuts, app_args.use_mpi, stderr);
-
   // Construct communicator for use in app.
-  struct gkyl_comm *comm = gkyl_gyrokinetic_comms_new(app_args.use_mpi, app_args.use_gpu, decomp, stderr);
+  struct gkyl_comm *comm = gkyl_gyrokinetic_comms_new(app_args.use_mpi, app_args.use_gpu, stderr);
 
   int my_rank = 0;
   int comm_sz = 1;
@@ -645,9 +642,9 @@ int main(int argc, char **argv)
   if (my_rank == 0) {
     printf("Grid size = %d in psi, %d in Z, %d in Vpar, %d in mu\n", cells_x[0], cells_x[1], cells_v[0], cells_v[1]);
     if (app_args.use_mpi)
-      printf("Number of MPI ranks: %d\n", decomp->ndecomp);
+      printf("Number of MPI ranks: %d by %d\n", app_args.cuts[0], app_args.cuts[1]);
     if (app_args.use_gpu)
-      printf("Number of GPUs: %d\n", decomp->ndecomp);
+      printf("Number of GPUs: %d by %d\n", app_args.cuts[0], app_args.cuts[1]);
     printf("psi_min = %g, psi_max = %g\n", ctx.psi_min, ctx.psi_max);
     printf("z_min = %g, z_max = %g\n", ctx.z_min, ctx.z_max);
     printf("vpar_max_ion/vti = %g, mu_max_ion/mu_ti = %g\n", ctx.vpar_max_ion/ctx.vti, sqrt(ctx.mu_max_ion/ctx.mi*2.0*ctx.B_p)/ctx.vti);
@@ -740,8 +737,8 @@ int main(int argc, char **argv)
       .lo_value = {0.0},
       .up_value = {0.0},
     },
-    // .polarization_potential = read_phi,
-    // .polarization_potential_ctx = &ctx,
+    .polarization_potential = read_phi,
+    .polarization_potential_ctx = &ctx,
   };
 
 struct gkyl_efit_inp efit_inp = {
@@ -752,8 +749,8 @@ struct gkyl_efit_inp efit_inp = {
 
   struct gkyl_mirror_geo_grid_inp grid_inp = {
     .rclose = 0.2, // closest R to region of interest
-    .zmin = -2.0,  // Z of lower boundary
-    .zmax =  2.0,  // Z of upper boundary 
+    .zmin = -0.98,  // Z of lower boundary
+    .zmax =  0.98,  // Z of upper boundary 
   };
   struct gkyl_gk app_inp = {  // GK app
     .name = "gk_wham",
@@ -775,12 +772,12 @@ struct gkyl_efit_inp efit_inp = {
     .num_species = 2,
     .species = {elc, ion},
     .field = field,
+    .enforce_positivity = true,
+    .parallelism = {
     .use_gpu = app_args.use_gpu,
-    .has_low_inp = true,
-    .low_inp = {
-      .local_range = decomp->ranges[my_rank],
-      .comm = comm
-    }
+      .cuts = { app_args.cuts[0], app_args.cuts[1], app_args.cuts[2] },
+      .comm = comm,
+    },
   };
   
   // Create app object.
@@ -837,11 +834,15 @@ struct gkyl_efit_inp efit_inp = {
   end_time = clock();
   if (my_rank == 0)
     printf("Time to write diagnostics: %g\n", (double)(end_time - start_time) / CLOCKS_PER_SEC);
+  start_time = clock();
   while ((t_curr < t_end) && (step <= app_args.num_steps)) {
     struct gkyl_update_status status = gkyl_gyrokinetic_update(app, dt);    
     if (step % 1000 == 0) {
       gkyl_gyrokinetic_app_cout(app, stdout, "Taking time-step %ld at t = %g ...", step, t_curr);
-      gkyl_gyrokinetic_app_cout(app, stdout, " dt = %g\n", status.dt_actual);
+      gkyl_gyrokinetic_app_cout(app, stdout, " dt = %g ... ", status.dt_actual);
+      end_time = clock();
+      double time_per_hour = t_curr / ((double)(end_time - start_time) / CLOCKS_PER_SEC) * 3600.0;
+      gkyl_gyrokinetic_app_cout(app, stdout, "will cover %g s in 1 hour\n", time_per_hour);
     }
 
     if (!status.success) {
@@ -904,7 +905,7 @@ struct gkyl_efit_inp efit_inp = {
   // Free resources after simulation completion.
   gkyl_gyrokinetic_app_release(app);
   free_wham_distf(&ctx);
-  gkyl_gyrokinetic_comms_release(decomp, comm);
+  gkyl_gyrokinetic_comms_release(comm);
 
 #ifdef GKYL_HAVE_MPI
   if (app_args.use_mpi) {

@@ -22,12 +22,18 @@ saveLoc="python-plots/$name"
 # pgkyl "$name-"jacobtot.gkyl interp -b ms -p1 pl --title "jacobtot" --saveas "$saveLoc-geo-jacobtot.png" --no-show &
 # pgkyl "$name-"mapc2p.gkyl interp -b ms -p1 pl --title "mapc2p" --saveas "$saveLoc-geo-mapc2p.png" --no-show &
 
-# pgkyl gk_wham-ion_BiMaxwellianMoments_0.gkyl interp -b ms -p1 sel -c0 --z1 0.0 pl --title "ion density" --xlabel "psi" --ylabel "density" &
-# pgkyl gk_wham-elc_BiMaxwellianMoments_0.gkyl interp -b ms -p1 sel -c0 --z1 0.0 pl --title "elc density" --xlabel "psi" --ylabel "density" &
-pgkyl gk_wham-field_0.gkyl interp -b ms -p1 sel --z1 0.0 pl --title "phi" --xlabel "psi" --ylabel "phi" &
+pgkyl gk_wham-ion_BiMaxwellianMoments_0.gkyl interp -b ms -p1 sel pl --title "ion density" --xlabel "psi" --ylabel "density" &
+pgkyl gk_wham-elc_BiMaxwellianMoments_0.gkyl interp -b ms -p1 sel pl --title "elc density" --xlabel "psi" --ylabel "density" &
+pgkyl gk_wham-field_0.gkyl interp -b ms -p1 sel --z1 0.0 pl --title "field" --xlabel "psi" --ylabel "phi" &
+# pgkyl gk_wham-den_mod.gkyl interp -b ms -p1 sel --z1 0.0 pl --title "den_mod" --xlabel "psi" --ylabel "den_mod" &
 # pgkyl gk_wham-den_mod.gkyl interp -b ms -p1 sel --z1 0.0 pl --title "den_mod" --xlabel "psi" --ylabel "den_mod" &
 # pgkyl data-lores/wham_psi.gkyl interp -b ms -p2 pl -c --clevels "1e-10:3e-3:16" &
-
+# pgkyl gk_wham-ion_BiMaxwellianMoments_0.gkyl interp -b ms -p1 pl --title "ion density" --xlabel "psi" --ylabel "density" &
+pgkyl gk_wham-npol_advanced.gkyl interp -b ms -p1 sel --z1 0.0 pl --title "npol advanced" --xlabel "psi" --ylabel "npol" &
+pgkyl gk_wham-npol.gkyl interp -b ms -p1 sel --z1 0.0 pl --title "npol" --xlabel "psi" --ylabel "npol" &
+pgkyl gk_wham-den_mod.gkyl interp -b ms -p1 sel --z1 0.0 pl --title "den_mod" --xlabel "psi" --ylabel "den_mod" &
+pgkyl gk_wham-m0.gkyl interp -b ms -p1 sel --z1 0.0 pl --title "m0" --xlabel "psi" --ylabel "m0" &
+pgkyl gk_wham-phi_pol.gkyl interp -b mt -p3 sel --z1 0.0 pl --title "phi_pol" --xlabel "psi" --ylabel "phi_pol" &
 
 # pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 sel --z0 0.002 --z1 0.0 pl --title "$species frame $frame z=0" \
 #   --saveas "python-plots/$name-$species-$frame-1d-z=0.png" --no-show -x "vpar" -y "mu" &

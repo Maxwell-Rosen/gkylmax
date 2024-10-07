@@ -9,7 +9,7 @@
 #SBATCH -q gpu-short
 
 #.Number of nodes to request (Perlmutter has 64 cores and 4 GPUs per node)
-#SBATCH -N 4
+#SBATCH -N 1
 #SBATCH --ntasks-per-node 2
 #SBATCH --mem=500G
 
@@ -19,7 +19,7 @@
 
 #.Request wall time
 #SBATCH -t 24:00:00
-num_gpu=8
+num_gpu=2
 
 #.Load modules (this must match those in the machines/configure script).
 export PATH="$HOME/scratch/gkylsoft-amd-gtwo/gkyl/bin:$PATH"
@@ -47,9 +47,9 @@ echo "Max number is $max_number"
 if [ "$max_number" -eq 0 ]; then
   echo "No matching files found. Starting from the begining"
   echo "srun -u -n $num_gpu ./sim -g -M -c $num_gpu"
-  srun -u -n $num_gpu ./sim -g -M -c $num_gpu
+  srun -u -n $num_gpu ./sim-modified -g -M -c $num_gpu
 else
   echo "Resuming from file $max_number"
   echo "srun -u -n $num_gpu ./sim -g -M -c $num_gpu -r $max_number"
-  srun -u -n $num_gpu ./sim -g -M -c $num_gpu -r $max_number
+  srun -u -n $num_gpu ./sim-modified -g -M -c $num_gpu -r $max_number
 fi

@@ -19,12 +19,12 @@ import imageio.v2 as imageio
 # dataDir = './data-hires-lorad/'
 dataDir = './'
 unifFile = 'gk_wham'
-frame_max_plus1 = 1
+frame_max_plus1 = 12
 time_per_frame = 1e-6
 
-plot_potential_trace = 0
+plot_potential_trace = 1
 plot_bimax_moms = 1
-plot_integrate_positivity = 0
+plot_integrate_positivity = 1
 
 # frame_arr = np.arange(0,11)
 # frame_arr = np.array([1:4])
@@ -379,26 +379,26 @@ if plot_bimax_moms:
     plt.close()
 
   # Number of processes to run in parallel
-  make_moms(0)
-  # frame_arr = np.arange(0,frame_max_plus1)
-  # num_processes = multiprocessing.cpu_count()
-  # print('Number of processes: ', num_processes)
-  # pool = multiprocessing.Pool(processes=num_processes)
-  # pool.map(make_moms, frame_arr)
-  # pool.close()
-  # pool.join()
+  # make_moms(0)
+  frame_arr = np.arange(0,frame_max_plus1)
+  num_processes = multiprocessing.cpu_count()
+  print('Number of processes: ', num_processes)
+  pool = multiprocessing.Pool(processes=num_processes)
+  pool.map(make_moms, frame_arr)
+  pool.close()
+  pool.join()
 
 
   # Define the filenames in order
-  # filenames = [f'moments_{i}.png' for i in range(0, frame_max_plus1)]
-  # filenames = [outDir+f'moments_{i}.png' for i in range(0, frame_max_plus1)]
+  filenames = [f'moments_{i}.png' for i in range(0, frame_max_plus1)]
+  filenames = [outDir+f'moments_{i}.png' for i in range(0, frame_max_plus1)]
 
-  # # Create a writer object specifying the output file name and frame rate
-  # with imageio.get_writer(outDir+'moments_movie.mp4', mode='I', fps=5) as writer:
-  #     for filename in filenames:
-  #         image = imageio.imread(filename)
-  #         writer.append_data(image)
-  # print("Movie created successfully.")
+  # Create a writer object specifying the output file name and frame rate
+  with imageio.get_writer(outDir+'moments_movie.mp4', mode='I', fps=5) as writer:
+      for filename in filenames:
+          image = imageio.imread(filename)
+          writer.append_data(image)
+  print("Movie created successfully.")
   
 if plot_integrate_positivity:
     print("Getting integrated moments")
