@@ -20,12 +20,12 @@ import imageio.v2 as imageio
 dataDir = './'
 unifFile = 'gk_wham'
 modifiedFile = 'gk_wham_modified'
-frame_max_plus1 = 1
+frame_max_plus1 = 48
 time_per_frame = 1e-6
 
 plot_potential_trace = 1
 plot_bimax_moms = 1
-plot_integrate_positivity = 0
+plot_integrate_positivity = 1
 
 # frame_arr = np.arange(0,11)
 # frame_arr = np.array([1:4])
@@ -203,7 +203,6 @@ if plot_bimax_moms:
     coords, phi = pgInterp_field.interpolate()
 
     filename_elc_mod = str(dataDir+modifiedFile+'-elc_BiMaxwellianMoments_'+str(frame_number)+'.gkyl')
-    print("Reading file ", filename_elc_mod)
     pgData_elc_mod = pg.GData(filename_elc_mod)
     pgInterp_elc_mod = pg.GInterpModal(pgData_elc_mod, polyOrder, 'ms')
     coords, n_elc_mod = pgInterp_elc_mod.interpolate(0)
@@ -233,12 +232,8 @@ if plot_bimax_moms:
     shape_R = np.shape(nodes_R)
     midplane_R_min = nodes_R[shape_R[0]//2]
     midplane_R_max = nodes_R[shape_R[0]//2]
-    print("Midplane R min: ", midplane_R_min)
-    print("Midplane R max: ", midplane_R_max)
     throat_R_min = nodes_R[shape_R[0]//4]
     throat_R_max = nodes_R[shape_R[0]//4]
-    print("Throat R min: ", throat_R_min)
-    print("Throat R max: ", throat_R_max)
 
     def expand_1D_array(original_array):
       new_length = 2 * len(original_array) - 1
@@ -310,9 +305,7 @@ if plot_bimax_moms:
 
     
     nodes_Z = expand_1D_array(nodes_Z)
-    print(np.shape(nodes_Z))
     nodes_Z = nodes_Z[1:]
-    print(np.shape(nodes_Z))
     # nodes_R = expand_1D_array(nodes_R)
 
 
@@ -434,26 +427,26 @@ if plot_bimax_moms:
     plt.close()
 
   # Number of processes to run in parallel
-  make_moms(0)
-  # frame_arr = np.arange(0,frame_max_plus1)
-  # num_processes = multiprocessing.cpu_count()
-  # print('Number of processes: ', num_processes)
-  # pool = multiprocessing.Pool(processes=num_processes)
-  # pool.map(make_moms, frame_arr)
-  # pool.close()
-  # pool.join()
+  # make_moms(0)
+  frame_arr = np.arange(0,frame_max_plus1)
+  num_processes = multiprocessing.cpu_count()
+  print('Number of processes: ', num_processes)
+  pool = multiprocessing.Pool(processes=num_processes)
+  pool.map(make_moms, frame_arr)
+  pool.close()
+  pool.join()
 
 
   # Define the filenames in order
-  # filenames = [f'moments_{i}.png' for i in range(0, frame_max_plus1)]
-  # filenames = [outDir+f'moments_{i}.png' for i in range(0, frame_max_plus1)]
+  filenames = [f'moments_{i}.png' for i in range(0, frame_max_plus1)]
+  filenames = [outDir+f'moments_{i}.png' for i in range(0, frame_max_plus1)]
 
-  # # Create a writer object specifying the output file name and frame rate
-  # with imageio.get_writer(outDir+'moments_movie.mp4', mode='I', fps=5) as writer:
-  #     for filename in filenames:
-  #         image = imageio.imread(filename)
-  #         writer.append_data(image)
-  # print("Movie created successfully.")
+  # Create a writer object specifying the output file name and frame rate
+  with imageio.get_writer(outDir+'moments_movie.mp4', mode='I', fps=5) as writer:
+      for filename in filenames:
+          image = imageio.imread(filename)
+          writer.append_data(image)
+  print("Movie created successfully.")
   
 if plot_integrate_positivity:
     print("Getting integrated moments")

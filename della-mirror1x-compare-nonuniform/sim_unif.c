@@ -175,7 +175,7 @@ Z_psiz(double psiIn, double zIn, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
   double maxL = app->Z_max - app->Z_min;
-  double eps = maxL / app->num_cell_z;   // Interestingly using a smaller eps yields larger errors in some geo quantities.
+  double eps = maxL / app->Nz;   // Interestingly using a smaller eps yields larger errors in some geo quantities.
   app->psi_in = psiIn;
   app->z_in = zIn;
   struct gkyl_qr_res Zout;
@@ -611,13 +611,13 @@ create_ctx(void)
   double Z_m = 0.98;
 
   // Grid parameters
-  double vpar_max_ion = 30 * vti;
+  double vpar_max_ion = 20 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
-  int num_cell_vpar = 128; // Number of cells in the paralell velocity direction 96
-  int num_cell_mu = 192;  // Number of cells in the mu direction 192
-  int num_cell_z = 288;
+  int Nvpar = 128; // Number of cells in the paralell velocity direction 96
+  int Nmu = 192;  // Number of cells in the mu direction 192
+  int Nz = 288;
   int poly_order = 1;
-  double final_time = 100e-6;
+  double t_end = 100e-6;
   int num_frames = 100;
 
   // Bananna tip info. Hardcoad to avoid dependency on ctx
@@ -642,6 +642,7 @@ create_ctx(void)
 
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
   int num_failures_max = 20; // Maximum allowable number of consecutive small time-steps.
+  int int_diag_calc_num = num_frames*100;
 
   struct gk_mirror_ctx ctx = {
     .cdim = cdim,
@@ -703,7 +704,7 @@ create_ctx(void)
   };
   calculate_mirror_throat_location(&ctx);
   // Printing
-  double dxi = (ctx.z_max - ctx.z_min) / ctx.num_cell_z;
+  double dxi = (ctx.z_max - ctx.z_min) / ctx.Nz;
   if (ctx.mapping_frac == 0.0)
   {
     printf("Uniform cell spacing in z: %g m\n", dxi);
@@ -717,7 +718,7 @@ create_ctx(void)
     double diff_z_p50 = z_xi(ctx.z_m * .5  + dxi/2, ctx.psi_eval, &ctx) - z_xi(ctx.z_m * .5  - dxi/2, ctx.psi_eval, &ctx);
     double diff_z_p25 = z_xi(ctx.z_m * .25 + dxi/2, ctx.psi_eval, &ctx) - z_xi(ctx.z_m * .25 - dxi/2, ctx.psi_eval, &ctx);
     double diff_z_min = z_xi(dxi/2, ctx.psi_eval, &ctx) - z_xi(-dxi/2, ctx.psi_eval, &ctx);
-    printf("Total number of cells in z   : %d\n", ctx.num_cell_z);
+    printf("Total number of cells in z   : %d\n", ctx.Nz);
     printf("Uniform computational spacing: %g m\n", dxi);
     printf("Maximum cell spacing at z_m  : %g m\n", diff_z_max);
     printf("Cell spacing at z_m * 0.75   : %g m\n", diff_z_p75);
@@ -799,22 +800,21 @@ int main(int argc, char **argv)
       printf("Number of MPI ranks: %d\n", app_args.cuts[0]);
     if (app_args.use_gpu)
       printf("Number of GPUs: %d\n", app_args.cuts[0]);
-    printf("psi_eval = %g, psi_min = %g, psi_max = %g\n", ctx.psi_eval, ctx.psi_min, ctx.psi_max);
+    printf("psi_eval = %g\n", ctx.psi_eval);
     printf("z_min = %g, z_max = %g\n", ctx.z_min, ctx.z_max);
     printf("vpar_max_ion/vti = %g, mu_max_ion/mu_ti = %g\n", ctx.vpar_max_ion/ctx.vti, sqrt(ctx.mu_max_ion/ctx.mi*2.0*ctx.B_p)/ctx.vti);
-    printf("vpar_max_elc/vte = %g, mu_max_elc/mu_te = %g\n", ctx.vpar_max_elc/ctx.vte, sqrt(ctx.mu_max_elc/ctx.me*2.0*ctx.B_p)/ctx.vte);
-    printf("vti = %.4e, vte = %.4e, c_s = %.4e, mu_ti = %.4e, mu_te = %.4e\n", ctx.vti, ctx.vte, ctx.c_s, ctx.mi * pow(ctx.vti, 2.) / (2. * ctx.B_p),
+    printf("vti = %.4e, c_s = %.4e, mu_ti = %.4e, mu_te = %.4e\n", ctx.vti, ctx.c_s, ctx.mi * pow(ctx.vti, 2.) / (2. * ctx.B_p),
      ctx.me * pow(ctx.vte, 2.) / (2. * ctx.B_p));
-    printf("omega_ci = %.4e, rho_s = %.4e, kperp = %.4e\n", ctx.omega_ci, ctx.rho_s, ctx.kperp);
-    printf("1/nuElc = %.4e, 1/nuIon = %.4e\n", 1./ctx.nuElc, 1./ctx.nuIon);
+    printf("omega_ci = %.4e, rho_s = %.4e\n", ctx.omega_ci, ctx.rho_s);
+    printf("1/nuIon = %.4e\n", 1./ctx.nuIon);
   }
 
   struct gkyl_gyrokinetic_species ion = {
     .name = "ion",
     .charge = ctx.qi,
     .mass = ctx.mi,
-    .lower = {-1.0, 0.0},
-    .upper = { 1.0, 1.0},
+    .lower = {-ctx.vpar_max_ion, 0.0},
+    .upper = {ctx.vpar_max_ion, ctx.mu_max_ion},
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
     .projection = {
@@ -853,7 +853,7 @@ int main(int argc, char **argv)
     .fem_parbc = GKYL_FEM_PARPROJ_NONE,
   };
   struct gkyl_gk gk = {  // GK app
-    .name = "outputs/gk_mirror_adiabatic_elc_1x2v_p1_nosource_uniform",
+    .name = "gk_mirror_uniform",
     .cdim = ctx.cdim,
     .vdim = ctx.vdim,
     .lower = {ctx.z_min},
@@ -883,7 +883,7 @@ int main(int argc, char **argv)
   
   // Create app object.
   clock_t start_time = clock();
-  gkyl_gyrokinetic_app *app = gkyl_gyrokinetic_app_new(&app_inp);
+  gkyl_gyrokinetic_app *app = gkyl_gyrokinetic_app_new(&gk);
   clock_t end_time = clock();
   if (my_rank == 0)
     printf("Time to create app object: %g\n", (double)(end_time - start_time) / CLOCKS_PER_SEC);
@@ -939,11 +939,11 @@ int main(int argc, char **argv)
   start_time = clock();
   while ((t_curr < t_end) && (step <= app_args.num_steps)) {
     struct gkyl_update_status status = gkyl_gyrokinetic_update(app, dt);    
-    if (step % 1000 == 0) {
+    if (step % 100 == 0 || step == 1) {
       gkyl_gyrokinetic_app_cout(app, stdout, "Taking time-step %ld at t = %g ...", step, t_curr);
       gkyl_gyrokinetic_app_cout(app, stdout, " dt = %g ... ", status.dt_actual);
       end_time = clock();
-      double time_per_hour = t_curr / ((double)(end_time - start_time) / CLOCKS_PER_SEC) * 3600.0;
+      double time_per_hour = t_curr + status.dt_actual / ((double)(end_time - start_time) / CLOCKS_PER_SEC) * 3600.0;
       gkyl_gyrokinetic_app_cout(app, stdout, "will cover %g s in 1 hour\n", time_per_hour);
     }
 
