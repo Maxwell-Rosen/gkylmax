@@ -25,6 +25,13 @@ def convert_hdf5_to_binary(hdf5_file, output_dir):
                 data_electron[:,0,:,:] = data_electron[:,1,:,:]
                 data_ion[:,0,:,:] = data_ion[:,1,:,:]
 
+                # Scan if there are any negative values
+                print(f"Negative values in ion distribution: {np.any(data_ion < 0)}")
+                print(f"Negative values in electron distribution: {np.any(data_electron < 0)}")
+                # Find where the negative values are
+                print(f"Negative values in ion distribution: {np.where(data_ion < 0)}")
+                print(f"Negative values in electron distribution: {np.where(data_electron < 0)}")
+
                 output_file = f"{output_dir}/f_dist_ion.bin"
                 # Write the data to binary file
                 with open(output_file, 'wb') as binary_file:
