@@ -14,17 +14,19 @@ from matplotlib.colors import LogNorm
 import multiprocessing
 from scipy.integrate import cumulative_trapezoid as cumtrapz
 import imageio.v2 as imageio
+from scipy.optimize import curve_fit
+
 
 # dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-wham1x-compare_unif_vs_nonunif/outputs/'
 # dataDir = './data-hires-lorad/'
 dataDir = './'
-unifFile = 'gk_wham'
+unifFile = 'gk_wham_modified'
 modifiedFile = 'gk_wham_modified'
-frame_max_plus1 = 63
+frame_max_plus1 = 107
 time_per_frame = 1e-6
 
-plot_potential_trace = 1
-plot_bimax_moms = 1
+plot_potential_trace = 0
+plot_bimax_moms = 0
 plot_integrate_positivity = 1
 
 # frame_arr = np.arange(0,11)
@@ -167,6 +169,51 @@ if plot_potential_trace:
   plt.title('Potential difference between midplane and peak magnetic field')
   plt.legend()
   plt.savefig(outDir+'potential_trace'+figureFileFormat)
+  plt.close()
+
+  starting_fit_from_frame = frame_max_plus1 - 20
+  x = np.arange(frame_max_plus1-starting_fit_from_frame)*1e-6
+  y_mod = potential_mod[starting_fit_from_frame:]
+  y_van = potential[starting_fit_from_frame:]
+  # Fit an exponential of the form a - b*exp(-c*x)
+  def fit_func(x, a, b, c):
+    return a - b*np.exp(-c*x)
+  
+  popt_mod, pcov_mod = curve_fit(fit_func, x, y_mod, p0=[5.0, 0.2, 0.0])
+  popt_van, pcov_van = curve_fit(fit_func, x, y_van, p0=[5.0, 0.2, 0.0])
+
+  print("Fitted parameters for modified collisions: ")
+  print(" a = {:.4f} ± {:.4f} e phi / Te".format(popt_mod[0], np.sqrt(pcov_mod[0,0])))
+  print(" b = {:.4f} ± {:.4f} e phi / Te".format(popt_mod[1], np.sqrt(pcov_mod[1,1])))
+  pct_err = np.sqrt(pcov_mod[2,2]) / popt_mod[2]
+  print(" 1/c = {:.1f} ± {:.1f} microseconds".format(1/(popt_mod[2])*1e6, 1/(popt_mod[2])*pct_err*1e6))
+
+  print("Fitted parameters for standard collisions: ")
+  print(" a = {:.4f} ± {:.4f} e phi / Te".format(popt_van[0], np.sqrt(pcov_van[0,0])))
+  print(" b = {:.4f} ± {:.4f} e phi / Te".format(popt_van[1], np.sqrt(pcov_van[1,1])))
+  pct_err = np.sqrt(pcov_van[2,2]) / popt_van[2]
+  print(" 1/c = {:.1f} ± {:.1f} microseconds".format(1/(popt_van[2])*1e6, 1/(popt_van[2])*pct_err*1e6))
+
+  plt.plot(x, y_mod, label='Data Modified Collisions', color='orange', linestyle='-')
+  plt.plot(x, fit_func(x, *popt_mod), label='Fit Modified Collisions: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(popt_mod), color='goldenrod', linestyle='--')
+  plt.plot(x, y_van, label='Data Standard Collisions', color='blue', linestyle='-')
+  plt.plot(x, fit_func(x, *popt_van), label='Fit Standard Collisions: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(popt_van), color='skyblue', linestyle='--')
+  plt.xlabel('Time, seconds')
+  plt.ylabel('Potential difference, $e \phi / T_e(\psi_{min},z=0)$')
+  plt.title('Potential difference between midplane and peak magnetic field')
+  plt.legend()
+
+  plt.savefig(outDir+'potential_trace_fit'+figureFileFormat)
+  plt.close()
+
+  # Plot the error in this model
+  plt.plot(x, y_mod - fit_func(x, *popt_mod), label='Modified Collisions', color='orange')
+  plt.plot(x, y_van - fit_func(x, *popt_van), label='Standard Collisions', color='blue')
+  plt.xlabel('Time, seconds')
+  plt.ylabel('Error in fit')
+  plt.title('Error in fit of potential difference between midplane and peak magnetic field')
+  plt.legend()
+  plt.savefig(outDir+'potential_trace_fit_error'+figureFileFormat)
   plt.close()
 
   plt.plot(np.arange(frame_max_plus1)*1e-6, Temp/eV, label = 'Standard collisions')

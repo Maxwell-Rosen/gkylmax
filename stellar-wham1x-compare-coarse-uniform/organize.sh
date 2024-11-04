@@ -35,3 +35,8 @@ mv *-jacobtot* Geometry/
 mv *-mapc2p* Geometry/
 mv *-nodes* Geometry/
 mv *-normals* Geometry/
+
+if [ ! -d "Slurmscripts" ]; then
+  mkdir Slurmscripts
+fi
+mv *.out Slurmscripts/

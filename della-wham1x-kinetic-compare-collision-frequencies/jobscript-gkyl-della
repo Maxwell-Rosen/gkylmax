@@ -6,7 +6,7 @@
 
 #.Request the queue (enter the possible names, if omitted, default is the default)
 #.this job is going to use the default
-#SBATCH -q gpu-short
+#SBATCH -q gpu-long
 
 #.Number of nodes to request (Perlmutter has 64 cores and 4 GPUs per node)
 #SBATCH -N 1
@@ -18,7 +18,7 @@
 #SBATCH --constraint=amd
 
 #.Request wall time
-#SBATCH -t 24:00:00
+#SBATCH -t 144:00:00
 num_gpu=2
 
 #.Load modules (this must match those in the machines/configure script).

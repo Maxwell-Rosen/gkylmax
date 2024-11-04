@@ -31,11 +31,13 @@ def Rosen_confinement_time(P,R,coeff = 0.84, ZpFl = 1):
         1/(4*ZpFl/2 / (np.log((w_term+1)/(w_term-1))- coeff) * (1-erf(a_term)))
     
     return Loss_Rosen
+
+
 phi_cql3d = 4514
 Te = 867.3
-
-ephi_T = 4.468
-R = 17
+ephi_T = phi_cql3d / Te
+print("ephi_T: ", ephi_T)
+R = 20
 Z_N = 1/2
 Z_dough = 1
 m_e = 9.10938356e-28

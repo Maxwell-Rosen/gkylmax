@@ -9,6 +9,7 @@
 #.Number of nodes to request (Perlmutter has 64 cores and 4 GPUs per node)
 #SBATCH -N 1
 #SBATCH --ntasks-per-node 2
+#SBATCH --mem=250000
 
 #.Specify GPU needs:
 #SBATCH --gres=gpu:2
@@ -16,7 +17,7 @@
 #.Request wall time
 #SBATCH -t 24:00:00
 
-num_gpu=1
+num_gpu=2
 
 #.Load modules (this must match those in the machines/configure script).
 export PATH="$HOME/scratch/gkylsoft-amd-gtwo/gkyl/bin:$PATH"

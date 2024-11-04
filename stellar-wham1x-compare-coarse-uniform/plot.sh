@@ -1,10 +1,11 @@
 
 # name1="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nosource_uniform"
 # name2="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nosource_nonuniform"
-name="gk_mirror_uniform_64"
+name="gk_wham_64_pos"
 # name="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nosource_nonuniform"
-species="ion"
-saveLoc="python-plots/$name"
+species="elc"
+saveLoc="python-plots/Distribution-functions-figures-for-movies/$name"
+saveMovieLoc="python-plots/Distribution-functions-movies/$name"
 
 # pgkyl outputs/gk_mirror_adiabatic_elc_1x2v_p1_true_maxwellian-ion_0.gkyl --c2p outputs/mapc2p.gkyl \
 #  interp -b gkhyb -p1 integrate 1 pl &
@@ -12,28 +13,79 @@ saveLoc="python-plots/$name"
 #  interp -b gkhyb -p1 integrate 1 pl &
 
 
-pgkyl "$name-"b_i.gkyl interp -b ms -p1 pl --title "b_i" --saveas "$saveLoc-geo-b_i.png" --no-show &
-pgkyl "$name-"bmag_inv_sq.gkyl interp -b ms -p1 pl --title "bmag_inv_sq" --saveas "$saveLoc-geo-bmag_inv_sq.png" --no-show &
-pgkyl "$name-"bmag_inv.gkyl interp -b ms -p1 pl --title "bmag_inv" --saveas "$saveLoc-geo-bmag_inv.png" --no-show &
-pgkyl "$name-"bmag.gkyl interp -b ms -p1 pl --title "bmag" --saveas "$saveLoc-geo-bmag.png" --no-show &
-pgkyl "$name-"cmag.gkyl interp -b ms -p1 pl --title "cmag" --saveas "$saveLoc-geo-cmag.png" --no-show &
-pgkyl "$name-"jacobtot_inv.gkyl interp -b ms -p1 pl --title "jacobtot_inv" --saveas "$saveLoc-geo-jacobtot_inv.png" --no-show &
-pgkyl "$name-"jacobgeo.gkyl interp -b ms -p1 pl --title "jacobgeo" --saveas "$saveLoc-geo-jacobgeo.png" --no-show &
-pgkyl "$name-"jacobtot.gkyl interp -b ms -p1 pl --title "jacobtot" --saveas "$saveLoc-geo-jacobtot.png" --no-show &
-pgkyl "$name-"mapc2p.gkyl interp -b ms -p1 pl --title "mapc2p" --saveas "$saveLoc-geo-mapc2p.png" --no-show &
+# pgkyl "Geometry/$name-"b_i.gkyl interp -b ms -p1 pl --title "b_i" --saveas "$saveLoc-geo-b_i.png" --no-show &
+# pgkyl "Geometry/$name-"bmag_inv_sq.gkyl interp -b ms -p1 pl --title "bmag_inv_sq" --saveas "$saveLoc-geo-bmag_inv_sq.png" --no-show &
+# pgkyl "Geometry/$name-"bmag_inv.gkyl interp -b ms -p1 pl --title "bmag_inv" --saveas "$saveLoc-geo-bmag_inv.png" --no-show &
+# pgkyl "Geometry/$name-"bmag.gkyl interp -b ms -p1 pl --title "bmag" --saveas "$saveLoc-geo-bmag.png" --no-show &
+# pgkyl "Geometry/$name-"cmag.gkyl interp -b ms -p1 pl --title "cmag" --saveas "$saveLoc-geo-cmag.png" --no-show &
+# pgkyl "Geometry/$name-"jacobtot_inv.gkyl interp -b ms -p1 pl --title "jacobtot_inv" --saveas "$saveLoc-geo-jacobtot_inv.png" --no-show &
+# pgkyl "Geometry/$name-"jacobgeo.gkyl interp -b ms -p1 pl --title "jacobgeo" --saveas "$saveLoc-geo-jacobgeo.png" --no-show &
+# pgkyl "Geometry/$name-"jacobtot.gkyl interp -b ms -p1 pl --title "jacobtot" --saveas "$saveLoc-geo-jacobtot.png" --no-show &
+# pgkyl "Geometry/$name-"mapc2p.gkyl interp -b ms -p1 pl --title "mapc2p" --saveas "$saveLoc-geo-mapc2p.png" --no-show &
 
-frame=0
+frame=98
+# pgkyl "BiMaxwellianMoments/$name-"$species"_BiMaxwellianMoments_[0-9]*.gkyl" interp -b ms -p1 anim &
+# for frame in {0..100}
+# do
+#   pgkyl "BiMaxwellianMoments/$name-"$species"_BiMaxwellianMoments_0.gkyl" interp -b ms -p1 pl --saveas "$saveLoc-$species-BiMaxwellianMoments-$frame.png" --no-show &
+# done
+
+# for frame in {0..98}
+# do
+#   framepad=$(printf "%03d" $frame)
+#   echo "frame $framepad"
+#   pgkyl --c2p-vel $name-"$species"_mapc2p_vel.gkyl $name-"$species"_$frame.gkyl -t jf "$name-"$species"_jacobvel.gkyl" -t jac ev -t df 'jf jac /' activ -t df interp -b gkhyb -p1 integrate 2 pl --title "Frame $frame vpar" --saveas "$saveLoc-$species-$framepad-vpar.png" --no-show --xlabel "z" --ylabel "$ v_{||}$" &
+#   pgkyl --c2p-vel $name-"$species"_mapc2p_vel.gkyl $name-"$species"_$frame.gkyl -t jf "$name-"$species"_jacobvel.gkyl" -t jac ev -t df 'jf jac /' activ -t df interp -b gkhyb -p1 integrate 1 pl --title "Frame $frame mu" --saveas "$saveLoc-$species-$framepad-mu.png" --no-show --xlabel "z" --ylabel "$\mu$" &
+#   pgkyl --c2p-vel $name-"$species"_mapc2p_vel.gkyl $name-"$species"_$frame.gkyl -t jf "$name-"$species"_jacobvel.gkyl" -t jac ev -t df 'jf jac /' activ -t df interp -b gkhyb -p1 sel --z0 0.0 pl --title "Frame $frame z=0" --saveas "$saveLoc-$species-$framepad-z0.png" --no-show --xlabel "$ v_{||}$" --ylabel "$\mu$" &
+#   pgkyl --c2p-vel $name-"$species"_mapc2p_vel.gkyl $name-"$species"_$frame.gkyl -t jf "$name-"$species"_jacobvel.gkyl" -t jac ev -t df 'jf jac /' activ -t df interp -b gkhyb -p1 sel --z0 0.70 pl --title "Frame $frame z=0.7" --saveas "$saveLoc-$species-$framepad-z0.7.png" --no-show --xlabel "$ v_{||}$" --ylabel "$\mu$" &
+#   pgkyl --c2p-vel $name-"$species"_mapc2p_vel.gkyl $name-"$species"_$frame.gkyl -t jf "$name-"$species"_jacobvel.gkyl" -t jac ev -t df 'jf jac /' activ -t df interp -b gkhyb -p1 sel --z0 0.98 pl --title "Frame $frame z=0.98" --saveas "$saveLoc-$species-$framepad-z0.98.png" --no-show --xlabel "$ v_{||}$" --ylabel "$\mu$" &
+#   pgkyl --c2p-vel $name-"$species"_mapc2p_vel.gkyl $name-"$species"_$frame.gkyl -t jf "$name-"$species"_jacobvel.gkyl" -t jac ev -t df 'jf jac /' activ -t df interp -b gkhyb -p1 sel --z0 2.00 pl --title "Frame $frame z=2.0" --saveas "$saveLoc-$species-$framepad-z2.0.png" --no-show --xlabel "$ v_{||}$" --ylabel "$\mu$" &
+
+#   pgkyl --c2p-vel $name-"$species"_mapc2p_vel.gkyl $name-"$species"_$frame.gkyl -t jf "$name-"$species"_jacobvel.gkyl" -t jac ev -t df 'jf jac /' activ -t df interp -b gkhyb -p1 integrate 2 pl --logz --zmin 1e-30 --title "Frame $frame vpar" --saveas "$saveLoc-$species-$framepad-vpar-logz.png" --no-show --xlabel "z" --ylabel "$ v_{||}$" &
+#   pgkyl --c2p-vel $name-"$species"_mapc2p_vel.gkyl $name-"$species"_$frame.gkyl -t jf "$name-"$species"_jacobvel.gkyl" -t jac ev -t df 'jf jac /' activ -t df interp -b gkhyb -p1 integrate 1 pl --logz --zmin 1e-30 --title "Frame $frame mu" --saveas "$saveLoc-$species-$framepad-mu-logz.png" --no-show --xlabel "z" --ylabel "$\mu$" &
+#   pgkyl --c2p-vel $name-"$species"_mapc2p_vel.gkyl $name-"$species"_$frame.gkyl -t jf "$name-"$species"_jacobvel.gkyl" -t jac ev -t df 'jf jac /' activ -t df interp -b gkhyb -p1 sel --z0 0.0 pl --logz --zmin 1e-30 --title "Frame $frame z=0" --saveas "$saveLoc-$species-$framepad-z0-logz.png" --no-show --xlabel "$ v_{||}$" --ylabel "$\mu$" &
+#   pgkyl --c2p-vel $name-"$species"_mapc2p_vel.gkyl $name-"$species"_$frame.gkyl -t jf "$name-"$species"_jacobvel.gkyl" -t jac ev -t df 'jf jac /' activ -t df interp -b gkhyb -p1 sel --z0 0.70 pl --logz --zmin 1e-30 --title "Frame $frame z=0.7" --saveas "$saveLoc-$species-$framepad-z0.7-logz.png" --no-show --xlabel "$ v_{||}$" --ylabel "$\mu$" &
+#   pgkyl --c2p-vel $name-"$species"_mapc2p_vel.gkyl $name-"$species"_$frame.gkyl -t jf "$name-"$species"_jacobvel.gkyl" -t jac ev -t df 'jf jac /' activ -t df interp -b gkhyb -p1 sel --z0 0.98 pl --logz --zmin 1e-30 --title "Frame $frame z=0.98" --saveas "$saveLoc-$species-$framepad-z0.98-logz.png" --no-show --xlabel "$ v_{||}$" --ylabel "$\mu$" &
+#   pgkyl --c2p-vel $name-"$species"_mapc2p_vel.gkyl $name-"$species"_$frame.gkyl -t jf "$name-"$species"_jacobvel.gkyl" -t jac ev -t df 'jf jac /' activ -t df interp -b gkhyb -p1 sel --z0 2.00 pl --logz --zmin 1e-30 --title "Frame $frame z=2.0" --saveas "$saveLoc-$species-$framepad-z2.0-logz.png" --no-show --xlabel "$ v_{||}$" --ylabel "$\mu$" &
+#   sleep 3
+# done
+bash make-movie.sh -r 10 -o "$saveMovieLoc-$species-vpar.mp4" -i "$saveLoc-$species"-%03d-vpar.png
+bash make-movie.sh -r 10 -o "$saveMovieLoc-$species-vpar-logz.mp4" -i "$saveLoc-$species"-%03d-vpar-logz.png
+bash make-movie.sh -r 10 -o "$saveMovieLoc-$species-mu.mp4" -i "$saveLoc-$species"-%03d-mu.png
+bash make-movie.sh -r 10 -o "$saveMovieLoc-$species-mu-logz.mp4" -i "$saveLoc-$species"-%03d-mu-logz.png
+bash make-movie.sh -r 10 -o "$saveMovieLoc-$species-z0.mp4" -i "$saveLoc-$species"-%03d-z0.png
+bash make-movie.sh -r 10 -o "$saveMovieLoc-$species-z0-logz.mp4" -i "$saveLoc-$species"-%03d-z0-logz.png
+bash make-movie.sh -r 10 -o "$saveMovieLoc-$species-z0.7.mp4" -i "$saveLoc-$species"-%03d-z0.7.png
+bash make-movie.sh -r 10 -o "$saveMovieLoc-$species-z0.7-logz.mp4" -i "$saveLoc-$species"-%03d-z0.7-logz.png
+bash make-movie.sh -r 10 -o "$saveMovieLoc-$species-z0.98.mp4" -i "$saveLoc-$species"-%03d-z0.98.png
+bash make-movie.sh -r 10 -o "$saveMovieLoc-$species-z0.98-logz.mp4" -i "$saveLoc-$species"-%03d-z0.98-logz.png
+bash make-movie.sh -r 10 -o "$saveMovieLoc-$species-z2.0.mp4" -i "$saveLoc-$species"-%03d-z2.0.png
+bash make-movie.sh -r 10 -o "$saveMovieLoc-$species-z2.0-logz.mp4" -i "$saveLoc-$species"-%03d-z2.0-logz.png
+
+# pgkyl --c2p-vel $name-"$species"_mapc2p_vel.gkyl $name-"$species"_[0-9]*.gkyl interp -b gkhyb -p1 integrate 2 anim --logz --zmin 1e-30 --saveas "$saveLoc-$species-vpar-logz.mp4" --no-show & 
+# pgkyl --c2p-vel $name-"$species"_mapc2p_vel.gkyl $name-"$species"_[0-9]*.gkyl interp -b gkhyb -p1 integrate 1 anim --saveas "$saveLoc-$species-mu.mp4" --no-show &
+# pgkyl --c2p-vel $name-"$species"_mapc2p_vel.gkyl $name-"$species"_[0-9]*.gkyl interp -b gkhyb -p1 integrate 1 anim --logz --zmin 1e-30 --saveas "$saveLoc-$species-mu-logz.mp4" --no-show &
+# pgkyl --c2p-vel $name-"$species"_mapc2p_vel.gkyl $name-"$species"_[0-9]*.gkyl interp -b gkhyb -p1 sel --z0 0.0 anim --saveas "$saveLoc-$species-z0.mp4" --no-show &
+# pgkyl --c2p-vel $name-"$species"_mapc2p_vel.gkyl $name-"$species"_[0-9]*.gkyl interp -b gkhyb -p1 sel --z0 0.0 anim --logz --zmin 1e-30 --saveas "$saveLoc-$species-z0-logz.mp4" --no-show &
+# pgkyl --c2p-vel $name-"$species"_mapc2p_vel.gkyl $name-"$species"_[0-9]*.gkyl interp -b gkhyb -p1 sel --z0 0.70 anim --saveas "$saveLoc-$species-z0.7.mp4" --no-show &
+# pgkyl --c2p-vel $name-"$species"_mapc2p_vel.gkyl $name-"$species"_[0-9]*.gkyl interp -b gkhyb -p1 sel --z0 0.70 anim --logz --zmin 1e-30 --saveas "$saveLoc-$species-z0.7-logz.mp4" --no-show &
+# pgkyl --c2p-vel $name-"$species"_mapc2p_vel.gkyl $name-"$species"_[0-9]*.gkyl interp -b gkhyb -p1 sel --z0 0.98 anim --saveas "$saveLoc-$species-z0.98.mp4" --no-show &
+# pgkyl --c2p-vel $name-"$species"_mapc2p_vel.gkyl $name-"$species"_[0-9]*.gkyl interp -b gkhyb -p1 sel --z0 0.98 anim --logz --zmin 1e-30 --saveas "$saveLoc-$species-z0.98-logz.mp4" --no-show &
+# pgkyl --c2p-vel $name-"$species"_mapc2p_vel.gkyl $name-"$species"_[0-9]*.gkyl interp -b gkhyb -p1 sel --z0 2.00 anim --saveas "$saveLoc-$species-z2.0.mp4" --no-show &  
+# pgkyl --c2p-vel $name-"$species"_mapc2p_vel.gkyl $name-"$species"_[0-9]*.gkyl interp -b gkhyb -p1 sel --z0 2.00 anim --logz --zmin 1e-30 --saveas "$saveLoc-$species-z2.0-logz.mp4" --no-show &
+
+
 # pgkyl "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 0.0 anim --title "ion distribution function" --xlabel "vpar" --ylabel "mu" --logz --zmin 1e-20 --fps 4 &
 # pgkyl "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 0.98 anim --title "ion distribution function" --xlabel "vpar" --ylabel "mu" --logz --zmin 1e-20 --fps 4 &
 # pgkyl "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 0.98 anim --title "ion distribution function" --xlabel "vpar" --ylabel "mu" --zmax 1e-8 --fps 4 &
-pgkyl --c2p-vel "$name-ion_mapc2p_vel.gkyl" "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 2.00 anim --xlabel "vpar" --ylabel "mu, z=2.0, $name" --logz --zmin 1e-20 --fps 4 --saveas "$saveLoc-ion-z2.0_logz.mp4" --no-show &
-pgkyl --c2p-vel "$name-ion_mapc2p_vel.gkyl" "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 0.98 anim --xlabel "vpar" --ylabel "mu, z=0.98, $name" --logz --zmin 1e-20 --fps 4 --saveas "$saveLoc-ion-z0.98_logz.mp4" --no-show &
-pgkyl --c2p-vel "$name-ion_mapc2p_vel.gkyl" "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 0.00 anim --xlabel "vpar" --ylabel "mu, z=0, $name" --logz --zmin 1e-20 --fps 4 --saveas "$saveLoc-ion-z0.0_logz.mp4" --no-show &
+# pgkyl --c2p-vel "$name-ion_mapc2p_vel.gkyl" "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 2.00 anim --xlabel "vpar" --ylabel "mu, z=2.0, $name" --logz --zmin 1e-20 --fps 4 --saveas "$saveLoc-ion-z2.0_logz.mp4" --no-show &
+# pgkyl --c2p-vel "$name-ion_mapc2p_vel.gkyl" "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 0.98 anim --xlabel "vpar" --ylabel "mu, z=0.98, $name" --logz --zmin 1e-20 --fps 4 --saveas "$saveLoc-ion-z0.98_logz.mp4" --no-show &
+# pgkyl --c2p-vel "$name-ion_mapc2p_vel.gkyl" "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 0.00 anim --xlabel "vpar" --ylabel "mu, z=0, $name" --logz --zmin 1e-20 --fps 4 --saveas "$saveLoc-ion-z0.0_logz.mp4" --no-show &
 
 
-pgkyl --c2p-vel "$name-ion_mapc2p_vel.gkyl" "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 2.00 anim --xlabel "vpar" --ylabel "mu, z=2.0, $name" --fps 4 --saveas "$saveLoc-ion-z2.0.mp4" --no-show &
-pgkyl --c2p-vel "$name-ion_mapc2p_vel.gkyl" "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 0.98 anim --xlabel "vpar" --ylabel "mu, z=0.98, $name" --fps 4 --saveas "$saveLoc-ion-z0.98.mp4" --no-show &
-pgkyl --c2p-vel "$name-ion_mapc2p_vel.gkyl" "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 0.00 anim --xlabel "vpar" --ylabel "mu, z=0, $name" --fps 4 --saveas "$saveLoc-ion-z0.0.mp4" --no-show &
+# pgkyl --c2p-vel "$name-ion_mapc2p_vel.gkyl" "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 2.00 anim --xlabel "vpar" --ylabel "mu, z=2.0, $name" --fps 4 --saveas "$saveLoc-ion-z2.0.mp4" --no-show &
+# pgkyl --c2p-vel "$name-ion_mapc2p_vel.gkyl" "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 0.98 anim --xlabel "vpar" --ylabel "mu, z=0.98, $name" --fps 4 --saveas "$saveLoc-ion-z0.98.mp4" --no-show &
+# pgkyl --c2p-vel "$name-ion_mapc2p_vel.gkyl" "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 0.00 anim --xlabel "vpar" --ylabel "mu, z=0, $name" --fps 4 --saveas "$saveLoc-ion-z0.0.mp4" --no-show &
 
 
 # Animations of distribution functions with vpar on z and mu on z
