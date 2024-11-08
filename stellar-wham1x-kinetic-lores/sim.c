@@ -514,7 +514,7 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   int Nvpar = 32; // 96 uniform
   int Nmu = 32;  // 192 uniform
-  int Nz = 288;
+  int Nz = 144;
   int Nx = 16;
   int poly_order = 1;
   double t_end = 1000e-6;
@@ -685,8 +685,8 @@ int main(int argc, char **argv)
       .num_cross_collisions = 1,
       .collide_with = {"ion"},
     },
-    .num_diag_moments = 8,
-    .diag_moments = {"BiMaxwellianMoments", "M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp" },
+    .num_diag_moments = 1,
+    .diag_moments = {"BiMaxwellianMoments"},
   };
 
   struct gkyl_gyrokinetic_projection ion_ic = {
@@ -722,8 +722,8 @@ int main(int argc, char **argv)
       .num_cross_collisions = 1,
       .collide_with = {"elc"},
     },
-    .num_diag_moments = 8,
-    .diag_moments = {"BiMaxwellianMoments", "M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp" },
+    .num_diag_moments = 1,
+    .diag_moments = {"BiMaxwellianMoments"},
   };
   struct gkyl_gyrokinetic_field field = {
     .polarization_bmag = ctx.B_p, 
@@ -745,7 +745,7 @@ struct gkyl_efit_inp efit_inp = {
     .zmax =  2.0,  // Z of upper boundary 
   };
   struct gkyl_gk app_inp = {  // GK app
-    .name = "gk_wham_modified",
+    .name = "gk_wham",
     .cdim = ctx.cdim ,  .vdim = ctx.vdim,
     .lower = {ctx.z_min},
     .upper = {ctx.z_max},

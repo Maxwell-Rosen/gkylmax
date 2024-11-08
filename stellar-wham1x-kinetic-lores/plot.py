@@ -20,14 +20,14 @@ from scipy.optimize import curve_fit
 # dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-wham1x-compare_unif_vs_nonunif/outputs/'
 # dataDir = './data-hires-lorad/'
 dataDir = './'
-unifFile = 'gk_wham'
+unifFile = 'gk_wham_modified'
 modifiedFile = 'gk_wham_modified'
-frame_max_plus1 = 163
+frame_max_plus1 = 107
 time_per_frame = 1e-6
 
-plot_potential_trace = 1
+plot_potential_trace = 0
 plot_bimax_moms = 0
-plot_integrate_positivity = 0
+plot_integrate_positivity = 1
 
 # frame_arr = np.arange(0,11)
 # frame_arr = np.array([1:4])
@@ -666,15 +666,15 @@ if plot_integrate_positivity:
     fig.suptitle('Time integrated positivity ratios', fontsize=20)
 
 
-    plot_moment_data(M0_elc_ratio_total, ax, fig, '$\int_0^t dt \;  M_{0,elc,positivity} / M_{0,elc}$', 0, 0)
-    plot_moment_data(M1_elc_ratio_total, ax, fig, '$\int_0^t dt \; M_{1,elc,positivity} / M_{1,elc}$', 0, 1)
-    plot_moment_data(M2par_elc_ratio_total, ax, fig, '$\int_0^t dt \; M_{2 ||,elc,positivity} / M_{2 ||,elc}$', 1, 0)
-    plot_moment_data(M2perp_elc_ratio_total, ax, fig, '$\int_0^t dt \; M_{2 \perp,elc,positivity} / M_{2 \perp,elc}$', 1, 1)
+    plot_moment_data(M0_elc_ratio_total, ax, fig, 'M0 elc ratio', 0, 0)
+    plot_moment_data(M1_elc_ratio_total, ax, fig, 'M1 elc ratio', 0, 1)
+    plot_moment_data(M2par_elc_ratio_total, ax, fig, 'M2par elc ratio', 1, 0)
+    plot_moment_data(M2perp_elc_ratio_total, ax, fig, 'M2perp elc ratio', 1, 1)
 
-    plot_moment_data(M0_ion_ratio_total, ax, fig, '$\int_0^t dt \;  M_{0,ion,positivity} / M_{0,ion}$', 2, 0)
-    plot_moment_data(M1_ion_ratio_total, ax, fig, '$\int_0^t dt \;  M_{1,ion,positivity} / M_{1,ion}$', 2, 1)
-    plot_moment_data(M2par_ion_ratio_total, ax, fig, '$\int_0^t dt \;  M_{2 ||,ion,positivity} / M_{2 ||,ion}$', 3, 0)
-    plot_moment_data(M2perp_ion_ratio_total, ax, fig, '$\int_0^t dt \;  M_{2 \perp,ion,positivity} / M_{2 \perp,ion}$', 3, 1)
+    plot_moment_data(M0_ion_ratio_total, ax, fig, 'M0 ion ratio', 2, 0)
+    plot_moment_data(M1_ion_ratio_total, ax, fig, 'M1 ion ratio', 2, 1)
+    plot_moment_data(M2par_ion_ratio_total, ax, fig, 'M2par ion ratio', 3, 0)
+    plot_moment_data(M2perp_ion_ratio_total, ax, fig, 'M2perp ion ratio', 3, 1)
 
     plt.tight_layout()
     plt.savefig(outDir+'integrated_Ms_ratios_in_time'+figureFileFormat, dpi=600)

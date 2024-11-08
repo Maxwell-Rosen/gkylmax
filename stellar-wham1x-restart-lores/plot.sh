@@ -8,7 +8,7 @@ saveLoc="python-plots/Distribution-functions-figures-for-movies/$name"
 saveMovieLoc="python-plots/Distribution-functions-movies/$name"
 
 # Negativity of the T_par
-pgkyl "BiMaxwellianMoments/gk_wham_64_npos-ion_BiMaxwellianMoments_[0-9]*.gkyl" interp anim --float --saveas "moment_movie_64np.mp4"
+pgkyl "BiMaxwellianMoments/gk_wham_64_npos-ion_BiMaxwellianMoments_[0-9]*.gkyl" interp anim --float
 pgkyl "BiMaxwellianMoments/gk_wham_64_npos-ion_BiMaxwellianMoments_[0-9]*.gkyl" interp sel -c2 anim --float --ylabel="\$T_\parallel\$"
 
 # Early frame when T_par < 0

@@ -1,32 +1,35 @@
 
 # name1="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nosource_uniform"
 # name2="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nosource_nonuniform"
-name="gk_wham_64_pos"
+name="gk_wham"
 # name="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nosource_nonuniform"
 species="elc"
-saveLoc="python-plots/Distribution-functions-figures-for-movies/$name"
-saveMovieLoc="python-plots/Distribution-functions-movies/$name"
+saveLoc="python-plots/$name"
+saveMovieLoc="python-plots/$name"
+
+pgkyl "BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_[0-9]*.gkyl" interp -b ms -p1 anim --saveas "$saveLoc-ion-BiMaxwellianMoments.mp4" --no-show --float &
+pgkyl "BiMaxwellianMoments/gk_wham-elc_BiMaxwellianMoments_[0-9]*.gkyl" interp -b ms -p1 anim --saveas "$saveLoc-elc-BiMaxwellianMoments.mp4" --no-show --float &
 
 # Negativity of the T_par
-pgkyl "BiMaxwellianMoments/gk_wham_64_npos-ion_BiMaxwellianMoments_[0-9]*.gkyl" interp anim --float --saveas "moment_movie_64np.mp4"
-pgkyl "BiMaxwellianMoments/gk_wham_64_npos-ion_BiMaxwellianMoments_[0-9]*.gkyl" interp sel -c2 anim --float --ylabel="\$T_\parallel\$"
+# pgkyl "BiMaxwellianMoments/gk_wham_64_npos-ion_BiMaxwellianMoments_[0-9]*.gkyl" interp anim --float
+# pgkyl "BiMaxwellianMoments/gk_wham_64_npos-ion_BiMaxwellianMoments_[0-9]*.gkyl" interp sel -c2 anim --float --ylabel="\$T_\parallel\$"
 
-# Early frame when T_par < 0
-pgkyl BiMaxwellianMoments/gk_wham_64_npos-ion_BiMaxwellianMoments_10.gkyl interp pl
+# # Early frame when T_par < 0
+# pgkyl BiMaxwellianMoments/gk_wham_64_npos-ion_BiMaxwellianMoments_10.gkyl interp pl
 
-# f(v)  
-pgkyl gk_wham_64_npos-ion_10.gkyl interp sel --z0 1.86 pl --xlabel "\$v_\parallel\$" --ylabel "\$\mu\$" -d
-pgkyl gk_wham_64_npos-ion_10.gkyl interp sel --z0 1.86 --z1 0.133 pl
+# # f(v)  
+# pgkyl gk_wham_64_npos-ion_10.gkyl interp sel --z0 1.86 pl --xlabel "\$v_\parallel\$" --ylabel "\$\mu\$" -d
+# pgkyl gk_wham_64_npos-ion_10.gkyl interp sel --z0 1.86 --z1 0.133 pl
 
-# n*upar
-pgkyl BiMaxwellianMoments/gk_wham_64_npos-ion_BiMaxwellianMoments_10.gkyl interp ev "f[0][0] f[0][1] *" pl --ylabel "\$n u_\parallel\$"
+# # n*upar
+# pgkyl BiMaxwellianMoments/gk_wham_64_npos-ion_BiMaxwellianMoments_10.gkyl interp ev "f[0][0] f[0][1] *" pl --ylabel "\$n u_\parallel\$"
 
 
-# Late frame when T_par < 0
-pgkyl BiMaxwellianMoments/gk_wham_64_npos-ion_BiMaxwellianMoments_100.gkyl interp pl   
+# # Late frame when T_par < 0
+# pgkyl BiMaxwellianMoments/gk_wham_64_npos-ion_BiMaxwellianMoments_100.gkyl interp pl   
 
-# f(v)
-pgkyl gk_wham_64_npos-ion_100.gkyl interp sel --z0 1.86 pl --xlabel "\$v_\parallel\$" --ylabel "\$\mu\$" -d
+# # f(v)
+# pgkyl gk_wham_64_npos-ion_100.gkyl interp sel --z0 1.86 pl --xlabel "\$v_\parallel\$" --ylabel "\$\mu\$" -d
 
 # pgkyl outputs/gk_mirror_adiabatic_elc_1x2v_p1_true_maxwellian-ion_0.gkyl --c2p outputs/mapc2p.gkyl \
 #  interp -b gkhyb -p1 integrate 1 pl &

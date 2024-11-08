@@ -433,17 +433,17 @@ void mapc2p_vel_elc(double t, const double *vc, double* GKYL_RESTRICT vp, void *
   double mu_max_elc = app->mu_max_elc;
 
   double cvpar = vc[0], cmu = vc[1];
-  // double b = 1.45;
-  // double linear_velocity_threshold = 1./6.;
-  // double frac_linear = 1/b*atan(linear_velocity_threshold*tan(b));
-  // if (fabs(cvpar) < frac_linear) {
-  //   double func_frac = tan(frac_linear*b) / tan(b);
-  //   vp[0] = vpar_max_elc*func_frac*cvpar/frac_linear;
-  // }
-  // else {
-  //   vp[0] = vpar_max_elc*tan(cvpar*b)/tan(b);
-  // }
-  vp[0] = vc[0] * vpar_max_elc;
+  double b = 1.45;
+  double linear_velocity_threshold = 1./6.;
+  double frac_linear = 1/b*atan(linear_velocity_threshold*tan(b));
+  if (fabs(cvpar) < frac_linear) {
+    double func_frac = tan(frac_linear*b) / tan(b);
+    vp[0] = vpar_max_elc*func_frac*cvpar/frac_linear;
+  }
+  else {
+    vp[0] = vpar_max_elc*tan(cvpar*b)/tan(b);
+  }
+  // vp[0] = vc[0] * vpar_max_elc;
   // Quadratic map in mu.
   vp[1] = mu_max_elc*pow(cmu,2);
 }
@@ -508,9 +508,9 @@ create_ctx(void)
   double psi_max = 3e-3; // aim for 2e-2
 
   // Grid parameters
-  double vpar_max_elc = 8 * vte;
+  double vpar_max_elc = 30 * vte;
   double mu_max_elc = me * pow(3. * vte, 2.) / (2. * B_p);
-  double vpar_max_ion = 16 * vti;
+  double vpar_max_ion = 30 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   int Nvpar = 32; // 96 uniform
   int Nmu = 32;  // 192 uniform

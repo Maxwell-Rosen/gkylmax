@@ -6,34 +6,57 @@ name="gk_mirror_uniform_64"
 species="ion"
 saveLoc="python-plots/$name"
 
+  
+
+# Negativity of the T_par
+pgkyl "gk_mirror_uniform_64-ion_BiMaxwellianMoments_[0-9]*.gkyl" interp anim --float
+pgkyl "gk_mirror_uniform_64-ion_BiMaxwellianMoments_[0-9]*.gkyl" interp sel -c2 anim --float --ylabel="\$T_\parallel\$"
+
+# Early frame when T_par < 0
+pgkyl gk_mirror_uniform_64-ion_BiMaxwellianMoments_6.gkyl interp pl
+
+# f(v)  
+pgkyl gk_mirror_uniform_64-ion_6.gkyl interp sel --z0 1.2 pl --xlabel "\$v_\parallel\$" --ylabel "\$\mu\$" -d
+pgkyl gk_mirror_uniform_64-ion_6.gkyl interp sel --z0 1.2 --z1 0.133 pl
+
+# n*upar
+pgkyl gk_mirror_uniform_64-ion_BiMaxwellianMoments_6.gkyl interp ev "f[0][0] f[0][1] *" pl --ylabel "\$n u_\parallel\$"
+
+
+# Late frame when T_par < 0
+pgkyl gk_mirror_uniform_64-ion_BiMaxwellianMoments_10.gkyl interp pl   
+
+# f(v)
+pgkyl gk_mirror_uniform_64-ion_10.gkyl interp sel --z0 1.2 pl --xlabel "\$v_\parallel\$" --ylabel "\$\mu\$" -d
+
 # pgkyl outputs/gk_mirror_adiabatic_elc_1x2v_p1_true_maxwellian-ion_0.gkyl --c2p outputs/mapc2p.gkyl \
 #  interp -b gkhyb -p1 integrate 1 pl &
 # pgkyl outputs/gk_mirror_adiabatic_elc_1x2v_p1_true_maxwellian-ion_0.gkyl \
 #  interp -b gkhyb -p1 integrate 1 pl &
 
 
-pgkyl "$name-"b_i.gkyl interp -b ms -p1 pl --title "b_i" --saveas "$saveLoc-geo-b_i.png" --no-show &
-pgkyl "$name-"bmag_inv_sq.gkyl interp -b ms -p1 pl --title "bmag_inv_sq" --saveas "$saveLoc-geo-bmag_inv_sq.png" --no-show &
-pgkyl "$name-"bmag_inv.gkyl interp -b ms -p1 pl --title "bmag_inv" --saveas "$saveLoc-geo-bmag_inv.png" --no-show &
-pgkyl "$name-"bmag.gkyl interp -b ms -p1 pl --title "bmag" --saveas "$saveLoc-geo-bmag.png" --no-show &
-pgkyl "$name-"cmag.gkyl interp -b ms -p1 pl --title "cmag" --saveas "$saveLoc-geo-cmag.png" --no-show &
-pgkyl "$name-"jacobtot_inv.gkyl interp -b ms -p1 pl --title "jacobtot_inv" --saveas "$saveLoc-geo-jacobtot_inv.png" --no-show &
-pgkyl "$name-"jacobgeo.gkyl interp -b ms -p1 pl --title "jacobgeo" --saveas "$saveLoc-geo-jacobgeo.png" --no-show &
-pgkyl "$name-"jacobtot.gkyl interp -b ms -p1 pl --title "jacobtot" --saveas "$saveLoc-geo-jacobtot.png" --no-show &
-pgkyl "$name-"mapc2p.gkyl interp -b ms -p1 pl --title "mapc2p" --saveas "$saveLoc-geo-mapc2p.png" --no-show &
+# pgkyl "$name-"b_i.gkyl interp -b ms -p1 pl --title "b_i" --saveas "$saveLoc-geo-b_i.png" --no-show &
+# pgkyl "$name-"bmag_inv_sq.gkyl interp -b ms -p1 pl --title "bmag_inv_sq" --saveas "$saveLoc-geo-bmag_inv_sq.png" --no-show &
+# pgkyl "$name-"bmag_inv.gkyl interp -b ms -p1 pl --title "bmag_inv" --saveas "$saveLoc-geo-bmag_inv.png" --no-show &
+# pgkyl "$name-"bmag.gkyl interp -b ms -p1 pl --title "bmag" --saveas "$saveLoc-geo-bmag.png" --no-show &
+# pgkyl "$name-"cmag.gkyl interp -b ms -p1 pl --title "cmag" --saveas "$saveLoc-geo-cmag.png" --no-show &
+# pgkyl "$name-"jacobtot_inv.gkyl interp -b ms -p1 pl --title "jacobtot_inv" --saveas "$saveLoc-geo-jacobtot_inv.png" --no-show &
+# pgkyl "$name-"jacobgeo.gkyl interp -b ms -p1 pl --title "jacobgeo" --saveas "$saveLoc-geo-jacobgeo.png" --no-show &
+# pgkyl "$name-"jacobtot.gkyl interp -b ms -p1 pl --title "jacobtot" --saveas "$saveLoc-geo-jacobtot.png" --no-show &
+# pgkyl "$name-"mapc2p.gkyl interp -b ms -p1 pl --title "mapc2p" --saveas "$saveLoc-geo-mapc2p.png" --no-show &
 
-frame=0
-# pgkyl "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 0.0 anim --title "ion distribution function" --xlabel "vpar" --ylabel "mu" --logz --zmin 1e-20 --fps 4 &
-# pgkyl "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 0.98 anim --title "ion distribution function" --xlabel "vpar" --ylabel "mu" --logz --zmin 1e-20 --fps 4 &
-# pgkyl "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 0.98 anim --title "ion distribution function" --xlabel "vpar" --ylabel "mu" --zmax 1e-8 --fps 4 &
-pgkyl --c2p-vel "$name-ion_mapc2p_vel.gkyl" "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 2.00 anim --xlabel "vpar" --ylabel "mu, z=2.0, $name" --logz --zmin 1e-20 --fps 4 --saveas "$saveLoc-ion-z2.0_logz.mp4" --no-show &
-pgkyl --c2p-vel "$name-ion_mapc2p_vel.gkyl" "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 0.98 anim --xlabel "vpar" --ylabel "mu, z=0.98, $name" --logz --zmin 1e-20 --fps 4 --saveas "$saveLoc-ion-z0.98_logz.mp4" --no-show &
-pgkyl --c2p-vel "$name-ion_mapc2p_vel.gkyl" "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 0.00 anim --xlabel "vpar" --ylabel "mu, z=0, $name" --logz --zmin 1e-20 --fps 4 --saveas "$saveLoc-ion-z0.0_logz.mp4" --no-show &
+# frame=0
+# # pgkyl "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 0.0 anim --title "ion distribution function" --xlabel "vpar" --ylabel "mu" --logz --zmin 1e-20 --fps 4 &
+# # pgkyl "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 0.98 anim --title "ion distribution function" --xlabel "vpar" --ylabel "mu" --logz --zmin 1e-20 --fps 4 &
+# # pgkyl "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 0.98 anim --title "ion distribution function" --xlabel "vpar" --ylabel "mu" --zmax 1e-8 --fps 4 &
+# pgkyl --c2p-vel "$name-ion_mapc2p_vel.gkyl" "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 2.00 anim --xlabel "vpar" --ylabel "mu, z=2.0, $name" --logz --zmin 1e-20 --fps 4 --saveas "$saveLoc-ion-z2.0_logz.mp4" --no-show &
+# pgkyl --c2p-vel "$name-ion_mapc2p_vel.gkyl" "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 0.98 anim --xlabel "vpar" --ylabel "mu, z=0.98, $name" --logz --zmin 1e-20 --fps 4 --saveas "$saveLoc-ion-z0.98_logz.mp4" --no-show &
+# pgkyl --c2p-vel "$name-ion_mapc2p_vel.gkyl" "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 0.00 anim --xlabel "vpar" --ylabel "mu, z=0, $name" --logz --zmin 1e-20 --fps 4 --saveas "$saveLoc-ion-z0.0_logz.mp4" --no-show &
 
 
-pgkyl --c2p-vel "$name-ion_mapc2p_vel.gkyl" "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 2.00 anim --xlabel "vpar" --ylabel "mu, z=2.0, $name" --fps 4 --saveas "$saveLoc-ion-z2.0.mp4" --no-show &
-pgkyl --c2p-vel "$name-ion_mapc2p_vel.gkyl" "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 0.98 anim --xlabel "vpar" --ylabel "mu, z=0.98, $name" --fps 4 --saveas "$saveLoc-ion-z0.98.mp4" --no-show &
-pgkyl --c2p-vel "$name-ion_mapc2p_vel.gkyl" "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 0.00 anim --xlabel "vpar" --ylabel "mu, z=0, $name" --fps 4 --saveas "$saveLoc-ion-z0.0.mp4" --no-show &
+# pgkyl --c2p-vel "$name-ion_mapc2p_vel.gkyl" "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 2.00 anim --xlabel "vpar" --ylabel "mu, z=2.0, $name" --fps 4 --saveas "$saveLoc-ion-z2.0.mp4" --no-show &
+# pgkyl --c2p-vel "$name-ion_mapc2p_vel.gkyl" "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 0.98 anim --xlabel "vpar" --ylabel "mu, z=0.98, $name" --fps 4 --saveas "$saveLoc-ion-z0.98.mp4" --no-show &
+# pgkyl --c2p-vel "$name-ion_mapc2p_vel.gkyl" "$name-ion_[0-9]*.gkyl" interp -b gkhyb -p1 sel --z0 0.00 anim --xlabel "vpar" --ylabel "mu, z=0, $name" --fps 4 --saveas "$saveLoc-ion-z0.0.mp4" --no-show &
 
 
 # Animations of distribution functions with vpar on z and mu on z

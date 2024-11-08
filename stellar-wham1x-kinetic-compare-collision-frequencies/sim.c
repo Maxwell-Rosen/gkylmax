@@ -679,8 +679,8 @@ int main(int argc, char **argv)
       .num_cross_collisions = 1,
       .collide_with = {"ion"},
     },
-    .num_diag_moments = 1,
-    .diag_moments = {"BiMaxwellianMoments"},
+    .num_diag_moments = 8,
+    .diag_moments = {"BiMaxwellianMoments", "M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp" },
   };
 
   struct gkyl_gyrokinetic_projection ion_ic = {
@@ -713,8 +713,8 @@ int main(int argc, char **argv)
       .num_cross_collisions = 1,
       .collide_with = {"elc"},
     },
-    .num_diag_moments = 1,
-    .diag_moments = {"BiMaxwellianMoments"},
+    .num_diag_moments = 8,
+    .diag_moments = {"BiMaxwellianMoments", "M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp" },
   };
   struct gkyl_gyrokinetic_field field = {
     .polarization_bmag = ctx.B_p, 
