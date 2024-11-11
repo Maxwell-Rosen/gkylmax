@@ -40,3 +40,14 @@ if [ ! -d "Slurmscripts" ]; then
   mkdir Slurmscripts
 fi
 mv *.out Slurmscripts/
+
+if [ ! -d "M" ]; then
+  mkdir M
+fi
+mv *_M* M/
+
+if [ ! -d "Distributions" ]; then
+  mkdir Distributions
+fi
+mv *-ion_[0-9]* Distributions/
+mv *-elc_[0-9]* Distributions/

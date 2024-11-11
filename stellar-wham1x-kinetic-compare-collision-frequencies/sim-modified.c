@@ -67,6 +67,7 @@ struct gk_mirror_ctx
   int poly_order;
   double t_end;
   int num_frames;
+  double write_phase_freq; // Frequency of writing phase-space data.
   int int_diag_calc_num; // Number of integrated diagnostics computations (=INT_MAX for every step).
   double dt_failure_tol; // Minimum allowable fraction of initial time-step.
   int num_failures_max; // Maximum allowable number of consecutive small time-steps.
@@ -448,6 +449,43 @@ void mapc2p_vel_elc(double t, const double *vc, double* GKYL_RESTRICT vp, void *
   vp[1] = mu_max_elc*pow(cmu,2);
 }
 
+void
+output_diagnostics(struct gk_mirror_ctx ctx, void *app_inp, struct gkyl_app_args app_args)
+{
+  struct gkyl_gk *app = app_inp;
+  int my_rank = 0;
+  int comm_sz = 1;
+#ifdef GKYL_HAVE_MPI
+  if (app_args.use_mpi){
+    gkyl_comm_get_rank(app->parallelism.comm, &my_rank);
+    int comm_sz;
+    gkyl_comm_get_size(app->parallelism.comm, &comm_sz);
+  }
+#endif
+  if (my_rank == 0) {
+    if (app->cdim == 1){printf("Grid size = %d in Z\n", app->cells[0]);}
+    else if (app->cdim == 2){printf("Grid size = %d in psi, %d in Z\n", app->cells[0], app->cells[1]);}
+    else if (app->cdim == 3){printf("Grid size = %d in psi, %d in Z, %d in theta\n", app->cells[0], app->cells[1], app->cells[2]);}
+
+    printf("Velocity grid is %d in vpar and %d in mu \n", ctx.Nvpar, ctx.Nmu);
+    if (app_args.use_mpi)
+      printf("Number of MPI ranks: %d\n", app_args.cuts[0]);
+    if (app_args.use_gpu)
+      printf("Number of GPUs: %d\n", app_args.cuts[0]);
+    printf("psi_eval = %g, psi_min = %g, psi_max = %g\n", ctx.psi_eval, ctx.psi_min, ctx.psi_max);
+    printf("z_min = %g, z_max = %g\n", ctx.z_min, ctx.z_max);
+    printf("vpar_max_ion/vti = %g, mu_max_ion/mu_ti = %g\n", ctx.vpar_max_ion/ctx.vti, sqrt(ctx.mu_max_ion/ctx.mi*2.0*ctx.B_p)/ctx.vti);
+    printf("vpar_max_elc/vte = %g, mu_max_elc/mu_te = %g\n", ctx.vpar_max_elc/ctx.vte, sqrt(ctx.mu_max_elc/ctx.me*2.0*ctx.B_p)/ctx.vte);
+    printf("vti = %.4e, vte = %.4e, c_s = %.4e, mu_ti = %.4e, mu_te = %.4e\n", ctx.vti, ctx.vte, ctx.c_s, ctx.mi * pow(ctx.vti, 2.) / (2. * ctx.B_p),
+     ctx.me * pow(ctx.vte, 2.) / (2. * ctx.B_p));
+    printf("omega_ci = %.4e, rho_s = %.4e, kperp = %.4e\n", ctx.omega_ci, ctx.rho_s, ctx.kperp);
+    printf("1/nuElc = %.4e, 1/nuIon = %.4e\n", 1./ctx.nuElc, 1./ctx.nuIon);
+    printf("App name = %s\n", app->name);
+    printf("Using positivity = %d\n", app->enforce_positivity);
+
+  }
+}
+
 struct gk_mirror_ctx
 create_ctx(void)
 {
@@ -566,6 +604,7 @@ create_ctx(void)
     .poly_order = poly_order,
     .t_end = t_end,
     .num_frames = num_frames,
+    .write_phase_freq = write_phase_freq,
     .int_diag_calc_num = int_diag_calc_num,
     .dt_failure_tol = dt_failure_tol,
     .num_failures_max = num_failures_max,
@@ -584,19 +623,27 @@ calc_integrated_diagnostics(struct gkyl_tm_trigger* iot, gkyl_gyrokinetic_app* a
 }
 
 void
-write_data(struct gkyl_tm_trigger* iot, gkyl_gyrokinetic_app* app, double t_curr, bool force_write)
+write_data(struct gkyl_tm_trigger* iot_conf, struct gkyl_tm_trigger* iot_phase,
+  gkyl_gyrokinetic_app* app, double t_curr, bool force_write)
 {
-  bool trig_now = gkyl_tm_trigger_check_and_bump(iot, t_curr);
-  if (trig_now || force_write) {
-    int frame = (!trig_now) && force_write? iot->curr : iot->curr-1;
+  bool trig_now_conf = gkyl_tm_trigger_check_and_bump(iot_conf, t_curr);
+  if (trig_now_conf || force_write) {
+    int frame = (!trig_now_conf) && force_write? iot_conf->curr : iot_conf->curr-1;
 
-    gkyl_gyrokinetic_app_write(app, t_curr, frame);
+    gkyl_gyrokinetic_app_write_conf(app, t_curr, frame);
 
     gkyl_gyrokinetic_app_calc_field_energy(app, t_curr);
     gkyl_gyrokinetic_app_write_field_energy(app);
 
     gkyl_gyrokinetic_app_calc_integrated_mom(app, t_curr);
     gkyl_gyrokinetic_app_write_integrated_mom(app);
+  }
+
+  bool trig_now_phase = gkyl_tm_trigger_check_and_bump(iot_phase, t_curr);
+  if (trig_now_phase || force_write) {
+    int frame = (!trig_now_conf) && force_write? iot_conf->curr : iot_conf->curr-1;
+
+    gkyl_gyrokinetic_app_write_phase(app, t_curr, frame);
   }
 }
 
@@ -624,32 +671,6 @@ int main(int argc, char **argv)
 
   // Construct communicator for use in app.
   struct gkyl_comm *comm = gkyl_gyrokinetic_comms_new(app_args.use_mpi, app_args.use_gpu, stderr);
-
-  int my_rank = 0;
-  int comm_sz = 1;
-#ifdef GKYL_HAVE_MPI
-  if (app_args.use_mpi){
-    gkyl_comm_get_rank(comm, &my_rank);
-    int comm_sz;
-    gkyl_comm_get_size(comm, &comm_sz);
-  }
-#endif
-
-  if (my_rank == 0) {
-    printf("Grid size = %d in Z, %d in Vpar, %d in mu\n", cells_x[0], cells_v[0], cells_v[1]);
-    if (app_args.use_mpi)
-      printf("Number of MPI ranks: %d\n", app_args.cuts[0]);
-    if (app_args.use_gpu)
-      printf("Number of GPUs: %d\n", app_args.cuts[0]);
-    printf("psi_eval = %g, psi_min = %g, psi_max = %g\n", ctx.psi_eval, ctx.psi_min, ctx.psi_max);
-    printf("z_min = %g, z_max = %g\n", ctx.z_min, ctx.z_max);
-    printf("vpar_max_ion/vti = %g, mu_max_ion/mu_ti = %g\n", ctx.vpar_max_ion/ctx.vti, sqrt(ctx.mu_max_ion/ctx.mi*2.0*ctx.B_p)/ctx.vti);
-    printf("vpar_max_elc/vte = %g, mu_max_elc/mu_te = %g\n", ctx.vpar_max_elc/ctx.vte, sqrt(ctx.mu_max_elc/ctx.me*2.0*ctx.B_p)/ctx.vte);
-    printf("vti = %.4e, vte = %.4e, c_s = %.4e, mu_ti = %.4e, mu_te = %.4e\n", ctx.vti, ctx.vte, ctx.c_s, ctx.mi * pow(ctx.vti, 2.) / (2. * ctx.B_p),
-     ctx.me * pow(ctx.vte, 2.) / (2. * ctx.B_p));
-    printf("omega_ci = %.4e, rho_s = %.4e, kperp = %.4e\n", ctx.omega_ci, ctx.rho_s, ctx.kperp);
-    printf("1/nuElc = %.4e, 1/nuIon = %.4e\n", 1./ctx.nuElc, 1./ctx.nuIon);
-  }
 
   struct gkyl_gyrokinetic_projection elc_ic = {
       .proj_id = GKYL_PROJ_FUNC,
@@ -772,6 +793,9 @@ struct gkyl_efit_inp efit_inp = {
   };
   
   // Create app object.
+
+  output_diagnostics(ctx, &app_inp, app_args);
+
   clock_t start_time = clock();
   gkyl_gyrokinetic_app *app = gkyl_gyrokinetic_app_new(&app_inp);
   clock_t end_time = clock();
@@ -808,13 +832,14 @@ struct gkyl_efit_inp efit_inp = {
 
   // Create triggers for IO.
   int num_frames = ctx.num_frames, num_int_diag_calc = ctx.int_diag_calc_num;
-  struct gkyl_tm_trigger trig_write = { .dt = t_end/num_frames, .tcurr = t_curr, .curr = frame_curr };
+  struct gkyl_tm_trigger trig_write_conf = { .dt = t_end/num_frames, .tcurr = t_curr, .curr = frame_curr };
+  struct gkyl_tm_trigger trig_write_phase = { .dt = t_end/(ctx.write_phase_freq*num_frames), .tcurr = t_curr, .curr = frame_curr};
   struct gkyl_tm_trigger trig_calc_intdiag = { .dt = t_end/GKYL_MAX2(num_frames, num_int_diag_calc),
     .tcurr = t_curr, .curr = frame_curr };
 
   // Write out ICs (if restart, it overwrites the restart frame).
   calc_integrated_diagnostics(&trig_calc_intdiag, app, t_curr, false);
-  write_data(&trig_write, app, t_curr, false);
+  write_data(&trig_write_conf, &trig_write_phase, app, t_curr, false);
 
   double dt = t_end-t_curr; // Initial time step.
   // Initialize small time-step check.
@@ -846,7 +871,7 @@ struct gkyl_efit_inp efit_inp = {
       dt = status.dt_suggested;
 
     calc_integrated_diagnostics(&trig_calc_intdiag, app, t_curr, t_curr > t_end);
-    write_data(&trig_write, app, t_curr, t_curr > t_end);
+    write_data(&trig_write_conf, &trig_write_phase, app, t_curr, t_curr > t_end);
 
     if (dt_init < 0.0) {
       dt_init = status.dt_actual;
@@ -861,7 +886,7 @@ struct gkyl_efit_inp efit_inp = {
         gkyl_gyrokinetic_app_cout(app, stdout, "ERROR: Time-step was below %g*dt_init ", dt_failure_tol);
         gkyl_gyrokinetic_app_cout(app, stdout, "%d consecutive times. Aborting simulation ....\n", num_failures_max);
         calc_integrated_diagnostics(&trig_calc_intdiag, app, t_curr, true);
-        write_data(&trig_write, app, t_curr, true);
+        write_data(&trig_write_conf, &trig_write_phase, app, t_curr, true);
         break;
       }
     }

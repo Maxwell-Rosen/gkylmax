@@ -8,6 +8,11 @@ if [ ! -d "BiMaxwellianMoments" ]; then
 fi
 mv *_BiMaxwellianMoments_* BiMaxwellianMoments/
 
+if [ ! -d "prim_moms" ]; then
+  mkdir prim_moms
+fi
+mv *_prim_moms_* prim_moms/
+
 if [ ! -d "Field" ]; then
   mkdir Field
 fi

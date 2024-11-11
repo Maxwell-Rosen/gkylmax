@@ -15,7 +15,7 @@
 #SBATCH --gres=gpu:1
 
 #.Request wall time
-#SBATCH -t 24:00:00
+#SBATCH -t 12:00:00
 
 num_gpu=1
 
@@ -27,7 +27,7 @@ module load cudatoolkit/12.4
 module load anaconda3/2021.11
 
 max_number=0
-file_prefix="gk_wham_32-ion_"
+file_prefix="gk_wham_512-ion_"
 file_extension="[0-9]*.gkyl"
 matching_files=$(ls $file_prefix$file_extension)
 for file in $matching_files; do
@@ -44,10 +44,10 @@ echo "Max number is $max_number"
 
 if [ "$max_number" -eq 0 ]; then
   echo "No matching files found. Starting from the begining"
-  echo "srun -u -n $num_gpu ./sim_unif -g -M -c $num_gpu"
-  srun -u -n $num_gpu ./sim_unif -g -M -c $num_gpu
+  echo "srun -u -n $num_gpu ./sim -g -M -c $num_gpu"
+  srun -u -n $num_gpu ./sim -g -M -c $num_gpu
 else
   echo "Resuming from file $max_number"
-  echo "srun -u -n $num_gpu ./sim_unif -g -M -c $num_gpu -r $max_number"
-  srun -u -n $num_gpu ./sim_unif -g -M -c $num_gpu -r $max_number
+  echo "srun -u -n $num_gpu ./sim -g -M -c $num_gpu -r $max_number"
+  srun -u -n $num_gpu ./sim -g -M -c $num_gpu -r $max_number
 fi

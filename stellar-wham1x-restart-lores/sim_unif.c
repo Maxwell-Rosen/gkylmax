@@ -448,6 +448,43 @@ void mapc2p_vel_elc(double t, const double *vc, double* GKYL_RESTRICT vp, void *
   vp[1] = mu_max_elc*pow(cmu,2);
 }
 
+void
+output_diagnostics(struct gk_mirror_ctx ctx, void *app_inp, struct gkyl_app_args app_args)
+{
+  struct gkyl_gk *app = app_inp;
+  int my_rank = 0;
+  int comm_sz = 1;
+#ifdef GKYL_HAVE_MPI
+  if (app_args.use_mpi){
+    gkyl_comm_get_rank(app->parallelism.comm, &my_rank);
+    int comm_sz;
+    gkyl_comm_get_size(app->parallelism.comm, &comm_sz);
+  }
+#endif
+  if (my_rank == 0) {
+    if (app->cdim == 1){printf("Grid size = %d in Z\n", app->cells[0]);}
+    else if (app->cdim == 2){printf("Grid size = %d in psi, %d in Z\n", app->cells[0], app->cells[1]);}
+    else if (app->cdim == 3){printf("Grid size = %d in psi, %d in Z, %d in theta\n", app->cells[0], app->cells[1], app->cells[2]);}
+
+    printf("Velocity grid is %d in vpar and %d in mu \n", ctx.Nvpar, ctx.Nmu);
+    if (app_args.use_mpi)
+      printf("Number of MPI ranks: %d\n", app_args.cuts[0]);
+    if (app_args.use_gpu)
+      printf("Number of GPUs: %d\n", app_args.cuts[0]);
+    printf("psi_eval = %g, psi_min = %g, psi_max = %g\n", ctx.psi_eval, ctx.psi_min, ctx.psi_max);
+    printf("z_min = %g, z_max = %g\n", ctx.z_min, ctx.z_max);
+    printf("vpar_max_ion/vti = %g, mu_max_ion/mu_ti = %g\n", ctx.vpar_max_ion/ctx.vti, sqrt(ctx.mu_max_ion/ctx.mi*2.0*ctx.B_p)/ctx.vti);
+    printf("vpar_max_elc/vte = %g, mu_max_elc/mu_te = %g\n", ctx.vpar_max_elc/ctx.vte, sqrt(ctx.mu_max_elc/ctx.me*2.0*ctx.B_p)/ctx.vte);
+    printf("vti = %.4e, vte = %.4e, c_s = %.4e, mu_ti = %.4e, mu_te = %.4e\n", ctx.vti, ctx.vte, ctx.c_s, ctx.mi * pow(ctx.vti, 2.) / (2. * ctx.B_p),
+     ctx.me * pow(ctx.vte, 2.) / (2. * ctx.B_p));
+    printf("omega_ci = %.4e, rho_s = %.4e, kperp = %.4e\n", ctx.omega_ci, ctx.rho_s, ctx.kperp);
+    printf("1/nuElc = %.4e, 1/nuIon = %.4e\n", 1./ctx.nuElc, 1./ctx.nuIon);
+    printf("App name = %s\n", app->name);
+    printf("Using positivity = %d\n", app->enforce_positivity);
+
+  }
+}
+
 struct gk_mirror_ctx
 create_ctx(void)
 {
@@ -512,13 +549,13 @@ create_ctx(void)
   double mu_max_elc = me * pow(3. * vte, 2.) / (2. * B_p);
   double vpar_max_ion = 30 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
+  int Nx = 16;
+  int Nz = 32;
   int Nvpar = 32; // 96 uniform
   int Nmu = 32;  // 192 uniform
-  int Nz = 64;
-  int Nx = 16;
   int poly_order = 1;
-  double t_end = 100e-6;//100e-6;
-  int num_frames = 100;
+  double t_end = 300e-6;//100e-6;
+  int num_frames = 300;
   double write_phase_freq = 1;
   int int_diag_calc_num = num_frames*100;
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
@@ -634,32 +671,6 @@ int main(int argc, char **argv)
   // Construct communicator for use in app.
   struct gkyl_comm *comm = gkyl_gyrokinetic_comms_new(app_args.use_mpi, app_args.use_gpu, stderr);
 
-  int my_rank = 0;
-  int comm_sz = 1;
-#ifdef GKYL_HAVE_MPI
-  if (app_args.use_mpi){
-    gkyl_comm_get_rank(comm, &my_rank);
-    int comm_sz;
-    gkyl_comm_get_size(comm, &comm_sz);
-  }
-#endif
-
-  if (my_rank == 0) {
-    printf("Grid size = %d in Z, %d in Vpar, %d in mu\n", cells_x[0], cells_v[0], cells_v[1]);
-    if (app_args.use_mpi)
-      printf("Number of MPI ranks: %d\n", app_args.cuts[0]);
-    if (app_args.use_gpu)
-      printf("Number of GPUs: %d\n", app_args.cuts[0]);
-    printf("psi_eval = %g, psi_min = %g, psi_max = %g\n", ctx.psi_eval, ctx.psi_min, ctx.psi_max);
-    printf("z_min = %g, z_max = %g\n", ctx.z_min, ctx.z_max);
-    printf("vpar_max_ion/vti = %g, mu_max_ion/mu_ti = %g\n", ctx.vpar_max_ion/ctx.vti, sqrt(ctx.mu_max_ion/ctx.mi*2.0*ctx.B_p)/ctx.vti);
-    printf("vpar_max_elc/vte = %g, mu_max_elc/mu_te = %g\n", ctx.vpar_max_elc/ctx.vte, sqrt(ctx.mu_max_elc/ctx.me*2.0*ctx.B_p)/ctx.vte);
-    printf("vti = %.4e, vte = %.4e, c_s = %.4e, mu_ti = %.4e, mu_te = %.4e\n", ctx.vti, ctx.vte, ctx.c_s, ctx.mi * pow(ctx.vti, 2.) / (2. * ctx.B_p),
-     ctx.me * pow(ctx.vte, 2.) / (2. * ctx.B_p));
-    printf("omega_ci = %.4e, rho_s = %.4e, kperp = %.4e\n", ctx.omega_ci, ctx.rho_s, ctx.kperp);
-    printf("1/nuElc = %.4e, 1/nuIon = %.4e\n", 1./ctx.nuElc, 1./ctx.nuIon);
-  }
-
   struct gkyl_gyrokinetic_projection elc_ic = {
       .proj_id = GKYL_PROJ_FUNC,
       .func = read_elc_distf,
@@ -675,6 +686,10 @@ int main(int argc, char **argv)
     .polarization_density = ctx.n0,
     .no_by = true,
     .projection = elc_ic,
+    // .init_from_file = {
+    //   .type = GKYL_IC_IMPORT_F,
+    //   .file_name = "gk_wham_32-elc_61.gkyl",
+    // },
     .mapc2p = {
       .mapping = mapc2p_vel_elc,
       .ctx = &ctx,
@@ -690,8 +705,8 @@ int main(int argc, char **argv)
       .num_cross_collisions = 1,
       .collide_with = {"ion"},
     },
-    .num_diag_moments = 1,
-    .diag_moments = {"BiMaxwellianMoments"},
+    .num_diag_moments = 8,
+    .diag_moments = {"BiMaxwellianMoments", "M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp" },
   };
 
   struct gkyl_gyrokinetic_projection ion_ic = {
@@ -709,6 +724,10 @@ int main(int argc, char **argv)
     .polarization_density = ctx.n0,
     .no_by = true,
     .projection = ion_ic,
+    // .init_from_file = {
+    //   .type = GKYL_IC_IMPORT_F,
+    //   .file_name = "gk_wham_32-elc_61.gkyl",
+    // },
     .mapc2p = {
       .mapping = mapc2p_vel_ion,
       .ctx = &ctx,
@@ -724,15 +743,13 @@ int main(int argc, char **argv)
       .num_cross_collisions = 1,
       .collide_with = {"elc"},
     },
-    .num_diag_moments = 1,
-    .diag_moments = {"BiMaxwellianMoments"},
+    .num_diag_moments = 8,
+    .diag_moments = {"BiMaxwellianMoments", "M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp" },
   };
   struct gkyl_gyrokinetic_field field = {
     .polarization_bmag = ctx.B_p, 
     .fem_parbc = GKYL_FEM_PARPROJ_NONE,
     .kperpSq = pow(ctx.kperp, 2.),
-    // .polarization_potential = read_phi,
-    // .polarization_potential_ctx = &ctx,
   };
 
   struct gkyl_efit_inp efit_inp = {
@@ -747,14 +764,14 @@ int main(int argc, char **argv)
     .zmax =  2.0,  // Z of upper boundary 
   };
   struct gkyl_gk app_inp = {  // GK app
-    .name = "gk_wham_64_npos",
+    .name = "gk_wham_32",
     .cdim = ctx.cdim ,  .vdim = ctx.vdim,
     .lower = {ctx.z_min},
     .upper = {ctx.z_max},
     .cells = { cells_x[0] },
     .poly_order = ctx.poly_order,
     .basis_type = app_args.basis_type,
-    // .enforce_positivity = true,
+    .enforce_positivity = true,
     .geometry = {
       .geometry_id = GKYL_MIRROR,
       .world = {ctx.psi_eval, 0.0},
@@ -774,6 +791,9 @@ int main(int argc, char **argv)
   };
   
   // Create app object.
+
+  output_diagnostics(ctx, &app_inp, app_args);
+
   clock_t start_time = clock();
   gkyl_gyrokinetic_app *app = gkyl_gyrokinetic_app_new(&app_inp);
   clock_t end_time = clock();
@@ -831,7 +851,7 @@ int main(int argc, char **argv)
   start_time = clock();
   while ((t_curr < t_end) && (step <= app_args.num_steps)) {
     struct gkyl_update_status status = gkyl_gyrokinetic_update(app, dt);    
-    if (step % 1 == 0) {
+    if (step % 100 == 0 | step == 1) {
       gkyl_gyrokinetic_app_cout(app, stdout, "Taking time-step %ld at t = %g ...", step, t_curr);
       gkyl_gyrokinetic_app_cout(app, stdout, " dt = %g ... ", status.dt_actual);
       end_time = clock();
