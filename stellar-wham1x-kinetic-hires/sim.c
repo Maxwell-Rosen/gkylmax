@@ -251,7 +251,7 @@ read_ion_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   if (interp_val < 0.0) {
     interp_val = 0.0;
   }
-  fout[0] = interp_val * 1.179; //*1.0786, 1.01802 phi 8
+  fout[0] = interp_val * 1.189717305;
 }
 
 void
@@ -551,7 +551,7 @@ create_ctx(void)
   double vpar_max_ion = 30 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   int Nx = 16;
-  int Nz = 512;
+  int Nz = 576;
   int Nvpar = 32; // 96 uniform
   int Nmu = 32;  // 192 uniform
   int poly_order = 1;
@@ -791,6 +791,7 @@ struct gkyl_efit_inp efit_inp = {
     .poly_order = ctx.poly_order,
     .basis_type = app_args.basis_type,
     .enforce_positivity = true,
+    .static_field = false,
     .geometry = {
       .geometry_id = GKYL_MIRROR,
       .world = {ctx.psi_eval, 0.0},

@@ -15,7 +15,7 @@
 #SBATCH --gres=gpu:1
 
 #.Request wall time
-#SBATCH -t 12:00:00
+#SBATCH -t 24:00:00
 
 num_gpu=1
 
