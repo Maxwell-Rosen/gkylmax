@@ -13,120 +13,144 @@ from typing import Any, Generator, Iterable, List, TextIO, Union
 
 #Remove all files with the name conditioned_coil_R*.geqdsk
 import os
+import multiprocessing as mp
+
 for file in os.listdir():
     if file.endswith(".geqdsk") and file.startswith("conditioned_coil_R"):
         os.remove(file)
 
+## TODO: Control for minimum B = constant, then set Bmax = R * Bmin
+
+def psi_f(R, Z, I_high_field_coils, I_low_field_coils, coil_dist):
+    if R < 1e-17:
+        R = 1e-17
+    a = 0.45 #Radius of all the coils. Must be > R_max
+    mu0 = scipy.constants.mu_0
+
+    Zl = Z - coil_dist/2
+    k2 = 4*a*R/((a+R)**2 + Zl**2)
+    k = np.sqrt(k2)
+    Aphi = -mu0*I_high_field_coils/np.pi * np.sqrt(a/R) * ((k2 - 2)/2/k*ellipk(k2) + ellipe(k2)/k)
+    Zu = Z + coil_dist/2
+    k2 = 4*a*R/((a+R)**2 + Zu**2)
+    k = np.sqrt(k2)
+    Aphi += -mu0*I_high_field_coils/np.pi * np.sqrt(a/R) * ((k2 - 2)/2/k*ellipk(k2) + ellipe(k2)/k)
+    Z_middle = np.linspace(Zl,Zu,50)
+    Z_middle = Z_middle[1:-1]
+    k2 = 4*a*R/((a+R)**2 + Z_middle**2)
+    k = np.sqrt(k2)
+    Aphi += np.sum(-mu0*I_low_field_coils/np.pi * np.sqrt(a/R) * ((k2 - 2)/2/k*ellipk(k2) + ellipe(k2)/k))
+    return Aphi * R
+
 
 B0 = 0.0 #Domain center
 R0 = .02
-I = 812998 # High field current. Optimized such that Bmax on psi_eval = aim_Bmax
 
-# Imiddle | R for Bmax=10
-# 0   20
-# 0.2e4 13.1628
-# 0.5e4 8.506
-# 1e4 5.026
-# 2e4 2.51212
-Imiddle_vec = np.array([0, 0.2e4, 0.5e4, 1e4, 2e4])
-for i_current in range(len(Imiddle_vec)):
-    Imiddle = Imiddle_vec[i_current]
+mirror_ratio_vector = np.array([20])#, 15, 10, 5, 2, 1.5])
 
+I_high_field = 812998 # High field current. Optimized such that Bmax on psi_eval = aim_Bmax
+I_middle_low_field = 0 # Low field current. Optimized such that Bmin on psi_eval = aim_Bmin
+h = 2 
 
-    a = 1.0 #Radius of all the coils. Must be > R_max
-    #Adjusted h such that when Imiddle=0, mirror ratio ~ 20
-    h = 4.4 # Distance between the high field coils, centered at z=0
-    mu0 = scipy.constants.mu_0
+#optimizer parameters
+aim_Bmax = 10.0
+aim_Bmin = 0.5
+I_previous_step = 0
+Bmax_previous_step = 0
+psi_eval = 1e-3
 
-    #optimizer parameters
-    aim_Bmax = 10.0
-    Im1 = 0
-    Bmaxm1 = 0
-    psi_eval = 1e-3
-
-    def psi_f(R, Z, Icoil):
-        if R < 1e-17:
-            R = 1e-17
-        Zl = Z - h/2
-        k2 = 4*a*R/((a+R)**2 + Zl**2)
-        k = np.sqrt(k2)
-        Aphi = -mu0*Icoil/np.pi * np.sqrt(a/R) * ((k2 - 2)/2/k*ellipk(k2) + ellipe(k2)/k)
-        Zu = Z + h/2
-        k2 = 4*a*R/((a+R)**2 + Zu**2)
-        k = np.sqrt(k2)
-        Aphi += -mu0*Icoil/np.pi * np.sqrt(a/R) * ((k2 - 2)/2/k*ellipk(k2) + ellipe(k2)/k)
-        Z_middle = np.linspace(Zl,Zu,50)
-        Z_middle = Z_middle[1:-1]
-        k2 = 4*a*R/((a+R)**2 + Z_middle**2)
-        k = np.sqrt(k2)
-        Aphi += np.sum(-mu0*Imiddle/np.pi * np.sqrt(a/R) * ((k2 - 2)/2/k*ellipk(k2) + ellipe(k2)/k))
-        return Aphi * R
 
     #RZ box
-    NW = 257
-    NH = 257
-    RMIN,RMAX = .001, 0.5
-    ZMIN,ZMAX = -3, 3
-    RDIM = RMAX - RMIN
-    ZDIM = ZMAX - ZMIN
-    RLEFT = RMIN
-    ZMID = (ZMAX+ZMIN)/2.0
-    RMAXIS = 0.0
-    ZMAXIS = 0.0
-    NPSI = NW #don't write
-    RCENTR = 0.0
-    BCENTR = B0
-    CURRENT = 0
+NW = 257
+NH = 257
+RMIN,RMAX = .001, 0.4
+ZMIN,ZMAX = -2, 2
+RDIM = RMAX - RMIN
+ZDIM = ZMAX - ZMIN
+RLEFT = RMIN
+ZMID = (ZMAX+ZMIN)/2.0
+RMAXIS = 0.0
+ZMAXIS = 0.0
+NPSI = NW #don't write
+RCENTR = 0.0
+BCENTR = B0
+CURRENT = 0
 
 
-    #Solve GS in RZ coords
-    Rgrid = np.linspace(RMIN,RMAX,NW)
-    Zgrid = np.linspace(ZMIN,ZMAX,NH)
-    dR = Rgrid[1] - Rgrid[0]
-    dZ = Zgrid[1] - Zgrid[0]
-    #rthetagrid = np.zeros((len(Rgrid),len(Zgrid),2))
-    psiRZ = np.zeros((len(Rgrid),len(Zgrid)))
-    BzRZ = np.zeros((len(Rgrid),len(Zgrid)))
-    BrRZ = np.zeros((len(Rgrid),len(Zgrid)))
-    BRZ = np.zeros((len(Rgrid),len(Zgrid)))
+#Solve GS in RZ coords
+Rgrid = np.linspace(RMIN,RMAX,NW)
+Zgrid = np.linspace(ZMIN,ZMAX,NH)
+dR = Rgrid[1] - Rgrid[0]
+dZ = Zgrid[1] - Zgrid[0]
+#rthetagrid = np.zeros((len(Rgrid),len(Zgrid),2))
+psiRZ = np.zeros((len(Rgrid),len(Zgrid)))
+BzRZ = np.zeros((len(Rgrid),len(Zgrid)))
+BrRZ = np.zeros((len(Rgrid),len(Zgrid)))
+BRZ = np.zeros((len(Rgrid),len(Zgrid)))
+
+B_psi = np.zeros((len(mirror_ratio_vector),len(Zgrid)))
+
+def minimize_function(I_high_field, I_middle, coil_distance):
+
+
 
     while True:
         # # From Jackson. There seems to be a typo in the k**2 in the eliptic functions. They should be k**2, not k
-        print("I = %g"%I)
-        for i,Ri in enumerate(Rgrid):
-            for j,Zj in enumerate(Zgrid):
-                psiRZ[i,j] = psi_f(Ri,Zj, I)
+        print("I = %g"%I_high_field)
+        def compute_psi_B(i, Ri, Zgrid, dR, dZ, I):
+            psiRZ_row = np.zeros(len(Zgrid))
+            BzRZ_row = np.zeros(len(Zgrid))
+            BrRZ_row = np.zeros(len(Zgrid))
+            BRZ_row = np.zeros(len(Zgrid))
+            for j, Zj in enumerate(Zgrid):
+                psiRZ_row[j] = psi_f(Ri, Zj, I)
                 if Ri < 1e-17:
                     Ri = Rgrid[1]
-                BzRZ[i,j] = 1/Ri**2 * (psi_f(Ri+dR,Zj, I) - psi_f(Ri-dR,Zj, I))/(2*dR)
-                BrRZ[i,j] = -1/Ri * (psi_f(Ri,Zj+dZ, I) - psi_f(Ri,Zj-dZ, I))/(2*dZ)
-                BRZ[i,j] = np.sqrt(BrRZ[i,j]**2 + BzRZ[i,j]**2)
+                BzRZ_row[j] = 1/Ri**2 * (psi_f(Ri+dR, Zj, I) - psi_f(Ri-dR, Zj, I))/(2*dR)
+                BrRZ_row[j] = -1/Ri * (psi_f(Ri, Zj+dZ, I) - psi_f(Ri, Zj-dZ, I))/(2*dZ)
+                BRZ_row[j] = np.sqrt(BrRZ_row[j]**2 + BzRZ_row[j]**2)
+            return i, psiRZ_row, BzRZ_row, BrRZ_row, BRZ_row
+
+        with mp.Pool(mp.cpu_count()) as pool:
+            results = pool.starmap(compute_psi_B, [(i, Ri, Zgrid, dR, dZ, I_high_field) for i, Ri in enumerate(Rgrid)])
+
+        for i, psiRZ_row, BzRZ_row, BrRZ_row, BRZ_row in results:
+            psiRZ[i, :] = psiRZ_row
+            BzRZ[i, :] = BzRZ_row
+            BrRZ[i, :] = BrRZ_row
+            BRZ[i, :] = BRZ_row
         
-        B_psi = np.zeros(len(Zgrid))
         for j, Zj in enumerate(Zgrid):
             # For this position of Z, find which R gives psi = psi_eval
             psiR = interp1d(Rgrid, psiRZ[:,j], kind='cubic')
             R_psi = sco.brentq(lambda R: psiR(R) - psi_eval, RMIN, RMAX)
-            psi_interp = psi_f(R_psi, Zj, I)
+            psi_interp = psi_f(R_psi, Zj, I_high_field)
             #Interpolate the magnetic field at this point
             B_psi_interp_model = interp1d(Rgrid, BRZ[:,j], kind='cubic')
-            B_psi[j] = B_psi_interp_model(R_psi)
+            B_psi[i_current,j] = B_psi_interp_model(R_psi)
             
 
 
-        Bmax = np.max(B_psi)
-        Bmin = B_psi[int(NH/2)]
-        print("Bmax = %g at (R = %g, Z = %g)"%(Bmax, R_psi, Zgrid[np.argmax(B_psi)]))
+        Bmax = np.max(B_psi[i_current,:])
+        Bmin = B_psi[i_current,int(NH/2)]
+        print("Bmax = %g at (R = %g, Z = %g)"%(Bmax, R_psi, Zgrid[np.argmax(B_psi[i_current,:])]))
         print("Bmin = %g at (R = %g, Z = %g)"%(Bmin, Rgrid[int(NW/2)], Zgrid[int(NH/2)]))
         print("Mirror ratio = %g"%(Bmax/Bmin))
+
         if np.isclose(Bmax, aim_Bmax, rtol=1e-2):
+            a_fit = (Bmin - Bmin_previous_step)/(I_middle_low_field - I_middle_low_field_previous_step)
+            b_fit = Bmin - a_fit*I_middle_low_field
+            I_middle_low_field_previous_step = I_middle_low_field
+            Bmin_previous_step = Bmin
+            I_middle_low_field = (aim_Bmax - b_fit)/a_fit
+
             break
 
-        a_fit = (Bmax - Bmaxm1)/(I - Im1)
-        b_fit = Bmax - a_fit*I
-        Im1 = I
-        Bmaxm1 = Bmax
-        I = (aim_Bmax - b_fit)/a_fit
+        a_fit = (Bmax - Bmax_previous_step)/(I_high_field - I_previous_step)
+        b_fit = Bmax - a_fit*I_high_field
+        I_previous_step = I_high_field
+        Bmax_previous_step = Bmax
+        I_high_field = (aim_Bmax - b_fit)/a_fit
 
     mirrorRatio = Bmax/Bmin
     outFileName = 'conditioned_coil_R'+str(int(Bmax/Bmin))+'.geqdsk'
@@ -135,23 +159,23 @@ for i_current in range(len(Imiddle_vec)):
 
     Bmin = BRZ[0,int(NH/2)]
 
-    SIMAG = psi_f(2.0,0, I) 
-    SIBRY = psi_f(4.0,0, I)
+    SIMAG = psi_f(2.0,0, I_high_field) 
+    SIBRY = psi_f(4.0,0, I_high_field)
 
-    plt.figure()
-    plt.plot(Zgrid, B_psi)
-    plt.xlabel('Z')
-    plt.ylabel('B')
-    plt.title("B calculated in RZ coords at psi = "+str(psi_eval))
+    # plt.figure()
+    # plt.plot(Zgrid, B_psi)
+    # plt.xlabel('Z')
+    # plt.ylabel('B')
+    # plt.title("B calculated in RZ coords at psi = "+str(psi_eval))
 
 
-    plt.figure()
-    contour = plt.contour(Rgrid,Zgrid, psiRZ.T, levels = np.linspace(0, 1e-4, 50))
-    plt.xlabel('R')
-    plt.ylabel('Z')
-    plt.colorbar()
-    plt.title("Psi calculated in RZ coords")
-    # plt.show()
+    # plt.figure()
+    # contour = plt.contour(Rgrid,Zgrid, psiRZ.T, levels = np.linspace(0, 1e-4, 50))
+    # plt.xlabel('R')
+    # plt.ylabel('Z')
+    # plt.colorbar()
+    # plt.title("Psi calculated in RZ coords")
+    # # plt.show()
 
     # plt.figure()
     # plt.pcolormesh(Rgrid,Zgrid, np.log(BRZ.T))
@@ -296,5 +320,12 @@ for i_current in range(len(Imiddle_vec)):
 
 
 
-
+for i in range(len(Imiddle_vec)):
+    plt.plot(Zgrid, B_psi[i, :], label=f'I = {Imiddle_vec[i]}')
+plt.xlabel('Z')
+plt.ylabel('B')
+plt.title("B calculated in RZ coords at psi = "+str(psi_eval))
+plt.legend()
+plt.tight_layout()
+plt.show()
     # plt.show()
