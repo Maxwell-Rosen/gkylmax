@@ -555,7 +555,7 @@ create_ctx(void)
   int Nvpar = 32; // 96 uniform
   int Nmu = 32;  // 192 uniform
   int poly_order = 1;
-  double t_end = 30-6;//100e-6;
+  double t_end = 30e-6;//100e-6;
   int num_frames = 30;
   double write_phase_freq = 1;
   int int_diag_calc_num = num_frames*100;

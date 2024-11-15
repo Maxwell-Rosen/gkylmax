@@ -7,3 +7,4 @@ rm -rf PositivityFourMoments
 rm *.gkyl
 rm *.json
 rm *.out
+rm *.d

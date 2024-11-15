@@ -216,11 +216,11 @@ z_xi(double xi, double psi, void *ctx)
   struct gk_mirror_ctx *app = ctx;
   double z_min = app->z_min;
   double z_max = app->z_max;
-  double z_m = app->z_m;
-  int n_ex = app->mapping_order_expander;
-  int n_ct = app->mapping_order_center;
+  double z_m = 0.984084;
+  int n_ex = 6;
+  int n_ct = 7;
   int n;
-  double frac = app->mapping_frac; // 1 is full mapping, 0 is no mapping
+  double frac = 0.0; // 1 is full mapping, 0 is no mapping
   double z, left, right;
   if (xi >= z_min && xi <= z_max)
   {
@@ -433,105 +433,10 @@ calculate_mirror_throat_location(void *ctx)
   app->z_m = maximum_Bmag_location;
   app->Z_m_computational = Z_psiz(psi, maximum_Bmag_location, ctx);
   app->B_m = maximum_Bmag;
+  printf("Mirror throat location: %g\n", app->z_m);
+  printf("Mirror throat magnetic field: %g\n", app->B_m);
+
 }
-
-void
-calculate_optimal_mapping(void *ctx)
-{
-  // Determine optimal order for each region
-  // Expander region
-  struct gk_mirror_ctx *app = ctx;
-  double mapping_frac = app->mapping_frac;
-  app->mapping_order_center = 1;
-  double scan_cells = 50;
-  double scan_left = app->z_m;
-  double scan_right = app->z_max;
-  double scan_dxi = (scan_right - scan_left) / scan_cells;
-  int expander_order = 1;
-  double max_dB_dCell_prior = 99999999.99;
-  double max_dB_dCell;
-  double max_dB_dCell_order1 = 0.0;
-  while (1)
-  {
-    max_dB_dCell = 0.0;
-    app->mapping_order_expander = expander_order;
-    for (int iz = 0; iz < scan_cells; iz++)
-    {
-      double left_xi = scan_left + iz * scan_dxi;
-      double right_xi = scan_left + (iz + 1) * scan_dxi;
-      double psi = app->psi_eval;
-      double left_z = z_xi(left_xi, psi, app);
-      double right_z = z_xi(right_xi, psi, app);
-      double B_rad, B_Z, Bmag_left, Bmag_right;
-      Bfield_psiZ(psi, left_z, app, &B_rad, &B_Z, &Bmag_left);
-      Bfield_psiZ(psi, right_z, app, &B_rad, &B_Z, &Bmag_right);
-      double dB_dCell = (Bmag_right - Bmag_left);
-      if (fabs(dB_dCell) > max_dB_dCell)
-      {
-        max_dB_dCell = fabs(dB_dCell);
-      }
-    }
-    double improvement = max_dB_dCell_prior - max_dB_dCell;
-    printf("Improvement: %g, max_dB_dCell: %g, expander_order: %i\n", improvement, max_dB_dCell, expander_order);
-    if (app->mapping_order_expander == 1)
-    {
-      max_dB_dCell_order1 = max_dB_dCell;
-    }
-
-    if (improvement > 1e-3)
-    {
-      expander_order++;
-      max_dB_dCell_prior = max_dB_dCell;
-    }
-    else
-    {
-      break;
-    }
-  }
-  printf("Expander order: %i \ndB/dCell reduction factor: %g\n", expander_order, max_dB_dCell_order1/max_dB_dCell);
-  double max_dB_dCell_expander = max_dB_dCell;
-  //Center region
-  scan_left = 0.0;
-  scan_right = app->z_m;
-  scan_dxi = (scan_right - scan_left) / scan_cells;
-  int center_order = 1;
-  max_dB_dCell_prior = 99999999.99;
-  while (1)
-  {
-    max_dB_dCell = 0.0;
-    app->mapping_order_center = center_order;
-    for (int iz = 0; iz < scan_cells; iz++)
-    {
-      double left_xi = scan_left + iz * scan_dxi;
-      double right_xi = scan_left + (iz + 1) * scan_dxi;
-      double psi = app->psi_eval;
-      double left_z = z_xi(left_xi, psi, app);
-      double right_z = z_xi(right_xi, psi, app);
-      double B_rad, B_Z, Bmag_left, Bmag_right;
-      Bfield_psiZ(psi, left_z, app, &B_rad, &B_Z, &Bmag_left);
-      Bfield_psiZ(psi, right_z, app, &B_rad, &B_Z, &Bmag_right);
-      double dB_dCell = (Bmag_right - Bmag_left);
-      if (fabs(dB_dCell) > max_dB_dCell)
-      {
-        max_dB_dCell = fabs(dB_dCell);
-      }
-    }
-    double improvement = max_dB_dCell_prior - max_dB_dCell;
-    printf("Improvement: %g, max_dB_dCell: %g, center_order: %i\n", improvement, max_dB_dCell, center_order);
-    // if (improvement > 1e-3 & max_dB_dCell > max_dB_dCell_expander)
-    if (improvement > 1e-3)
-    {
-      center_order++;
-      max_dB_dCell_prior = max_dB_dCell;
-    }
-    else
-    {
-      break;
-    }
-  }
-  printf("Center   order: %i\n", center_order);
-}
-
 
 void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *ctx)
 {
@@ -618,7 +523,7 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   int Nvpar = 32; // Number of cells in the paralell velocity direction 96
   int Nmu = 32;  // Number of cells in the mu direction 192
-  int Nz = 128;
+  int Nz = 144;
   int poly_order = 1;
   double t_end = 100e-6;
   int num_frames = 100;
@@ -641,7 +546,7 @@ create_ctx(void)
   double Ti_par_m = 1000 * eV;
 
   // Non-uniform z mapping
-  double mapping_frac = 1. - Nz / 288.; // 1 is full mapping, 0 is no mapping
+  double mapping_frac = 0.5; // 1 is full mapping, 0 is no mapping
   printf("mapping_frac: %g\n", mapping_frac);
 
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
@@ -716,7 +621,6 @@ create_ctx(void)
   else 
   {  
     printf("Mapping fraction: %g\n", ctx.mapping_frac);
-    calculate_optimal_mapping(&ctx);
     double diff_z_max = z_xi(ctx.z_m + dxi/2, ctx.psi_eval, &ctx) - z_xi(ctx.z_m - dxi/2, ctx.psi_eval, &ctx);
     double diff_z_p75 = z_xi(ctx.z_m * .75 + dxi/2, ctx.psi_eval, &ctx) - z_xi(ctx.z_m * .75 - dxi/2, ctx.psi_eval, &ctx);
     double diff_z_p50 = z_xi(ctx.z_m * .5  + dxi/2, ctx.psi_eval, &ctx) - z_xi(ctx.z_m * .5  - dxi/2, ctx.psi_eval, &ctx);
@@ -853,7 +757,7 @@ int main(int argc, char **argv)
     .fem_parbc = GKYL_FEM_PARPROJ_NONE,
   };
   struct gkyl_gk gk = {  // GK app
-    .name = "gk_mirror_nonuniform_128",
+    .name = "gk_mirror",
     .cdim = ctx.cdim,
     .vdim = ctx.vdim,
     .lower = {ctx.z_min},
@@ -861,7 +765,7 @@ int main(int argc, char **argv)
     .cells = { cells_x[0] },
     .poly_order = ctx.poly_order,
     .basis_type = app_args.basis_type,
-    // .enforce_positivity = true,
+    .enforce_positivity = true,
     .geometry = {
       .geometry_id = GKYL_MAPC2P,
       .world = {ctx.psi_eval, 0.0},

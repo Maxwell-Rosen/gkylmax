@@ -5,3 +5,6 @@ rm -rf Geometry
 rm -rf M
 rm -rf PositivityFourMoments
 rm *.gkyl
+rm *.json
+rm *.out
+rm *.d
