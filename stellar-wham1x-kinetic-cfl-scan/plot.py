@@ -109,7 +109,7 @@ def plot_verticalLinesPM(xIn, axIn):
 #   #................................................................................#
 
 # resolution_list = np.array([32, 64, 96, 128, 192, 288])
-resolution_list = np.array([32, 64, 96, 128, 192, 288])
+resolution_list = np.array(['0,05', '0,1', '0,5', '1'])
 confinement_time = np.zeros(len(resolution_list))
 for ir in range(len(resolution_list)):
     resolution = resolution_list[ir]
@@ -136,34 +136,30 @@ for ir in range(len(resolution_list)):
     initial_guess = [densities[0], slope / densities[0], 0]
     popt, pcov = curve_fit(fit_function, time, densities, initial_guess)
     confinement_time[ir] = 1 / popt[1]
-    plt.plot(time, densities, 'o', label=str(resolution))
-    plt.plot(time, fit_function(time, *popt), '-', label=str(resolution))
-plt.xlabel('Time')
-plt.ylabel('Density')
-plt.yscale('log')
-plt.legend()
+    print('Confinement time: ', confinement_time[ir])
+
 
 
 # Fit to a power law
-def power_law(x, a, b):
-    return a * x**b
-popt, pcov = curve_fit(power_law, resolution_list, abs(confinement_time), p0=[1e-11, 3])
-print('Power law fit: ', popt)
-# Calculate R^2 from this fit
-y_hat = power_law(resolution_list, *popt)
-y_bar = np.mean(abs(confinement_time))
-ss_tot = np.sum((abs(confinement_time) - y_bar)**2)
-ss_res = np.sum((abs(confinement_time) - y_hat)**2)
-r_squared = 1 - ss_res / ss_tot
-print('R^2: ', r_squared)
+# def power_law(x, a, b):
+#     return a * x**b
+# popt, pcov = curve_fit(power_law, resolution_list, abs(confinement_time), p0=[1e-11, 3])
+# print('Power law fit: ', popt)
+# # Calculate R^2 from this fit
+# y_hat = power_law(resolution_list, *popt)
+# y_bar = np.mean(abs(confinement_time))
+# ss_tot = np.sum((abs(confinement_time) - y_bar)**2)
+# ss_res = np.sum((abs(confinement_time) - y_hat)**2)
+# r_squared = 1 - ss_res / ss_tot
+# print('R^2: ', r_squared)
 
 plt.figure()
 plt.plot(resolution_list, abs(confinement_time), 'bo')
 # plt.plot(resolution_list, power_law(resolution_list, *popt), 'rx--')
-plt.xlabel('Resolution')
+plt.xlabel('CFL fraction')
 plt.ylabel('Confinement time')
-plt.yscale('log')
-plt.xscale('log')
+# plt.yscale('log')
+# plt.xscale('log')
 # plt.legend(['Data', 'Fit: $(%e) x^{%f}$: $R^2 = %f$' % (popt[0], popt[1], r_squared)])
 plt.savefig(outDir + 'confinement time_vs_resolution.png')
 plt.show()
