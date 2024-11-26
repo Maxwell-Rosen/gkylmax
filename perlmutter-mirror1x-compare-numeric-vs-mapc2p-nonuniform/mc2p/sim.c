@@ -714,8 +714,8 @@ int main(int argc, char **argv)
       .self_nu = evalNuIon,
     },
     .bcx = {
-      .lower={.type = GKYL_SPECIES_GK_SHEATH,},
-      .upper={.type = GKYL_SPECIES_GK_SHEATH,},
+      .lower={.type = GKYL_SPECIES_ABSORB,},
+      .upper={.type = GKYL_SPECIES_ABSORB,},
     },
     .num_diag_moments = 1,
     .diag_moments = {"BiMaxwellianMoments"},
@@ -726,7 +726,7 @@ int main(int argc, char **argv)
     .electron_mass = ctx.me,
     .electron_charge = ctx.qe,
     .electron_temp = ctx.Te0,
-    .fem_parbc = GKYL_FEM_PARPROJ_NONE,
+    .fem_parbc = GKYL_FEM_PARPROJ_DIRICHLET,
   };
   struct gkyl_gk gk = {  // GK app
     .name = "gk_mirror",

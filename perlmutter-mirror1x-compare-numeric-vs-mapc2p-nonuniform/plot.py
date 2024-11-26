@@ -18,14 +18,18 @@ import imageio.v2 as imageio
 # dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-wham1x-compare_unif_vs_nonunif/outputs/'
 # dataDir = './data-hires-lorad/'
 dataDir = './'
-unifFile = 'gk_mirror_uniform'
-modifiedFile = 'gk_mirror_nonuniform_64'
-frame_max_plus1 = 21
+mc2pFolder = './mc2p/'
+mc2pFilename = 'gk_mirror'
+mc2pUniformFolder = './mc2p_uniform/'
+mc2pUniformFilename = 'gk_mirror'
+numericFolder = './numeric/'
+numericFilename = 'gk_mirror'
+frame_max_plus1 = 101
 time_per_frame = 1e-6
 
 plot_potential_trace = 0
 plot_bimax_moms = 1
-plot_subtracted_moms = 1
+plot_subtracted_moms = 0
 plot_integrate_positivity = 0
 
 # frame_arr = np.arange(0,11)
@@ -114,7 +118,7 @@ def plot_verticalLinesPM(xIn, axIn):
 
 if plot_potential_trace:
   print("Plotting potential trace")
-  filename_bmag = str(dataDir+unifFile+'-bmag.gkyl')
+  filename_bmag = str(dataDir+mc2pFilename+'-bmag.gkyl')
   pgData_bmag = pg.GData(filename_bmag)
   pgInterp_bmag = pg.GInterpModal(pgData_bmag, polyOrder, 'ms')
   x_bmag, dataOut_bmag = pgInterp_bmag.interpolate()
@@ -146,14 +150,14 @@ if plot_potential_trace:
   Temp = np.zeros(frame_max_plus1)
   Temp_mod = np.zeros(frame_max_plus1)  
   for i in range(frame_max_plus1):
-    dataOut_phi = loadphi(i, unifFile)
-    Temp[i] = get_temp(i, unifFile)
+    dataOut_phi = loadphi(i, mc2pFilename)
+    Temp[i] = get_temp(i, mc2pFilename)
     midphi = dataOut_phi[midpoint]
     phi_peak = dataOut_phi[peak_idx]
     potential[i] = (midphi[0] - phi_peak[0]) / Temp[i]
 
-    dataOut_phi = loadphi(i, modifiedFile)
-    Temp_mod[i] = get_temp(i, modifiedFile)
+    dataOut_phi = loadphi(i, numericFilename)
+    Temp_mod[i] = get_temp(i, numericFilename)
     midphi = dataOut_phi[midpoint]
     phi_peak = dataOut_phi[peak_idx]
     potential_mod[i] = (midphi[0] - phi_peak[0]) / Temp_mod[i]
@@ -190,18 +194,31 @@ if plot_bimax_moms:
     # coords, Tpar_elc = pgInterp_elc.interpolate(2)
     # coords, Tperp_elc = pgInterp_elc.interpolate(3)
 
-    filename_ion = str(dataDir+unifFile+'-ion_BiMaxwellianMoments_'+str(frame_number)+'.gkyl')
-    pgData_ion = pg.GData(filename_ion)
-    pgInterp_ion = pg.GInterpModal(pgData_ion, polyOrder, 'ms')
-    coords, n_ion = pgInterp_ion.interpolate(0)
-    coords, u_ion = pgInterp_ion.interpolate(1)
-    coords, Tpar_ion = pgInterp_ion.interpolate(2)
-    coords, Tperp_ion = pgInterp_ion.interpolate(3)
+    filename_ion_mc2p = str(mc2pFolder+'BiMaxwellianMoments/'+mc2pFilename+'-ion_BiMaxwellianMoments_'+str(frame_number)+'.gkyl')
+    pgData_ion_mc2p = pg.GData(filename_ion_mc2p)
+    pgInterp_ion_mc2p = pg.GInterpModal(pgData_ion_mc2p, polyOrder, 'ms')
+    coords, n_ion_mc2p = pgInterp_ion_mc2p.interpolate(0)
+    coords, u_ion_mc2p = pgInterp_ion_mc2p.interpolate(1)
+    coords, Tpar_ion_mc2p = pgInterp_ion_mc2p.interpolate(2)
+    coords, Tperp_ion_mc2p = pgInterp_ion_mc2p.interpolate(3)
 
-    filename_field = str(dataDir+unifFile+'-field_'+str(frame_number)+'.gkyl')
-    pgData_field = pg.GData(filename_field)
-    pgInterp_field = pg.GInterpModal(pgData_field, polyOrder, 'ms')
-    coords, phi = pgInterp_field.interpolate()
+    filename_field_mc2p = str(mc2pFolder+'Field/'+mc2pFilename+'-field_'+str(frame_number)+'.gkyl')
+    pgData_field_mc2p = pg.GData(filename_field_mc2p)
+    pgInterp_field_mc2p = pg.GInterpModal(pgData_field_mc2p, polyOrder, 'ms')
+    coords, phi_mc2p = pgInterp_field_mc2p.interpolate()
+
+    filename_ion_mc2p_uniform = str(mc2pUniformFolder+'BiMaxwellianMoments/'+mc2pUniformFilename+'-ion_BiMaxwellianMoments_'+str(frame_number)+'.gkyl')
+    pgData_ion_mc2p_uniform = pg.GData(filename_ion_mc2p_uniform)
+    pgInterp_ion_mc2p_uniform = pg.GInterpModal(pgData_ion_mc2p_uniform, polyOrder, 'ms')
+    coords, n_ion_mc2p_uniform = pgInterp_ion_mc2p_uniform.interpolate(0)
+    coords, u_ion_mc2p_uniform = pgInterp_ion_mc2p_uniform.interpolate(1)
+    coords, Tpar_ion_mc2p_uniform = pgInterp_ion_mc2p_uniform.interpolate(2)
+    coords, Tperp_ion_mc2p_uniform = pgInterp_ion_mc2p_uniform.interpolate(3)
+
+    filename_field_mc2p_uniform = str(mc2pUniformFolder+'Field/'+mc2pUniformFilename+'-field_'+str(frame_number)+'.gkyl')
+    pgData_field_mc2p_uniform = pg.GData(filename_field_mc2p_uniform)
+    pgInterp_field_mc2p_uniform = pg.GInterpModal(pgData_field_mc2p_uniform, polyOrder, 'ms')
+    coords, phi_mc2p_uniform = pgInterp_field_mc2p_uniform.interpolate()
 
     # filename_elc_mod = str(dataDir+modifiedFile+'-elc_BiMaxwellianMoments_'+str(frame_number)+'.gkyl')
     # print("Reading file ", filename_elc_mod)
@@ -212,36 +229,42 @@ if plot_bimax_moms:
     # coords, Tpar_elc_mod = pgInterp_elc_mod.interpolate(2)
     # coords, Tperp_elc_mod = pgInterp_elc_mod.interpolate(3)
     
-    filename_ion_mod = str(dataDir+modifiedFile+'-ion_BiMaxwellianMoments_'+str(frame_number)+'.gkyl')
-    pgData_ion_mod = pg.GData(filename_ion_mod)
-    pgInterp_ion_mod = pg.GInterpModal(pgData_ion_mod, polyOrder, 'ms')
-    coords, n_ion_mod = pgInterp_ion_mod.interpolate(0)
-    coords, u_ion_mod = pgInterp_ion_mod.interpolate(1)
-    coords, Tpar_ion_mod = pgInterp_ion_mod.interpolate(2)
-    coords, Tperp_ion_mod = pgInterp_ion_mod.interpolate(3)
+    filename_ion_numeric = str(numericFolder+'BiMaxwellianMoments/'+numericFilename+'-ion_BiMaxwellianMoments_'+str(frame_number)+'.gkyl')
+    pgData_ion_numeric = pg.GData(filename_ion_numeric)
+    pgInterp_ion_numeric = pg.GInterpModal(pgData_ion_numeric, polyOrder, 'ms')
+    coords, n_ion_numeric = pgInterp_ion_numeric.interpolate(0)
+    coords, u_ion_numeric = pgInterp_ion_numeric.interpolate(1)
+    coords, Tpar_ion_numeric = pgInterp_ion_numeric.interpolate(2)
+    coords, Tperp_ion_numeric = pgInterp_ion_numeric.interpolate(3)
     
-    filename_field_mod = str(dataDir+modifiedFile+'-field_'+str(frame_number)+'.gkyl')
-    pgData_field_mod = pg.GData(filename_field_mod)
-    pgInterp_field_mod = pg.GInterpModal(pgData_field_mod, polyOrder, 'ms')
-    coords, phi_mod = pgInterp_field_mod.interpolate()
+    filename_field_numeric = str(numericFolder+'Field/'+numericFilename+'-field_'+str(frame_number)+'.gkyl')
+    pgData_field_numeric = pg.GData(filename_field_numeric)
+    pgInterp_field_numeric = pg.GInterpModal(pgData_field_numeric, polyOrder, 'ms')
+    coords, phi_numeric = pgInterp_field_numeric.interpolate()
 
-    data = pg.GData(str(dataDir+unifFile+"-nodes.gkyl"))
+    data = pg.GData(str(mc2pFolder+'Geometry/'+mc2pFilename+"-nodes.gkyl"))
     vals = data.get_values()
-    nodes_R = vals[:,0]
-    nodes_Z = vals[:,1]
-    nodes_phi = vals[:,2]
+    nodes_R_mc2p = vals[:,0]
+    nodes_Z_mc2p = vals[:,1]
+    nodes_phi_mc2p = vals[:,2]
 
-    data_nunif = pg.GData(str(dataDir+modifiedFile+"-nodes.gkyl"))
-    vals_nunif = data_nunif.get_values()
-    nodes_R_nunif = vals_nunif[:,0]
-    nodes_Z_nunif = vals_nunif[:,1]
-    nodes_phi_nunif = vals_nunif[:,2]
+    data_mc2p_uniform = pg.GData(str(mc2pUniformFolder+'Geometry/'+mc2pUniformFilename+"-nodes.gkyl"))
+    vals_mc2p_uniform = data_mc2p_uniform.get_values()
+    nodes_R_mc2p_uniform = vals_mc2p_uniform[:,0]
+    nodes_Z_mc2p_uniform = vals_mc2p_uniform[:,1]
+    nodes_phi_mc2p_uniform = vals_mc2p_uniform[:,2]
 
-    shape_R = np.shape(nodes_R)
-    midplane_R_min = nodes_R[shape_R[0]//2]
-    midplane_R_max = nodes_R[shape_R[0]//2]
-    throat_R_min = nodes_R[shape_R[0]//4]
-    throat_R_max = nodes_R[shape_R[0]//4]
+    data_numeric = pg.GData(str(numericFolder+'Geometry/'+numericFilename+"-nodes.gkyl"))
+    vals_numeric = data_numeric.get_values()
+    nodes_R_numeric = vals_numeric[:,0]
+    nodes_Z_numeric = vals_numeric[:,1]
+    nodes_phi_numeric = vals_numeric[:,2]
+
+    shape_R = np.shape(nodes_R_mc2p)
+    midplane_R_min = nodes_R_mc2p[shape_R[0]//2]
+    midplane_R_max = nodes_R_mc2p[shape_R[0]//2]
+    throat_R_min = nodes_R_mc2p[shape_R[0]//4]
+    throat_R_max = nodes_R_mc2p[shape_R[0]//4]
 
     def expand_1D_array(original_array):
       new_length = 2 * len(original_array) - 1
@@ -312,10 +335,12 @@ if plot_bimax_moms:
       return new_array
 
     
-    nodes_Z = expand_1D_array(nodes_Z)
-    nodes_Z_nunif = expand_1D_array(nodes_Z_nunif)
-    nodes_Z = nodes_Z[1:]
-    nodes_Z_nunif = nodes_Z_nunif[1:]
+    nodes_Z_mc2p = expand_1D_array(nodes_Z_mc2p)
+    nodes_Z_mc2p_uniform = expand_1D_array(nodes_Z_mc2p_uniform)
+    nodes_Z_numeric = expand_1D_array(nodes_Z_numeric)
+    nodes_Z_mc2p = nodes_Z_mc2p[1:]
+    nodes_Z_mc2p_uniform = nodes_Z_mc2p_uniform[1:]
+    nodes_Z_numeric = nodes_Z_numeric[1:]
     # nodes_R = expand_1D_array(nodes_R)
 
 
@@ -324,28 +349,37 @@ if plot_bimax_moms:
     # Tpar_elc = Tpar_elc[:,0] * me / eV
     # Tperp_elc = Tperp_elc[:,0] * me / eV
     # T_elc = (Tpar_elc + 2*Tperp_elc)/3
-    n_ion = n_ion[:,0]
-    u_ion = u_ion[:,0]
-    Tpar_ion = Tpar_ion[:,0] * mi / eV
-    Tperp_ion = Tperp_ion[:,0] * mi / eV
-    T_ion = (Tpar_ion + 2*Tperp_ion)/3
-    phi = phi[:,0]
+    n_ion_mc2p = n_ion_mc2p[:,0]
+    u_ion_mc2p = u_ion_mc2p[:,0]
+    Tpar_ion_mc2p = Tpar_ion_mc2p[:,0] * mi / eV
+    Tperp_ion_mc2p = Tperp_ion_mc2p[:,0] * mi / eV
+    T_ion_mc2p = (Tpar_ion_mc2p + 2*Tperp_ion_mc2p)/3
+    phi_mc2p = phi_mc2p[:,0]
     # midplane_Te = T_elc[T_elc.shape[0]//2]
-    ephioTe =  qi * phi / Te0
+    ephioTe_mc2p =  qi * phi_mc2p / Te0
+
+    n_ion_mc2p_uniform = n_ion_mc2p_uniform[:,0]
+    u_ion_mc2p_uniform = u_ion_mc2p_uniform[:,0]
+    Tpar_ion_mc2p_uniform = Tpar_ion_mc2p_uniform[:,0] * mi / eV
+    Tperp_ion_mc2p_uniform = Tperp_ion_mc2p_uniform[:,0] * mi / eV
+    T_ion_mc2p_uniform = (Tpar_ion_mc2p_uniform + 2*Tperp_ion_mc2p_uniform)/3
+    phi_mc2p_uniform = phi_mc2p_uniform[:,0]
+    # midplane_Te = T_elc[T_elc.shape[0]//2]
+    ephioTe_mc2p_uniform =  qi * phi_mc2p_uniform / Te0
 
     # n_elc_mod = n_elc_mod[:,0]
     # u_elc_mod = u_elc_mod[:,0]
     # Tpar_elc_mod = Tpar_elc_mod[:,0] * me / eV
     # Tperp_elc_mod = Tperp_elc_mod[:,0] * me / eV
     # T_elc_mod = (Tpar_elc_mod + 2*Tperp_elc_mod)/3
-    n_ion_mod = n_ion_mod[:,0]
-    u_ion_mod = u_ion_mod[:,0]
-    Tpar_ion_mod = Tpar_ion_mod[:,0] * mi / eV
-    Tperp_ion_mod = Tperp_ion_mod[:,0] * mi / eV
-    T_ion_mod = (Tpar_ion_mod + 2*Tperp_ion_mod)/3
-    phi_mod = phi_mod[:,0]
+    n_ion_numeric = n_ion_numeric[:,0]
+    u_ion_numeric = u_ion_numeric[:,0]
+    Tpar_ion_numeric = Tpar_ion_numeric[:,0] * mi / eV
+    Tperp_ion_numeric = Tperp_ion_numeric[:,0] * mi / eV
+    T_ion_numeric = (Tpar_ion_numeric + 2*Tperp_ion_numeric)/3
+    phi_numeric = phi_numeric[:,0]
     # midplane_Te_mod = T_elc_mod[T_elc_mod.shape[0]//2]
-    ephioTe_mod =  qi * phi_mod / Te0
+    ephioTe_numeric =  qi * phi_numeric / Te0
 
     # # Compute polarization density for ions
     # # Read in the magnetic field
@@ -380,18 +414,25 @@ if plot_bimax_moms:
 
     # make an array grid that is the size of coords
 
-    nonunif_mapc2p_filename = str(dataDir+modifiedFile+'-mapc2p.gkyl')
-    pgData_nonunif_mapc2p = pg.GData(nonunif_mapc2p_filename)
-    pgInterp_nonunif_mapc2p = pg.GInterpModal(pgData_nonunif_mapc2p, polyOrder, 'ms')
-    x_nonunif_mapc2p, dataOut_nonunif_mapc2p = pgInterp_nonunif_mapc2p.interpolate(2)
+    nonunif_mapc2p_filename = str(mc2pFolder+'Geometry/'+mc2pFilename+'-mapc2p.gkyl')
+    pgData_mc2p_mapc2p = pg.GData(nonunif_mapc2p_filename)
+    pgInterp_mc2p_mapc2p = pg.GInterpModal(pgData_mc2p_mapc2p, polyOrder, 'ms')
+    x_nonunif_mapc2p, dataOut_mapc2p_mc2p = pgInterp_mc2p_mapc2p.interpolate(2)
 
-    unif_mapc2p_filename = str(dataDir+unifFile+'-mapc2p.gkyl')
+    unif_mapc2p_filename = str(mc2pUniformFolder+'Geometry/'+mc2pUniformFilename+'-mapc2p.gkyl')
     pgData_unif_mapc2p = pg.GData(unif_mapc2p_filename)
     pgInterp_unif_mapc2p = pg.GInterpModal(pgData_unif_mapc2p, polyOrder, 'ms')
-    x_unif_mapc2p, dataOut_unif_mapc2p = pgInterp_unif_mapc2p.interpolate(2)
+    x_unif_mapc2p, dataOut_mapc2p_mc2p_uniform = pgInterp_unif_mapc2p.interpolate(2)
 
-    X = dataOut_unif_mapc2p[:,0]
-    X_nunif = dataOut_nonunif_mapc2p[:,0]
+    numeric_mapc2p_filename = str(numericFolder+'Geometry/'+numericFilename+'-mapc2p.gkyl')
+    pgData_numeric_mapc2p = pg.GData(numeric_mapc2p_filename)
+    pgInterp_numeric_mapc2p = pg.GInterpModal(pgData_numeric_mapc2p, polyOrder, 'ms')
+    x_unif_mapc2p, dataOut_numeric_mapc2p = pgInterp_numeric_mapc2p.interpolate(2)
+
+
+    X_mc2p = dataOut_mapc2p_mc2p[:,0]
+    X_mc2p_uniform = dataOut_mapc2p_mc2p_uniform[:,0]
+    X_numeric = nodes_Z_numeric
 
     # X = nodes_Z[:,:]
     # Y = nodes_R[:,:]
@@ -399,9 +440,10 @@ if plot_bimax_moms:
     fig, ax = plt.subplots(3, 3, figsize=(12,12))
     fig.suptitle(str(frame_number*time_per_frame)+' seconds', fontsize=20)
 
-    def plot_moment_data(data, data_mod, ax, fig, title, locx, locy):
-      ax[locx,locy].plot(X, data, label='Uniform')
-      ax[locx,locy].plot(X_nunif, data_mod, label='Nonuniform', linestyle='--')
+    def plot_moment_data(data_mc2p, data_mc2p_uniform, data_numeric, ax, fig, title, locx, locy):
+      ax[locx,locy].plot(X_mc2p, data_mc2p, label=mc2pFolder, color='blue')
+      ax[locx,locy].plot(X_mc2p_uniform, data_mc2p_uniform, label=mc2pUniformFolder, linestyle='-.', color='orange')
+      ax[locx,locy].plot(X_numeric, data_numeric, label=numericFolder, linestyle='--', color='green')
       ax[locx,locy].set_xlabel('Z cylindrical axis, m')
       ax[locx,locy].set_ylabel(title)
       ax[locx,locy].set_title(title, fontsize=16)
@@ -412,11 +454,11 @@ if plot_bimax_moms:
     # plot_moment_data(Tperp_elc, Tperp_elc_mod, ax, fig, '$T_{e,\perp}$, $eV$', 1, 1)
     # plot_moment_data(T_elc, T_elc_mod, ax, fig, '$T_e$, $eV$', 1, 2)
 
-    plot_moment_data(n_ion, n_ion_mod, ax, fig, '$n_i$, $m^{-3}$', 0, 0)
-    plot_moment_data(u_ion, u_ion_mod, ax, fig, '$U_{i,||}$, $m/s$', 0, 2)
-    plot_moment_data(Tpar_ion, Tpar_ion_mod, ax, fig, '$T_{i,||}$, $eV$', 1, 0)
-    plot_moment_data(Tperp_ion, Tperp_ion_mod, ax, fig, '$T_{i,\perp}$, $eV$', 1, 1)
-    plot_moment_data(T_ion, T_ion_mod, ax, fig, '$T_i$, $eV$', 1, 2)
+    plot_moment_data(n_ion_mc2p, n_ion_mc2p_uniform, n_ion_numeric, ax, fig, '$n_i$, $m^{-3}$', 0, 0)
+    plot_moment_data(u_ion_mc2p, u_ion_mc2p_uniform,u_ion_numeric, ax, fig, '$U_{i,||}$, $m/s$', 0, 2)
+    plot_moment_data(Tpar_ion_mc2p, Tpar_ion_mc2p_uniform, Tpar_ion_numeric, ax, fig, '$T_{i,||}$, $eV$', 1, 0)
+    plot_moment_data(Tperp_ion_mc2p, Tperp_ion_mc2p_uniform, Tperp_ion_numeric, ax, fig, '$T_{i,\perp}$, $eV$', 1, 1)
+    plot_moment_data(T_ion_mc2p, T_ion_mc2p_uniform, T_ion_numeric, ax, fig, '$T_i$, $eV$', 1, 2)
 
     ax[0,2].legend()
 
@@ -429,15 +471,16 @@ if plot_bimax_moms:
     # ax[0,1].set_title('$n_e$ (log scale) $m^{-3}$', fontsize=16)
 
     # Plot the ion density on a log scale
-    ax[0,1].plot(X,n_ion, label='Uniform')
-    ax[0,1].plot(X_nunif,n_ion_mod, label='Nonuniform', linestyle='--')
+    ax[0,1].plot(X_mc2p,n_ion_mc2p, label=mc2pFolder, color='blue')
+    ax[0,1].plot(X_mc2p_uniform,n_ion_mc2p_uniform, label=mc2pUniformFolder, linestyle='-.', color='orange')
+    ax[0,1].plot(X_numeric,n_ion_numeric, label=numericFolder, linestyle='--', color='green')
     ax[0,1].set_yscale('log')
     ax[0,1].set_xlabel('Z cylindrical axis, m')
     ax[0,1].set_ylabel('$n_i$')
     ax[0,1].set_title('$n_i$ (log scale) $m^{-3}$', fontsize=16)
 
-    plot_moment_data(phi, phi_mod, ax, fig, '$\phi$, V', 2, 0)
-    plot_moment_data(ephioTe, ephioTe_mod, ax, fig, '$e \phi / T_e$', 2, 1)
+    plot_moment_data(phi_mc2p, phi_mc2p_uniform, phi_numeric, ax, fig, '$\phi$, $V$', 2, 0)
+    plot_moment_data(ephioTe_mc2p, ephioTe_mc2p_uniform, ephioTe_numeric, ax, fig, '$e \phi / T_e$', 2, 1)
     ax[2,2].remove()
 
     plt.tight_layout()
@@ -445,39 +488,39 @@ if plot_bimax_moms:
     plt.close()
 
     if plot_subtracted_moms:
-      interp_x = np.linspace(X[0], X[-1], 1000)
-      n_ion_interp_nunif = np.interp(interp_x, X_nunif, n_ion_mod)
-      n_ion_interp_unif = np.interp(interp_x, X, n_ion)
+      interp_x = np.linspace(X_mc2p[0], X_mc2p[-1], 1000)
+      n_ion_interp_nunif = np.interp(interp_x, X_numeric, n_ion_numeric)
+      n_ion_interp_unif = np.interp(interp_x, X_mc2p, n_ion_mc2p)
       n_ion_diff_rel = (n_ion_interp_unif - n_ion_interp_nunif) / n_ion_interp_unif
       n_ion_diff = n_ion_interp_unif - n_ion_interp_nunif
 
-      u_ion_interp_nunif = np.interp(interp_x, X_nunif, u_ion_mod)
-      u_ion_interp_unif = np.interp(interp_x, X, u_ion)
+      u_ion_interp_nunif = np.interp(interp_x, X_numeric, u_ion_numeric)
+      u_ion_interp_unif = np.interp(interp_x, X_mc2p, u_ion_mc2p)
       u_ion_diff_rel = (u_ion_interp_unif - u_ion_interp_nunif) / u_ion_interp_unif
       u_ion_diff = u_ion_interp_unif - u_ion_interp_nunif
 
-      Tpar_ion_interp_nunif = np.interp(interp_x, X_nunif, Tpar_ion_mod)
-      Tpar_ion_interp_unif = np.interp(interp_x, X, Tpar_ion)
+      Tpar_ion_interp_nunif = np.interp(interp_x, X_numeric, Tpar_ion_numeric)
+      Tpar_ion_interp_unif = np.interp(interp_x, X_mc2p, Tpar_ion_mc2p)
       Tpar_ion_diff_rel = (Tpar_ion_interp_unif - Tpar_ion_interp_nunif) / Tpar_ion_interp_unif
       Tpar_ion_diff = Tpar_ion_interp_unif - Tpar_ion_interp_nunif
 
-      Tperp_ion_interp_nunif = np.interp(interp_x, X_nunif, Tperp_ion_mod)
-      Tperp_ion_interp_unif = np.interp(interp_x, X, Tperp_ion)
+      Tperp_ion_interp_nunif = np.interp(interp_x, X_numeric, Tperp_ion_numeric)
+      Tperp_ion_interp_unif = np.interp(interp_x, X_mc2p, Tperp_ion_mc2p)
       Tperp_ion_diff_rel = (Tperp_ion_interp_unif - Tperp_ion_interp_nunif) / Tperp_ion_interp_unif
       Tperp_ion_diff = Tperp_ion_interp_unif - Tperp_ion_interp_nunif
 
-      T_ion_interp_nunif = np.interp(interp_x, X_nunif, T_ion_mod)
-      T_ion_interp_unif = np.interp(interp_x, X, T_ion)
+      T_ion_interp_nunif = np.interp(interp_x, X_numeric, T_ion_numeric)
+      T_ion_interp_unif = np.interp(interp_x, X_mc2p, T_ion_mc2p)
       T_ion_diff_rel = (T_ion_interp_unif - T_ion_interp_nunif) / T_ion_interp_unif
       T_ion_diff = T_ion_interp_unif - T_ion_interp_nunif
 
-      phi_interp_nunif = np.interp(interp_x, X_nunif, phi_mod)
-      phi_interp_unif = np.interp(interp_x, X, phi)
+      phi_interp_nunif = np.interp(interp_x, X_numeric, phi_numeric)
+      phi_interp_unif = np.interp(interp_x, X_mc2p, phi_mc2p)
       phi_diff_rel = (phi_interp_unif - phi_interp_nunif) / phi_interp_unif
       phi_diff = phi_interp_unif - phi_interp_nunif
 
-      ephioTe_interp_nunif = np.interp(interp_x, X_nunif, ephioTe_mod)
-      ephioTe_interp_unif = np.interp(interp_x, X, ephioTe)
+      ephioTe_interp_nunif = np.interp(interp_x, X_numeric, ephioTe_numeric)
+      ephioTe_interp_unif = np.interp(interp_x, X_mc2p, ephioTe_mc2p)
       ephioTe_diff_rel = (ephioTe_interp_unif - ephioTe_interp_nunif) / ephioTe_interp_unif
       ephioTe_diff = ephioTe_interp_unif - ephioTe_interp_nunif
 
@@ -536,12 +579,20 @@ if plot_bimax_moms:
   filenames = [f'moments_{i}.png' for i in range(0, frame_max_plus1)]
   filenames = [outDir+f'moments_{i}.png' for i in range(0, frame_max_plus1)]
 
-  # Create a writer object specifying the output file name and frame rate
+  # # Create a writer object specifying the output file name and frame rate
   with imageio.get_writer(outDir+'moments_movie.mp4', mode='I', fps=5) as writer:
       for filename in filenames:
           image = imageio.imread(filename)
           writer.append_data(image)
   print("Movie created successfully.")
+
+  # Create a GIF from the PNG files
+  with imageio.get_writer(outDir+'moments_movie.gif', mode='I', duration=0.2) as writer:
+    for filename in filenames:
+      image = imageio.imread(filename)
+      writer.append_data(image)
+  print("GIF created successfully.")
+
 
   if plot_subtracted_moms:
     filenames = [f'moments_diff_{i}.png' for i in range(0, frame_max_plus1)]
@@ -563,7 +614,7 @@ if plot_integrate_positivity:
 #  activate -t poverf pl --title "Mp/Mf" --saveas "$saveLoc-positivity-moms-over-f.png" --no-show&
   
 
-    filename_ion = str(dataDir+unifFile+'-ion_integrated_moms.gkyl')
+    filename_ion = str(dataDir+mc2pFilename+'-ion_integrated_moms.gkyl')
     pgData_ion = pg.GData(filename_ion)
     M_ion = pgData_ion.get_values()
     M0_ion = np.array(M_ion[:,0])
@@ -579,7 +630,7 @@ if plot_integrate_positivity:
     Tperp_ion = M2perp_ion / M0_ion * mi / eV / 2.0
     T_ion = (Tpar_ion + 2*Tperp_ion)/3
 
-    filename_ion_positivity = str(dataDir+unifFile+'-ion_positivity_shift_integrated_moms.gkyl')
+    filename_ion_positivity = str(dataDir+mc2pFilename+'-ion_positivity_shift_integrated_moms.gkyl')
     pgData_ion_positivity = pg.GData(filename_ion_positivity)
     M_ion_positivity = pgData_ion_positivity.get_values()
     M0_ion_positivity = np.array(M_ion_positivity[:,0])

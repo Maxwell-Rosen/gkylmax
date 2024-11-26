@@ -42,3 +42,6 @@ for frame in {0..100}
 do
 pgkyl mc2p/BiMaxwellianMoments/gk_mirror-ion_BiMaxwellianMoments_$frame.gkyl -t "mc2p" numeric/BiMaxwellianMoments/gk_mirror-ion_BiMaxwellianMoments_$frame.gkyl -t numeric interp -b ms -p1 activ -t mc2p pl --title "frame $frame" --xscale 1.25069595987 --no-show -f0 activ -t numeric pl -f0 --no-show --saveas "$saveLoc-ion_BiMaxwellianMoments_"$frame".png" --linestyle dashed --legend "mc2p" "numeric" &
 done
+
+# pgkyl mc2p/Distributions/gk_mirror-ion_100.gkyl interp sel --z0 2 pl --saveas "./python-plots/ion_100.png" --logz --zmin 1e-20
+# pgkyl mc2p/Geometry/gk_mirror-jacobgeo.gkyl mc2p_uniform/Geometry/gk_mirror-jacobgeo.gkyl interp pl -f0 --saveas "./python-plots/jacobian_nonunif_comp.png"
