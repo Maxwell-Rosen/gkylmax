@@ -555,8 +555,8 @@ create_ctx(void)
   int Nvpar = 32; // 96 uniform
   int Nmu = 32;  // 192 uniform
   int poly_order = 1;
-  double t_end = 30e-6;//100e-6;
-  int num_frames = 30;
+  double t_end = 300e-6;//100e-6;
+  int num_frames = 300;
   double write_phase_freq = 1;
   int int_diag_calc_num = num_frames*100;
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.

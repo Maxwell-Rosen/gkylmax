@@ -2,7 +2,9 @@
 
 # Path to the first folder
 first_folder="32"
-first_file="$first_folder/sim.c"
+filename="sim.c"
+# filename="jobscript-gkyl-stellar"
+first_file="$first_folder/$filename"
 
 # Open the first sim.c in VS Code
 code "$first_file"
@@ -15,13 +17,13 @@ for folder in */; do
     fi
     
     # Path to the sim.c in the current folder
-    other_file="${folder}sim.c"
+    other_file="${folder}${filename}"
     
     # Check if sim.c exists in the other folder
     if [[ -f "$other_file" ]]; then
         # Open the diff view in VS Code between the first sim.c and the current one
         code -d "$first_file" "$other_file"
     else
-        echo "No sim.c found in $folder"
+        echo "No $filename found in $folder"
     fi
 done
