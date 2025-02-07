@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 from scipy.optimize import curve_fit
+import postgkyl as pg
 
 def model_phi(R, R_wall, miome):
     term1 = np.log(R)
@@ -58,6 +59,30 @@ paper_line2 = np.loadtxt('Line 2.csv', delimiter=',')
 paper_line3 = np.loadtxt('Line 3.csv', delimiter=',')
 paper_line4 = np.loadtxt('Line 4.csv', delimiter=',')
 
+filename_phi = str('./gk_wham-field_300.gkyl')
+pgData_phi = pg.GData(filename_phi)
+polyOrder = 1
+pgInterp_phi = pg.GInterpModal(pgData_phi, polyOrder, 'ms')
+x_phi, dataOut_phi = pgInterp_phi.interpolate()
+
+filename_bmag = str('./gk_wham-bmag.gkyl')
+pgData_bmag = pg.GData(filename_bmag)
+pgInterp_bmag = pg.GInterpModal(pgData_bmag, polyOrder, 'ms')
+x_bmag, dataOut_bmag = pgInterp_bmag.interpolate()
+
+bmag_shape = dataOut_bmag.shape
+midpoint = int(bmag_shape[0]/2)
+upperhalf = dataOut_bmag[midpoint:]
+peak = np.argmax(upperhalf)
+peak_idx = midpoint-peak
+
+Te0 = 940 # eV
+phi = dataOut_phi[:peak_idx]/ Te0
+bmag = dataOut_bmag[:peak_idx]
+
+K = bmag[-1] / bmag
+phi = -(phi - phi[-1])
+
 R = np.linspace(1, 450, 100)
 boltzmann = np.log(R)
 miome = 1836
@@ -90,6 +115,7 @@ plt.plot(R100, phi_100, 'b--', label = "Model $R_{wall}=100$")
 plt.plot(R200, phi_200, 'g--', label = "Model $R_{wall}=200$")
 plt.plot(R300, phi_300, 'm--', label = "Model $R_{wall}=300$")
 plt.plot(R400, phi_400, 'c--', label = "Model $R_{wall}=400$")
+plt.plot(K, phi, 'r--', label = "Gkeyll")
 plt.xlabel('R')
 plt.ylabel('$-e \phi / T_e$')
 plt.xlim([0, 450])
