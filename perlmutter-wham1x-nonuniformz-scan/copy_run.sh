@@ -8,8 +8,8 @@ module load nccl/2.18.3-cu12
 
 # Define arrays
 # cell_numbers=(48 64 80 96)
-map_fractions=(0.500 0.600 0.700 0.800 0.900)
-cell_numbers=(64)
+map_fractions=(0.500 0.600 0.700 0.800 0.900 0.999)
+cell_numbers=(48)
 # map_fractions=(0.000 0.999)
 # Loop over all combinations of cell_numbers and map_fractions
 rm "core/sim"

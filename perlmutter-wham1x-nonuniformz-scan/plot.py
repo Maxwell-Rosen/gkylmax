@@ -25,20 +25,21 @@ mc2pUniformFolder = './mc2p_uniform_fix/'
 mc2pUniformFilename = 'gk_mirror'
 numericFolder = './mc2p/'
 numericFilename = 'gk_mirror'
-frame_max_plus1 = 301
+frame_max_plus1 = 301#301
 time_per_frame = 1e-6 / 3.
 
-Nz_arr = ['32', '64', '96', '128', '192', '288']
-nonuniform_frac = ['0.000', '0.333', '0.666', '0.999']
-# Nz_arr = ['48', '64', '80', '96', '288']
-# nonuniform_frac = ['0.000', '0.100', '0.200', '0.300', '0.400', '0.500', '0.600', '0.700', '0.800', '0.900', '0.999']
+# Nz_arr = ['32', '64', '96', '128', '192', '288']
+# nonuniform_frac = ['0.000', '0.333', '0.666', '0.999']
+frame_arr = [100, 300]
+Nz_arr = ['288', '48', '64', '96']
+nonuniform_frac = ['0.000', '0.100', '0.200', '0.300', '0.400', '0.500', '0.600', '0.666', '0.700', '0.800', '0.900', '0.999']
 
 outDir = './python-plots/'
 
 figureFileFormat = '.png'    #[ Can be .png, .pdf, .ps, .eps, .svg.
 
 figsize_dim = (20, 14)
-
+# figsize_dim=(10, 7)
 #   #[ ............... End of user inputs (MAYBE) ..................... ]#
 
 polyOrder = 1
@@ -71,28 +72,57 @@ linecolors = [
     'darkorange', 'mediumseagreen', 'hotpink', 'peru', 'dodgerblue', 'darkred', 'mediumvioletred', 'springgreen', 'steelblue', 'khaki',
     'mediumorchid', 'firebrick', 'seagreen', 'darkviolet', 'lightcoral', 'royalblue', 'chartreuse', 'wheat', 'darkcyan', 'salmon'
 ]
+linecolors = np.tile(linecolors, [len(frame_arr),1])
+linecolors = np.reshape(linecolors, [len(frame_arr)*len(linecolors[0])], order='F')
+
 linestyles = np.tile(['-', '--', '-.', ':'], 15)
 
 #   #................................................................................#
 
 def skip_sims(Nz, nonuniform_frac):
-  if Nz == '32' and nonuniform_frac == '0.000':
-    return True
+  # if Nz == '32' and nonuniform_frac == '0.000':
+  #   return True
   # if Nz == '288' and nonuniform_frac != '0.000':
+  #   return True
+  # if Nz == '48' and nonuniform_frac =='0.000':
+  #   return True
+  # if Nz == '64' and (nonuniform_frac =='0.000' or \
+  #             nonuniform_frac =='0.100' or \
+  #             nonuniform_frac =='0.200' or \
+  #             nonuniform_frac =='0.300' or \
+  #             nonuniform_frac =='0.400'): \
   #   return True
   return False
 
 def plot_only_sims(Nz, nonuniform_frac):
-  if Nz == '288' and nonuniform_frac == '0.000':
+  if Nz == '288' and (nonuniform_frac == '0.000' or \
+                      nonuniform_frac == '0.666'):
     return True
   if Nz == '64' and nonuniform_frac == '0.666':
     return True
   if Nz == '96' and nonuniform_frac == '0.666':
-    return True
+  # if Nz == '48' and (nonuniform_frac == '0.100' or \
+  #                     nonuniform_frac == '0.200' or \
+  #                     nonuniform_frac == '0.300' or \
+  #                     nonuniform_frac == '0.400' or \
+  #                     nonuniform_frac == '0.500' or \
+  #                     nonuniform_frac == '0.600' or \
+  #                     nonuniform_frac == '0.700' or \
+  #                     nonuniform_frac == '0.800' or \
+  #                     nonuniform_frac == '0.900' or \
+  #                     nonuniform_frac == '0.999'):       
+  #   return True
+  # if Nz == '64' and (nonuniform_frac == '0.500' or \
+  #                     nonuniform_frac == '0.600' or \
+  #                     nonuniform_frac == '0.666'):
+    return True  
+  # if Nz == '64' and (nonuniform_frac == '0.666'):
+  #   return True
   return False
 
 def load_mom(frame_number, filebase):
-  filename_M0 = str(filebase+'/BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_'+str(frame_number)+'.gkyl')
+  filename_M0 = str(filebase+'/BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_'\
+                    +str(frame_number)+'.gkyl')
   pgData_M0 = pg.GData(filename_M0)
   pgInterp_M0 = pg.GInterpModal(pgData_M0, polyOrder, 'ms')
   x, dens = pgInterp_M0.interpolate(0)
@@ -383,7 +413,6 @@ def plot_intM0_combined():
       skip = skip_sims(Nz, nonuniform_frac_str)
       noskip = plot_only_sims(Nz, nonuniform_frac_str)
       if skip or not noskip:
-        linenumber += 1
         continue
 
       intM0 = np.zeros(frame_max_plus1)
@@ -529,35 +558,42 @@ def plot_final_BiMax_moms_combined():
   linenumber = 0
   for iZ in range(len(Nz_arr)):
     for iS in range(len(nonuniform_frac)):
-      Nz = Nz_arr[iZ]
-      nonuniform_frac_str = nonuniform_frac[iS]
-      filebase = './'+Nz+'/'+nonuniform_frac_str+'/'
+      for iF in range(len(frame_arr)):
+        Nz = Nz_arr[iZ]
+        nonuniform_frac_str = nonuniform_frac[iS]
+        frame = frame_arr[iF]
+        time = frame*time_per_frame
+        filebase = './'+Nz+'/'+nonuniform_frac_str+'/'
 
-      skip = skip_sims(Nz, nonuniform_frac_str)
-      noskip = plot_only_sims(Nz, nonuniform_frac_str)
-      if skip or not noskip:
-        continue
+        skip = skip_sims(Nz, nonuniform_frac_str)
+        noskip = plot_only_sims(Nz, nonuniform_frac_str)
+        if skip or not noskip:
+          continue
 
-      nodes_Z = loadZ(filebase)
-      xn, dens, U, Tpar, Tperp = load_mom(frame_max_plus1-1, filebase)
+        nodes_Z = loadZ(filebase)
+        xn, dens, U, Tpar, Tperp = load_mom(frame, filebase)
 
-      plt.subplot(2,2,1)
-      plt.plot(nodes_Z, dens, \
-          color = linecolors[linenumber], linestyle = linestyles[linenumber], \
-          label = 'Nz = '+Nz+', nonuniform frac = '+nonuniform_frac_str)
-      plt.subplot(2,2,2)
-      plt.plot(nodes_Z, U, \
-               color = linecolors[linenumber], linestyle = linestyles[linenumber], \
-                label = 'Nz = '+Nz+', nonuniform frac = '+nonuniform_frac_str)
-      plt.subplot(2,2,3)
-      plt.plot(nodes_Z, Tpar, \
-               color = linecolors[linenumber], linestyle = linestyles[linenumber], \
-                label = 'Nz = '+Nz+', nonuniform frac = '+nonuniform_frac_str)
-      plt.subplot(2,2,4)
-      plt.plot(nodes_Z, Tperp, \
-               color = linecolors[linenumber], linestyle = linestyles[linenumber], \
-                label = 'Nz = '+Nz+', nonuniform frac = '+nonuniform_frac_str)
-      linenumber += 1
+        plt.subplot(2,2,1)
+        plt.plot(nodes_Z, dens, \
+            color = linecolors[linenumber], linestyle = linestyles[linenumber], \
+            label = 'Nz = '+Nz+', nonuniform frac = '+nonuniform_frac_str\
+              +', t='+str(time)+' s')
+        plt.subplot(2,2,2)
+        plt.plot(nodes_Z, U, \
+            color = linecolors[linenumber], linestyle = linestyles[linenumber], \
+            label = 'Nz = '+Nz+', nonuniform frac = '+nonuniform_frac_str\
+              +', t='+str(time)+' s')
+        plt.subplot(2,2,3)
+        plt.plot(nodes_Z, Tpar, \
+            color = linecolors[linenumber], linestyle = linestyles[linenumber], \
+            label = 'Nz = '+Nz+', nonuniform frac = '+nonuniform_frac_str\
+              +', t='+str(time)+' s')
+        plt.subplot(2,2,4)
+        plt.plot(nodes_Z, Tperp, \
+            color = linecolors[linenumber], linestyle = linestyles[linenumber], \
+            label = 'Nz = '+Nz+', nonuniform frac = '+nonuniform_frac_str\
+              +', t='+str(time)+' s')
+        linenumber += 1
 
   plt.subplot(2,2,1)
   plt.xlabel('Z, m')
@@ -592,9 +628,9 @@ def main():
     # plot_final_Tpar,
     # plot_final_Tperp,
     plot_potential_trace_combined,
-    # plot_dndt_trace_combined,
-    # plot_intM0_combined,
-    # plot_final_BiMax_moms_combined
+    plot_dndt_trace_combined,
+    plot_intM0_combined,
+    plot_final_BiMax_moms_combined
 
   ]
   for plot_func in plot_functions:

@@ -4,13 +4,17 @@
 name="gk_wham"
 # name="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nosource_nonuniform"
 species="elc"
-saveLoc="python-plots/Distribution-functions-figures-for-movies/$name"
-saveMovieLoc="python-plots/Distribution-functions-movies/$name"
-hiresLoc="../stellar-wham1x-kinetic-compare-collision-frequencies"
+saveLoc="python-plots/gk_wham"
 
+pgkyl "gk_wham-elc_M0_0.gkyl" interp pl --title "Initial" --saveas "$saveLoc-kinetic-elc-M0-0.png" --logy&
+pgkyl "gk_wham-field_0.gkyl" interp pl --title "Initial" --saveas "$saveLoc-field-0.png" &
+pgkyl "gk_wham-ion_M0_0.gkyl" interp pl --title "Initial" --saveas "$saveLoc-kinetic-ion-M0-0.png" &
 
-pgkyl gk_wham-ion_M0_0.gkyl interp pl --title "M0" --saveas "M0.png" --no-show --title "128 cells"&
-pgkyl "64-cells/gk_wham-ion_M0_300.gkyl" interp pl --title "M0" --saveas "M0-300.png" --no-show --title "64 cells"&
+pgkyl "64-cells/gk_wham-ion_M0_300.gkyl" interp pl --title "300 microseconds" --saveas "$saveLoc-boltzmann-ion-M0-300.png" &
+pgkyl "64-cells/gk_wham-field_300.gkyl" interp pl --title "300 microseconds" --saveas "$saveLoc-boltzmann-field-300.png" &
+
+pgkyl "64-cells/gk_wham-field_300.gkyl" "gk_wham-field_0.gkyl" interp pl --title "300 microseconds" --saveas "$saveLoc-field-comparison.png" &
+
 # # Negativity of the T_par
 # pgkyl "BiMaxwellianMoments/"$name"-"$species"_BiMaxwellianMoments_[0-9]*.gkyl" interp anim --float &
 # pgkyl "Field/$name-field_[0-9]*.gkyl" interp anim --float &

@@ -9,8 +9,7 @@ saveMovieLoc="python-plots/Distribution-functions-movies/$name"
 hiresLoc="../stellar-wham1x-kinetic-compare-collision-frequencies"
 
 
-pgkyl gk_wham-ion_M0_0.gkyl interp pl --title "M0" --saveas "M0.png" --no-show --title "128 cells"&
-pgkyl "64-cells/gk_wham-ion_M0_300.gkyl" interp pl --title "M0" --saveas "M0-300.png" --no-show --title "64 cells"&
+
 # # Negativity of the T_par
 # pgkyl "BiMaxwellianMoments/"$name"-"$species"_BiMaxwellianMoments_[0-9]*.gkyl" interp anim --float &
 # pgkyl "Field/$name-field_[0-9]*.gkyl" interp anim --float &
@@ -29,9 +28,9 @@ pgkyl "64-cells/gk_wham-ion_M0_300.gkyl" interp pl --title "M0" --saveas "M0-300
 # pgkyl --c2p-vel "$hiresLoc/gk_wham_modified-"$species"_mapc2p_vel.gkyl" "$hiresLoc/Distributions/gk_wham_modified-"$species"_[0-9]*.gkyl" interp sel --z0 2 anim --logz --zmin 1e-20 &
 # pgkyl --c2p-vel "$hiresLoc/gk_wham_modified-"$species"_mapc2p_vel.gkyl" "$hiresLoc/Distributions/gk_wham_modified-"$species"_[0-9]*.gkyl" interp sel --z0 2 anim --float &
 
-# frame=16
-# pgkyl --c2p-vel "$hiresLoc/gk_wham_modified-"$species"_mapc2p_vel.gkyl" "$hiresLoc/Distributions/gk_wham_modified-"$species"_"$frame".gkyl" interp sel --z2 0. --z0 -2. pl --title "288 cells $species" --logz --zmin 1e-20 &
-# pgkyl --c2p-vel "$name"-"$species"_mapc2p_vel.gkyl Distributions/"$name"-"$species"_"$frame".gkyl interp sel --z2 0. --z0 -2. pl --title "32 cells $species" --logz --zmin 1e-20 &
+frame=16
+pgkyl --c2p-vel "$hiresLoc/gk_wham_modified-"$species"_mapc2p_vel.gkyl" "$hiresLoc/Distributions/gk_wham_modified-"$species"_"$frame".gkyl" interp sel --z2 0. --z0 -2. pl --title "288 cells $species" --logz --zmin 1e-20 &
+pgkyl --c2p-vel "$name"-"$species"_mapc2p_vel.gkyl Distributions/"$name"-"$species"_"$frame".gkyl interp sel --z2 0. --z0 -2. pl --title "32 cells $species" --logz --zmin 1e-20 &
 
 # pgkyl --c2p-vel "$hiresLoc/gk_wham_modified-"$species"_mapc2p_vel.gkyl" "$hiresLoc/Distributions/gk_wham_modified-"$species"_"$frame".gkyl" interp sel --z0 0.0 pl --logz --zmin 1e-20 --title "288 cells midplane $species"&
 # pgkyl --c2p-vel "$name"-ion_mapc2p_vel.gkyl Distributions/"$name"-"$species"_"$frame".gkyl interp sel --z0 0.0 pl --title "32 cells midplane $species" --logz --zmin 1e-20 &
