@@ -6,21 +6,20 @@
 
 #.Request the queue (enter the possible names, if omitted, default is the default)
 #.this job is going to use the default
-#SBATCH -q regular
+#SBATCH -q shared
 
 #.Number of nodes to request (Perlmutter has 64 cores and 4 GPUs per node)
 #SBATCH -N 1
-#SBATCH --ntasks 64
+#SBATCH --ntasks 1
 
 #.Specify GPU needs:
 #SBATCH --constraint gpu
-#SBATCH --gpus 4
-
+#SBATCH --gpus 1
 
 #.Request wall time
-#SBATCH -t 06:00:00
+#SBATCH -t 24:00:00
 
-num_gpu=4
+num_gpu=1
 
 #.Load modules (this must match those in the machines/configure script).
 module load PrgEnv-gnu/8.5.0
@@ -62,12 +61,12 @@ echo "Max number is $max_number"
 
 if [ "$max_number" -eq 0 ]; then
   echo "No matching files found. Starting from the begining"
-  echo "./sim -g"
+  echo "srun -n $num_gpu ./sim -g -M -c $num_gpu"
   srun -n $num_gpu ./sim -g -M -c $num_gpu
 
 else
   echo "Resuming from file $max_number"
-  echo "./sim -g -r $max_number"
+  echo "srun -n $num_gpu ./sim -g -M -c $num_gpu -r $max_number"
   srun -n $num_gpu ./sim -g -M -c $num_gpu -r $max_number
 fi
 

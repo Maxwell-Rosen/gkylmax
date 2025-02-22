@@ -30,7 +30,7 @@ time_per_frame = 1e-6 / 3.
 
 # Nz_arr = ['32', '64', '96', '128', '192', '288']
 # nonuniform_frac = ['0.000', '0.333', '0.666', '0.999']
-frame_arr = [100, 300]
+frame_arr = [300]#[100, 300]
 Nz_arr = ['288', '48', '64', '96']
 nonuniform_frac = ['0.000', '0.100', '0.200', '0.300', '0.400', '0.500', '0.600', '0.666', '0.700', '0.800', '0.900', '0.999']
 
@@ -437,6 +437,76 @@ def plot_intM0_combined():
   plt.tight_layout()
   plt.savefig(outDir+'intM0_trace_combined'+figureFileFormat)
 
+def plot_intEnergy():
+  print("Plotting total energy trace")
+  plt.figure( figsize = figsize_dim)
+  linenumber = 0
+  for iZ in range(len(Nz_arr)):
+    for iS in range(len(nonuniform_frac)):
+      Nz = Nz_arr[iZ]
+      nonuniform_frac_str = nonuniform_frac[iS]
+      filebase = './'+Nz+'/'+nonuniform_frac_str+'/'
+      skip = skip_sims(Nz, nonuniform_frac_str)
+      if skip:
+        linenumber += 1
+        continue
+
+      Energy = np.zeros(frame_max_plus1)
+      nodes_Z = loadZ(filebase)
+      for i in range(frame_max_plus1):
+        x, dens, U, Tpar, Tperp = load_mom(i, filebase)
+        Energy[i] = np.trapz(dens * (Tpar + 2 * Tperp)/3, nodes_Z)
+
+      
+      plt.subplot(len(Nz_arr), len(nonuniform_frac), linenumber+1)
+      plt.plot(np.arange(frame_max_plus1)*time_per_frame, Energy, \
+               color = linecolors[linenumber], linestyle = linestyles[linenumber])
+
+      linenumber += 1
+      plt.title("N_z = "+Nz+", nonuniform frac = "+nonuniform_frac_str)
+      plt.xlabel('Time, seconds')
+      plt.ylabel('$\int n T dx$')
+
+  plt.tight_layout()
+  plt.savefig(outDir+'Energy_trace'+figureFileFormat)
+
+def plot_intEnergy_combined():
+  print("Plotting integral of Energy trace combined")
+  plt.figure( figsize = figsize_dim)
+  linenumber = 0
+  for iZ in range(len(Nz_arr)):
+    for iS in range(len(nonuniform_frac)):
+      Nz = Nz_arr[iZ]
+      nonuniform_frac_str = nonuniform_frac[iS]
+      filebase = './'+Nz+'/'+nonuniform_frac_str+'/'
+
+      skip = skip_sims(Nz, nonuniform_frac_str)
+      noskip = plot_only_sims(Nz, nonuniform_frac_str)
+      if skip or not noskip:
+        continue
+
+      Energy = np.zeros(frame_max_plus1)
+      nodes_Z = loadZ(filebase)
+      for i in range(frame_max_plus1):
+        x, dens, U, Tpar, Tperp = load_mom(i, filebase)
+        Energy[i] = np.trapz(dens * (Tpar + 2 * Tperp)/3, nodes_Z)
+
+      # t, M0 = loadM0_integrated(filebase)
+      
+      # plt.plot(t, M0, \
+      #          color = linecolors[linenumber], linestyle = linestyles[linenumber])
+      plt.plot(np.arange(frame_max_plus1)*time_per_frame, Energy, \
+               color = linecolors[linenumber], linestyle = linestyles[linenumber],\
+                label = 'Nz = '+Nz+', nonuniform frac = '+nonuniform_frac_str)
+      linenumber += 1
+
+  plt.xlabel('Time, seconds')
+  plt.ylabel('$\int n T dx$')
+  plt.title('Integral of n T')
+  plt.legend()
+  plt.tight_layout()
+  plt.savefig(outDir+'Energy_trace_combined'+figureFileFormat)
+
 def plot_final_density():
   print("Plotting final density")
   plt.figure( figsize = figsize_dim)
@@ -616,6 +686,54 @@ def plot_final_BiMax_moms_combined():
   plt.savefig(outDir+'BiMaxMoms_combined'+figureFileFormat)
 
 
+def plot_final_energy_combined():
+  print("Plotting final Energy")
+  plt.figure( figsize = figsize_dim)
+  linenumber = 0
+  for iZ in range(len(Nz_arr)):
+    for iS in range(len(nonuniform_frac)):
+      for iF in range(len(frame_arr)):
+        Nz = Nz_arr[iZ]
+        nonuniform_frac_str = nonuniform_frac[iS]
+        frame = frame_arr[iF]
+        time = frame*time_per_frame
+        filebase = './'+Nz+'/'+nonuniform_frac_str+'/'
+
+        skip = skip_sims(Nz, nonuniform_frac_str)
+        noskip = plot_only_sims(Nz, nonuniform_frac_str)
+        if skip or not noskip:
+          continue
+
+        nodes_Z = loadZ(filebase)
+        xn, dens, U, Tpar, Tperp = load_mom(frame, filebase)
+
+        T = (Tpar + 2*Tperp)/3
+        energy = dens * T
+        plt.subplot(1,2,1)
+        plt.plot(nodes_Z, energy, \
+            color = linecolors[linenumber], linestyle = linestyles[linenumber], \
+            label = 'Nz = '+Nz+', nonuniform frac = '+nonuniform_frac_str\
+              +', t='+str(time)+' s')
+        plt.subplot(1,2,2)
+        plt.plot(nodes_Z, energy, \
+            color = linecolors[linenumber], linestyle = linestyles[linenumber], \
+            label = 'Nz = '+Nz+', nonuniform frac = '+nonuniform_frac_str\
+              +', t='+str(time)+' s')
+        linenumber += 1
+
+  plt.subplot(1,2,1)
+  plt.xlabel('Z, m')
+  plt.ylabel('Energy, $J/m^3$')
+  plt.title('Final energy')
+  plt.legend()
+  plt.subplot(1,2,2)
+  plt.xlabel('Z, m')
+  plt.ylabel('Energy, $J/m^3$')
+  plt.yscale('log')
+  plt.title('Final energy')
+  plt.tight_layout()
+  plt.savefig(outDir+'Energy_combined'+figureFileFormat)
+
 ## Main function
 def main():
   processes = []
@@ -623,6 +741,7 @@ def main():
     # plot_potential_trace_seperate,
     # plot_dndt_trace,
     # plot_intM0,
+    # plot_intEnergy,
     # plot_final_density,
     # plot_final_upar,
     # plot_final_Tpar,
@@ -630,8 +749,9 @@ def main():
     plot_potential_trace_combined,
     plot_dndt_trace_combined,
     plot_intM0_combined,
-    plot_final_BiMax_moms_combined
-
+    plot_final_BiMax_moms_combined,
+    plot_final_energy_combined,
+    plot_intEnergy_combined
   ]
   for plot_func in plot_functions:
     p = multiprocessing.Process(target=plot_func)

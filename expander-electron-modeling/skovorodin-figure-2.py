@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
-from scipy.optimize import curve_fit
+from scipy.optimize import curve_fit, root_scalar
 import postgkyl as pg
 
 def model_phi(R, R_wall, miome):
@@ -70,19 +70,47 @@ pgData_bmag = pg.GData(filename_bmag)
 pgInterp_bmag = pg.GInterpModal(pgData_bmag, polyOrder, 'ms')
 x_bmag, dataOut_bmag = pgInterp_bmag.interpolate()
 
+filename_BiMaxwellianMoms = str('./gk_wham-ion_BiMaxwellianMoments_300.gkyl')
+pgData_BiMaxwellianMoms = pg.GData(filename_BiMaxwellianMoms)
+pgInterp_BiMaxwellianMoms = pg.GInterpModal(pgData_BiMaxwellianMoms, polyOrder, 'ms')
+x, nOut = pgInterp_BiMaxwellianMoms.interpolate(0)
+x, uOut = pgInterp_BiMaxwellianMoms.interpolate(1)
+x, TparOut = pgInterp_BiMaxwellianMoms.interpolate(2)
+x, TperpOut = pgInterp_BiMaxwellianMoms.interpolate(3)
+
 bmag_shape = dataOut_bmag.shape
 midpoint = int(bmag_shape[0]/2)
 upperhalf = dataOut_bmag[midpoint:]
 peak = np.argmax(upperhalf)
-peak_idx = midpoint-peak
+peak_idx = midpoint-peak -10
 
 Te0 = 940 # eV
 phi = dataOut_phi[:peak_idx]/ Te0
 bmag = dataOut_bmag[:peak_idx]
+n = nOut[:peak_idx]
+u = uOut[:peak_idx]
+Tpar = TparOut[:peak_idx]
+Tperp = TperpOut[:peak_idx]
+Teomi = Te0 * 1.602176634e-19 / (2 * 1.67262192595e-27)
 
 K = bmag[-1] / bmag
 phi = -(phi - phi[-1])
+u_par_mirror = u[-1]
 
+phi_hammett = np.zeros(len(n))
+for i in range(len(n)):
+    idx = i
+    def model_phi_root(phi):
+        return (2* phi) - np.log((K[idx]**2) * \
+            (1 + 2*(Tperp[-1]*(1 - 1/K[idx]) + Teomi * phi)/(u_par_mirror**2)))
+    # Find the root of the function
+    phi_hammett[i] = root_scalar(model_phi_root, bracket=[0, 10]).root
+print(phi_hammett)
+
+# print("u_par_mirror = ", u_par_mirror)
+# print("u = ", u)
+
+# phi_hammett = np.log(K * u/u_par_mirror)
 R = np.linspace(1, 450, 100)
 boltzmann = np.log(R)
 miome = 1836
@@ -116,6 +144,7 @@ plt.plot(R200, phi_200, 'g--', label = "Model $R_{wall}=200$")
 plt.plot(R300, phi_300, 'm--', label = "Model $R_{wall}=300$")
 plt.plot(R400, phi_400, 'c--', label = "Model $R_{wall}=400$")
 plt.plot(K, phi, 'r--', label = "Gkeyll")
+plt.plot(K, phi_hammett, 'y--', label = "Gkeyll Hammett")
 plt.xlabel('R')
 plt.ylabel('$-e \phi / T_e$')
 plt.xlim([0, 450])
@@ -215,12 +244,12 @@ b_vals = fit_params[:, 1]
 c_vals = fit_params[:, 2]
 d_vals = fit_params[:, 3]
 e_vals = fit_params[:, 4]
-print(R_vals)
-print(a_vals)
-print(b_vals)
-print(c_vals)
-print(d_vals)
-print(e_vals)
+# print(R_vals)
+# print(a_vals)
+# print(b_vals)
+# print(c_vals)
+# print(d_vals)
+# print(e_vals)
 
 plt.xlabel('R')
 plt.ylabel('$-e \phi / T_e$')

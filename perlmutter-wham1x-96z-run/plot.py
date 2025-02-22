@@ -20,13 +20,14 @@ from scipy.optimize import curve_fit
 # dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-wham1x-compare_unif_vs_nonunif/outputs/'
 # dataDir = './data-hires-lorad/'
 dataDir = './'
-unifFile = 'gk_wham_modified'
-modifiedFile = 'gk_wham_modified'
-frame_max_plus1 = 107
-time_per_frame = 1e-6
+simName = 'gk_wham'
+frame_max_plus1 = 201
+time_per_frame = 10e-6
 
-plot_potential_trace = 0
+plot_potential_trace = 1
 plot_bimax_moms = 0
+plot_bimax_moms_2D_time_trace = 0
+plot_intEnergy_trace = 1
 plot_integrate_positivity = 1
 
 # frame_arr = np.arange(0,11)
@@ -115,7 +116,7 @@ def plot_verticalLinesPM(xIn, axIn):
 
 if plot_potential_trace:
   print("Plotting potential trace")
-  filename_bmag = str(dataDir+unifFile+'-bmag.gkyl')
+  filename_bmag = str(dataDir+'Geometry/'+simName+'-bmag.gkyl')
   pgData_bmag = pg.GData(filename_bmag)
   pgInterp_bmag = pg.GInterpModal(pgData_bmag, polyOrder, 'ms')
   x_bmag, dataOut_bmag = pgInterp_bmag.interpolate()
@@ -127,116 +128,114 @@ if plot_potential_trace:
   peak_idx = midpoint+peak
 
   def loadphi(frame_number, filename):
-    filename_phi = str(dataDir+filename+'-field_'+str(frame_number)+'.gkyl')
+    filename_phi = str(dataDir+'Field/'+filename+'-field_'+str(frame_number)+'.gkyl')
     pgData_phi = pg.GData(filename_phi)
     pgInterp_phi = pg.GInterpModal(pgData_phi, polyOrder, 'ms')
     x_phi, dataOut_phi = pgInterp_phi.interpolate()
     return dataOut_phi
   
   def get_temp(frame_number, filename):
-    filename_elc = str(dataDir+filename+'-elc_BiMaxwellianMoments_'+str(frame_number)+'.gkyl')
-    pgData_elc = pg.GData(filename_elc)
-    pgInterp_elc = pg.GInterpModal(pgData_elc, polyOrder, 'ms')
-    coords, Tpar_elc = pgInterp_elc.interpolate(2)
-    coords, Tperp_elc = pgInterp_elc.interpolate(3)
-    Temp = (Tpar_elc[midpoint,0] + 2*Tperp_elc[midpoint,0])/3 * me / eV
-    return Temp
+    # filename_elc = str(dataDir+filename+'-elc_BiMaxwellianMoments_'+str(frame_number)+'.gkyl')
+    # pgData_elc = pg.GData(filename_elc)
+    # pgInterp_elc = pg.GInterpModal(pgData_elc, polyOrder, 'ms')
+    # coords, Tpar_elc = pgInterp_elc.interpolate(2)
+    # coords, Tperp_elc = pgInterp_elc.interpolate(3)
+    # Temp = (Tpar_elc[midpoint,0] + 2*Tperp_elc[midpoint,0])/3 * me / eV
+    return Te0
 
   potential = np.zeros(frame_max_plus1)
-  potential_mod = np.zeros(frame_max_plus1)
+  expander_potential = np.zeros(frame_max_plus1)
   Temp = np.zeros(frame_max_plus1)
   Temp_mod = np.zeros(frame_max_plus1)  
   for i in range(frame_max_plus1):
-    dataOut_phi = loadphi(i, unifFile)
-    Temp[i] = get_temp(i, unifFile)
+    dataOut_phi = loadphi(i, simName)
+    Temp[i] = get_temp(i, simName)
     midphi = dataOut_phi[midpoint]
     phi_peak = dataOut_phi[peak_idx]
     potential[i] = (midphi[0] - phi_peak[0]) / Temp[i]
-
-    dataOut_phi = loadphi(i, modifiedFile)
-    Temp_mod[i] = get_temp(i, modifiedFile)
-    midphi = dataOut_phi[midpoint]
-    phi_peak = dataOut_phi[peak_idx]
-    potential_mod[i] = (midphi[0] - phi_peak[0]) / Temp_mod[i]
+    wall_potential = (dataOut_phi[0][0] + dataOut_phi[-1][0]) / 2
+    expander_potential[i] = (phi_peak[0] - wall_potential) / Temp[i]
 
   Temp = Temp*eV
-  Temp_mod = Temp_mod*eV
+  potential *= eV
+  expander_potential *= eV
 
-  plt.plot(np.arange(frame_max_plus1)*1e-6, potential, label = 'Standard collisions')
-  plt.plot(np.arange(frame_max_plus1)*1e-6, potential_mod, linestyle='--', label = 'Modified collisions')
+
+  plt.plot(np.arange(frame_max_plus1)*1e-6, potential)
   plt.xlabel('Time, seconds')
   plt.ylabel('Potential difference, $e \phi / T_e(\psi_{min},z=0)$')
   plt.title('Potential difference between midplane and peak magnetic field')
-  plt.legend()
+  plt.xscale('log')
   plt.savefig(outDir+'potential_trace'+figureFileFormat)
   plt.close()
 
-  starting_fit_from_frame = frame_max_plus1 - 20
-  x = np.arange(frame_max_plus1-starting_fit_from_frame)*1e-6
-  y_mod = potential_mod[starting_fit_from_frame:]
-  y_van = potential[starting_fit_from_frame:]
-  # Fit an exponential of the form a - b*exp(-c*x)
-  def fit_func(x, a, b, c):
-    return a - b*np.exp(-c*x)
-  
-  popt_mod, pcov_mod = curve_fit(fit_func, x, y_mod, p0=[5.0, 0.2, 0.0])
-  popt_van, pcov_van = curve_fit(fit_func, x, y_van, p0=[5.0, 0.2, 0.0])
-
-  print("Fitted parameters for modified collisions: ")
-  print(" a = {:.4f} ± {:.4f} e phi / Te".format(popt_mod[0], np.sqrt(pcov_mod[0,0])))
-  print(" b = {:.4f} ± {:.4f} e phi / Te".format(popt_mod[1], np.sqrt(pcov_mod[1,1])))
-  pct_err = np.sqrt(pcov_mod[2,2]) / popt_mod[2]
-  print(" 1/c = {:.1f} ± {:.1f} microseconds".format(1/(popt_mod[2])*1e6, 1/(popt_mod[2])*pct_err*1e6))
-
-  print("Fitted parameters for standard collisions: ")
-  print(" a = {:.4f} ± {:.4f} e phi / Te".format(popt_van[0], np.sqrt(pcov_van[0,0])))
-  print(" b = {:.4f} ± {:.4f} e phi / Te".format(popt_van[1], np.sqrt(pcov_van[1,1])))
-  pct_err = np.sqrt(pcov_van[2,2]) / popt_van[2]
-  print(" 1/c = {:.1f} ± {:.1f} microseconds".format(1/(popt_van[2])*1e6, 1/(popt_van[2])*pct_err*1e6))
-
-  plt.plot(x, y_mod, label='Data Modified Collisions', color='orange', linestyle='-')
-  plt.plot(x, fit_func(x, *popt_mod), label='Fit Modified Collisions: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(popt_mod), color='goldenrod', linestyle='--')
-  plt.plot(x, y_van, label='Data Standard Collisions', color='blue', linestyle='-')
-  plt.plot(x, fit_func(x, *popt_van), label='Fit Standard Collisions: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(popt_van), color='skyblue', linestyle='--')
+  plt.plot(np.arange(frame_max_plus1)*1e-6, expander_potential)
   plt.xlabel('Time, seconds')
   plt.ylabel('Potential difference, $e \phi / T_e(\psi_{min},z=0)$')
-  plt.title('Potential difference between midplane and peak magnetic field')
-  plt.legend()
-
-  plt.savefig(outDir+'potential_trace_fit'+figureFileFormat)
+  plt.title('Potential difference between mirror throat and wall')
+  plt.xscale('log')
+  plt.savefig(outDir+'potential_expander_trace'+figureFileFormat)
   plt.close()
 
-  # Plot the error in this model
-  plt.plot(x, y_mod - fit_func(x, *popt_mod), label='Modified Collisions', color='orange')
-  plt.plot(x, y_van - fit_func(x, *popt_van), label='Standard Collisions', color='blue')
-  plt.xlabel('Time, seconds')
-  plt.ylabel('Error in fit')
-  plt.title('Error in fit of potential difference between midplane and peak magnetic field')
-  plt.legend()
-  plt.savefig(outDir+'potential_trace_fit_error'+figureFileFormat)
-  plt.close()
+  # starting_fit_from_frame = frame_max_plus1 - 20
+  # x = np.arange(frame_max_plus1-starting_fit_from_frame)*1e-6
+  # y_mod = potential_mod[starting_fit_from_frame:]
+  # y_van = potential[starting_fit_from_frame:]
+  # # Fit an exponential of the form a - b*exp(-c*x)
+  # def fit_func(x, a, b, c):
+  #   return a - b*np.exp(-c*x)
+  
+  # popt_mod, pcov_mod = curve_fit(fit_func, x, y_mod, p0=[5.0, 0.2, 0.0])
+  # popt_van, pcov_van = curve_fit(fit_func, x, y_van, p0=[5.0, 0.2, 0.0])
 
-  plt.plot(np.arange(frame_max_plus1)*1e-6, Temp/eV, label = 'Standard collisions')
-  plt.plot(np.arange(frame_max_plus1)*1e-6, Temp_mod/eV, linestyle='--', label = 'Modified collisions')
-  plt.xlabel('Time, seconds')
-  plt.ylabel('Temperature, $T_e(\psi_{min},z=0)$')
-  plt.title('Temperature at midplane')
-  plt.legend()
-  plt.savefig(outDir+'temperature_trace'+figureFileFormat)
-  plt.close()
+  # print("Fitted parameters for modified collisions: ")
+  # print(" a = {:.4f} ± {:.4f} e phi / Te".format(popt_mod[0], np.sqrt(pcov_mod[0,0])))
+  # print(" b = {:.4f} ± {:.4f} e phi / Te".format(popt_mod[1], np.sqrt(pcov_mod[1,1])))
+  # pct_err = np.sqrt(pcov_mod[2,2]) / popt_mod[2]
+  # print(" 1/c = {:.1f} ± {:.1f} microseconds".format(1/(popt_mod[2])*1e6, 1/(popt_mod[2])*pct_err*1e6))
+
+  # print("Fitted parameters for standard collisions: ")
+  # print(" a = {:.4f} ± {:.4f} e phi / Te".format(popt_van[0], np.sqrt(pcov_van[0,0])))
+  # print(" b = {:.4f} ± {:.4f} e phi / Te".format(popt_van[1], np.sqrt(pcov_van[1,1])))
+  # pct_err = np.sqrt(pcov_van[2,2]) / popt_van[2]
+  # print(" 1/c = {:.1f} ± {:.1f} microseconds".format(1/(popt_van[2])*1e6, 1/(popt_van[2])*pct_err*1e6))
+
+  # plt.plot(x, y_mod, label='Data Modified Collisions', color='orange', linestyle='-')
+  # plt.plot(x, fit_func(x, *popt_mod), label='Fit Modified Collisions: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(popt_mod), color='goldenrod', linestyle='--')
+  # plt.plot(x, y_van, label='Data Standard Collisions', color='blue', linestyle='-')
+  # plt.plot(x, fit_func(x, *popt_van), label='Fit Standard Collisions: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(popt_van), color='skyblue', linestyle='--')
+  # plt.xlabel('Time, seconds')
+  # plt.ylabel('Potential difference, $e \phi / T_e(\psi_{min},z=0)$')
+  # plt.title('Potential difference between midplane and peak magnetic field')
+  # plt.legend()
+
+  # plt.savefig(outDir+'potential_trace_fit'+figureFileFormat)
+  # plt.close()
+
+  # # Plot the error in this model
+  # plt.plot(x, y_mod - fit_func(x, *popt_mod), label='Modified Collisions', color='orange')
+  # plt.plot(x, y_van - fit_func(x, *popt_van), label='Standard Collisions', color='blue')
+  # plt.xlabel('Time, seconds')
+  # plt.ylabel('Error in fit')
+  # plt.title('Error in fit of potential difference between midplane and peak magnetic field')
+  # plt.legend()
+  # plt.savefig(outDir+'potential_trace_fit_error'+figureFileFormat)
+  # plt.close()
+
+  # plt.plot(np.arange(frame_max_plus1)*1e-6, Temp/eV, label = 'Standard collisions')
+  # plt.plot(np.arange(frame_max_plus1)*1e-6, Temp_mod/eV, linestyle='--', label = 'Modified collisions')
+  # plt.xlabel('Time, seconds')
+  # plt.ylabel('Temperature, $T_e(\psi_{min},z=0)$')
+  # plt.title('Temperature at midplane')
+  # plt.legend()
+  # plt.savefig(outDir+'temperature_trace'+figureFileFormat)
+  # plt.close()
 
 if plot_bimax_moms:
   def make_moms(frame_number):
     print("Getting moments for frame ", frame_number)
-    filename_elc = str(dataDir+unifFile+'-elc_BiMaxwellianMoments_'+str(frame_number)+'.gkyl')
-    pgData_elc = pg.GData(filename_elc)
-    pgInterp_elc = pg.GInterpModal(pgData_elc, polyOrder, 'ms')
-    coords, n_elc = pgInterp_elc.interpolate(0)
-    coords, u_elc = pgInterp_elc.interpolate(1)
-    coords, Tpar_elc = pgInterp_elc.interpolate(2)
-    coords, Tperp_elc = pgInterp_elc.interpolate(3)
 
-    filename_ion = str(dataDir+unifFile+'-ion_BiMaxwellianMoments_'+str(frame_number)+'.gkyl')
+    filename_ion = str(dataDir+'BiMaxwellianMoments/'+simName+'-ion_BiMaxwellianMoments_'+str(frame_number)+'.gkyl')
     pgData_ion = pg.GData(filename_ion)
     pgInterp_ion = pg.GInterpModal(pgData_ion, polyOrder, 'ms')
     coords, n_ion = pgInterp_ion.interpolate(0)
@@ -244,230 +243,55 @@ if plot_bimax_moms:
     coords, Tpar_ion = pgInterp_ion.interpolate(2)
     coords, Tperp_ion = pgInterp_ion.interpolate(3)
 
-    filename_field = str(dataDir+unifFile+'-field_'+str(frame_number)+'.gkyl')
+    filename_field = str(dataDir+'Field/'+simName+'-field_'+str(frame_number)+'.gkyl')
     pgData_field = pg.GData(filename_field)
     pgInterp_field = pg.GInterpModal(pgData_field, polyOrder, 'ms')
     coords, phi = pgInterp_field.interpolate()
-
-    filename_elc_mod = str(dataDir+modifiedFile+'-elc_BiMaxwellianMoments_'+str(frame_number)+'.gkyl')
-    pgData_elc_mod = pg.GData(filename_elc_mod)
-    pgInterp_elc_mod = pg.GInterpModal(pgData_elc_mod, polyOrder, 'ms')
-    coords, n_elc_mod = pgInterp_elc_mod.interpolate(0)
-    coords, u_elc_mod = pgInterp_elc_mod.interpolate(1)
-    coords, Tpar_elc_mod = pgInterp_elc_mod.interpolate(2)
-    coords, Tperp_elc_mod = pgInterp_elc_mod.interpolate(3)
     
-    filename_ion_mod = str(dataDir+modifiedFile+'-ion_BiMaxwellianMoments_'+str(frame_number)+'.gkyl')
-    pgData_ion_mod = pg.GData(filename_ion_mod)
-    pgInterp_ion_mod = pg.GInterpModal(pgData_ion_mod, polyOrder, 'ms')
-    coords, n_ion_mod = pgInterp_ion_mod.interpolate(0)
-    coords, u_ion_mod = pgInterp_ion_mod.interpolate(1)
-    coords, Tpar_ion_mod = pgInterp_ion_mod.interpolate(2)
-    coords, Tperp_ion_mod = pgInterp_ion_mod.interpolate(3)
-    
-    filename_field_mod = str(dataDir+modifiedFile+'-field_'+str(frame_number)+'.gkyl')
-    pgData_field_mod = pg.GData(filename_field_mod)
-    pgInterp_field_mod = pg.GInterpModal(pgData_field_mod, polyOrder, 'ms')
-    coords, phi_mod = pgInterp_field_mod.interpolate()
+    filename_mc2nu_pos = pg.GData(str(dataDir+'Geometry/'+simName+'-mc2nu_pos.gkyl'))
+    interp = pg.GInterpModal(filename_mc2nu_pos, 1, 'ms')
+    nodes_Z = interp.interpolate(2)[1]
+    nodes_Z = np.squeeze(nodes_Z)
 
-    data = pg.GData(str(dataDir+unifFile+"-nodes.gkyl"))
-    vals = data.get_values()
-    nodes_R = vals[:,0]
-    nodes_Z = vals[:,1]
-    nodes_phi = vals[:,2]
-
-    shape_R = np.shape(nodes_R)
-    midplane_R_min = nodes_R[shape_R[0]//2]
-    midplane_R_max = nodes_R[shape_R[0]//2]
-    throat_R_min = nodes_R[shape_R[0]//4]
-    throat_R_max = nodes_R[shape_R[0]//4]
-
-    def expand_1D_array(original_array):
-      new_length = 2 * len(original_array) - 1
-      new_array = np.zeros(new_length)
-      new_array[0] = original_array[0]
-      for i in range(1, len(original_array)):
-          new_array[2*i - 1] = (original_array[i - 1] + original_array[i]) / 2
-          new_array[2*i] = original_array[i]
-      return new_array
-    
-    def expand_2D_array(original_array):
-      original_shape = np.shape(original_array)
-      new_shape = (2*original_shape[0]-1, 2*original_shape[1]-1)
-      new_array = np.zeros(new_shape)
-      for i in range(1, original_shape[0]-1):
-        for j in range(1, original_shape[1]-1):
-          new_array[2*i, 2*j] = original_array[i, j]
-          new_array[2*i, 2*j+1] = (original_array[i, j] + original_array[i, j+1]) / 2
-          new_array[2*i, 2*j-1] = (original_array[i, j] + original_array[i, j-1]) / 2
-          new_array[2*i+1, 2*j] = (original_array[i, j] + original_array[i+1, j]) / 2
-          new_array[2*i-1, 2*j] = (original_array[i, j] + original_array[i-1, j]) / 2
-          new_array[2*i+1, 2*j+1] = (original_array[i, j] + original_array[i+1, j+1]) / 2
-          new_array[2*i-1, 2*j-1] = (original_array[i, j] + original_array[i-1, j-1]) / 2
-          new_array[2*i+1, 2*j-1] = (original_array[i, j] + original_array[i+1, j-1]) / 2
-          new_array[2*i-1, 2*j+1] = (original_array[i, j] + original_array[i-1, j+1]) / 2
-      new_array[:,0] = expand_1D_array(original_array[:,0])
-      new_array[:,-1] = expand_1D_array(original_array[:,-1])
-      new_array[0,:] = expand_1D_array(original_array[0,:])
-      new_array[-1,:] = expand_1D_array(original_array[-1,:])
-      return new_array
-    
-    def expand_3D_array(original_array):
-      original_shape = np.shape(original_array)
-      new_shape = (2*original_shape[0]-1, 2*original_shape[1]-1, 2*original_shape[2]-1)
-      new_array = np.zeros(new_shape)
-      for i in range(1, original_shape[0]-1):
-        for j in range(1, original_shape[1]-1):
-          for k in range(1, original_shape[2]-1):
-            new_array[2*i, 2*j, 2*k] = original_array[i, j, k]
-
-            new_array[2*i, 2*j, 2*k+1] = (original_array[i, j, k] + original_array[i, j, k+1]) / 2
-            new_array[2*i, 2*j, 2*k-1] = (original_array[i, j, k] + original_array[i, j, k-1]) / 2
-            new_array[2*i, 2*j+1, 2*k] = (original_array[i, j, k] + original_array[i, j+1, k]) / 2
-            new_array[2*i, 2*j-1, 2*k] = (original_array[i, j, k] + original_array[i, j-1, k]) / 2
-            new_array[2*i+1, 2*j, 2*k] = (original_array[i, j, k] + original_array[i+1, j, k]) / 2
-            new_array[2*i-1, 2*j, 2*k] = (original_array[i, j, k] + original_array[i-1, j, k]) / 2
-
-            new_array[2*i+1, 2*j+1, 2*k] = (original_array[i, j, k] + original_array[i+1, j+1, k]) / 2
-            new_array[2*i-1, 2*j-1, 2*k] = (original_array[i, j, k] + original_array[i-1, j-1, k]) / 2
-            new_array[2*i+1, 2*j-1, 2*k] = (original_array[i, j, k] + original_array[i+1, j-1, k]) / 2
-            new_array[2*i-1, 2*j+1, 2*k] = (original_array[i, j, k] + original_array[i-1, j+1, k]) / 2
-
-            new_array[2*i+1, 2*j, 2*k+1] = (original_array[i, j, k] + original_array[i+1, j, k+1]) / 2
-            new_array[2*i-1, 2*j, 2*k-1] = (original_array[i, j, k] + original_array[i-1, j, k-1]) / 2
-            new_array[2*i+1, 2*j, 2*k-1] = (original_array[i, j, k] + original_array[i+1, j, k-1]) / 2
-            new_array[2*i-1, 2*j, 2*k+1] = (original_array[i, j, k] + original_array[i-1, j, k+1]) / 2
-
-            new_array[2*i, 2*j+1, 2*k+1] = (original_array[i, j, k] + original_array[i, j+1, k+1]) / 2
-            new_array[2*i, 2*j-1, 2*k-1] = (original_array[i, j, k] + original_array[i, j-1, k-1]) / 2
-            new_array[2*i, 2*j+1, 2*k-1] = (original_array[i, j, k] + original_array[i, j+1, k-1]) / 2
-            new_array[2*i, 2*j-1, 2*k+1] = (original_array[i, j, k] + original_array[i, j-1, k+1]) / 2
-      new_array[:,0,:] = expand_2D_array(original_array[:,0,:])
-      new_array[:,-1,:] = expand_2D_array(original_array[:,-1,:])
-      new_array[:,:,0] = expand_2D_array(original_array[:,:,0])
-      new_array[:,:,-1] = expand_2D_array(original_array[:,:,-1])
-      new_array[0,:,:] = expand_2D_array(original_array[0,:,:])
-      new_array[-1,:,:] = expand_2D_array(original_array[-1,:,:])
-      return new_array
-
-    
-    nodes_Z = expand_1D_array(nodes_Z)
-    nodes_Z = nodes_Z[1:]
-    # nodes_R = expand_1D_array(nodes_R)
-
-
-    n_elc = n_elc[:,0]
-    u_elc = u_elc[:,0]
-    Tpar_elc = Tpar_elc[:,0] * me / eV
-    Tperp_elc = Tperp_elc[:,0] * me / eV
-    T_elc = (Tpar_elc + 2*Tperp_elc)/3
     n_ion = n_ion[:,0]
     u_ion = u_ion[:,0]
     Tpar_ion = Tpar_ion[:,0] * mi / eV
     Tperp_ion = Tperp_ion[:,0] * mi / eV
     T_ion = (Tpar_ion + 2*Tperp_ion)/3
     phi = phi[:,0]
-    midplane_Te = T_elc[T_elc.shape[0]//2]
-    ephioTe =  phi / midplane_Te
-
-    n_elc_mod = n_elc_mod[:,0]
-    u_elc_mod = u_elc_mod[:,0]
-    Tpar_elc_mod = Tpar_elc_mod[:,0] * me / eV
-    Tperp_elc_mod = Tperp_elc_mod[:,0] * me / eV
-    T_elc_mod = (Tpar_elc_mod + 2*Tperp_elc_mod)/3
-    n_ion_mod = n_ion_mod[:,0]
-    u_ion_mod = u_ion_mod[:,0]
-    Tpar_ion_mod = Tpar_ion_mod[:,0] * mi / eV
-    Tperp_ion_mod = Tperp_ion_mod[:,0] * mi / eV
-    T_ion_mod = (Tpar_ion_mod + 2*Tperp_ion_mod)/3
-    phi_mod = phi_mod[:,0]
-    midplane_Te_mod = T_elc_mod[T_elc_mod.shape[0]//2]
-    ephioTe_mod =  phi_mod / midplane_Te_mod
-
-    # # Compute polarization density for ions
-    # # Read in the magnetic field
-    # filename_bmag = str(dataDir+unifFile+'-bmag.gkyl')
-    # pgData_bmag = pg.GData(filename_bmag)
-    # pgInterp_bmag = pg.GInterpModal(pgData_bmag, polyOrder, 'ms')
-    # coords, bmag = pgInterp_bmag.interpolate()
-    # bmag_shape = bmag.shape
-
-    # # Checked in gkyl_gk_geometry_bmag_mid that this is how it's done
-    # epsilon_i = mi * n_pol / bmag[bmag_shape[0]//2,bmag_shape[1]//2,0]**2
-
-    # filename_jacobgeo = str(dataDir+unifFile+'-jacobgeo.gkyl')
-    # pgData_jacobgeo = pg.GData(filename_jacobgeo)
-    # pgInterp_jacobgeo = pg.GInterpModal(pgData_jacobgeo, polyOrder, 'ms')
-    # coords, jacobgeo = pgInterp_jacobgeo.interpolate()
-    # jacobgeo = jacobgeo[:,0]
-
-    # filename_gxx = str(dataDir+unifFile+'-gxxj.gkyl')
-    # pgData_gxx = pg.GData(filename_gxx)
-    # pgInterp_gxx = pg.GInterpModal(pgData_gxx, polyOrder, 'ms')
-    # coords, gxxj = pgInterp_gxx.interpolate()
-    # gxxj = gxxj[:,0]
-
-    # D =  gxxj * epsilon_i
-    # dpsi = coords[1][0] - coords[0][0]
-    # ni_pol = np.zeros(D.shape)
-    # for i in range (D.shape[0]-1):
-    #   ni_pol[i,:] = -1/jacobgeo[i,:] / dpsi * (((D[i+1,:]+D[i,:])/2) * ((phi[i+1,:]-phi[i,:])/dpsi) - \
-    #                                            ((D[i-1,:]+D[i,:])/2) * ((phi[i,:]-phi[i-1,:])/dpsi))
-    # ni_pol[0,:] = 0.0
-
-    # make an array grid that is the size of coords
+    midplane_Te = Te0
+    ephioTe =  eV * phi / midplane_Te
 
     X = nodes_Z
 
-    # X = nodes_Z[:,:]
-    # Y = nodes_R[:,:]
-
-    # Print where n_ion is nan
+    # Print where n_ion is na
     print(np.argwhere(np.isnan(n_ion)))
-
     
-    fig, ax = plt.subplots(5, 3, figsize=(12,12))
+    fig, ax = plt.subplots(3, 3, figsize=(12,12))
     fig.suptitle(str(frame_number*time_per_frame)+' seconds', fontsize=20)
 
-    def plot_moment_data(data, data_mod, ax, fig, title, locx, locy):
-      ax[locx,locy].plot(X, data, label='Standard collisions')
-      ax[locx,locy].plot(X, data_mod, label='Modified collisions', linestyle='--')
-      ax[locx,locy].set_xlabel('Z cylindrical axis, m')
+    def plot_moment_data(data, ax, fig, title, locx, locy):
+      ax[locx,locy].plot(X, data)
+      ax[locx,locy].set_xlabel('Field line length, radians')
       ax[locx,locy].set_ylabel(title)
       ax[locx,locy].set_title(title, fontsize=16)
 
-    plot_moment_data(n_elc, n_elc_mod, ax, fig, '$n_e$, $m^{-3}$', 0, 0)
-    plot_moment_data(u_elc, u_elc_mod, ax, fig, '$U_{e,||}$, $m/s$', 0, 2)
-    plot_moment_data(Tpar_elc, Tpar_elc_mod, ax, fig, '$T_{e,||}$, $eV$', 1, 0)
-    plot_moment_data(Tperp_elc, Tperp_elc_mod, ax, fig, '$T_{e,\perp}$, $eV$', 1, 1)
-    plot_moment_data(T_elc, T_elc_mod, ax, fig, '$T_e$, $eV$', 1, 2)
-    plot_moment_data(n_ion, n_ion_mod, ax, fig, '$n_i$, $m^{-3}$', 2, 0)
-    plot_moment_data(u_ion, u_ion_mod, ax, fig, '$U_{i,||}$, $m/s$', 2, 2)
-    plot_moment_data(Tpar_ion, Tpar_ion_mod, ax, fig, '$T_{i,||}$, $eV$', 3, 0)
-    plot_moment_data(Tperp_ion, Tperp_ion_mod, ax, fig, '$T_{i,\perp}$, $eV$', 3, 1)
-    plot_moment_data(T_ion, T_ion_mod, ax, fig, '$T_i$, $eV$', 3, 2)
-
-    ax[0,2].legend()
-
-    # Plot electron density on a log scale
-    ax[0,1].plot(X,n_elc, label='Standard collisions')
-    ax[0,1].plot(X,n_elc_mod, label='Modified collisions', linestyle='--')
-    ax[0,1].set_yscale('log')
-    ax[0,1].set_xlabel('Z cylindrical axis, m')
-    ax[0,1].set_ylabel('$n_e$')
-    ax[0,1].set_title('$n_e$ (log scale) $m^{-3}$', fontsize=16)
+    plot_moment_data(n_ion, ax, fig, '$n_i$, $m^{-3}$', 0, 0)
+    plot_moment_data(u_ion, ax, fig, '$U_{i,||}$, $m/s$', 0, 2)
+    plot_moment_data(Tpar_ion, ax, fig, '$T_{i,||}$, $eV$', 1, 0)
+    plot_moment_data(Tperp_ion, ax, fig, '$T_{i,\perp}$, $eV$', 1, 1)
+    plot_moment_data(T_ion, ax, fig, '$T_i$, $eV$', 1, 2)
 
     # Plot the ion density on a log scale
-    ax[2,1].plot(X,n_ion, label='Standard collisions')
-    ax[2,1].plot(X,n_ion_mod, label='Modified collisions', linestyle='--')
-    ax[2,1].set_yscale('log')
-    ax[2,1].set_xlabel('Z cylindrical axis, m')
-    ax[2,1].set_ylabel('$n_i$')
-    ax[2,1].set_title('$n_i$ (log scale) $m^{-3}$', fontsize=16)
+    ax[0,1].plot(X, n_ion)
+    ax[0,1].set_yscale('log')
+    ax[0,1].set_xlabel('Field line length, radians')
+    ax[0,1].set_ylabel('$n_i$')
+    ax[0,1].set_title('$n_i$ (log scale) $m^{-3}$', fontsize=16)
 
-    plot_moment_data(phi, phi_mod, ax, fig, '$\phi$, V', 4, 0)
-    plot_moment_data(ephioTe, ephioTe_mod, ax, fig, '$e \phi / T_e$', 4, 1)
-    ax[4,2].remove()
+    plot_moment_data(phi, ax, fig, '$\phi$, V', 2, 0)
+    plot_moment_data(ephioTe, ax, fig, '$e \phi / T_e$', 2, 1)
+    ax[2,2].remove()
 
     plt.tight_layout()
     plt.savefig(outDir+'moments_'+str(frame_number)+figureFileFormat, dpi=600)
@@ -484,16 +308,218 @@ if plot_bimax_moms:
   pool.join()
 
 
-  # Define the filenames in order
-  filenames = [f'moments_{i}.png' for i in range(0, frame_max_plus1)]
-  filenames = [outDir+f'moments_{i}.png' for i in range(0, frame_max_plus1)]
+  # # Define the filenames in order
+  # filenames = [f'moments_{i}.png' for i in range(0, frame_max_plus1)]
+  # filenames = [outDir+f'moments_{i}.png' for i in range(0, frame_max_plus1)]
 
-  # Create a writer object specifying the output file name and frame rate
-  with imageio.get_writer(outDir+'moments_movie.mp4', mode='I', fps=5) as writer:
-      for filename in filenames:
-          image = imageio.imread(filename)
-          writer.append_data(image)
-  print("Movie created successfully.")
+  # # Create a writer object specifying the output file name and frame rate
+  # with imageio.get_writer(outDir+'moments_movie.mp4', mode='I', fps=5) as writer:
+  #     for filename in filenames:
+  #         image = imageio.imread(filename)
+  #         writer.append_data(image)
+  # print("Movie created successfully.")
+
+if plot_bimax_moms_2D_time_trace:
+    def get_moms(frame_number):
+      filename_ion = str(dataDir+'BiMaxwellianMoments/'+simName+'-ion_BiMaxwellianMoments_'+str(frame_number)+'.gkyl')
+      pgData_ion = pg.GData(filename_ion)
+      pgInterp_ion = pg.GInterpModal(pgData_ion, polyOrder, 'ms')
+      _, n = pgInterp_ion.interpolate(0)
+      _, upar = pgInterp_ion.interpolate(1)
+      _, Tpar = pgInterp_ion.interpolate(2)
+      _, Tperp = pgInterp_ion.interpolate(3)
+
+      filename_field = str(dataDir+'Field/'+simName+'-field_'+str(frame_number)+'.gkyl')
+      pgData_field = pg.GData(filename_field)
+      pgInterp_field = pg.GInterpModal(pgData_field, polyOrder, 'ms')
+      _, phi = pgInterp_field.interpolate()
+
+      n = n[:,0]
+      upar = upar[:,0]
+      Tpar = Tpar[:,0]
+      Tperp = Tperp[:,0]
+      phi = phi[:,0]
+      return n, upar, Tpar, Tperp, phi
+    
+    filename_mc2nu_pos = pg.GData(str(dataDir+'Geometry/'+simName+'-mc2nu_pos.gkyl'))
+    interp = pg.GInterpModal(filename_mc2nu_pos, 1, 'ms')
+    nodes_Z = interp.interpolate(2)[1]
+    nodes_Z = np.squeeze(nodes_Z)
+
+    time = np.arange(frame_max_plus1+1)*time_per_frame
+
+
+    n_ion = np.zeros((frame_max_plus1, nodes_Z.shape[0]))
+    u_ion = np.zeros((frame_max_plus1, nodes_Z.shape[0]))
+    Tpar_ion = np.zeros((frame_max_plus1, nodes_Z.shape[0]))
+    Tperp_ion = np.zeros((frame_max_plus1, nodes_Z.shape[0]))
+    phi = np.zeros((frame_max_plus1, nodes_Z.shape[0]))
+
+    def process_frame(frame_number):
+      n, upar, Tpar, Tperp, phi_frame = get_moms(frame_number)
+      return frame_number, n, upar, Tpar, Tperp, phi_frame
+
+    with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
+      results = pool.map(process_frame, range(frame_max_plus1))
+
+    for frame_number, n, upar, Tpar, Tperp, phi_frame in results:
+      n_ion[frame_number, :] = n
+      u_ion[frame_number, :] = upar
+      Tpar_ion[frame_number, :] = Tpar
+      Tperp_ion[frame_number, :] = Tperp
+      phi[frame_number, :] = phi_frame
+
+    Tpar_ion = Tpar_ion * mi / eV
+    Tperp_ion = Tperp_ion * mi / eV
+    T_ion = (Tpar_ion + 2*Tperp_ion)/3
+    Energy = n_ion * T_ion
+    ephioTe = eV * phi / Te0
+
+    z_lower = -np.pi + 0.1
+    z_upper = np.pi - 0.1
+    z_lefts = nodes_Z[0:-1]
+    z_rights = nodes_Z[1:]
+    z_avg = (z_lefts + z_rights) / 2
+    z_edges = np.append(z_lower, z_avg)
+    z_edges = np.append(z_edges, z_upper)
+
+    fig, ax = plt.subplots(3, 3, figsize=(20,12))
+    fig.suptitle('Time trace of moments', fontsize=20)
+
+    ax[0,0].pcolormesh(time, z_edges, n_ion.T, shading='auto', cmap='inferno')
+    ax[0,0].set_xlabel('Time, seconds')
+    ax[0,0].set_ylabel('Field line length, radians')
+    cbar = plt.colorbar(ax[0,0].pcolormesh(time, z_edges, n_ion.T, shading='auto', cmap='inferno'))
+    cbar.set_label('$n_i$, $m^{-3}$')
+    ax[0,0].set_title('$n_i$, $m^{-3}$')
+
+    ax[0,1].pcolormesh(time, z_edges, n_ion.T, shading='auto', norm=LogNorm(), cmap='inferno')
+    ax[0,1].set_xlabel('Time, seconds')
+    ax[0,1].set_ylabel('Field line length, radians')
+    cbar = plt.colorbar(ax[0,1].pcolormesh(time, z_edges, n_ion.T, shading='auto', norm=LogNorm(), cmap='inferno'))
+    cbar.set_label('$n_i$, $m^{-3}$')
+    ax[0,1].set_title('$n_i$, $m^{-3}$')
+
+    ax[0,2].pcolormesh(time, z_edges, u_ion.T, shading='auto', cmap='inferno')
+    ax[0,2].set_xlabel('Time, seconds')
+    ax[0,2].set_ylabel('Field line length, radians')
+    cbar = plt.colorbar(ax[0,2].pcolormesh(time, z_edges, u_ion.T, shading='auto', cmap='inferno'))
+    cbar.set_label('$U_{i,||}$, $m/s$')
+    ax[0,2].set_title('$U_{i,||}$, $m/s$')
+
+    ax[1,0].pcolormesh(time, z_edges, Tpar_ion.T, shading='auto', cmap='inferno')
+    ax[1,0].set_xlabel('Time, seconds')
+    ax[1,0].set_ylabel('Field line length, radians')
+    cbar = plt.colorbar(ax[1,0].pcolormesh(time, z_edges, Tpar_ion.T, shading='auto', cmap='inferno'))
+    cbar.set_label('$T_{i,||}$, $eV$')
+    ax[1,0].set_title('$T_{i,||}$, $eV$')
+
+    ax[1,1].pcolormesh(time, z_edges, Tperp_ion.T, shading='auto', cmap='inferno')
+    ax[1,1].set_xlabel('Time, seconds')
+    ax[1,1].set_ylabel('Field line length, radians')
+    cbar = plt.colorbar(ax[1,1].pcolormesh(time, z_edges, Tperp_ion.T, shading='auto', cmap='inferno'))
+    cbar.set_label('$T_{i,\perp}$, $eV$')
+    ax[1,1].set_title('$T_{i,\perp}$, $eV$')
+    
+    ax[1,2].pcolormesh(time, z_edges, T_ion.T, shading='auto', cmap='inferno')
+    ax[1,2].set_xlabel('Time, seconds')
+    ax[1,2].set_ylabel('Field line length, radians')
+    cbar = plt.colorbar(ax[1,2].pcolormesh(time, z_edges, T_ion.T, shading='auto', cmap='inferno'))
+    cbar.set_label('$T_i$, $eV$')
+    ax[1,2].set_title('$T_i$, $eV$')
+
+    ax[2,0].pcolormesh(time, z_edges, phi.T, shading='auto', cmap='inferno')
+    ax[2,0].set_xlabel('Time, seconds')
+    ax[2,0].set_ylabel('Field line length, radians')
+    cbar = plt.colorbar(ax[2,0].pcolormesh(time, z_edges, phi.T, shading='auto', cmap='inferno'))
+    cbar.set_label('$\phi$, V')
+    ax[2,0].set_title('$\phi$, V')
+
+    ax[2,1].pcolormesh(time, z_edges, ephioTe.T, shading='auto', cmap='inferno')
+    ax[2,1].set_xlabel('Time, seconds')
+    ax[2,1].set_ylabel('Field line length, radians')
+    cbar = plt.colorbar(ax[2,1].pcolormesh(time, z_edges, ephioTe.T, shading='auto', cmap='inferno'))
+    cbar.set_label('$e \phi / T_e$')
+    ax[2,1].set_title('$e \phi / T_e$')
+
+    ax[2,2].pcolor(time, z_edges, Energy.T, shading='auto', cmap='inferno')
+    ax[2,2].set_xlabel('Time, seconds')
+    ax[2,2].set_ylabel('Field line length, radians')
+    cbar = plt.colorbar(ax[2,2].pcolor(time, z_edges, Energy.T, shading='auto', cmap='inferno'))
+    cbar.set_label('Energy, $eV m^{-3}$')
+    ax[2,2].set_title('Energy, $eV m^{-3}$')
+
+    plt.tight_layout()
+    plt.savefig(outDir+'time_trace_moments_n'+figureFileFormat, dpi=600)
+    plt.close()
+
+
+if plot_intEnergy_trace:
+    print("Getting integrated energy trace")
+    def get_moms(frame_number):
+      filename_ion = str(dataDir+'BiMaxwellianMoments/'+simName+'-ion_BiMaxwellianMoments_'+str(frame_number)+'.gkyl')
+      pgData_ion = pg.GData(filename_ion)
+      pgInterp_ion = pg.GInterpModal(pgData_ion, polyOrder, 'ms')
+      _, n = pgInterp_ion.interpolate(0)
+      _, upar = pgInterp_ion.interpolate(1)
+      _, Tpar = pgInterp_ion.interpolate(2)
+      _, Tperp = pgInterp_ion.interpolate(3)
+
+      filename_field = str(dataDir+'Field/'+simName+'-field_'+str(frame_number)+'.gkyl')
+      pgData_field = pg.GData(filename_field)
+      pgInterp_field = pg.GInterpModal(pgData_field, polyOrder, 'ms')
+      _, phi = pgInterp_field.interpolate()
+
+      n = n[:,0]
+      upar = upar[:,0]
+      Tpar = Tpar[:,0]
+      Tperp = Tperp[:,0]
+      phi = phi[:,0]
+      return n, upar, Tpar, Tperp, phi
+    
+    filename_mc2nu_pos = pg.GData(str(dataDir+'Geometry/'+simName+'-mc2nu_pos.gkyl'))
+    interp = pg.GInterpModal(filename_mc2nu_pos, 1, 'ms')
+    nodes_Z = interp.interpolate(2)[1]
+    nodes_Z = np.squeeze(nodes_Z)
+
+    time = np.arange(frame_max_plus1+1)*time_per_frame
+
+
+    n_ion = np.zeros((frame_max_plus1, nodes_Z.shape[0]))
+    u_ion = np.zeros((frame_max_plus1, nodes_Z.shape[0]))
+    Tpar_ion = np.zeros((frame_max_plus1, nodes_Z.shape[0]))
+    Tperp_ion = np.zeros((frame_max_plus1, nodes_Z.shape[0]))
+    phi = np.zeros((frame_max_plus1, nodes_Z.shape[0]))
+
+    def process_frame(frame_number):
+      n, upar, Tpar, Tperp, phi_frame = get_moms(frame_number)
+      return frame_number, n, upar, Tpar, Tperp, phi_frame
+
+    with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
+      results = pool.map(process_frame, range(frame_max_plus1))
+
+    for frame_number, n, upar, Tpar, Tperp, phi_frame in results:
+      n_ion[frame_number, :] = n
+      u_ion[frame_number, :] = upar
+      Tpar_ion[frame_number, :] = Tpar
+      Tperp_ion[frame_number, :] = Tperp
+      phi[frame_number, :] = phi_frame
+
+    Tpar_ion = Tpar_ion * mi / eV
+    Tperp_ion = Tperp_ion * mi / eV
+    T_ion = (Tpar_ion + 2*Tperp_ion)/3
+    Energy = n_ion * T_ion
+    ephioTe = eV * phi / Te0
+
+    intEnergy = np.trapz(Energy, x=nodes_Z, axis=1)
+    plt.figure(figsize=(12,8))
+    plt.plot(time[:-1]*1e3, intEnergy)
+    plt.xlabel('Time, ms')
+    plt.ylabel('Integrated energy $\int n T dx$, $eV m^{-3}$')
+    plt.title('Integrated energy $\int n T dx$')
+    plt.savefig(outDir+'integrated_energy_trace'+figureFileFormat)
+    plt.close()
+
   
 if plot_integrate_positivity:
     print("Getting integrated moments")
@@ -503,42 +529,14 @@ if plot_integrate_positivity:
 #  activate -t f,p ev -t poverf 'p f /' \
 #  activate -t poverf pl --title "Mp/Mf" --saveas "$saveLoc-positivity-moms-over-f.png" --no-show&
 
-    filename_elc = str(dataDir+unifFile+'-elc_integrated_moms.gkyl')
-    pgData_elc = pg.GData(filename_elc)
-    M_elc = pgData_elc.get_values()
-    M0_elc = np.array(M_elc[:,0])
-    M1_elc = np.array(M_elc[:,1])
-    M2par_elc = np.array(M_elc[:,2])
-    M2perp_elc = np.array(M_elc[:,3])
-    time = np.squeeze(np.array(pgData_elc.get_grid()))
-
-    n_elc = M0_elc
-    u_elc = M1_elc / M0_elc
-    Tpar_elc = (M2par_elc - u_elc / M0_elc) * me / eV / M0_elc
-    Tperp_elc = M2perp_elc / M0_elc * me / eV / 2.0
-    T_elc = (Tpar_elc + 2*Tperp_elc)/3
-
-    filename_elc_positivity = str(dataDir+unifFile+'-elc_positivity_shift_integrated_moms.gkyl')
-    pgData_elc_positivity = pg.GData(filename_elc_positivity)
-    M_elc_positivity = pgData_elc_positivity.get_values()
-    M0_elc_positivity = np.array(M_elc_positivity[:,0])
-    M1_elc_positivity = np.array(M_elc_positivity[:,1])
-    M2par_elc_positivity = np.array(M_elc_positivity[:,2])
-    M2perp_elc_positivity = np.array(M_elc_positivity[:,3])
-
-    n_elc_positivity = M0_elc_positivity
-    u_elc_positivity = np.divide(M1_elc_positivity, M0_elc_positivity, where=M0_elc_positivity!=0)
-    Tpar_elc_positivity = (M2par_elc_positivity - np.divide(u_elc_positivity, M0_elc_positivity, where=M0_elc_positivity!=0)) * me / eV / M0_elc
-    Tperp_elc_positivity = M2perp_elc_positivity / M0_elc * me / eV / 2.0
-    T_elc_positivity = (Tpar_elc_positivity + 2*Tperp_elc_positivity)/3
-
-    filename_ion = str(dataDir+unifFile+'-ion_integrated_moms.gkyl')
+    filename_ion = str(dataDir+'misc/'+simName+'-ion_integrated_moms.gkyl')
     pgData_ion = pg.GData(filename_ion)
     M_ion = pgData_ion.get_values()
     M0_ion = np.array(M_ion[:,0])
     M1_ion = np.array(M_ion[:,1])
     M2par_ion = np.array(M_ion[:,2])
     M2perp_ion = np.array(M_ion[:,3])
+    time = np.squeeze(np.array(pgData_ion.get_grid()))
 
     n_ion = M0_ion
     u_ion = M1_ion / M0_ion
@@ -546,7 +544,7 @@ if plot_integrate_positivity:
     Tperp_ion = M2perp_ion / M0_ion * mi / eV / 2.0
     T_ion = (Tpar_ion + 2*Tperp_ion)/3
 
-    filename_ion_positivity = str(dataDir+unifFile+'-ion_positivity_shift_integrated_moms.gkyl')
+    filename_ion_positivity = str(dataDir+'misc/'+simName+'-ion_positivity_shift_integrated_moms.gkyl')
     pgData_ion_positivity = pg.GData(filename_ion_positivity)
     M_ion_positivity = pgData_ion_positivity.get_values()
     M0_ion_positivity = np.array(M_ion_positivity[:,0])
@@ -560,7 +558,7 @@ if plot_integrate_positivity:
     Tperp_ion_positivity = M2perp_ion_positivity / M0_ion * mi / eV / 2.0
     T_ion_positivity = (Tpar_ion_positivity + 2*Tperp_ion_positivity)/3
 
-    fig, ax = plt.subplots(8, 3, figsize=(12,20))
+    fig, ax = plt.subplots(4, 3, figsize=(12,20))
     fig.suptitle('Integrated moments', fontsize=20)
 
     def plot_moment_data(data, ax, fig, title, locx, locy):
@@ -568,29 +566,17 @@ if plot_integrate_positivity:
       ax[locx,locy].set_xlabel('Time, seconds')
       ax[locx,locy].set_title(title)
 
-    plot_moment_data(n_elc, ax, fig, '$n_e$, $m^{-3}$', 0, 0)
-    plot_moment_data(u_elc, ax, fig, '$U_{e,||}$, $m/s$', 0, 2)
-    plot_moment_data(Tpar_elc, ax, fig, '$T_{e,||}$, $eV$', 1, 0)
-    plot_moment_data(Tperp_elc, ax, fig, '$T_{e,\perp}$, $eV$', 1, 1)
-    plot_moment_data(T_elc, ax, fig, '$T_e$, $eV$', 1, 2)
+    plot_moment_data(n_ion, ax, fig, '$n_i$, $m^{-3}$', 0, 0)
+    plot_moment_data(u_ion, ax, fig, '$U_{i,||}$, $m/s$', 0, 2)
+    plot_moment_data(Tpar_ion, ax, fig, '$T_{i,||}$, $eV$', 1, 0)
+    plot_moment_data(Tperp_ion, ax, fig, '$T_{i,\perp}$, $eV$', 1, 1)
+    plot_moment_data(T_ion, ax, fig, '$T_i$, $eV$', 1, 2)
 
-    plot_moment_data(n_elc_positivity, ax, fig, 'Positivity $n_e$, $m^{-3}$', 2, 0)
-    plot_moment_data(u_elc_positivity, ax, fig, 'Positivity $U_{e,||}$, $m/s$', 2, 2)
-    plot_moment_data(Tpar_elc_positivity, ax, fig, 'Positivity $T_{e,||}$, $eV$', 3, 0)
-    plot_moment_data(Tperp_elc_positivity, ax, fig, 'Positivity $T_{e,\perp}$, $eV$', 3, 1)
-    plot_moment_data(T_elc_positivity, ax, fig, 'Positivity $T_e$, $eV$', 3, 2)
-
-    plot_moment_data(n_ion, ax, fig, '$n_i$, $m^{-3}$', 4, 0)
-    plot_moment_data(u_ion, ax, fig, '$U_{i,||}$, $m/s$', 4, 2)
-    plot_moment_data(Tpar_ion, ax, fig, '$T_{i,||}$, $eV$', 5, 0)
-    plot_moment_data(Tperp_ion, ax, fig, '$T_{i,\perp}$, $eV$', 5, 1)
-    plot_moment_data(T_ion, ax, fig, '$T_i$, $eV$', 5, 2)
-
-    plot_moment_data(n_ion_positivity, ax, fig, 'Positivity $n_i$, $m^{-3}$', 6, 0)
-    plot_moment_data(u_ion_positivity, ax, fig, 'Positivity $U_{i,||}$, $m/s$', 6, 2)
-    plot_moment_data(Tpar_ion_positivity, ax, fig, 'Positivity $T_{i,||}$, $eV$', 7, 0)
-    plot_moment_data(Tperp_ion_positivity, ax, fig, 'Positivity $T_{i,\perp}$, $eV$', 7, 1)
-    plot_moment_data(T_ion_positivity, ax, fig, 'Positivity $T_i$, $eV$', 7, 2)
+    plot_moment_data(n_ion_positivity, ax, fig, 'Positivity $n_i$, $m^{-3}$', 2, 0)
+    plot_moment_data(u_ion_positivity, ax, fig, 'Positivity $U_{i,||}$, $m/s$', 2, 2)
+    plot_moment_data(Tpar_ion_positivity, ax, fig, 'Positivity $T_{i,||}$, $eV$', 3, 0)
+    plot_moment_data(Tperp_ion_positivity, ax, fig, 'Positivity $T_{i,\perp}$, $eV$', 3, 1)
+    plot_moment_data(T_ion_positivity, ax, fig, 'Positivity $T_i$, $eV$', 3, 2)
 
     plt.tight_layout()
     plt.savefig(outDir+'integrated_moments'+figureFileFormat, dpi=600)
@@ -598,83 +584,52 @@ if plot_integrate_positivity:
 
     ##########################################################################################
 
-    fig, ax = plt.subplots(8, 2, figsize=(12,20))
+    fig, ax = plt.subplots(4, 2, figsize=(12,20))
     fig.suptitle('Integrated Ms', fontsize=20)
 
-    plot_moment_data(M0_elc, ax, fig, 'M0 elc', 0, 0)
-    plot_moment_data(M1_elc, ax, fig, 'M1 elc', 0, 1)
-    plot_moment_data(M2par_elc, ax, fig, 'M2par elc', 1, 0)
-    plot_moment_data(M2perp_elc, ax, fig, 'M2perp elc', 1, 1)
+    plot_moment_data(M0_ion, ax, fig, 'M0 ion', 0, 0)
+    plot_moment_data(M1_ion, ax, fig, 'M1 ion', 0, 1)
+    plot_moment_data(M2par_ion, ax, fig, 'M2par ion', 1, 0)
+    plot_moment_data(M2perp_ion, ax, fig, 'M2perp ion', 1, 1)
 
-    plot_moment_data(M0_elc_positivity, ax, fig, 'M0 elc positivity', 2, 0)
-    plot_moment_data(M1_elc_positivity, ax, fig, 'M1 elc positivity', 2, 1)
-    plot_moment_data(M2par_elc_positivity, ax, fig, 'M2par elc positivity', 3, 0)
-    plot_moment_data(M2perp_elc_positivity, ax, fig, 'M2perp elc positivity', 3, 1)
-
-    plot_moment_data(M0_ion, ax, fig, 'M0 ion', 4, 0)
-    plot_moment_data(M1_ion, ax, fig, 'M1 ion', 4, 1)
-    plot_moment_data(M2par_ion, ax, fig, 'M2par ion', 5, 0)
-    plot_moment_data(M2perp_ion, ax, fig, 'M2perp ion', 5, 1)
-
-    plot_moment_data(M0_ion_positivity, ax, fig, 'M0 ion positivity', 6, 0)
-    plot_moment_data(M1_ion_positivity, ax, fig, 'M1 ion positivity', 6, 1)
-    plot_moment_data(M2par_ion_positivity, ax, fig, 'M2par ion positivity', 7, 0)
-    plot_moment_data(M2perp_ion_positivity, ax, fig, 'M2perp ion positivity', 7, 1)
+    plot_moment_data(M0_ion_positivity, ax, fig, 'M0 ion positivity', 2, 0)
+    plot_moment_data(M1_ion_positivity, ax, fig, 'M1 ion positivity', 2, 1)
+    plot_moment_data(M2par_ion_positivity, ax, fig, 'M2par ion positivity', 3, 0)
+    plot_moment_data(M2perp_ion_positivity, ax, fig, 'M2perp ion positivity', 3, 1)
 
     plt.tight_layout()
     plt.savefig(outDir+'integrated_Ms'+figureFileFormat, dpi=600)
     plt.close()
-
-    M0_elc_ratio = M0_elc_positivity / M0_elc
-    M1_elc_ratio = M1_elc_positivity / M1_elc
-    M2par_elc_ratio = M2par_elc_positivity / M2par_elc
-    M2perp_elc_ratio = M2perp_elc_positivity / M2perp_elc
 
     M0_ion_ratio = M0_ion_positivity / M0_ion
     M1_ion_ratio = M1_ion_positivity / M1_ion
     M2par_ion_ratio = M2par_ion_positivity / M2par_ion
     M2perp_ion_ratio = M2perp_ion_positivity / M2perp_ion
 
-    fig, ax = plt.subplots(4, 2, figsize=(12,10))
+    fig, ax = plt.subplots(2, 2, figsize=(12,10))
     fig.suptitle('Ratios of $M_{i,positivity} / M_i$', fontsize=20)
 
-    plot_moment_data(M0_elc_ratio, ax, fig, 'M0 elc ratio', 0, 0)
-    plot_moment_data(M1_elc_ratio, ax, fig, 'M1 elc ratio', 0, 1)
-    plot_moment_data(M2par_elc_ratio, ax, fig, 'M2par elc ratio', 1, 0)
-    plot_moment_data(M2perp_elc_ratio, ax, fig, 'M2perp elc ratio', 1, 1)
-
-    plot_moment_data(M0_ion_ratio, ax, fig, 'M0 ion ratio', 2, 0)
-    plot_moment_data(M1_ion_ratio, ax, fig, 'M1 ion ratio', 2, 1)
-    plot_moment_data(M2par_ion_ratio, ax, fig, 'M2par ion ratio', 3, 0)
-    plot_moment_data(M2perp_ion_ratio, ax, fig, 'M2perp ion ratio', 3, 1)
+    plot_moment_data(M0_ion_ratio, ax, fig, 'M0 ion ratio', 0, 0)
+    plot_moment_data(M1_ion_ratio, ax, fig, 'M1 ion ratio', 0, 1)
+    plot_moment_data(M2par_ion_ratio, ax, fig, 'M2par ion ratio', 1, 0)
+    plot_moment_data(M2perp_ion_ratio, ax, fig, 'M2perp ion ratio', 1, 1)
 
     plt.tight_layout()
     plt.savefig(outDir+'integrated_Ms_ratios'+figureFileFormat, dpi=600)
     plt.close()
-
-    M0_elc_ratio_total = cumtrapz(M0_elc_ratio, time, initial=0) / timestep
-    M1_elc_ratio_total = cumtrapz(M1_elc_ratio, time, initial=0) / timestep
-    M2par_elc_ratio_total = cumtrapz(M2par_elc_ratio, time, initial=0) / timestep
-    M2perp_elc_ratio_total = cumtrapz(M2perp_elc_ratio, time, initial=0) / timestep
 
     M0_ion_ratio_total = cumtrapz(M0_ion_ratio, time, initial=0) / timestep
     M1_ion_ratio_total = cumtrapz(M1_ion_ratio, time, initial=0) / timestep
     M2par_ion_ratio_total = cumtrapz(M2par_ion_ratio, time, initial=0) / timestep
     M2perp_ion_ratio_total = cumtrapz(M2perp_ion_ratio, time, initial=0) / timestep
 
-    fig, ax = plt.subplots(4, 2, figsize=(12,10))
+    fig, ax = plt.subplots(2, 2, figsize=(12,10))
     fig.suptitle('Time integrated positivity ratios', fontsize=20)
 
-
-    plot_moment_data(M0_elc_ratio_total, ax, fig, 'M0 elc ratio', 0, 0)
-    plot_moment_data(M1_elc_ratio_total, ax, fig, 'M1 elc ratio', 0, 1)
-    plot_moment_data(M2par_elc_ratio_total, ax, fig, 'M2par elc ratio', 1, 0)
-    plot_moment_data(M2perp_elc_ratio_total, ax, fig, 'M2perp elc ratio', 1, 1)
-
-    plot_moment_data(M0_ion_ratio_total, ax, fig, 'M0 ion ratio', 2, 0)
-    plot_moment_data(M1_ion_ratio_total, ax, fig, 'M1 ion ratio', 2, 1)
-    plot_moment_data(M2par_ion_ratio_total, ax, fig, 'M2par ion ratio', 3, 0)
-    plot_moment_data(M2perp_ion_ratio_total, ax, fig, 'M2perp ion ratio', 3, 1)
+    plot_moment_data(M0_ion_ratio_total, ax, fig, 'M0 ion ratio', 0, 0)
+    plot_moment_data(M1_ion_ratio_total, ax, fig, 'M1 ion ratio', 0, 1)
+    plot_moment_data(M2par_ion_ratio_total, ax, fig, 'M2par ion ratio', 1, 0)
+    plot_moment_data(M2perp_ion_ratio_total, ax, fig, 'M2perp ion ratio', 1, 1)
 
     plt.tight_layout()
     plt.savefig(outDir+'integrated_Ms_ratios_in_time'+figureFileFormat, dpi=600)

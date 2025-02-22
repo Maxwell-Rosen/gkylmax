@@ -14,6 +14,7 @@
 
 #include <rt_arg_parse.h>
 
+// Neccisary for the boltzmann electron density reading
 #include <gkyl_array.h>
 #include <gkyl_array_rio.h>
 #include <gkyl_basis.h>
@@ -87,13 +88,14 @@ struct gk_mirror_ctx
   double *psi_grid;
   double *z_grid;
   double *v_grid;
-  double *theta_grid;
+  double *mu_grid;
   double *B_grid;
   int *dims;
   int rank;
 
   // Boltzmann electron reading
   struct gkyl_array *field;
+  struct gkyl_array *ion_M0;
   double ni_sheath;
   struct gkyl_position_map *position_map;
   double boltzmann_z_fa;
@@ -160,6 +162,34 @@ double LI_2D(const int *ncells,  // array of number of cells
             f[ip*ncells[1] +j ]*xWta) * yWtb +            //        f[ip][j ]*xWta*yWtb +
            (f[i *ncells[1] +jp]*xWtb +                    //        f[i ][jp]*xWtb*yWta +
             f[ip*ncells[1] +jp]*xWta) * yWta;             //        f[ip][jp]*xWta*yWta;
+}
+
+double LI_3D(const int *ncells, // array of number of cells
+       const double *x, // z grid for data
+       const double *y, // vpar grid for data
+       const double *z, // mu grid for data
+       const double *f, // distribution function at grid locations
+       const double *pt // point to interpolate at
+       )
+{
+  int i = get_lower_index(ncells[0], x, pt[0]);
+  int j = get_lower_index(ncells[1], y, pt[1]);
+  int k = get_lower_index(ncells[2], z, pt[2]);
+  int ip = i + 1;
+  int jp = j + 1;
+  int kp = k + 1;
+  double xWta = fmax(0, fmin(1, (pt[0] - x[i]) / (x[ip] - x[i])));
+  double yWta = fmax(0, fmin(1, (pt[1] - y[j]) / (y[jp] - y[j])));
+  double zWta = fmax(0, fmin(1, (pt[2] - z[k]) / (z[kp] - z[k])));
+  double xWtb = 1 - xWta;
+  double yWtb = 1 - yWta;
+  double zWtb = 1 - zWta;
+  int nxy = ncells[1] * ncells[2];
+  int nx = ncells[1];
+  return (((f[i * nxy + j * nx + k] * xWtb + f[ip * nxy + j * nx + k] * xWta) * yWtb +
+       (f[i * nxy + jp * nx + k] * xWtb + f[ip * nxy + jp * nx + k] * xWta) * yWta) * zWtb +
+      ((f[i * nxy + j * nx + kp] * xWtb + f[ip * nxy + j * nx + kp] * xWta) * yWtb +
+       (f[i * nxy + jp * nx + kp] * xWtb + f[ip * nxy + jp * nx + kp] * xWta) * yWta) * zWta);
 }
 
 double LI_4D(const int *ncells, // array of number of cells
@@ -230,223 +260,45 @@ read_ion_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
 {
   struct gk_mirror_ctx app = *(struct gk_mirror_ctx*)ctx;
   double* f_dist = app.f_dist_ion;
-  double* psi_grid = app.psi_grid;
   double* z_grid = app.z_grid;
   double* v_grid = app.v_grid;
-  double* theta_grid = app.theta_grid;
+  double* mu_grid = app.mu_grid;
   int* dims = app.dims;
 
-  // FROM GEOMETRY INPUT HARDCOPY
-  double z_min_geo = -2.0;
-  double z_max_geo =  2.0;
-  double tmin = app.z_min;
-  double tmax = app.z_max;
-  double t_norm_cord = (xn[0] + tmin) / (tmax - tmin);
-  double z_cord = fabs(-z_min_geo + t_norm_cord * (z_max_geo - z_min_geo));
-
-  // Calculate magnetic field at this point
-  double interp_pt[4];
-  interp_pt[0] = app.psi_eval;
-  interp_pt[1] = z_cord;
-  double B_val = LI_2D(dims, psi_grid, z_grid, app.B_grid, interp_pt);
-
   // Must convert the point xn from cartesian to polar
+  double z = xn[0];
   double vpar = xn[1];
   double mu = xn[2];
-  double vperp = sqrt((2.0 * B_val * mu) / app.mi);
-  double v = sqrt(pow(vpar, 2) + pow(vperp, 2));
-  double theta = atan2(vperp, vpar);
 
-  interp_pt[2] = v;
-  interp_pt[3] = theta;
+  double interp_pt[3];
+  interp_pt[0] = z;
+  interp_pt[2] = vpar;
+  interp_pt[3] = mu;
 
-  double interp_val = LI_4D(dims, psi_grid, z_grid, v_grid, theta_grid, f_dist, interp_pt);
+  double interp_val = LI_3D(dims, z_grid, v_grid, mu_grid, f_dist, interp_pt);
   if (interp_val < 0.0) {
     interp_val = 0.0;
   }
-  fout[0] = interp_val * 1.179; //*1.0786, 1.01802 phi 8
-}
-
-void
-read_elc_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx app = *(struct gk_mirror_ctx*)ctx;
-  double* f_dist = app.f_dist_elc;
-  double* psi_grid = app.psi_grid;
-  double* z_grid = app.z_grid;
-  double* v_grid = app.v_grid;
-  double* theta_grid = app.theta_grid;
-  int* dims = app.dims;
-
-  // FROM GEOMETRY INPUT HARDCOPY
-  double z_min_geo = -2.0;
-  double z_max_geo =  2.0;
-  double tmin = app.z_min;
-  double tmax = app.z_max;
-  double t_norm_cord = (xn[0] + tmin) / (tmax - tmin);
-  double z_cord = fabs(-z_min_geo + t_norm_cord * (z_max_geo - z_min_geo));
-
-  double interp_pt[4];
-  interp_pt[0] = app.psi_eval;
-  interp_pt[1] = z_cord;
-  double B_val = LI_2D(dims, psi_grid, z_grid, app.B_grid, interp_pt);
-
-  // Must convert the point xn from cartesian to polar
-  double vpar = xn[1];
-  double mu = xn[2];
-  double vperp = sqrt((2.0 * B_val * mu) / app.me);
-  double v = sqrt(pow(vpar, 2) + pow(vperp, 2));
-  double theta = atan2(vperp, vpar);
-
-  interp_pt[2] = v;
-  interp_pt[3] = theta;
-
-  double interp_val = LI_4D(dims, psi_grid, z_grid, v_grid, theta_grid, f_dist, interp_pt);
-  if (interp_val < 0.0){
-    interp_val = 0.0;
-  }
-  // double radial_scaling = 1 - 0.9*pow((xn[0] - app.psi_min)/(app.psi_max - app.psi_min), 1.);
   fout[0] = interp_val;
-  // fout[0] = interp_val;
-}
-
-void
-read_phi(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx app = *(struct gk_mirror_ctx*)ctx;
-  double* psi_grid = app.psi_grid;
-  double* z_grid = app.z_grid;
-  double* phi_vals = app.phi_vals;
-  int* dims = app.dims;
-
-  double interp_pt[2];
-  interp_pt[0] = app.psi_eval;
-
-  // FROM GEOMETRY INPUT HARDCOPY
-  double z_min_geo = -2.0;
-  double z_max_geo =  2.0;
-  double z_throat_approx = 1.0;
-  double tmin = app.z_min;
-  double tmax = app.z_max;
-  double t_norm_cord = (xn[0] + tmin) / (tmax - tmin);
-  double z_cord = fabs(-z_min_geo + t_norm_cord * (z_max_geo - z_min_geo));
-  interp_pt[1] = z_cord;
-
-  double interp_val = LI_2D(dims, psi_grid, z_grid, phi_vals, interp_pt);
-  fout[0] = interp_val;
-}
-
-void
-load_wham_distf(void* ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  char* filename_base = "/global/homes/m/mhrosen/scratch/gkylmax/binary_files/";
-
-  char filename_f_dist_ion[256];
-  sprintf(filename_f_dist_ion, "%sf_dist_ion.bin", filename_base);
-  size_t num_elements_f_dist_ion;
-  double* f_dist_ion = load_binary_file(filename_f_dist_ion, &num_elements_f_dist_ion);
-  app->f_dist_ion = f_dist_ion;
-
-  char filename_f_dist_elc[256];
-  sprintf(filename_f_dist_elc, "%sf_dist_elc.bin", filename_base);
-  size_t num_elements_f_dist_elc;
-  double* f_dist_elc = load_binary_file(filename_f_dist_elc, &num_elements_f_dist_elc);
-  app->f_dist_elc = f_dist_elc;
-
-  char filename_phiVals[256];
-  sprintf(filename_phiVals, "%sphi.bin", filename_base);
-  size_t num_elements_phiVals;
-  double *phi_vals = load_binary_file(filename_phiVals, &num_elements_phiVals);
-  app->phi_vals = phi_vals; // Need to check units. I think this is kV
-
-  char filename_psiGrid[256];
-  sprintf(filename_psiGrid, "%spsiGrid.bin", filename_base);
-  size_t num_elements_psiGrid;
-  double *psi_grid = load_binary_file(filename_psiGrid, &num_elements_psiGrid);
-  app->psi_grid = psi_grid;
-
-  char filename_zGrid[256];
-  sprintf(filename_zGrid, "%szGrid.bin", filename_base);
-  size_t num_elements_zGrid;
-  double *z_grid = load_binary_file(filename_zGrid, &num_elements_zGrid);
-  app->z_grid = z_grid;
-
-  char filename_uGrid[256];
-  sprintf(filename_uGrid, "%suGrid.bin", filename_base);
-  size_t num_elements_uGrid;
-  double *u_grid = load_binary_file(filename_uGrid, &num_elements_uGrid);
-
-  char filename_v_norm[256];
-  sprintf(filename_v_norm, "%sv_norm.bin", filename_base);
-  size_t num_elements_v_norm;
-  double *v_norm = load_binary_file(filename_v_norm, &num_elements_v_norm);
-
-  // multiply every element of u_grid with v_norm and call it v_grid
-  double *v_grid = (double*)malloc(num_elements_uGrid * sizeof(double));
-  for (int i = 0; i < num_elements_uGrid; i++) {
-    v_grid[i] = u_grid[i] * v_norm[0];
-  }
-  free(v_norm); // free v_norm (not needed anymore
-  free(u_grid); // free u_grid (not needed anymore)
-  app->v_grid = v_grid;
-  size_t num_elements_vGrid = num_elements_uGrid;
-
-  char filename_theta[256];
-  sprintf(filename_theta, "%stheta.bin", filename_base);
-  size_t num_elements_theta;
-  double *theta_grid = load_binary_file(filename_theta, &num_elements_theta);
-  app->theta_grid = theta_grid;
-
-  char filename_BGrid[256];
-  sprintf(filename_BGrid, "%sBGrid.bin", filename_base);
-  size_t num_elements_BGrid;
-  double *B_grid = load_binary_file(filename_BGrid, &num_elements_BGrid);
-  app->B_grid = B_grid;
-
-  int rank = 4;
-  int *dims = (int*)malloc(rank * sizeof(int));
-  dims[0] = num_elements_psiGrid;
-  dims[1] = num_elements_zGrid;
-  dims[2] = num_elements_vGrid;
-  dims[3] = num_elements_theta;
-  app->dims = dims;
-  app->rank = rank;
-}
-
-void
-free_wham_distf(void* ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  free(app->f_dist_ion);
-  free(app->f_dist_elc);
-  free(app->phi_vals);
-  free(app->psi_grid);
-  free(app->z_grid);
-  free(app->v_grid);
-  free(app->theta_grid);
-  free(app->B_grid);
-  free(app->dims);
 }
 
 void
 load_boltzmann_elec(void* ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  struct gkyl_rect_grid field_grid, mc2nu_pos_grid, ion_grid;
-  struct gkyl_array *field, *mc2nu_pos, *ion_distf;
+  struct gkyl_rect_grid field_grid, mc2nu_pos_grid, M0_grid;
+  struct gkyl_array *field, *mc2nu_pos, *M0;
 
   field     = gkyl_grid_array_new_from_file(&field_grid, 
     "64-cells/gk_wham-field_300.gkyl");
   mc2nu_pos = gkyl_grid_array_new_from_file(&mc2nu_pos_grid, 
     "64-cells/gk_wham-mc2nu_pos.gkyl");
+  M0 = gkyl_grid_array_new_from_file(&M0_grid, 
+    "64-cells/gk_wham-ion_M0_300.gkyl");
 
   app->field = field;
+  app->ion_M0 = M0;
 
-  // Read ni_sheath from file
-  struct gkyl_rect_grid M0_grid;
-  struct gkyl_array *M0 = gkyl_grid_array_new_from_file(&M0_grid, 
-    "64-cells/gk_wham-ion_M0_300.gkyl");
   int lower_cell[] = {1};
   int upper_cell[] = {M0_grid.cells[0]};
 
@@ -458,19 +310,6 @@ load_boltzmann_elec(void* ctx)
   int nghost[] = { 0, 0, 0 };
   struct gkyl_range local, local_ext;
   gkyl_create_grid_ranges(&M0_grid, nghost, &local, &local_ext);
-
-  long lidx = gkyl_range_idx(&local, lower_cell);
-  const double *M0_lower_coeffs = gkyl_array_cfetch(M0, lidx);
-  double x_log[] = {-1};
-  double M0_lower = basis.eval_expand(x_log, M0_lower_coeffs);
-
-  long uidx = gkyl_range_idx(&local, upper_cell);
-  const double *M0_upper_coeffs = gkyl_array_cfetch(M0, uidx);
-  double x_log2[] = {1};
-  double M0_upper = basis.eval_expand(x_log2, M0_upper_coeffs);
-
-  app->ni_sheath = (M0_upper + M0_lower)/2.;
-  gkyl_array_release(M0);
 
   // Create a position map object
   struct gkyl_position_map_inp pmap_inp = { };
@@ -486,6 +325,7 @@ free_boltzmann_elec(void* ctx)
 {
   struct gk_mirror_ctx *app = ctx;
   gkyl_array_release(app->field);
+  gkyl_array_release(app->ion_M0);
   gkyl_position_map_release(app->position_map);
 }
 
@@ -503,10 +343,61 @@ invert_position_map_func(double x, void *ctx)
 void
 botlzmann_elc_density(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
+  // Since boltzmann electrons are particle density and gyrokinetic sims take guiding center density
+  // Boltzmann electron simulations have n_i = n_e, and we must determine the ion density
+  // using the polarization density.
+
   struct gk_mirror_ctx *app = ctx;
   double z_field_aligned = xn[0];
-  double vpar = xn[1];
-  double mu = xn[2];
+
+  // First we must determine the computational coordinate in non-uniform space
+  app->boltzmann_z_fa = z_field_aligned;
+  double interval_lower = -M_PI;
+  double interval_upper = M_PI;
+  double interval_lower_eval = invert_position_map_func(interval_lower, ctx);
+  double interval_upper_eval = invert_position_map_func(interval_upper, ctx);
+  struct gkyl_qr_res res = gkyl_ridders(invert_position_map_func, ctx,
+    interval_lower, interval_upper, interval_lower_eval, interval_upper_eval, 10, 1e-6);
+  double z_computational = res.res;
+
+  // Now we calculate the value of the field at this computational coordinate
+  int cdim = 1;
+  struct gkyl_basis basis = app->position_map->basis;
+  struct gkyl_rect_grid grid = app->position_map->grid;
+  struct gkyl_range local = app->position_map->local;
+
+  // I'm limiting myself to 1x
+  int idx_temp = local.lower[0] + (int) floor((z_computational - grid.lower[0]) / grid.dx[0]);
+  idx_temp = GKYL_MAX2(local.lower[0], GKYL_MIN2(local.upper[0], idx_temp));
+  long lidx = gkyl_range_idx(&local, &idx_temp);
+  const double *field_coeffs = gkyl_array_cfetch(app->ion_M0, lidx);
+  double cxc[3];
+  gkyl_rect_grid_cell_center(&grid, &idx_temp, cxc);
+  double x_log = (z_computational - cxc[0]) / (grid.dx[0]*0.5);
+  double M0_val = basis.eval_expand(&x_log, field_coeffs);
+
+  fout[0] = M0_val;
+}
+
+void
+boltzmann_elc_upar(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  fout[0] = 0.0;
+}
+
+void
+boltzmann_elc_T(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  fout[0] = app->Te0;
+}
+
+void
+botlzmann_elc_field(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  // There is no position map in the polarization solve presently. It needs that
+  double z_field_aligned = xn[0];
 
   // First we must determine the computational coordinate in non-uniform space
   app->boltzmann_z_fa = z_field_aligned;
@@ -534,21 +425,7 @@ botlzmann_elc_density(double t, const double *GKYL_RESTRICT xn, double *GKYL_RES
   double x_log = (z_computational - cxc[0]) / (grid.dx[0]*0.5);
   double field_val = basis.eval_expand(&x_log, field_coeffs);
 
-  fout[0] = 1e-14;
-  fout[0] = app->ni_sheath * exp(GKYL_ELEMENTARY_CHARGE * field_val  / app->Te0);
-}
-
-void
-boltzmann_elc_upar(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  fout[0] = 0.0;
-}
-
-void
-boltzmann_elc_T(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  fout[0] = app->Te0;
+  fout[0] = field_val;
 }
 
 void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *ctx)
@@ -755,7 +632,6 @@ create_ctx(void)
     .dt_failure_tol = dt_failure_tol,
     .num_failures_max = num_failures_max,
   };
-  load_wham_distf(&ctx);
   load_boltzmann_elec(&ctx);
   return ctx;
 }
@@ -884,6 +760,7 @@ int main(int argc, char **argv)
     .upper = { 1.0, 1.0},
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
+    .scale_with_polarization = true,
     .no_by = true,
     // .projection = ion_ic,
     .mapc2p = {
@@ -896,7 +773,7 @@ int main(int argc, char **argv)
     },    
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
-      .file_name = "gk_wham-ion_300.gkyl",
+      .file_name = "64-cells/gk_wham-ion_300.gkyl",
     },
     .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
@@ -915,7 +792,7 @@ int main(int argc, char **argv)
     .polarization_bmag = ctx.B_p, 
     .fem_parbc = GKYL_FEM_PARPROJ_NONE,
     .kperpSq = pow(ctx.kperp, 2.),
-    .polarization_potential = read_phi,
+    .polarization_potential = botlzmann_elc_field,
     .polarization_potential_ctx = &ctx,
   };
 
@@ -1084,13 +961,12 @@ struct gkyl_efit_inp efit_inp = {
   gkyl_gyrokinetic_app_cout(app, stdout, "Field RHS calc took %g secs\n", stat.field_rhs_tm);
   gkyl_gyrokinetic_app_cout(app, stdout, "Species collisional moments took %g secs\n", stat.species_coll_mom_tm);
   gkyl_gyrokinetic_app_cout(app, stdout, "Updates took %g secs\n", stat.total_tm);
-  gkyl_gyrokinetic_app_cout(app, stdout, "Number of write calls %ld,\n", stat.nio);
+  gkyl_gyrokinetic_app_cout(app, stdout, "Number of write calls %ld,\n", stat.n_io);
   gkyl_gyrokinetic_app_cout(app, stdout, "IO time took %g secs \n", stat.io_tm);
 
   freeresources:
   // Free resources after simulation completion.
   gkyl_gyrokinetic_app_release(app);
-  free_wham_distf(&ctx);
   free_boltzmann_elec(&ctx);
   gkyl_gyrokinetic_comms_release(comm);
 
