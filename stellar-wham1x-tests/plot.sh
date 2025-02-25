@@ -6,9 +6,9 @@ name="gk_wham"
 species="elc"
 saveLoc="python-plots/gk_wham"
 
-pgkyl misc/gk_wham-ion_integrated_moms.gkyl pl --saveas "$saveLoc-ion_integrated_moms.png" --no-show &
+pgkyl gk_wham-ion_integrated_moms.gkyl pl --saveas "$saveLoc-ion_integrated_moms.png" --no-show &
 
-pgkyl misc/gk_wham-ion_integrated_moms.gkyl ev "f[:][0] f[:][2] f[:][3] 2 * + * 3 /" pl --saveas "python-plots/integrated-energy-trace.png"
+pgkyl gk_wham-ion_integrated_moms.gkyl ev "f[:][0] f[:][2] f[:][3] 2 * + * 3 /" pl --saveas "python-plots/integrated-energy-trace.png"
 
 # pgkyl Geometry/gk_wham-jacobgeo.gkyl interp -b ms -p1 pl --title "jacobgeo" --saveas "$saveLoc-jacobgeo.png" --no-show &
 # pgkyl Geometry/gk_wham-jacobtot.gkyl interp -b ms -p1 pl --title "jacobtot" --saveas "$saveLoc-jacobtot.png" --no-show &

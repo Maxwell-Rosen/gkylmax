@@ -21,14 +21,14 @@ from scipy.optimize import curve_fit
 # dataDir = './data-hires-lorad/'
 dataDir = './'
 simName = 'gk_wham'
-frame_max_plus1 = 73
+frame_max_plus1 = 33
 time_per_frame = 10e-6
 
-plot_potential_trace = 1
-plot_bimax_moms = 1
-plot_bimax_moms_2D_time_trace = 1
+plot_potential_trace = 0
+plot_bimax_moms = 0
+plot_bimax_moms_2D_time_trace = 0
 plot_intEnergy_trace = 1
-plot_integrate_positivity = 1
+plot_integrate_positivity = 0
 
 # frame_arr = np.arange(0,11)
 # frame_arr = np.array([1:4])
@@ -265,6 +265,7 @@ if plot_bimax_moms:
     X = nodes_Z
 
     # Print where n_ion is na
+    print(np.argwhere(np.isnan(n_ion)))
     
     fig, ax = plt.subplots(3, 3, figsize=(12,12))
     fig.suptitle(str(frame_number*time_per_frame)+' seconds', fontsize=20)
@@ -456,8 +457,8 @@ if plot_bimax_moms_2D_time_trace:
 if plot_intEnergy_trace:
     print("Getting integrated energy trace")
     def get_moms(frame_number):
-      filename_ion = str(dataDir+'BiMaxwellianMoments/'+simName+'-ion_BiMaxwellianMoments_'+str(frame_number)+'.gkyl')
-      # filename_ion = str(dataDir+simName+'-ion_BiMaxwellianMoments_'+str(frame_number)+'.gkyl')
+      # filename_ion = str(dataDir+'BiMaxwellianMoments/'+simName+'-ion_BiMaxwellianMoments_'+str(frame_number)+'.gkyl')
+      filename_ion = str(dataDir+simName+'-ion_BiMaxwellianMoments_'+str(frame_number)+'.gkyl')
       pgData_ion = pg.GData(filename_ion)
       pgInterp_ion = pg.GInterpModal(pgData_ion, polyOrder, 'ms')
       _, n = pgInterp_ion.interpolate(0)
@@ -465,8 +466,8 @@ if plot_intEnergy_trace:
       _, Tpar = pgInterp_ion.interpolate(2)
       _, Tperp = pgInterp_ion.interpolate(3)
 
-      filename_field = str(dataDir+'Field/'+simName+'-field_'+str(frame_number)+'.gkyl')
-      # filename_field = str(dataDir+simName+'-field_'+str(frame_number)+'.gkyl')
+      # filename_field = str(dataDir+'Field/'+simName+'-field_'+str(frame_number)+'.gkyl')
+      filename_field = str(dataDir+simName+'-field_'+str(frame_number)+'.gkyl')
       pgData_field = pg.GData(filename_field)
       pgInterp_field = pg.GInterpModal(pgData_field, polyOrder, 'ms')
       _, phi = pgInterp_field.interpolate()
@@ -478,8 +479,8 @@ if plot_intEnergy_trace:
       phi = phi[:,0]
       return n, upar, Tpar, Tperp, phi
     
-    filename_mc2nu_pos = pg.GData(str(dataDir+'Geometry/'+simName+'-mc2nu_pos.gkyl'))
-    # filename_mc2nu_pos = pg.GData(str(dataDir+simName+'-mc2nu_pos.gkyl'))
+    # filename_mc2nu_pos = pg.GData(str(dataDir+'Geometry/'+simName+'-mc2nu_pos.gkyl'))
+    filename_mc2nu_pos = pg.GData(str(dataDir+simName+'-mc2nu_pos.gkyl'))
     interp = pg.GInterpModal(filename_mc2nu_pos, 1, 'ms')
     nodes_Z = interp.interpolate(2)[1]
     nodes_Z = np.squeeze(nodes_Z)
@@ -531,8 +532,8 @@ if plot_integrate_positivity:
 #  activate -t f,p ev -t poverf 'p f /' \
 #  activate -t poverf pl --title "Mp/Mf" --saveas "$saveLoc-positivity-moms-over-f.png" --no-show&
 
-    filename_ion = str(dataDir+'misc/'+simName+'-ion_integrated_moms.gkyl')
-    # filename_ion = str(dataDir + simName + '-ion_integrated_moms.gkyl')
+    # filename_ion = str(dataDir+'misc/'+simName+'-ion_integrated_moms.gkyl')
+    filename_ion = str(dataDir + simName + '-ion_integrated_moms.gkyl')
     pgData_ion = pg.GData(filename_ion)
     M_ion = pgData_ion.get_values()
     M0_ion = np.array(M_ion[:,0])
@@ -547,8 +548,8 @@ if plot_integrate_positivity:
     Tperp_ion = M2perp_ion / M0_ion * mi / eV / 2.0
     T_ion = (Tpar_ion + 2*Tperp_ion)/3
 
-    filename_ion_positivity = str(dataDir+'misc/'+simName+'-ion_positivity_shift_integrated_moms.gkyl')
-    # filename_ion_positivity = str(dataDir+simName+'-ion_positivity_shift_integrated_moms.gkyl')
+    # filename_ion_positivity = str(dataDir+'misc/'+simName+'-ion_positivity_shift_integrated_moms.gkyl')
+    filename_ion_positivity = str(dataDir+simName+'-ion_positivity_shift_integrated_moms.gkyl')
     pgData_ion_positivity = pg.GData(filename_ion_positivity)
     M_ion_positivity = pgData_ion_positivity.get_values()
     M0_ion_positivity = np.array(M_ion_positivity[:,0])
