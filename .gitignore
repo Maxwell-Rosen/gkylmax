@@ -10,6 +10,8 @@ tags
 *.nc
 *.gif
 
+h5py
+
 # Ignore compiled binaries and executables
 *.exe
 *.out
