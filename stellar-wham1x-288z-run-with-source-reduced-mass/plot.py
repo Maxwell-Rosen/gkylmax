@@ -14,14 +14,19 @@ from matplotlib.colors import LogNorm
 import multiprocessing
 from scipy.integrate import cumulative_trapezoid as cumtrapz
 import imageio.v2 as imageio
-from scipy.optimize import curve_fit
+from scipy.optimize import curve_fit, minimize
+from scipy import stats
+
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
 
 
 # dataDir = '/home/mr1884/scratch/Link to scratch_traverse/gkylmax/traverse-wham1x-compare_unif_vs_nonunif/outputs/'
 # dataDir = './data-hires-lorad/'
 dataDir = './'
 simName = 'gk_wham'
-frame_max_plus1 = 107
+origFile = '../stellar-wham1x-288z-run/misc/gk_wham-ion_integrated_moms.gkyl'
+frame_max_plus1 = 12
 time_per_frame = 10e-6
 in_folders_orgnaized = 0 # 1 if it's in the folders, 0 if data is in present directory
 
@@ -29,7 +34,9 @@ plot_potential_trace = 0
 plot_bimax_moms = 0
 plot_bimax_moms_2D_time_trace = 0
 plot_intEnergy_trace = 0
-plot_integrated_moments = 1
+plot_integrate_positivity = 1
+plot_stitched_integrated_moms = 1
+calculate_linear_interpolation = 1
 
 # frame_arr = np.arange(0,11)
 # frame_arr = np.array([1:4])
@@ -556,7 +563,7 @@ if plot_intEnergy_trace:
     plt.close()
 
   
-if plot_integrated_moments:
+if plot_integrate_positivity:
     print("Getting integrated moments")
     
 #  pgkyl "$name"-"$species"_integrated_moms.gkyl -t f\
@@ -620,7 +627,7 @@ if plot_integrated_moments:
     plot_moment_data(T_ion_positivity, ax, fig, 'Positivity $T_i$, $eV$', 3, 2)
 
     plt.tight_layout()
-    plt.savefig(outDir+'integrated_bimaxwellian_moments'+figureFileFormat, dpi=600)
+    plt.savefig(outDir+'integrated_moments'+figureFileFormat, dpi=600)
     plt.close()
 
     ##########################################################################################
@@ -696,28 +703,224 @@ if plot_integrated_moments:
     plt.savefig(outDir+'integrated_Ms_positivity_in_time'+figureFileFormat, dpi=600)
     plt.close()
 
-    # Plot the gradient of each M moment for the ions
-    dM0_ion = np.gradient(M0_ion, time)
-    dM1_ion = np.gradient(M1_ion, time)
-    dM2par_ion = np.gradient(M2par_ion, time)
-    dM2perp_ion = np.gradient(M2perp_ion, time)
+if plot_stitched_integrated_moms:
+  print("Getting integrated moments")
+  if in_folders_orgnaized:
+    filename_ion = str(dataDir+'misc/'+simName+'-ion_integrated_moms.gkyl')
+  else:
+    filename_ion = str(dataDir + simName + '-ion_integrated_moms.gkyl')
+  pgData_ion = pg.GData(filename_ion)
+  M_ion = pgData_ion.get_values()
+  M0_ion = np.array(M_ion[:,0])
+  M1_ion = np.array(M_ion[:,1])
+  M2par_ion = np.array(M_ion[:,2])
+  M2perp_ion = np.array(M_ion[:,3])
+  time = np.squeeze(np.array(pgData_ion.get_grid()))
 
-    fig, ax = plt.subplots(2, 2, figsize=(12,10))
-    fig.suptitle('Time derivative of moments', fontsize=20)
+  orig_integ_moms_data = pg.GData(origFile)
+  orig_integ_moms = orig_integ_moms_data.get_values()
+  orig_time = np.squeeze(np.array(orig_integ_moms_data.get_grid()))
+  orig_M0_ion = np.array(orig_integ_moms[:,0])
+  orig_M1_ion = np.array(orig_integ_moms[:,1])
+  orig_M2par_ion = np.array(orig_integ_moms[:,2])
+  orig_M2perp_ion = np.array(orig_integ_moms[:,3])
 
-    plot_moment_data(dM0_ion, ax, fig, 'dM0 ion', 0, 0)
-    plot_moment_data(dM1_ion, ax, fig, 'dM1 ion', 0, 1)
-    plot_moment_data(dM2par_ion, ax, fig, 'dM2par ion', 1, 0)
-    ax[1,0].set_ylim(-5e32, 0)
-    print(dM2par_ion)
-    print(dM2perp_ion)
-    plot_moment_data(dM2perp_ion, ax, fig, 'dM2perp ion', 1, 0)
-    ax[1,1].set_ylim(-5e32, 0)
+  continued_time = time + orig_time[-1]
 
-    plt.tight_layout()
-    plt.savefig(outDir+'integrated_Ms_derivatives'+figureFileFormat, dpi=600)
-    plt.close()
+  fig, ax = plt.subplots(2,2, figsize=(12,12))
+  fig.suptitle('Integrated moments', fontsize=20)
+
+  ax[0,0].plot(orig_time, orig_M0_ion)
+  ax[0,0].plot(continued_time, M0_ion)
+  ax[0,0].set_title('M0')
+  ax[0,0].set_xlabel('Time')
+  ax[0,0].set_ylabel('Integrated M0')
+
+  ax[0,1].plot(orig_time, orig_M1_ion)
+  ax[0,1].plot(continued_time, M1_ion)
+  ax[0,1].set_title('M1')
+  ax[0,1].set_xlabel('Time')
+  ax[0,1].set_ylabel('Integrated M1')
+
+  ax[1,0].plot(orig_time, orig_M2par_ion)
+  ax[1,0].plot(continued_time, M2par_ion)
+  ax[1,0].set_title('M2 parallel')
+  ax[1,0].set_xlabel('Time')
+  ax[1,0].set_ylabel('Integrated M2 parallel')
+
+  ax[1,1].plot(orig_time, orig_M2perp_ion)
+  ax[1,1].plot(continued_time, M2perp_ion)
+  ax[1,1].set_title('M2 perpendicular')
+  ax[1,1].set_xlabel('Time')
+  ax[1,1].set_ylabel('Integrated M2 perpendicular')
+
+  plt.savefig(outDir + 'continued_integrated_moms.png')
+  plt.close()
+
+  # Get the derivatives
+  dM0_ion = np.gradient(M0_ion, continued_time)
+  dM1_ion = np.gradient(M1_ion, continued_time)
+  dM2par_ion = np.gradient(M2par_ion, continued_time)
+  dM2perp_ion = np.gradient(M2perp_ion, continued_time)
+
+  orig_dM0_ion = np.gradient(orig_M0_ion, orig_time)
+  orig_dM1_ion = np.gradient(orig_M1_ion, orig_time)
+  orig_dM2par_ion = np.gradient(orig_M2par_ion, orig_time)
+  orig_dM2perp_ion = np.gradient(orig_M2perp_ion, orig_time)
+
+  fig, ax = plt.subplots(2,2, figsize=(12,12))
+  fig.suptitle('Derivatives of integrated moments', fontsize=20)
+
+  ax[0,0].plot(time, dM0_ion)
+  # ax[0,0].set_xlim(0.1e-3, continued_time[-1])
+  ax[0,0].set_title('dM0/dt')
+  ax[0,0].set_xlabel('Time')
+  ax[0,0].set_ylabel('Derivative of integrated M0')
+
+  ax[0,1].plot(time, dM1_ion)
+  # ax[0,1].set_xlim(0.1e-3, continued_time[-1])
+  ax[0,1].set_title('dM1/dt')
+  ax[0,1].set_xlabel('Time')
+  ax[0,1].set_ylabel('Derivative of integrated M1')
+
+  ax[1,0].plot(time, dM2par_ion)
+  # ax[1,0].set_xlim(0.1e-3, continued_time[-1])
+  ax[1,0].set_title('dM2par/dt')
+  ax[1,0].set_xlabel('Time')
+  ax[1,0].set_ylabel('Derivative of integrated M2 parallel')
+
+  ax[1,1].plot(time, dM2perp_ion)
+  # ax[1,1].set_xlim(0.1e-3, continued_time[-1])
+  ax[1,1].set_title('dM2perp/dt')
+  ax[1,1].set_xlabel('Time')
+  ax[1,1].set_ylabel('Derivative of integrated M2 perpendicular')
+
+  dM0_ion = np.array(dM0_ion)
+  dM2_ion = np.gradient((M2par_ion + 2*M2perp_ion)/3, continued_time)
+  # for i in range(len(dM0_ion)):
+  #   # print(dM0_ion[i])
+  #   print(dM0_ion[i])
+
+  # print(dM0_ion[-10:])
+  # print(dM2par_ion[-10:])
+  # print(dM2perp_ion[-10:])
+
+
+
+  plt.savefig(outDir + 'continued_integrated_moms_derivatives.png')
+  plt.close()
+
+  # Take the last few thousand points and fit an exponential A * exp ( - B * t) + C
+  # to the data to get the decay rate of the moments
+
+  # Get the last 1000 points
+  print(len(time))
+  time_fit = time[2500:] * 1e5
+  M0_ion_fit = M0_ion[2500:] * 1e-19
+
+  plt.figure()
+  plt.plot(time_fit, M0_ion_fit)
+  plt.xlabel('Time, $\mu s$')
+  plt.ylabel('Integrated M0')
+  plt.savefig(outDir + 'continued_integrated_moms_fit_data.png')
+  plt.show()
+
+  plt.figure()
+  plt.plot(time_fit, np.gradient(M0_ion_fit, time_fit))
+  plt.xlabel('Time, $\mu s$')
+  plt.ylabel('dM0/dt')
+  plt.savefig(outDir + 'continued_integrated_moms_fit_data_derivative.png')
+  plt.show()
+
+
+  print(time_fit[0], time_fit[-1])
+  print(M0_ion_fit[0], M0_ion_fit[-1])
+
+  # Fit the data
+  def exp_func(t, A, B, C):
+    return A * np.exp(-B * t) + C
   
+  popt, pcov = curve_fit(exp_func, time_fit, M0_ion_fit, p0=[-1, 1e-2, 1.2])
+  print("Fitted parameters: ", popt)
+  print("Covariance: ", pcov)
+
+  # plt.figure()
+  # plt.plot(time_fit, M0_ion_fit, label='Data')
+  # plt.plot(time_fit, exp_func(time_fit, *popt), label='Fit')
+  # plt.xlabel('Time, $\mu s$')
+  # plt.ylabel('Integrated M0')
+  # plt.legend()
+  # plt.savefig(outDir + 'continued_integrated_moms_fit.png')
+  # plt.show()
+
+
+  # Aiming for total M0 of _
+
+  # Source value of 5.167229357643037 gives estimated total M0 of 5.8960673300757049e18
+
+  # source = np.array([5.167229357643037, 8, 50, 104.99260584034226, 120]) # e20
+
+  # total_M0 = np.array([5.8960673300757049, 6.4275217249160654, 8.7516599139106610, 11.113950849009511, 11.601065890663596]) # * 1e18
+
+if calculate_linear_interpolation:
+  #nu_frac = 2000
+  # Match values of M0 at 200 microseconds
+  source = np.array([130, 140, 90, 100 ])
+  total_M0 = np.array([1.696, 1.7705, 1.386, 1.465])
+
+  # Match values of M0 at 700 microseconds
+  source = np.array([66.5, 75])
+  total_M0 = np.array([1.41934, 1.52578])
+
+  # source = source[-2:]
+  # total_M0 = total_M0[-2:]
+
+  # Fit the data
+  slope, intercept, r_value, p_value, std_err = stats.linregress(source, total_M0)
+  print("Density slope: ", slope)
+  print("Density intercept: ", intercept)
+
+  desired_M0 = 1.206625073 # * 1e18
+
+  source_value = (desired_M0 - intercept) / slope
+  print("Source value: ", source_value)
+
+  plt.figure()
+  plt.plot(source, total_M0, 'o')
+  plt.xlabel('Source value')
+  plt.ylabel('Total M0')
+  plt.show()
+
+
+
+
+  # # # Given data
+  # density = np.array([7, 8, 4.9, 5.0, 5.1, 5.1])  # * 1e20
+  # temp = np.array([8, 8, 8,  7,   5,   4.5]) # * 1000 eV
+  # temp_perp = np.array([8, 8, 8, 7,   5,   4.5]) # * 1000 eV
+
+  # dM0dt = np.array([1.3923226063916447, 2.0573284939765226, -0.10634726688644137, -0.033237220318406246, 0.0022117866957648691, 0.13179623866701447]) # * 1e20
+  # dM2pardt = np.array([8.612791110485298, 7.041680807735213, 3.1902121153130635,   2.3500489302718726,   0.32168621218720443, 0.9607939139062436]) # * 1e31
+  # dM2perpdt = np.array([3.980110393731658, 3.355423283229991, 1.9796983923183357,  1.6576143444612292,   0.9053190525418571, 0.8214944078569516]) # * 1e32
+
+  # # Do linear regression for density to predict dM0dt
+
+  # # Enhanced collision frequency
+  # density = np.array([5., 8.]) # e20
+  # dM0dt = np.array([-1.2505208293494358, 21.183114872680245]) # e19
+
+  # slope, intercept, r_value, p_value, std_err = stats.linregress(density, dM0dt)
+  # print("Density slope: ", slope)
+  # print("Density intercept: ", intercept)
+  # print("Density r_value: ", r_value)
+  # print("Density p_value: ", p_value)
+  # print("Density std_err: ", std_err)
+
+  # print("Root predicted at density: ", -intercept/slope)
+  
+
+
+
 
 
 #   #....................................DEPRICATED CODE............................................#
