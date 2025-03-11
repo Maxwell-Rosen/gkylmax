@@ -22,6 +22,7 @@
 #include <gkyl_rect_grid.h>
 #include <gkyl_rect_decomp.h>
 #include <gkyl_position_map.h>
+#include <gkyl_velocity_map.h>
 
 // Define the context of the simulation. This is basically all the globals
 struct gk_mirror_ctx
@@ -81,24 +82,22 @@ struct gk_mirror_ctx
   double dt_failure_tol; // Minimum allowable fraction of initial time-step.
   int num_failures_max; // Maximum allowable number of consecutive small time-steps.
 
-  // Initial conditions reading
-  double *f_dist_ion;
-  double *f_dist_elc;
-  double *phi_vals;
-  double *psi_grid;
-  double *z_grid;
-  double *v_grid;
-  double *mu_grid;
-  double *B_grid;
-  int *dims;
-  int rank;
+  // Source parameters
+  double ion_source_amplitude;
+  double ion_source_sigma;
+  double ion_source_temp;
 
   // Boltzmann electron reading
-  struct gkyl_array *field;
-  struct gkyl_array *ion_M0;
-  double ni_sheath;
+  struct gkyl_array *f_ion;
+  struct gkyl_rect_grid f_ion_grid;
+  struct gkyl_basis phase_basis;
+  struct gkyl_range phase_local;
+  struct gkyl_range phase_local_ext;
   struct gkyl_position_map *position_map;
+  struct gkyl_velocity_map *velocity_map;
   double target_z_fa;
+  double tartget_vpar_fa;
+  double target_mu_fa;
 };
 
 // Evaluate collision frequencies
@@ -116,200 +115,44 @@ evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, 
   fout[0] = app->nuIon;
 }
 
-int get_lower_index(const int nx, const double *x, const double xP)
-  //  nx: number of cells in the dimension
-  //  x: grid points in the dimension
-  //  xP: point to interpolate at
-{
-  if(xP < x[0])
-      return 0;
-  else if(xP > x[nx-1])
-      return nx-2;
-  else
-  {
-    // Return the rounded down index of the point we are closest to in x
-    // use midpoint rule to find the right index
-    int i = 0;
-    int j = nx-1;
-    while(j-i > 1)
-    {
-      int k = (i+j)/2;
-      if(xP < x[k])
-        j = k;
-      else
-        i = k;
-    }
-    return i;
-  }
-}
-
-double LI_2D(const int *ncells,  // array of number of cells
-             const double *x,            // x grid values
-             const double *y,            // y grid values
-             const double *f,            // field of function values over the x, y grid (1-D row major)
-             const double *pt           // point to interpolate at
-             )
-{
-    int i = get_lower_index(ncells[0],x,pt[0]);
-    int j = get_lower_index(ncells[1],y,pt[1]);
-    int ip = i+1;
-    int jp = j+1;
-    double xWta = fmax(0, fmin(1, (pt[0] - x[i])/(x[i+1]-x[i])));
-    double yWta = fmax(0, fmin(1, (pt[1] - y[j])/(y[j+1]-y[j])));
-    double xWtb = 1-xWta;
-    double yWtb = 1-yWta;
-    return (f[i *ncells[1] +j ]*xWtb +                    // return f[i ][j ]*xWtb*yWtb +
-            f[ip*ncells[1] +j ]*xWta) * yWtb +            //        f[ip][j ]*xWta*yWtb +
-           (f[i *ncells[1] +jp]*xWtb +                    //        f[i ][jp]*xWtb*yWta +
-            f[ip*ncells[1] +jp]*xWta) * yWta;             //        f[ip][jp]*xWta*yWta;
-}
-
-double LI_3D(const int *ncells, // array of number of cells
-       const double *x, // z grid for data
-       const double *y, // vpar grid for data
-       const double *z, // mu grid for data
-       const double *f, // distribution function at grid locations
-       const double *pt // point to interpolate at
-       )
-{
-  int i = get_lower_index(ncells[0], x, pt[0]);
-  int j = get_lower_index(ncells[1], y, pt[1]);
-  int k = get_lower_index(ncells[2], z, pt[2]);
-  int ip = i + 1;
-  int jp = j + 1;
-  int kp = k + 1;
-  double xWta = fmax(0, fmin(1, (pt[0] - x[i]) / (x[ip] - x[i])));
-  double yWta = fmax(0, fmin(1, (pt[1] - y[j]) / (y[jp] - y[j])));
-  double zWta = fmax(0, fmin(1, (pt[2] - z[k]) / (z[kp] - z[k])));
-  double xWtb = 1 - xWta;
-  double yWtb = 1 - yWta;
-  double zWtb = 1 - zWta;
-  int nxy = ncells[1] * ncells[2];
-  int nx = ncells[1];
-  return (((f[i * nxy + j * nx + k] * xWtb + f[ip * nxy + j * nx + k] * xWta) * yWtb +
-       (f[i * nxy + jp * nx + k] * xWtb + f[ip * nxy + jp * nx + k] * xWta) * yWta) * zWtb +
-      ((f[i * nxy + j * nx + kp] * xWtb + f[ip * nxy + j * nx + kp] * xWta) * yWtb +
-       (f[i * nxy + jp * nx + kp] * xWtb + f[ip * nxy + jp * nx + kp] * xWta) * yWta) * zWta);
-}
-
-double LI_4D(const int *ncells, // array of number of cells
-             const double *x, // psi grid for data
-             const double *y, // z grid for data
-             const double *z, // vpar grid for data
-             const double *w, // mu grid for data
-             const double *f, // distribution function at grid locations
-             const double *pt // point to interpolate at
-             )
-{
-  // Heavily inspired by  yet adapted from the algorythm at 
-  // https://github.com/BYUignite/multilinear_interpolation
-  int i = get_lower_index(ncells[0],x,pt[0]); //16
-  int j = get_lower_index(ncells[1],y,pt[1]);
-  int k = get_lower_index(ncells[2],z,pt[2]);
-  int l = get_lower_index(ncells[3],w,pt[3]);
-
-  // Linear interpolate
-  int ip = i+1;
-  int jp = j+1;
-  int kp = k+1;
-  int lp = l+1;
-  double xWta = fmax(0, fmin(1, (pt[0] - x[i])/(x[i+1]-x[i])));
-  double yWta = fmax(0, fmin(1, (pt[1] - y[j])/(y[j+1]-y[j])));
-  double zWta = fmax(0, fmin(1, (pt[2] - z[k])/(z[k+1]-z[k])));
-  double wWta = fmax(0, fmin(1, (pt[3] - w[l])/(w[l+1]-w[l])));
-  double xWtb = 1-xWta;
-  double yWtb = 1-yWta;
-  double zWtb = 1-zWta;
-  double wWtb = 1-wWta;
-  int nwzy = ncells[3]*ncells[2]*ncells[1];
-  int nwz = ncells[3]*ncells[2];
-  int nw = ncells[3];
-  return (((f[i *nwzy + j *nwz + k *nw + l ]*xWtb +                                // return f[i ][j ][k ][l ]*xWtb*yWtb*zWtb*wWtb +
-            f[ip*nwzy + j *nwz + k *nw + l ]*xWta) * yWtb +                        //        f[ip][j ][k ][l ]*xWta*yWtb*zWtb*wWtb +
-            (f[i *nwzy + jp*nwz + k *nw + l ]*xWtb +                                //        f[i ][jp][k ][l ]*xWtb*yWta*zWtb*wWtb +
-            f[ip*nwzy + jp*nwz + k *nw + l ]*xWta) * yWta) * zWtb +                //        f[ip][jp][k ][l ]*xWta*yWta*zWtb*wWtb +
-          ((f[i *nwzy + j *nwz + kp*nw + l ]*xWtb +                                //        f[i ][j ][kp][l ]*xWtb*yWtb*zWta*wWtb +
-            f[ip*nwzy + j *nwz + kp*nw + l ]*xWta) * yWtb +                        //        f[ip][j ][kp][l ]*xWta*yWtb*zWta*wWtb +    
-            (f[i *nwzy + jp*nwz + kp*nw + l ]*xWtb +                                //        f[i ][jp][kp][l ]*xWtb*yWta*zWta*wWtb +
-            f[ip*nwzy + jp*nwz + kp*nw + l ]*xWta) * yWta) * zWta) * wWtb +        //        f[ip][jp][kp][l ]*xWta*yWta*zWta*wWtb +
-          (((f[i *nwzy + j *nwz + k *nw + lp]*xWtb +                                //        f[i ][j ][k ][lp]*xWtb*yWtb*zWtb*wWta +
-            f[ip*nwzy + j *nwz + k *nw + lp]*xWta) * yWtb +                        //        f[ip][j ][k ][lp]*xWta*yWtb*zWtb*wWta +
-            (f[i *nwzy + jp*nwz + k *nw + lp]*xWtb +                                //        f[i ][jp][k ][lp]*xWtb*yWta*zWtb*wWta +
-            f[ip*nwzy + jp*nwz + k *nw + lp]*xWta) * yWta) * zWtb +                //        f[ip][jp][k ][lp]*xWta*yWta*zWtb*wWta +
-          ((f[i *nwzy + j *nwz + kp*nw + lp]*xWtb +                                //        f[i ][j ][kp][lp]*xWtb*yWtb*zWta*wWta +
-            f[ip*nwzy + j *nwz + kp*nw + lp]*xWta) * yWtb +                        //        f[ip][j ][kp][lp]*xWta*yWtb*zWta*wWta +    
-            (f[i *nwzy + jp*nwz + kp*nw + lp]*xWtb +                                //        f[i ][jp][kp][lp]*xWtb*yWta*zWta*wWta +
-            f[ip*nwzy + jp*nwz + kp*nw + lp]*xWta) * yWta) * zWta) * wWta;         //        f[ip][jp][kp][lp]*xWta*yWta*zWta*wWta;
-}
-
-double* load_binary_file(const char* filename, size_t* num_elements) {
-    FILE* file = fopen(filename, "rb");
-    // Determine the size of the file
-    fseek(file, 0, SEEK_END);
-    long file_size = ftell(file);
-    rewind(file);
-    *num_elements = file_size / sizeof(double);
-    double* data = (double*)malloc(file_size);
-    size_t elements_read = fread(data, sizeof(double), *num_elements, file);
-    fclose(file);
-    return data;
-}
-
-void
-read_ion_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx app = *(struct gk_mirror_ctx*)ctx;
-  double* f_dist = app.f_dist_ion;
-  double* z_grid = app.z_grid;
-  double* v_grid = app.v_grid;
-  double* mu_grid = app.mu_grid;
-  int* dims = app.dims;
-
-  // Must convert the point xn from cartesian to polar
-  double z = xn[0];
-  double vpar = xn[1];
-  double mu = xn[2];
-
-  double interp_pt[3];
-  interp_pt[0] = z;
-  interp_pt[2] = vpar;
-  interp_pt[3] = mu;
-
-  double interp_val = LI_3D(dims, z_grid, v_grid, mu_grid, f_dist, interp_pt);
-  if (interp_val < 0.0) {
-    interp_val = 0.0;
-  }
-  fout[0] = interp_val;
-}
-
 void
 load_ion_donor(void* ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  struct gkyl_rect_grid field_grid, mc2nu_pos_grid, M0_grid;
-  struct gkyl_array *field, *mc2nu_pos, *M0;
+  struct gkyl_rect_grid mc2nu_pos_grid, f_ion_grid, mc2nu_vel_grid;
+  struct gkyl_array *mc2nu_pos, *f_ion, *mc2nu_vel;
 
-  field     = gkyl_grid_array_new_from_file(&field_grid, 
-    "64-cells/gk_wham-field_300.gkyl");
   mc2nu_pos = gkyl_grid_array_new_from_file(&mc2nu_pos_grid, 
-    "64-cells/gk_wham-mc2nu_pos.gkyl");
-  M0 = gkyl_grid_array_new_from_file(&M0_grid, 
-    "64-cells/gk_wham-ion_M0_300.gkyl");
+    "initial-condition/gk_wham-mc2nu_pos.gkyl");
+  f_ion     = gkyl_grid_array_new_from_file(&f_ion_grid, 
+    "initial-condition/gk_wham-ion_26.gkyl");
+  mc2nu_vel = gkyl_grid_array_new_from_file(&mc2nu_vel_grid, 
+    "initial-condition/gk_wham-mapc2p_vel.gkyl");
 
-  app->field = field;
-  app->ion_M0 = M0;
+  app->f_ion = f_ion;
+  app->f_ion_grid = f_ion_grid;
 
   int lower_cell[] = {1};
-  int upper_cell[] = {M0_grid.cells[0]};
+  int upper_cell[] = {mc2nu_pos_grid.cells[0]};
 
   int poly_order = 1;
   int cdim = 1;
+  int vdim = 2;
   struct gkyl_basis basis;
   gkyl_cart_modal_serendip(&basis, cdim, poly_order);
 
+  struct gkyl_basis phase_basis;
+  gkyl_cart_modal_gkhybrid(&phase_basis, cdim, vdim);
+  app->phase_basis = phase_basis;
+
   int nghost[] = { 0, 0, 0 };
   struct gkyl_range local, local_ext;
-  gkyl_create_grid_ranges(&M0_grid, nghost, &local, &local_ext);
+  gkyl_create_grid_ranges(&mc2nu_pos_grid, nghost, &local, &local_ext);
+
+  struct gkyl_range phase_local, phase_local_ext;
+  gkyl_create_grid_ranges(&f_ion_grid, nghost, &phase_local, &phase_local_ext);
+  app->phase_local = phase_local;
+  app->phase_local_ext = phase_local_ext;
 
   // Create a position map object
   struct gkyl_position_map_inp pmap_inp = { };
@@ -318,15 +161,20 @@ load_ion_donor(void* ctx)
     mc2nu_pos_grid, local, local_ext, local, local_ext, basis);
   gkyl_position_map_set(gpm, mc2nu_pos);
   app->position_map = gpm;
-}
 
-void
-free_ion_donor(void* ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  gkyl_array_release(app->field);
-  gkyl_array_release(app->ion_M0);
-  gkyl_position_map_release(app->position_map);
+  // Create a velocity map object
+  int ghost_vel[vdim];
+  for (int d=0; d<vdim; d++) ghost_vel[d] = 0;
+  struct gkyl_range local_vel, local_ext_vel; // local, local-ext conf-space ranges
+  gkyl_create_grid_ranges(&mc2nu_vel_grid, ghost_vel, &local_ext_vel, &local_vel);
+
+  struct gkyl_velocity_map *gvm = gkyl_malloc(sizeof(struct gkyl_velocity_map));
+  gvm->grid_vel = mc2nu_vel_grid;
+  gvm->local_ext_vel = local_ext_vel;
+  gvm->vmap_ho = mc2nu_vel;
+  gkyl_cart_modal_serendip(&gvm->vmap_basis_ho, 1, 1);
+
+  app->velocity_map = gvm;
 }
 
 static double
@@ -340,18 +188,49 @@ invert_position_map_func(double x, void *ctx)
   return xfa[0] - app->target_z_fa;
 }
 
-void
-botlzmann_elc_density(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+static double
+invert_velocity_map_vpar_func(double vpar, void *ctx)
 {
-  // Since boltzmann electrons are particle density and gyrokinetic sims take guiding center density
-  // Boltzmann electron simulations have n_i = n_e, and we must determine the ion density
-  // using the polarization density.
-
   struct gk_mirror_ctx *app = ctx;
-  double z_field_aligned = xn[0];
+  double xc[] = {0, vpar, 0.5};
+  double xfa[3];
+  printf("evaluating at vpar = %g\n", vpar);
+  gkyl_velocity_map_eval_c2p(app->velocity_map, xc, xfa);
+  printf("vpar = %g maps to vpar_phys = %g \n", vpar, xfa[1]);
+  return xfa[1] - app->tartget_vpar_fa;
+}
 
+static double
+invert_velocity_map_mu_func(double mu, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  double xc[] = {0, 0, mu};
+  double xfa[3];
+  gkyl_velocity_map_eval_c2p(app->velocity_map, xc, xfa);
+  printf("mu = %g maps to mu_phys = %g \n", mu, xfa[2]);
+  return xfa[2] - app->target_mu_fa;
+}
+
+void
+read_ion_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+
+  // Must convert the point xn from cartesian to polar
+  double z_field_aligned = xn[0];
+  double vpar_field_aligned = xn[1];
+  double mu_field_aligned = xn[2];
+
+  // I have concerns about the non-uniform velocity grid
+  // Safe to just assume that it's comming from a uniform space grid
+  // Assume same non-uniform velocity grid, so I can use the functions in this file rather than the velocity map.
+  // The grid of the distribution function will have the -1 to 1 limits, so we must map from these coordinates to non-uniform coordinates
+  
   // First we must determine the computational coordinate in non-uniform space
   app->target_z_fa = z_field_aligned;
+  app->tartget_vpar_fa = vpar_field_aligned;
+  app->target_mu_fa = mu_field_aligned;
+
   double interval_lower = -M_PI;
   double interval_upper = M_PI;
   double interval_lower_eval = invert_position_map_func(interval_lower, ctx);
@@ -360,72 +239,100 @@ botlzmann_elc_density(double t, const double *GKYL_RESTRICT xn, double *GKYL_RES
     interval_lower, interval_upper, interval_lower_eval, interval_upper_eval, 10, 1e-6);
   double z_computational = res.res;
 
-  // Now we calculate the value of the field at this computational coordinate
-  int cdim = 1;
-  struct gkyl_basis basis = app->position_map->basis;
-  struct gkyl_rect_grid grid = app->position_map->grid;
-  struct gkyl_range local = app->position_map->local;
+  interval_lower = -1.0;
+  interval_upper = 1.0;
+  interval_lower_eval = invert_velocity_map_vpar_func(interval_lower, ctx);
+  interval_upper_eval = invert_velocity_map_vpar_func(interval_upper, ctx);
+  res = gkyl_ridders(invert_velocity_map_vpar_func, ctx,
+    interval_lower, interval_upper, interval_lower_eval, interval_upper_eval, 10, 1e-6);
+  double vpar_computational = res.res;
 
+  interval_lower = 0.0;
+  interval_upper = 1.0;
+  interval_lower_eval = invert_velocity_map_mu_func(interval_lower, ctx);
+  interval_upper_eval = invert_velocity_map_mu_func(interval_upper, ctx);
+  res = gkyl_ridders(invert_velocity_map_mu_func, ctx,
+    interval_lower, interval_upper, interval_lower_eval, interval_upper_eval, 10, 1e-6);
+  double mu_computational = res.res;
+
+
+  // Now we calculate the value of f at this computational coordinate
   // I'm limiting myself to 1x
-  int idx_temp = local.lower[0] + (int) floor((z_computational - grid.lower[0]) / grid.dx[0]);
-  idx_temp = GKYL_MAX2(local.lower[0], GKYL_MIN2(local.upper[0], idx_temp));
-  long lidx = gkyl_range_idx(&local, &idx_temp);
-  const double *field_coeffs = gkyl_array_cfetch(app->ion_M0, lidx);
-  double cxc[3];
-  gkyl_rect_grid_cell_center(&grid, &idx_temp, cxc);
-  double x_log = (z_computational - cxc[0]) / (grid.dx[0]*0.5);
-  double M0_val = basis.eval_expand(&x_log, field_coeffs);
+  int pdim = app->cdim + app->vdim;
+  double xc[3] = {z_computational, vpar_computational, mu_computational};
+  int pidx[3];
+  struct gkyl_basis basis = app->phase_basis;
+  struct gkyl_rect_grid grid = app->f_ion_grid;
+  struct gkyl_range local = app->phase_local;
 
-  fout[0] = M0_val;
+  for (int i = 0; i < pdim; i++) {
+    int idx_temp = local.lower[i] + (int) floor((xc[i] - grid.lower[i]) / grid.dx[i]);
+    idx_temp = GKYL_MAX2(local.lower[i], GKYL_MIN2(local.upper[i], idx_temp));
+    pidx[i] = idx_temp; 
+  }
+  long lidx = gkyl_range_idx(&local, pidx);
+
+  const double *f_c = gkyl_array_cfetch(app->f_ion, lidx);
+  double cxc[3];
+  gkyl_rect_grid_cell_center(&grid, pidx, cxc);
+  for (int i = 0; i < pdim; i++) {
+    xc[i] = (xc[i] - cxc[i]) / (grid.dx[i]*0.5);
+  }
+  double f_val = basis.eval_expand(xc, f_c);
+  printf("Evaluating ion distribution function at (%g, %g, %g) = %g\n", z_field_aligned, vpar_field_aligned, mu_field_aligned, f_val);
+  fout[0] = f_val;
 }
 
 void
-boltzmann_elc_upar(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+free_ion_donor(void* ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  gkyl_array_release(app->f_ion);
+  gkyl_velocity_map_release(app->velocity_map);
+  gkyl_position_map_release(app->position_map);
+}
+
+void
+eval_density_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  double z = xn[0];
+  double src_amp = app->ion_source_amplitude;
+  double z_src = 0.0;
+  double src_sigma = app->ion_source_sigma;
+  double src_amp_floor = src_amp*1e-2;
+  if (fabs(z) <= 1.0)
+  {
+    fout[0] = fmax(src_amp_floor, (src_amp / sqrt(2.0 * M_PI * pow(src_sigma, 2))) *
+      exp(-1 * pow((z - z_src), 2) / (2.0 * pow(src_sigma, 2))));
+  }
+  else
+  {
+    fout[0] = 1e-16;
+  }
+}
+
+void
+eval_upar_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   fout[0] = 0.0;
 }
 
 void
-boltzmann_elc_T(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+eval_temp_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  fout[0] = app->Te0;
-}
-
-void
-botlzmann_elc_field(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  // There is no position map in the polarization solve presently. It needs that
-  double z_field_aligned = xn[0];
-
-  // First we must determine the computational coordinate in non-uniform space
-  app->target_z_fa = z_field_aligned;
-  double interval_lower = -M_PI;
-  double interval_upper = M_PI;
-  double interval_lower_eval = invert_position_map_func(interval_lower, ctx);
-  double interval_upper_eval = invert_position_map_func(interval_upper, ctx);
-  struct gkyl_qr_res res = gkyl_ridders(invert_position_map_func, ctx,
-    interval_lower, interval_upper, interval_lower_eval, interval_upper_eval, 10, 1e-6);
-  double z_computational = res.res;
-
-  // Now we calculate the value of the field at this computational coordinate
-  int cdim = 1;
-  struct gkyl_basis basis = app->position_map->basis;
-  struct gkyl_rect_grid grid = app->position_map->grid;
-  struct gkyl_range local = app->position_map->local;
-
-  // I'm limiting myself to 1x
-  int idx_temp = local.lower[0] + (int) floor((z_computational - grid.lower[0]) / grid.dx[0]);
-  idx_temp = GKYL_MAX2(local.lower[0], GKYL_MIN2(local.upper[0], idx_temp));
-  long lidx = gkyl_range_idx(&local, &idx_temp);
-  const double *field_coeffs = gkyl_array_cfetch(app->field, lidx);
-  double cxc[3];
-  gkyl_rect_grid_cell_center(&grid, &idx_temp, cxc);
-  double x_log = (z_computational - cxc[0]) / (grid.dx[0]*0.5);
-  double field_val = basis.eval_expand(&x_log, field_coeffs);
-
-  fout[0] = field_val;
+  double z = xn[0];
+  double TSrc0 = app->ion_source_temp;
+  double Tfloor = TSrc0*1e-2;
+  if (fabs(z) <= 1.0)
+  {
+    fout[0] = TSrc0;
+  }
+  else
+  {
+    fout[0] = Tfloor;
+  }
 }
 
 void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *ctx)
@@ -501,10 +408,15 @@ output_diagnostics(struct gk_mirror_ctx ctx, void *app_inp, struct gkyl_app_args
     printf("vti = %.4e, vte = %.4e, c_s = %.4e, mu_ti = %.4e, mu_te = %.4e\n", ctx.vti, ctx.vte, ctx.c_s, ctx.mi * pow(ctx.vti, 2.) / (2. * ctx.B_p),
      ctx.me * pow(ctx.vte, 2.) / (2. * ctx.B_p));
     printf("omega_ci = %.4e, rho_s = %.4e, kperp = %.4e\n", ctx.omega_ci, ctx.rho_s, ctx.kperp);
+    printf("nu_elc = %.4e, nu_ion = %.4e\n", ctx.nuElc, ctx.nuIon);
     printf("1/nuElc = %.4e, 1/nuIon = %.4e\n", 1./ctx.nuElc, 1./ctx.nuIon);
     printf("App name = %s\n", app->name);
     printf("Using positivity = %d\n", app->enforce_positivity);
     printf("Nonuniform mapping fraction = %g\n", app->geometry.position_map_info.map_strength);
+    // Print the clock time
+    time_t now;
+    time(&now);
+    printf("Date and time: %s", ctime(&now));
   }
 }
 
@@ -561,8 +473,8 @@ create_ctx(void)
   double kperp = kperpRhos / rho_s;
 
   // Geometry parameters.
-  double z_min = -M_PI + 1e-1;
-  double z_max = M_PI - 1e-1;
+  double z_min = -M_PI + 1e-2;
+  double z_max = M_PI - 1e-2;
   double psi_min = 1e-6; // Go smaller. 1e-4 might be too small
   double psi_eval= 1e-3;
   double psi_max = 3e-3; // aim for 2e-2
@@ -573,16 +485,21 @@ create_ctx(void)
   double vpar_max_ion = 30 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   int Nx = 16;
-  int Nz = 64;
+  int Nz = 288;
   int Nvpar = 32; // 96 uniform
   int Nmu = 32;  // 192 uniform
   int poly_order = 1;
   double t_end = 100e-6;//100e-6;
-  int num_frames = 300;
+  int num_frames = 100;
   double write_phase_freq = 1;
   int int_diag_calc_num = num_frames*100;
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
   int num_failures_max = 20; // Maximum allowable number of consecutive small time-steps.
+
+  // Source parameters
+  double ion_source_amplitude = 45e21;
+  double ion_source_sigma = 0.1;
+  double ion_source_temp = 9000. * eV;
 
   struct gk_mirror_ctx ctx = {
     .cdim = cdim,
@@ -631,6 +548,9 @@ create_ctx(void)
     .int_diag_calc_num = int_diag_calc_num,
     .dt_failure_tol = dt_failure_tol,
     .num_failures_max = num_failures_max,
+    .ion_source_amplitude = ion_source_amplitude,
+    .ion_source_sigma = ion_source_sigma,
+    .ion_source_temp = ion_source_temp,
   };
   load_ion_donor(&ctx);
   return ctx;
@@ -705,53 +625,12 @@ int main(int argc, char **argv)
   }
 #endif
 
-  struct gkyl_gyrokinetic_projection elc_ic = {
-    .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
-    .density = botlzmann_elc_density,
-    .ctx_density = &ctx,
-    .temp = boltzmann_elc_T,
-    .ctx_temp = &ctx,
-    .upar = boltzmann_elc_upar,
-    .ctx_upar = &ctx,
-  };
-  struct gkyl_gyrokinetic_species elc = {
-    .name = "elc",
-    .charge = ctx.qe,
-    .mass = ctx.me,
-    .lower = {-1.0, 0.0},
-    .upper = { 1.0, 1.0},
-    .cells = { cells_v[0], cells_v[1]},
-    .polarization_density = ctx.n0,
-    .no_by = true,
-    .projection = elc_ic,
-    .mapc2p = {
-      .mapping = mapc2p_vel_elc,
-      .ctx = &ctx,
-    },
-    .bcx = {
-      .lower={.type = GKYL_SPECIES_GK_SHEATH,},
-      .upper={.type = GKYL_SPECIES_GK_SHEATH,},
-    },
-    .collisions = {
-      .collision_id = GKYL_LBO_COLLISIONS,
-      .normNu = true,
-      .n_ref = ctx.n0,
-      .T_ref = ctx.Te0,
-      .nuFrac = ctx.elc_nuFrac,
-      .ctx = &ctx,
-      .self_nu = evalNuElc,
-      .num_cross_collisions = 1,
-      .collide_with = {"ion"},
-    },
-    .num_diag_moments = 8,
-    .diag_moments = {"BiMaxwellianMoments", "M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp" },
-  };
-
   struct gkyl_gyrokinetic_projection ion_ic = {
       .proj_id = GKYL_PROJ_FUNC,
       .func = read_ion_distf,
       .ctx_func = &ctx,  
   };
+
   struct gkyl_gyrokinetic_species ion = {
     .name = "ion",
     .charge = ctx.qi,
@@ -760,20 +639,36 @@ int main(int argc, char **argv)
     .upper = { 1.0, 1.0},
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
-    .scale_with_polarization = true,
     .no_by = true,
-    // .projection = ion_ic,
+    .projection = ion_ic,
     .mapc2p = {
       .mapping = mapc2p_vel_ion,
       .ctx = &ctx,
     },
+    .source = {
+      .source_id = GKYL_BFLUX_SOURCE,
+      .source_species = "ion",
+      .evolve = true,
+      .M0_feedback_strength = 1.0e3,
+
+      .num_sources = 1,
+      .projection[0] = {
+        .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM, 
+        .ctx_density = &ctx,
+        .density = eval_density_ion_source,
+        .ctx_upar = &ctx,
+        .upar= eval_upar_ion_source,
+        .ctx_temp = &ctx,
+        .temp = eval_temp_ion_source,      
+      }, 
+      .diagnostics = { 
+        .num_diag_moments = 5,
+        .diag_moments = { "M0", "M1", "M2", "M2par", "M2perp" },
+      },
+    },
     .bcx = {
       .lower={.type = GKYL_SPECIES_GK_SHEATH,},
       .upper={.type = GKYL_SPECIES_GK_SHEATH,},
-    },    
-    .init_from_file = {
-      .type = GKYL_IC_IMPORT_F,
-      .file_name = "64-cells/gk_wham-ion_300.gkyl",
     },
     .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
@@ -781,23 +676,31 @@ int main(int argc, char **argv)
       .n_ref = ctx.n0,
       .T_ref = ctx.Ti0,
       .ctx = &ctx,
-      .self_nu = evalNuIon,
-      .num_cross_collisions = 1,
-      .collide_with = {"elc"},
+      .self_nu = evalNuIon, 
+      .write_diagnostics = true, 
+      .nuFrac = 2000.0,
     },
     .num_diag_moments = 8,
-    .diag_moments = {"BiMaxwellianMoments", "M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp" },
+    .diag_moments = { "BiMaxwellianMoments", "M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp" },
+    .num_integrated_diag_moments = 1,
+    .integrated_diag_moments = { "FourMoments" },
+    .time_rate_diagnostics = true,
+
+    .boundary_flux_diagnostics = {
+      .num_integrated_diag_moments = 1,
+      .integrated_diag_moments = { "FourMoments" },
+    },
   };
+  
   struct gkyl_gyrokinetic_field field = {
-    .polarization_bmag = ctx.B_p, 
-    .fem_parbc = GKYL_FEM_PARPROJ_NONE,
-    .kperpSq = pow(ctx.kperp, 2.),
-    .polarization_potential = botlzmann_elc_field,
-    .polarization_potential_ctx = &ctx,
+    .gkfield_id = GKYL_GK_FIELD_BOLTZMANN,
+    .electron_mass = ctx.me,
+    .electron_charge = ctx.qe,
+    .electron_temp = ctx.Te0,
   };
 
 struct gkyl_efit_inp efit_inp = {
-    .filepath = "/global/homes/m/mhrosen/scratch/gkylmax/eqdsk/wham.geqdsk",
+    .filepath = "/home/mr1884/scratch/gkylmax/eqdsk/wham.geqdsk",
     .rz_poly_order = 2,                     // polynomial order for psi(R,Z) used for field line tracing
     .flux_poly_order = 1,                   // polynomial order for fpol(psi)
   };
@@ -807,6 +710,7 @@ struct gkyl_efit_inp efit_inp = {
     .zmin = -2.0,  // Z of lower boundary
     .zmax =  2.0,  // Z of upper boundary 
   };
+  
   struct gkyl_gk app_inp = {  // GK app
     .name = "gk_wham",
     .cdim = ctx.cdim ,  .vdim = ctx.vdim,
@@ -821,15 +725,15 @@ struct gkyl_efit_inp efit_inp = {
       .world = {ctx.psi_eval, 0.0},
       .efit_info = efit_inp,
       .mirror_grid_info = grid_inp,
-      .position_map_info = {
-        .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
-        .map_strength = 0.666,
-      },
+      // .position_map_info = {
+      //   .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
+      //   .map_strength = 0.2,
+      // },
     },
     .num_periodic_dir = 0,
     .periodic_dirs = {},
-    .num_species = 2,
-    .species = {elc, ion},
+    .num_species = 1,
+    .species = {ion},
     .field = field,
     .parallelism = {
       .use_gpu = app_args.use_gpu,

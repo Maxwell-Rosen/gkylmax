@@ -617,8 +617,8 @@ create_ctx(void)
   int Nvpar = 32; // 96 uniform
   int Nmu = 32;  // 192 uniform
   int poly_order = 1;
-  double t_end = 10e-6;//100e-6;
-  int num_frames = 10;
+  double t_end = 10e-3;//100e-6;
+  int num_frames = 1e3;
   double write_phase_freq = 1;
   int int_diag_calc_num = num_frames*100;
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
@@ -818,7 +818,7 @@ int main(int argc, char **argv)
       .source_id = GKYL_BFLUX_SOURCE,
       .source_species = "ion",
       .evolve = true,
-      // .M0_feedback_strength = 1.0e2,
+      .M0_feedback_strength = 1.0e3,
 
       .num_sources = 1,
       .projection[0] = {
@@ -974,7 +974,7 @@ struct gkyl_efit_inp efit_inp = {
   double init_time = t_curr;
   while ((t_curr < t_end) && (step <= app_args.num_steps)) {
     struct gkyl_update_status status = gkyl_gyrokinetic_update(app, dt);    
-    if (step % 1 == 0 || step == 1) {
+    if (step % 1000 == 0 || step == 1) {
       gkyl_gyrokinetic_app_cout(app, stdout, "Taking time-step %ld at t = %g ...", step, t_curr);
       gkyl_gyrokinetic_app_cout(app, stdout, " dt = %g ... ", status.dt_actual);
       end_time = clock();

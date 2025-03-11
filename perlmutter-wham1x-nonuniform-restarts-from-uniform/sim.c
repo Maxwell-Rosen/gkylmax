@@ -99,7 +99,7 @@ struct gk_mirror_ctx
   struct gkyl_array *ion_M0;
   double ni_sheath;
   struct gkyl_position_map *position_map;
-  double boltzmann_z_fa;
+  double target_z_fa;
 };
 
 // Evaluate collision frequencies
@@ -139,7 +139,7 @@ read_ion_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
 }
 
 void
-load_boltzmann_elec(void* ctx)
+load_ion_donor(void* ctx)
 {
   struct gk_mirror_ctx *app = ctx;
   struct gkyl_rect_grid mc2nu_pos_grid, f_ion_grid;
@@ -185,7 +185,7 @@ load_boltzmann_elec(void* ctx)
 }
 
 void
-free_boltzmann_elec(void* ctx)
+free_ion_donor(void* ctx)
 {
   struct gk_mirror_ctx *app = ctx;
   gkyl_array_release(app->field);
@@ -201,7 +201,7 @@ invert_position_map_func(double x, void *ctx)
   double xfa[3];
   gkyl_position_map_eval_mc2nu(app->position_map, xc, xfa);
   // printf("xc = %g maps to xfa = %g \n", x, xfa[0]);
-  return xfa[0] - app->boltzmann_z_fa;
+  return xfa[0] - app->target_z_fa;
 }
 
 void
@@ -215,7 +215,7 @@ botlzmann_elc_density(double t, const double *GKYL_RESTRICT xn, double *GKYL_RES
   double z_field_aligned = xn[0];
 
   // First we must determine the computational coordinate in non-uniform space
-  app->boltzmann_z_fa = z_field_aligned;
+  app->target_z_fa = z_field_aligned;
   double interval_lower = -M_PI;
   double interval_upper = M_PI;
   double interval_lower_eval = invert_position_map_func(interval_lower, ctx);
@@ -264,7 +264,7 @@ botlzmann_elc_field(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTR
   double z_field_aligned = xn[0];
 
   // First we must determine the computational coordinate in non-uniform space
-  app->boltzmann_z_fa = z_field_aligned;
+  app->target_z_fa = z_field_aligned;
   double interval_lower = -M_PI;
   double interval_upper = M_PI;
   double interval_lower_eval = invert_position_map_func(interval_lower, ctx);
@@ -496,7 +496,7 @@ create_ctx(void)
     .dt_failure_tol = dt_failure_tol,
     .num_failures_max = num_failures_max,
   };
-  load_boltzmann_elec(&ctx);
+  load_ion_donor(&ctx);
   return ctx;
 }
 
@@ -785,7 +785,7 @@ int main(int argc, char **argv)
   freeresources:
   // Free resources after simulation completion.
   gkyl_gyrokinetic_app_release(app);
-  free_boltzmann_elec(&ctx);
+  free_ion_donor(&ctx);
   gkyl_gyrokinetic_comms_release(comm);
 
 #ifdef GKYL_HAVE_MPI
