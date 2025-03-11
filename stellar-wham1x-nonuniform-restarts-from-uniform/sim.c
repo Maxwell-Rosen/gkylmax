@@ -89,25 +89,40 @@ struct gk_mirror_ctx
 
   // Boltzmann electron reading
   struct gkyl_array *f_ion;
+  struct gkyl_array *jacobtot;
+  struct gkyl_array *ion_jacobvel;
   struct gkyl_rect_grid f_ion_grid;
   struct gkyl_basis phase_basis;
   struct gkyl_range phase_local;
   struct gkyl_range phase_local_ext;
   struct gkyl_position_map *position_map;
-  struct gkyl_velocity_map *velocity_map;
   double target_z_fa;
   double tartget_vpar_fa;
   double target_mu_fa;
 };
 
-// Evaluate collision frequencies
-void
-evalNuElc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  fout[0] = app->nuElc;
+  double vpar_max_ion = app->vpar_max_ion;
+  double mu_max_ion = app->mu_max_ion;
+
+  double cvpar = vc[0], cmu = vc[1];
+  double b = 1.45;
+  double linear_velocity_threshold = 1./6.;
+  double frac_linear = 1/b*atan(linear_velocity_threshold*tan(b));
+  if (fabs(cvpar) < frac_linear) {
+    double func_frac = tan(frac_linear*b) / tan(b);
+    vp[0] = vpar_max_ion*func_frac*cvpar/frac_linear;
+  }
+  else {
+    vp[0] = vpar_max_ion*tan(cvpar*b)/tan(b);
+  }
+  // Quadratic map in mu.
+  vp[1] = mu_max_ion*pow(cmu,2);
 }
 
+// Evaluate collision frequencies
 void
 evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
@@ -119,18 +134,23 @@ void
 load_ion_donor(void* ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  struct gkyl_rect_grid mc2nu_pos_grid, f_ion_grid, mc2nu_vel_grid;
-  struct gkyl_array *mc2nu_pos, *f_ion, *mc2nu_vel;
+  struct gkyl_rect_grid mc2nu_pos_grid, f_ion_grid, jacobtot_grid, ion_jacobvel_grid;
+  struct gkyl_array *mc2nu_pos, *f_ion, *jacobtot, *ion_jacobvel;
 
   mc2nu_pos = gkyl_grid_array_new_from_file(&mc2nu_pos_grid, 
     "initial-condition/gk_wham-mc2nu_pos.gkyl");
   f_ion     = gkyl_grid_array_new_from_file(&f_ion_grid, 
     "initial-condition/gk_wham-ion_26.gkyl");
-  mc2nu_vel = gkyl_grid_array_new_from_file(&mc2nu_vel_grid, 
-    "initial-condition/gk_wham-mapc2p_vel.gkyl");
+  jacobtot = gkyl_grid_array_new_from_file(&jacobtot_grid,
+    "initial-condition/gk_wham-jacobtot.gkyl");
+  ion_jacobvel = gkyl_grid_array_new_from_file(&ion_jacobvel_grid,
+    "initial-condition/gk_wham-ion_jacobvel.gkyl");
+  
 
   app->f_ion = f_ion;
   app->f_ion_grid = f_ion_grid;
+  app->jacobtot = jacobtot;
+  app->ion_jacobvel = ion_jacobvel;
 
   int lower_cell[] = {1};
   int upper_cell[] = {mc2nu_pos_grid.cells[0]};
@@ -161,20 +181,6 @@ load_ion_donor(void* ctx)
     mc2nu_pos_grid, local, local_ext, local, local_ext, basis);
   gkyl_position_map_set(gpm, mc2nu_pos);
   app->position_map = gpm;
-
-  // Create a velocity map object
-  int ghost_vel[vdim];
-  for (int d=0; d<vdim; d++) ghost_vel[d] = 0;
-  struct gkyl_range local_vel, local_ext_vel; // local, local-ext conf-space ranges
-  gkyl_create_grid_ranges(&mc2nu_vel_grid, ghost_vel, &local_ext_vel, &local_vel);
-
-  struct gkyl_velocity_map *gvm = gkyl_malloc(sizeof(struct gkyl_velocity_map));
-  gvm->grid_vel = mc2nu_vel_grid;
-  gvm->local_ext_vel = local_ext_vel;
-  gvm->vmap_ho = mc2nu_vel;
-  gkyl_cart_modal_serendip(&gvm->vmap_basis_ho, 1, 1);
-
-  app->velocity_map = gvm;
 }
 
 static double
@@ -184,7 +190,6 @@ invert_position_map_func(double x, void *ctx)
   double xc[] = {x};
   double xfa[3];
   gkyl_position_map_eval_mc2nu(app->position_map, xc, xfa);
-  // printf("xc = %g maps to xfa = %g \n", x, xfa[0]);
   return xfa[0] - app->target_z_fa;
 }
 
@@ -192,23 +197,20 @@ static double
 invert_velocity_map_vpar_func(double vpar, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  double xc[] = {0, vpar, 0.5};
+  double xc[] = {vpar, 0.0};
   double xfa[3];
-  printf("evaluating at vpar = %g\n", vpar);
-  gkyl_velocity_map_eval_c2p(app->velocity_map, xc, xfa);
-  printf("vpar = %g maps to vpar_phys = %g \n", vpar, xfa[1]);
-  return xfa[1] - app->tartget_vpar_fa;
+  mapc2p_vel_ion(0, xc, xfa, ctx);
+  return xfa[0] - app->tartget_vpar_fa;
 }
 
 static double
 invert_velocity_map_mu_func(double mu, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  double xc[] = {0, 0, mu};
+  double xc[] = {0.0, mu};
   double xfa[3];
-  gkyl_velocity_map_eval_c2p(app->velocity_map, xc, xfa);
-  printf("mu = %g maps to mu_phys = %g \n", mu, xfa[2]);
-  return xfa[2] - app->target_mu_fa;
+  mapc2p_vel_ion(0, xc, xfa, ctx);
+  return xfa[1] - app->target_mu_fa;
 }
 
 void
@@ -222,6 +224,7 @@ read_ion_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   double mu_field_aligned = xn[2];
 
   // I have concerns about the non-uniform velocity grid
+  // Must use the same one in the input file
   // Safe to just assume that it's comming from a uniform space grid
   // Assume same non-uniform velocity grid, so I can use the functions in this file rather than the velocity map.
   // The grid of the distribution function will have the -1 to 1 limits, so we must map from these coordinates to non-uniform coordinates
@@ -273,14 +276,21 @@ read_ion_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT f
   long lidx = gkyl_range_idx(&local, pidx);
 
   const double *f_c = gkyl_array_cfetch(app->f_ion, lidx);
+  const double *jacobvel_c = gkyl_array_cfetch(app->ion_jacobvel, lidx);
+
+  int cidx[1] = {pidx[0]};
+  long config_lidx = gkyl_range_idx(&app->position_map->local, cidx);
+  const double *jacobtot_c = gkyl_array_cfetch(app->jacobtot, config_lidx);
+
   double cxc[3];
   gkyl_rect_grid_cell_center(&grid, pidx, cxc);
   for (int i = 0; i < pdim; i++) {
     xc[i] = (xc[i] - cxc[i]) / (grid.dx[i]*0.5);
   }
   double f_val = basis.eval_expand(xc, f_c);
-  printf("Evaluating ion distribution function at (%g, %g, %g) = %g\n", z_field_aligned, vpar_field_aligned, mu_field_aligned, f_val);
-  fout[0] = f_val;
+  double config_xc[1] = {xc[0]};
+  double jacobtot_val = app->position_map->basis.eval_expand(xc, jacobtot_c);
+  fout[0] = f_val / jacobvel_c[0] / jacobtot_val;
 }
 
 void
@@ -288,7 +298,6 @@ free_ion_donor(void* ctx)
 {
   struct gk_mirror_ctx *app = ctx;
   gkyl_array_release(app->f_ion);
-  gkyl_velocity_map_release(app->velocity_map);
   gkyl_position_map_release(app->position_map);
 }
 
@@ -333,49 +342,6 @@ eval_temp_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_REST
   {
     fout[0] = Tfloor;
   }
-}
-
-void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  double vpar_max_ion = app->vpar_max_ion;
-  double mu_max_ion = app->mu_max_ion;
-
-  double cvpar = vc[0], cmu = vc[1];
-  double b = 1.45;
-  double linear_velocity_threshold = 1./6.;
-  double frac_linear = 1/b*atan(linear_velocity_threshold*tan(b));
-  if (fabs(cvpar) < frac_linear) {
-    double func_frac = tan(frac_linear*b) / tan(b);
-    vp[0] = vpar_max_ion*func_frac*cvpar/frac_linear;
-  }
-  else {
-    vp[0] = vpar_max_ion*tan(cvpar*b)/tan(b);
-  }
-  // Quadratic map in mu.
-  vp[1] = mu_max_ion*pow(cmu,2);
-}
-
-void mapc2p_vel_elc(double t, const double *vc, double* GKYL_RESTRICT vp, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  double vpar_max_elc = app->vpar_max_elc;
-  double mu_max_elc = app->mu_max_elc;
-
-  double cvpar = vc[0], cmu = vc[1];
-  double b = 1.45;
-  double linear_velocity_threshold = 1./6.;
-  double frac_linear = 1/b*atan(linear_velocity_threshold*tan(b));
-  if (fabs(cvpar) < frac_linear) {
-    double func_frac = tan(frac_linear*b) / tan(b);
-    vp[0] = vpar_max_elc*func_frac*cvpar/frac_linear;
-  }
-  else {
-    vp[0] = vpar_max_elc*tan(cvpar*b)/tan(b);
-  }
-  // vp[0] = vc[0] * vpar_max_elc;
-  // Quadratic map in mu.
-  vp[1] = mu_max_elc*pow(cmu,2);
 }
 
 void

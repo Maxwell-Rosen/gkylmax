@@ -8,9 +8,12 @@ saveLoc="python-plots/Distribution-functions-figures-for-movies/$name"
 saveMovieLoc="python-plots/Distribution-functions-movies/$name"
 hiresLoc="../stellar-wham1x-kinetic-compare-collision-frequencies"
 
-
-pgkyl gk_wham-ion_M0_0.gkyl interp pl --title "M0" --saveas "M0.png" --no-show --title "128 cells"&
-pgkyl "64-cells/gk_wham-ion_M0_300.gkyl" interp pl --title "M0" --saveas "M0-300.png" --no-show --title "64 cells"&
+pgkyl gk_wham-ion_0.gkyl interp sel --z0 288 pl --title "initial" &
+pgkyl initial-condition/gk_wham-ion_26.gkyl interp sel --z0 288 pl --title "donor" &
+pgkyl gk_wham-ion_M0_0.gkyl interp pl --title "M0 initial" &
+pgkyl initial-condition/gk_wham-ion_M0_26.gkyl interp pl --title "M0 donor" &
+# pgkyl gk_wham-ion_M0_0.gkyl interp pl --title "M0" --saveas "M0.png" --no-show --title "128 cells"&
+# pgkyl "64-cells/gk_wham-ion_M0_300.gkyl" interp pl --title "M0" --saveas "M0-300.png" --no-show --title "64 cells"&
 # # Negativity of the T_par
 # pgkyl "BiMaxwellianMoments/"$name"-"$species"_BiMaxwellianMoments_[0-9]*.gkyl" interp anim --float &
 # pgkyl "Field/$name-field_[0-9]*.gkyl" interp anim --float &
