@@ -627,7 +627,7 @@ create_ctx(void)
   // Source parameters
   double ion_source_amplitude = 45e21;
   double ion_source_sigma = 0.1;
-  double ion_source_temp = 9000. * eV;
+  double ion_source_temp = 5000. * eV;
 
   struct gk_mirror_ctx ctx = {
     .cdim = cdim,
@@ -772,6 +772,10 @@ int main(int argc, char **argv)
       .mapping = mapc2p_vel_elc,
       .ctx = &ctx,
     },
+    .bcx = {
+      .lower={.type = GKYL_SPECIES_GK_SHEATH,},
+      .upper={.type = GKYL_SPECIES_GK_SHEATH,},
+    },
     .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
       .normNu = true,
@@ -801,11 +805,41 @@ int main(int argc, char **argv)
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
     .no_by = true,
-    .projection = ion_ic,
+    .projection = ion_ic,    
+    // .init_from_file = {
+    //   .type = GKYL_IC_IMPORT_F,
+    //   .file_name = "initial-condition/gk_wham-ion_123.gkyl",
+    // },
     .mapc2p = {
       .mapping = mapc2p_vel_ion,
       .ctx = &ctx,
     },
+    .source = {
+      .source_id = GKYL_BFLUX_SOURCE,
+      .source_species = "ion",
+      .evolve = true,
+      .M0_target = 1.2e19,
+      .M0_feedback_strength = 1.0e4,
+
+      .num_sources = 1,
+      .projection[0] = {
+        .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM, 
+        .ctx_density = &ctx,
+        .density = eval_density_ion_source,
+        .ctx_upar = &ctx,
+        .upar= eval_upar_ion_source,
+        .ctx_temp = &ctx,
+        .temp = eval_temp_ion_source,      
+      }, 
+      .diagnostics = { 
+        .num_diag_moments = 5,
+        .diag_moments = { "BiMaxwellianMoments", "M0", "M1", "M2", "M2par", "M2perp" },
+      },
+    },
+    .bcx = {
+      .lower={.type = GKYL_SPECIES_GK_SHEATH,},
+      .upper={.type = GKYL_SPECIES_GK_SHEATH,},
+    },    
     .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
       .normNu = true,
@@ -867,8 +901,8 @@ struct gkyl_efit_inp efit_inp = {
       //   .maximum_slope_at_min_B = 4.0,
       // },
     },
-    .num_periodic_dir = 1,
-    .periodic_dirs = {0},
+    .num_periodic_dir = 0,
+    .periodic_dirs = {},
     .num_species = 1,
     .species = {ion},
     .field = field,

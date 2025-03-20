@@ -9,9 +9,12 @@ saveLoc="python-plots/gk_wham"
 # pgkyl old-run-before-restart-fix/misc/gk_wham-ion_integrated_moms.gkyl pl --title "ion integrated moms" -s &
 # pgkyl old-run-before-restart-fix/misc/gk_wham-ion_source_integrated_moms.gkyl pl --title "source" -s &
 
-pgkyl old-run-before-restart-fix/BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_0.gkyl -t "initial" old-run-before-restart-fix/BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_141.gkyl -t "last step" interp pl --title "BiMaxwellianMoments evolution" -f0 &
+# pgkyl old-run-before-restart-fix/BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_0.gkyl -t "initial" old-run-before-restart-fix/BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_141.gkyl -t "last step" interp pl --title "BiMaxwellianMoments evolution" -f0 &
 # pgkyl old-run-before-restart-fix/BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_141.gkyl interp pl --title "1" -s &
 # pgkyl "gk_wham-ion_BiMaxwellianMoments_[0-9]*.gkyl" interp anim --float &
+# pgkyl gk_wham-ion_integrated_moms.gkyl pl &
+pgkyl gk_wham-ion_integrated_moms.gkyl pl &
+
 # pgkyl "gk_wham-ion_[0-9]*.gkyl" interp sel --z0 288 anim --float --title "f" &
 # pgkyl "gk_wham-ion_source_[0-9]*.gkyl" interp sel --z0 288 anim --float --title "source" &
 

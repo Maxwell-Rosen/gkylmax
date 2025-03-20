@@ -12,8 +12,9 @@ saveLoc="python-plots/gk_wham"
 # pgkyl old-run-before-restart-fix/BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_0.gkyl -t "initial" old-run-before-restart-fix/BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_141.gkyl -t "last step" interp pl --title "BiMaxwellianMoments evolution" -f0 &
 # pgkyl old-run-before-restart-fix/BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_141.gkyl interp pl --title "1" -s &
 # pgkyl "gk_wham-ion_BiMaxwellianMoments_[0-9]*.gkyl" interp anim --float &
-# pgkyl misc/gk_wham-ion_integrated_moms.gkyl pl &
-# pgkyl misc/gk_wham-ion_source_integrated_moms.gkyl pl &
+pgkyl gk_wham-ion_integrated_moms.gkyl ../stellar-wham1x-288z-run-with-source-reduced-mass/misc/gk_wham-ion_integrated_moms.gkyl pl -f0 &
+# pgkyl gk_wham-ion_source_integrated_moms.gkyl pl &
+# pgkyl gk_wham-ion_integrated_moms.gkyl pl &
 # pgkyl "gk_wham-ion_[0-9]*.gkyl" interp sel --z0 288 anim --float --title "f" &
 # pgkyl "gk_wham-ion_source_[0-9]*.gkyl" interp sel --z0 288 anim --float --title "source" &
 
@@ -28,6 +29,7 @@ saveLoc="python-plots/gk_wham"
 # pgkyl gk_wham-ion_integrated_moms.gkyl pl --saveas "$saveLoc-ion_integrated_moms.png" &
 
 # pgkyl BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_0.gkyl -t 'vtpar2' gk_wham-ion_nu_sum_0.gkyl -t 'nu' activ -t 'vtpar2' interp sel -c2 ev -t 'transit' '2 vtpar2 sqrt /' activ -t 'nu' interp ev -t 'collision' '1 nu /' activ -t 'collision','transit' pl --logy -f0 --legend --xlabel 'z_comp' --ylabel 't, s' --title 'Collision and transit times' --saveas "$saveLoc-ion-collision-transit.png" &
+# pgkyl gk_wham-ion_BiMaxwellianMoments_59.gkyl -t 'vtpar2' gk_wham-ion_nu_sum_59.gkyl -t 'nu' activ -t 'vtpar2' interp sel -c2 ev -t 'transit' '2 vtpar2 sqrt /' activ -t 'nu' interp ev -t 'collision' '2000 nu /' activ -t 'collision','transit' pl --logy -f0 --legend --xlabel 'z_comp' --ylabel 't, s' --title 'Ion collision and transit times' --saveas "$saveLoc-ion-collision-transit.png" &
 
 # pgkyl source-100/misc/gk_wham-ion_integrated_moms.gkyl ../stellar-wham1x-192z-run-with-source-reduced-mass/source-90/misc/gk_wham-ion_integrated_moms.gkyl \
 #   ../stellar-wham1x-192z-run-with-source-reduced-mass/source-140-nu-2000/misc/gk_wham-ion_integrated_moms.gkyl source-130/misc/gk_wham-ion_integrated_moms.gkyl \
