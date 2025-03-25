@@ -1,0 +1,4 @@
+
+pgkyl gkyldata/gk_boundary_flux_1x2v_p1-ion_bflux_xupper_integrated_moms.gkyl pl --saveas gk_boundary_flux_1x2v_p1-ion_bflux_xupper_integrated_moms.png --no-show&
+pgkyl gkyldata/gk_boundary_flux_1x2v_p1_nux_center-ion_bflux_xupper_integrated_moms.gkyl pl --saveas gk_boundary_flux_1x2v_p1_nux_center-ion_bflux_xupper_integrated_moms.png --no-show&
+pgkyl gkyldata/gk_boundary_flux_1x2v_p1_nux_edge-ion_bflux_xupper_integrated_moms.gkyl pl --saveas gk_boundary_flux_1x2v_p1_nux_edge-ion_bflux_xupper_integrated_moms.png --no-show&

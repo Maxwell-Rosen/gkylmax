@@ -132,11 +132,17 @@ INCLUDES = -I${G0_INC_DIR} -I${LAPACK_INC} -I${SUPERLU_INC} -I${MPI_INC_DIR} -I$
 LIB_DIRS = -L${LAPACK_LIB_DIR} -L${SUPERLU_LIB_DIR} -L${MPI_LIB_DIR} -L${LUA_LIB_DIR} -L${NCCL_LIB_DIR} -L${CUDSS_LIB_DIR}
 EXT_LIBS = ${LAPACK_LIB} ${SUPERLU_LIB} ${MPI_RPATH} ${MPI_LIBS} ${LUA_RPATH} ${LUA_LIBS} ${NCCL_LIBS} ${CUDSS_RPATH} ${CUDSS_LIBS} -lm -lpthread -ldl
 
-all: rt_vlasov_twostream_p2
+all: rt_gk_boundary_flux_1x2v_p1 rt_gk_boundary_flux_1x2v_p1_nux_edge rt_gk_boundary_flux_1x2v_p1_nux_center
 
-rt_vlasov_twostream_p2: rt_vlasov_twostream_p2.c
-	 ${CC} ${CFLAGS} ${INCLUDES} rt_vlasov_twostream_p2.c -o rt_vlasov_twostream_p2 -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
+rt_gk_boundary_flux_1x2v_p1: rt_gk_boundary_flux_1x2v_p1.c
+	 ${CC} ${CFLAGS} ${INCLUDES} rt_gk_boundary_flux_1x2v_p1.c -o rt_gk_boundary_flux_1x2v_p1 -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
+
+rt_gk_boundary_flux_1x2v_p1_nux_edge: rt_gk_boundary_flux_1x2v_p1_nux_edge.c
+	 ${CC} ${CFLAGS} ${INCLUDES} rt_gk_boundary_flux_1x2v_p1_nux_edge.c -o rt_gk_boundary_flux_1x2v_p1_nux_edge -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
+
+rt_gk_boundary_flux_1x2v_p1_nux_center: rt_gk_boundary_flux_1x2v_p1_nux_center.c
+	 ${CC} ${CFLAGS} ${INCLUDES} rt_gk_boundary_flux_1x2v_p1_nux_center.c -o rt_gk_boundary_flux_1x2v_p1_nux_center -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
 
 clean:
-	rm -rf rt_vlasov_twostream_p2 rt_vlasov_twostream_p2.dSYM
+	rm -rf rt_gk_boundary_flux_1x2v_p1 rt_gk_boundary_flux_1x2v_p1_nux_edge rt_gk_boundary_flux_1x2v_p1_nux_center *.dSYM
 
