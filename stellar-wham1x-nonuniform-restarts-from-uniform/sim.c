@@ -138,13 +138,13 @@ load_ion_donor(void* ctx)
   struct gkyl_array *mc2nu_pos, *f_ion, *jacobtot, *ion_jacobvel;
 
   mc2nu_pos = gkyl_grid_array_new_from_file(&mc2nu_pos_grid, 
-    "initial-condition/gk_wham-mc2nu_pos.gkyl");
+    "../initial-conditions/boltz-elc-288z-nu2000/gk_wham-mc2nu_pos.gkyl");
   f_ion     = gkyl_grid_array_new_from_file(&f_ion_grid, 
-    "initial-condition/gk_wham-ion_26.gkyl");
+    "../initial-conditions/boltz-elc-288z-nu2000/gk_wham-ion_400.gkyl");
   jacobtot = gkyl_grid_array_new_from_file(&jacobtot_grid,
-    "initial-condition/gk_wham-jacobtot.gkyl");
+    "../initial-conditions/boltz-elc-288z-nu2000/gk_wham-jacobtot.gkyl");
   ion_jacobvel = gkyl_grid_array_new_from_file(&ion_jacobvel_grid,
-    "initial-condition/gk_wham-ion_jacobvel.gkyl");
+    "../initial-conditions/boltz-elc-288z-nu2000/gk_wham-ion_jacobvel.gkyl");
   
 
   app->f_ion = f_ion;
@@ -451,21 +451,21 @@ create_ctx(void)
   double vpar_max_ion = 30 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   int Nx = 16;
-  int Nz = 288;
+  int Nz = 216;
   int Nvpar = 32; // 96 uniform
   int Nmu = 32;  // 192 uniform
   int poly_order = 1;
-  double t_end = 100e-6;//100e-6;
-  int num_frames = 100;
+  double t_end = 4e-3;//100e-6;
+  int num_frames = 4e2;
   double write_phase_freq = 1;
   int int_diag_calc_num = num_frames*100;
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
   int num_failures_max = 20; // Maximum allowable number of consecutive small time-steps.
 
   // Source parameters
-  double ion_source_amplitude = 45e21;
+  double ion_source_amplitude = 7.39462473347548e22;
   double ion_source_sigma = 0.1;
-  double ion_source_temp = 9000. * eV;
+  double ion_source_temp = 5000. * eV;
 
   struct gk_mirror_ctx ctx = {
     .cdim = cdim,
@@ -612,12 +612,9 @@ int main(int argc, char **argv)
       .ctx = &ctx,
     },
     .source = {
-      .source_id = GKYL_BFLUX_SOURCE,
-      .source_species = "ion",
-      .evolve = true,
-      .M0_feedback_strength = 1.0e3,
-
+      .source_id = GKYL_PROJ_SOURCE,
       .num_sources = 1,
+      .evolve = true,
       .projection[0] = {
         .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM, 
         .ctx_density = &ctx,
@@ -628,8 +625,8 @@ int main(int argc, char **argv)
         .temp = eval_temp_ion_source,      
       }, 
       .diagnostics = { 
-        .num_diag_moments = 5,
-        .diag_moments = { "M0", "M1", "M2", "M2par", "M2perp" },
+        .num_diag_moments = 6,
+        .diag_moments = { "BiMaxwellianMoments", "M0", "M1", "M2", "M2par", "M2perp" },
       },
     },
     .bcx = {
@@ -691,10 +688,12 @@ struct gkyl_efit_inp efit_inp = {
       .world = {ctx.psi_eval, 0.0},
       .efit_info = efit_inp,
       .mirror_grid_info = grid_inp,
-      // .position_map_info = {
-      //   .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
-      //   .map_strength = 0.2,
-      // },
+      .position_map_info = {
+        .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
+        .map_strength = 0.25,
+        .maximum_slope_at_max_B = 1.0,
+        .maximum_slope_at_min_B = 4.0,
+      },
     },
     .num_periodic_dir = 0,
     .periodic_dirs = {},

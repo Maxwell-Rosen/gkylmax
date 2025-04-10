@@ -120,11 +120,11 @@ load_ion_donor(void* ctx)
   struct gkyl_array *field, *mc2nu_pos, *M0;
 
   field     = gkyl_grid_array_new_from_file(&field_grid, 
-    "initial-condition/gk_wham-field_26.gkyl");
+    "/home/mr1884/scratch/gkylmax/initial-conditions/boltz-elc-288z-nu2000/gk_wham-field_400.gkyl");
   mc2nu_pos = gkyl_grid_array_new_from_file(&mc2nu_pos_grid, 
-    "initial-condition/gk_wham-mc2nu_pos.gkyl");
+    "/home/mr1884/scratch/gkylmax/initial-conditions/boltz-elc-288z-nu2000/gk_wham-mc2nu_pos.gkyl");
   M0 = gkyl_grid_array_new_from_file(&M0_grid, 
-    "initial-condition/gk_wham-ion_M0_26.gkyl");
+    "/home/mr1884/scratch/gkylmax/initial-conditions/boltz-elc-288z-nu2000/gk_wham-ion_M0_400.gkyl");
 
   app->field = field;
   app->ion_M0 = M0;
@@ -677,6 +677,7 @@ int main(int argc, char **argv)
       .ctx = &ctx,
       .self_nu = evalNuElc,
       .num_cross_collisions = 1,
+      .write_diagnostics = true, 
       .collide_with = {"ion"},
     },
     .num_diag_moments = 8,
@@ -698,34 +699,13 @@ int main(int argc, char **argv)
       .mapping = mapc2p_vel_ion,
       .ctx = &ctx,
     },
-    .source = {
-      .source_id = GKYL_BFLUX_SOURCE,
-      .source_species = "ion",
-      .evolve = true,
-      .M0_feedback_strength = 1.0e3,
-
-      .num_sources = 1,
-      .projection[0] = {
-        .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM, 
-        .ctx_density = &ctx,
-        .density = eval_density_ion_source,
-        .ctx_upar = &ctx,
-        .upar= eval_upar_ion_source,
-        .ctx_temp = &ctx,
-        .temp = eval_temp_ion_source,      
-      }, 
-      .diagnostics = { 
-        .num_diag_moments = 5,
-        .diag_moments = { "M0", "M1", "M2", "M2par", "M2perp" },
-      },
-    },
     .bcx = {
       .lower={.type = GKYL_SPECIES_GK_SHEATH,},
       .upper={.type = GKYL_SPECIES_GK_SHEATH,},
     },    
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
-      .file_name = "initial-condition/gk_wham-ion_26.gkyl",
+      .file_name = "/home/mr1884/scratch/gkylmax/initial-conditions/boltz-elc-288z-nu2000/gk_wham-ion_400.gkyl",
     },
     .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
@@ -736,7 +716,8 @@ int main(int argc, char **argv)
       .self_nu = evalNuIon,
       .num_cross_collisions = 1,
       .collide_with = {"elc"},
-      .nuFrac = 2000.0,
+      .write_diagnostics = true, 
+      // .nuFrac = 2000.0,
     },
     .num_diag_moments = 8,
     .diag_moments = { "BiMaxwellianMoments", "M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp" },

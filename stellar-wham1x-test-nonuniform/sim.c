@@ -72,10 +72,6 @@ struct gk_mirror_ctx
   double dt_failure_tol; // Minimum allowable fraction of initial time-step.
   int num_failures_max; // Maximum allowable number of consecutive small time-steps.
 
-  // Source parameters
-  double ion_source_amplitude;
-  double ion_source_sigma;
-  double ion_source_temp;
   
   // Initial conditions reading
   double *f_dist_ion;
@@ -420,49 +416,6 @@ free_wham_distf(void* ctx)
   free(app->dims);
 }
 
-void
-eval_density_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  double z = xn[0];
-  double src_amp = app->ion_source_amplitude;
-  double z_src = 0.0;
-  double src_sigma = app->ion_source_sigma;
-  double src_amp_floor = src_amp*1e-2;
-  if (fabs(z) <= 1.0)
-  {
-    fout[0] = fmax(src_amp_floor, (src_amp / sqrt(2.0 * M_PI * pow(src_sigma, 2))) *
-      exp(-1 * pow((z - z_src), 2) / (2.0 * pow(src_sigma, 2))));
-  }
-  else
-  {
-    fout[0] = 1e-16;
-  }
-}
-
-void
-eval_upar_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  fout[0] = 0.0;
-}
-
-void
-eval_temp_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  double z = xn[0];
-  double TSrc0 = app->ion_source_temp;
-  double Tfloor = TSrc0*1e-2;
-  if (fabs(z) <= 1.0)
-  {
-    fout[0] = TSrc0;
-  }
-  else
-  {
-    fout[0] = Tfloor;
-  }
-}
-
 void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
@@ -617,17 +570,12 @@ create_ctx(void)
   int Nvpar = 32; // 96 uniform
   int Nmu = 32;  // 192 uniform
   int poly_order = 1;
-  double t_end = 4e-3;//100e-6;
-  int num_frames = 4e2;
+  double t_end = 1e-7;//100e-6;
+  int num_frames = 10;
   double write_phase_freq = 1;
   int int_diag_calc_num = num_frames*100;
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
   int num_failures_max = 20; // Maximum allowable number of consecutive small time-steps.
-
-  // Source parameters
-  double ion_source_amplitude = 45e21;
-  double ion_source_sigma = 0.1;
-  double ion_source_temp = 5000. * eV;
 
   struct gk_mirror_ctx ctx = {
     .cdim = cdim,
@@ -676,9 +624,6 @@ create_ctx(void)
     .int_diag_calc_num = int_diag_calc_num,
     .dt_failure_tol = dt_failure_tol,
     .num_failures_max = num_failures_max,
-    .ion_source_amplitude = ion_source_amplitude,
-    .ion_source_sigma = ion_source_sigma,
-    .ion_source_temp = ion_source_temp,
   };
   load_wham_distf(&ctx);
   return ctx;
@@ -805,36 +750,10 @@ int main(int argc, char **argv)
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
     .no_by = true,
-    .projection = ion_ic,    
-    // .init_from_file = {
-    //   .type = GKYL_IC_IMPORT_F,
-    //   .file_name = "initial-condition/gk_wham-ion_123.gkyl",
-    // },
+    .projection = ion_ic,
     .mapc2p = {
       .mapping = mapc2p_vel_ion,
       .ctx = &ctx,
-    },
-    .source = {
-      .source_id = GKYL_BFLUX_SOURCE,
-      .source_species = "ion",
-      .evolve = true,
-      .M0_target = 1.2e19,
-      .M0_feedback_strength = 1.0e3,
-
-      .num_sources = 1,
-      .projection[0] = {
-        .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM, 
-        .ctx_density = &ctx,
-        .density = eval_density_ion_source,
-        .ctx_upar = &ctx,
-        .upar= eval_upar_ion_source,
-        .ctx_temp = &ctx,
-        .temp = eval_temp_ion_source,      
-      }, 
-      .diagnostics = { 
-        .num_diag_moments = 6,
-        .diag_moments = { "BiMaxwellianMoments", "M0", "M1", "M2", "M2par", "M2perp" },
-      },
     },
     .bcx = {
       .lower={.type = GKYL_SPECIES_GK_SHEATH,},
@@ -878,7 +797,6 @@ struct gkyl_efit_inp efit_inp = {
     .rclose = 0.2, // closest R to region of interest
     .zmin = -2.0,  // Z of lower boundary
     .zmax =  2.0,  // Z of upper boundary 
-    // .use_cubics = true,
   };
   struct gkyl_gk app_inp = {  // GK app
     .name = "gk_wham",
@@ -894,12 +812,12 @@ struct gkyl_efit_inp efit_inp = {
       .world = {ctx.psi_eval, 0.0},
       .efit_info = efit_inp,
       .mirror_grid_info = grid_inp,
-      // .position_map_info = {
-      //   .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
-      //   .map_strength = 0.2,
-      //   .maximum_slope_at_max_B = 1.0,
-      //   .maximum_slope_at_min_B = 4.0,
-      // },
+      .position_map_info = {
+        .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
+        .map_strength = 0.2,
+        .maximum_slope_at_max_B = 1.0,
+        .maximum_slope_at_min_B = 4.0,
+      },
     },
     .num_periodic_dir = 0,
     .periodic_dirs = {},

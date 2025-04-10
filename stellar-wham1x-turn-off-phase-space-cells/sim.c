@@ -625,7 +625,7 @@ create_ctx(void)
   int num_failures_max = 20; // Maximum allowable number of consecutive small time-steps.
 
   // Source parameters
-  double ion_source_amplitude = 45e21;
+  double ion_source_amplitude = 7.39462473347548e22;
   double ion_source_sigma = 0.1;
   double ion_source_temp = 5000. * eV;
 
@@ -805,23 +805,19 @@ int main(int argc, char **argv)
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
     .no_by = true,
-    .projection = ion_ic,    
-    // .init_from_file = {
-    //   .type = GKYL_IC_IMPORT_F,
-    //   .file_name = "initial-condition/gk_wham-ion_123.gkyl",
-    // },
+
+    .init_from_file = {
+      .type = GKYL_IC_IMPORT_F,
+      .file_name = "/home/mr1884/scratch/gkylmax/initial-conditions/boltz-elc-288z-nu2000/gk_wham-ion_400.gkyl",
+    },
     .mapc2p = {
       .mapping = mapc2p_vel_ion,
       .ctx = &ctx,
     },
     .source = {
-      .source_id = GKYL_BFLUX_SOURCE,
-      .source_species = "ion",
-      .evolve = true,
-      .M0_target = 1.2e19,
-      .M0_feedback_strength = 1.0e3,
-
+      .source_id = GKYL_PROJ_SOURCE,
       .num_sources = 1,
+      .evolve = true,
       .projection[0] = {
         .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM, 
         .ctx_density = &ctx,
@@ -839,7 +835,7 @@ int main(int argc, char **argv)
     .bcx = {
       .lower={.type = GKYL_SPECIES_GK_SHEATH,},
       .upper={.type = GKYL_SPECIES_GK_SHEATH,},
-    },    
+    },
     .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
       .normNu = true,

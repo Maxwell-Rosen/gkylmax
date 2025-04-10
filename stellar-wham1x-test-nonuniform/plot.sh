@@ -4,23 +4,18 @@
 name="gk_wham"
 # name="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nosource_nonuniform"
 species="elc"
-saveLoc="python-plots/gk_wham"
+# saveLoc="python-plots/Distribution-functions-figures-for-movies/$name"
+# saveMovieLoc="python-plots/Distribution-functions-movies/$name"
+# hiresLoc="../stellar-wham1x-kinetic-compare-collision-frequencies"
 
+# pgkyl gk_wham-jacobgeo.gkyl interp pl --saveas "python-plots/$name-jacobgeo.png" --no-show --title "Jacobgeo" &
+# pgkyl gk_wham-jacobtot.gkyl interp pl --saveas "python-plots/$name-jacobtot.png" --no-show --title "Jacobtot" &
+# pgkyl gk_wham-cmag.gkyl interp pl --saveas "python-plots/$name-cmag.png" --no-show --title "Cmag" &
+# pgkyl gk_wham-bmag.gkyl interp pl --saveas "python-plots/$name-bmag.png" --no-show --title "Bmag" &
+# pgkyl gk_wham-mc2nu_pos.gkyl interp pl --saveas "python-plots/$name-mc2nu_pos.png" --no-show --title "Mc2nu_pos" &
 
-pgkyl gk_wham-ion_BiMaxwellianMoments_0.gkyl -t 'vtpar2_i' gk_wham-ion_nu_sum_0.gkyl -t 'nu_i' gk_wham-elc_BiMaxwellianMoments_0.gkyl -t 'vtpar2_e' gk_wham-elc_nu_sum_0.gkyl -t 'nu_e' activ -t 'vtpar2_i' interp sel -c2 ev -t 'transit_i' '2 vtpar2_i sqrt /' activ -t 'nu_i' interp ev -t 'collision_i' '1 nu_i /' activ -t 'vtpar2_e' interp sel -c2 ev -t 'transit_e' '2 vtpar2_e sqrt /' activ -t 'nu_e' interp ev -t 'collision_e' '1 nu_e /' activ -t 'collision_i','transit_i','collision_e','transit_e' pl --logy -f0 --legend --xlabel 'z_comp' --ylabel 't, s' --title 'Collision and transit times' --saveas "$saveLoc-collision-and-transit-times.png" &
-
-# pgkyl "gk_wham-elc_M0_0.gkyl" interp pl --title "Initial electron density" --saveas "$saveLoc-kinetic-elc-M0-0.png" --ylabel "Density" --xlabel "z" &
-# pgkyl "gk_wham-field_0.gkyl" interp pl --title "Initial field" --saveas "$saveLoc-field-0.png" --ylabel "Potential, V" --xlabel "z" &
-# pgkyl "gk_wham-ion_M0_0.gkyl" interp pl --title "Initial ion density" --saveas "$saveLoc-kinetic-ion-M0-0.png" --ylabel "Density" --xlabel "z" &
-# pgkyl "gk_wham-elc_M0_0.gkyl" -t "ion" "gk_wham-ion_M0_0.gkyl" -t "elc" interp pl --logy -f0 --title "Initial density" --saveas "$saveLoc-kinetic-M0-0.png" --ylabel "Density" --xlabel "z" &
-
-# pgkyl "64-cells/gk_wham-ion_M0_300.gkyl" interp pl --logy --title "300 microseconds donor ion density" --saveas "$saveLoc-boltzmann-ion-M0-300.png" --ylabel "Density" --xlabel "z" &
-# pgkyl "64-cells/gk_wham-field_300.gkyl" interp pl --title "300 microseconds donor field" --saveas "$saveLoc-boltzmann-field-300.png" --ylabel "Potential, V" --xlabel "z" &
-
-# pgkyl "288-cells-uniform/gk_wham-ion_M0_300.gkyl" interp pl --title "300 microseconds uniform ion density" --saveas "$saveLoc-uniform-ion-M0-300.png" --ylabel "Density" --xlabel "z" &
-# pgkyl "288-cells-uniform/gk_wham-field_300.gkyl" interp pl --title "300 microseconds uniform field" --saveas "$saveLoc-uniform-field-300.png" --ylabel "Potential, V" --xlabel "z" &
-
-# pgkyl 64-cells/gk_wham-field_300.gkyl gk_wham-field_0.gkyl interp pl --title "300 microseconds" --saveas "$saveLoc-field-comparison.png" &
+# pgkyl data-unif/gk_wham-ion_BiMaxwellianMoments_0.gkyl data-nonunif/gk_wham-ion_BiMaxwellianMoments_0.gkyl interp sel -c0 pl --logy -f0 --title "Ion density"&
+pgkyl data-unif/gk_wham-field_0.gkyl data-nonunif/gk_wham-field_0.gkyl interp pl --title "Potential" -f0 &
 
 # # Negativity of the T_par
 # pgkyl "BiMaxwellianMoments/"$name"-"$species"_BiMaxwellianMoments_[0-9]*.gkyl" interp anim --float &
