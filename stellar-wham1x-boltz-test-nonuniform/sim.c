@@ -86,334 +86,11 @@ struct gk_mirror_ctx
   int rank;
 };
 
-// Evaluate collision frequencies
-void
-evalNuElc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  fout[0] = app->nuElc;
-}
-
 void
 evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
   fout[0] = app->nuIon;
-}
-
-int get_lower_index(const int nx, const double *x, const double xP)
-  //  nx: number of cells in the dimension
-  //  x: grid points in the dimension
-  //  xP: point to interpolate at
-{
-  if(xP < x[0])
-      return 0;
-  else if(xP > x[nx-1])
-      return nx-2;
-  else
-  {
-    // Return the rounded down index of the point we are closest to in x
-    // use midpoint rule to find the right index
-    int i = 0;
-    int j = nx-1;
-    while(j-i > 1)
-    {
-      int k = (i+j)/2;
-      if(xP < x[k])
-        j = k;
-      else
-        i = k;
-    }
-    return i;
-  }
-}
-
-double LI_2D(const int *ncells,  // array of number of cells
-             const double *x,            // x grid values
-             const double *y,            // y grid values
-             const double *f,            // field of function values over the x, y grid (1-D row major)
-             const double *pt           // point to interpolate at
-             )
-{
-    int i = get_lower_index(ncells[0],x,pt[0]);
-    int j = get_lower_index(ncells[1],y,pt[1]);
-    int ip = i+1;
-    int jp = j+1;
-    double xWta = fmax(0, fmin(1, (pt[0] - x[i])/(x[i+1]-x[i])));
-    double yWta = fmax(0, fmin(1, (pt[1] - y[j])/(y[j+1]-y[j])));
-    double xWtb = 1-xWta;
-    double yWtb = 1-yWta;
-    return (f[i *ncells[1] +j ]*xWtb +                    // return f[i ][j ]*xWtb*yWtb +
-            f[ip*ncells[1] +j ]*xWta) * yWtb +            //        f[ip][j ]*xWta*yWtb +
-           (f[i *ncells[1] +jp]*xWtb +                    //        f[i ][jp]*xWtb*yWta +
-            f[ip*ncells[1] +jp]*xWta) * yWta;             //        f[ip][jp]*xWta*yWta;
-}
-
-double LI_4D(const int *ncells, // array of number of cells
-             const double *x, // psi grid for data
-             const double *y, // z grid for data
-             const double *z, // vpar grid for data
-             const double *w, // mu grid for data
-             const double *f, // distribution function at grid locations
-             const double *pt // point to interpolate at
-             )
-{
-  // Heavily inspired by  yet adapted from the algorythm at 
-  // https://github.com/BYUignite/multilinear_interpolation
-  int i = get_lower_index(ncells[0],x,pt[0]); //16
-  int j = get_lower_index(ncells[1],y,pt[1]);
-  int k = get_lower_index(ncells[2],z,pt[2]);
-  int l = get_lower_index(ncells[3],w,pt[3]);
-
-  // Linear interpolate
-  int ip = i+1;
-  int jp = j+1;
-  int kp = k+1;
-  int lp = l+1;
-  double xWta = fmax(0, fmin(1, (pt[0] - x[i])/(x[i+1]-x[i])));
-  double yWta = fmax(0, fmin(1, (pt[1] - y[j])/(y[j+1]-y[j])));
-  double zWta = fmax(0, fmin(1, (pt[2] - z[k])/(z[k+1]-z[k])));
-  double wWta = fmax(0, fmin(1, (pt[3] - w[l])/(w[l+1]-w[l])));
-  double xWtb = 1-xWta;
-  double yWtb = 1-yWta;
-  double zWtb = 1-zWta;
-  double wWtb = 1-wWta;
-  int nwzy = ncells[3]*ncells[2]*ncells[1];
-  int nwz = ncells[3]*ncells[2];
-  int nw = ncells[3];
-  return (((f[i *nwzy + j *nwz + k *nw + l ]*xWtb +                                // return f[i ][j ][k ][l ]*xWtb*yWtb*zWtb*wWtb +
-            f[ip*nwzy + j *nwz + k *nw + l ]*xWta) * yWtb +                        //        f[ip][j ][k ][l ]*xWta*yWtb*zWtb*wWtb +
-            (f[i *nwzy + jp*nwz + k *nw + l ]*xWtb +                                //        f[i ][jp][k ][l ]*xWtb*yWta*zWtb*wWtb +
-            f[ip*nwzy + jp*nwz + k *nw + l ]*xWta) * yWta) * zWtb +                //        f[ip][jp][k ][l ]*xWta*yWta*zWtb*wWtb +
-          ((f[i *nwzy + j *nwz + kp*nw + l ]*xWtb +                                //        f[i ][j ][kp][l ]*xWtb*yWtb*zWta*wWtb +
-            f[ip*nwzy + j *nwz + kp*nw + l ]*xWta) * yWtb +                        //        f[ip][j ][kp][l ]*xWta*yWtb*zWta*wWtb +    
-            (f[i *nwzy + jp*nwz + kp*nw + l ]*xWtb +                                //        f[i ][jp][kp][l ]*xWtb*yWta*zWta*wWtb +
-            f[ip*nwzy + jp*nwz + kp*nw + l ]*xWta) * yWta) * zWta) * wWtb +        //        f[ip][jp][kp][l ]*xWta*yWta*zWta*wWtb +
-          (((f[i *nwzy + j *nwz + k *nw + lp]*xWtb +                                //        f[i ][j ][k ][lp]*xWtb*yWtb*zWtb*wWta +
-            f[ip*nwzy + j *nwz + k *nw + lp]*xWta) * yWtb +                        //        f[ip][j ][k ][lp]*xWta*yWtb*zWtb*wWta +
-            (f[i *nwzy + jp*nwz + k *nw + lp]*xWtb +                                //        f[i ][jp][k ][lp]*xWtb*yWta*zWtb*wWta +
-            f[ip*nwzy + jp*nwz + k *nw + lp]*xWta) * yWta) * zWtb +                //        f[ip][jp][k ][lp]*xWta*yWta*zWtb*wWta +
-          ((f[i *nwzy + j *nwz + kp*nw + lp]*xWtb +                                //        f[i ][j ][kp][lp]*xWtb*yWtb*zWta*wWta +
-            f[ip*nwzy + j *nwz + kp*nw + lp]*xWta) * yWtb +                        //        f[ip][j ][kp][lp]*xWta*yWtb*zWta*wWta +    
-            (f[i *nwzy + jp*nwz + kp*nw + lp]*xWtb +                                //        f[i ][jp][kp][lp]*xWtb*yWta*zWta*wWta +
-            f[ip*nwzy + jp*nwz + kp*nw + lp]*xWta) * yWta) * zWta) * wWta;         //        f[ip][jp][kp][lp]*xWta*yWta*zWta*wWta;
-}
-
-double* load_binary_file(const char* filename, size_t* num_elements) {
-    FILE* file = fopen(filename, "rb");
-    // Determine the size of the file
-    fseek(file, 0, SEEK_END);
-    long file_size = ftell(file);
-    rewind(file);
-    *num_elements = file_size / sizeof(double);
-    double* data = (double*)malloc(file_size);
-    size_t elements_read = fread(data, sizeof(double), *num_elements, file);
-    fclose(file);
-    return data;
-}
-
-void
-read_ion_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx app = *(struct gk_mirror_ctx*)ctx;
-  double* f_dist = app.f_dist_ion;
-  double* psi_grid = app.psi_grid;
-  double* z_grid = app.z_grid;
-  double* v_grid = app.v_grid;
-  double* theta_grid = app.theta_grid;
-  int* dims = app.dims;
-
-  // FROM GEOMETRY INPUT HARDCOPY
-  double z_min_geo = -2.0;
-  double z_max_geo =  2.0;
-  double tmin = app.z_min;
-  double tmax = app.z_max;
-  double t_norm_cord = (xn[0] + tmin) / (tmax - tmin);
-  double z_cord = fabs(-z_min_geo + t_norm_cord * (z_max_geo - z_min_geo));
-
-  // Calculate magnetic field at this point
-  double interp_pt[4];
-  interp_pt[0] = app.psi_eval;
-  interp_pt[1] = z_cord;
-  double B_val = LI_2D(dims, psi_grid, z_grid, app.B_grid, interp_pt);
-
-  // Must convert the point xn from cartesian to polar
-  double vpar = xn[1];
-  double mu = xn[2];
-  double vperp = sqrt((2.0 * B_val * mu) / app.mi);
-  double v = sqrt(pow(vpar, 2) + pow(vperp, 2));
-  double theta = atan2(vperp, vpar);
-
-  interp_pt[2] = v;
-  interp_pt[3] = theta;
-
-  double interp_val = LI_4D(dims, psi_grid, z_grid, v_grid, theta_grid, f_dist, interp_pt);
-  if (interp_val < 0.0) {
-    interp_val = 0.0;
-  }
-  fout[0] = interp_val * 1.179; //*1.0786, 1.01802 phi 8
-}
-
-void
-read_elc_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx app = *(struct gk_mirror_ctx*)ctx;
-  double* f_dist = app.f_dist_elc;
-  double* psi_grid = app.psi_grid;
-  double* z_grid = app.z_grid;
-  double* v_grid = app.v_grid;
-  double* theta_grid = app.theta_grid;
-  int* dims = app.dims;
-
-  // FROM GEOMETRY INPUT HARDCOPY
-  double z_min_geo = -2.0;
-  double z_max_geo =  2.0;
-  double tmin = app.z_min;
-  double tmax = app.z_max;
-  double t_norm_cord = (xn[0] + tmin) / (tmax - tmin);
-  double z_cord = fabs(-z_min_geo + t_norm_cord * (z_max_geo - z_min_geo));
-
-  double interp_pt[4];
-  interp_pt[0] = app.psi_eval;
-  interp_pt[1] = z_cord;
-  double B_val = LI_2D(dims, psi_grid, z_grid, app.B_grid, interp_pt);
-
-  // Must convert the point xn from cartesian to polar
-  double vpar = xn[1];
-  double mu = xn[2];
-  double vperp = sqrt((2.0 * B_val * mu) / app.me);
-  double v = sqrt(pow(vpar, 2) + pow(vperp, 2));
-  double theta = atan2(vperp, vpar);
-
-  interp_pt[2] = v;
-  interp_pt[3] = theta;
-
-  double interp_val = LI_4D(dims, psi_grid, z_grid, v_grid, theta_grid, f_dist, interp_pt);
-  if (interp_val < 0.0){
-    interp_val = 0.0;
-  }
-  // double radial_scaling = 1 - 0.9*pow((xn[0] - app.psi_min)/(app.psi_max - app.psi_min), 1.);
-  fout[0] = interp_val;
-  // fout[0] = interp_val;
-}
-
-void
-read_phi(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx app = *(struct gk_mirror_ctx*)ctx;
-  double* psi_grid = app.psi_grid;
-  double* z_grid = app.z_grid;
-  double* phi_vals = app.phi_vals;
-  int* dims = app.dims;
-
-  double interp_pt[2];
-  interp_pt[0] = app.psi_eval;
-
-  // FROM GEOMETRY INPUT HARDCOPY
-  double z_min_geo = -2.0;
-  double z_max_geo =  2.0;
-  double z_throat_approx = 1.0;
-  double tmin = app.z_min;
-  double tmax = app.z_max;
-  double t_norm_cord = (xn[0] + tmin) / (tmax - tmin);
-  double z_cord = fabs(-z_min_geo + t_norm_cord * (z_max_geo - z_min_geo));
-  interp_pt[1] = z_cord;
-
-  double interp_val = LI_2D(dims, psi_grid, z_grid, phi_vals, interp_pt);
-  fout[0] = interp_val;
-}
-
-void
-load_wham_distf(void* ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  char* filename_base = "/home/mr1884/scratch/gkylmax/binary_files/";
-
-  char filename_f_dist_ion[256];
-  sprintf(filename_f_dist_ion, "%sf_dist_ion.bin", filename_base);
-  size_t num_elements_f_dist_ion;
-  double* f_dist_ion = load_binary_file(filename_f_dist_ion, &num_elements_f_dist_ion);
-  app->f_dist_ion = f_dist_ion;
-
-  char filename_f_dist_elc[256];
-  sprintf(filename_f_dist_elc, "%sf_dist_elc.bin", filename_base);
-  size_t num_elements_f_dist_elc;
-  double* f_dist_elc = load_binary_file(filename_f_dist_elc, &num_elements_f_dist_elc);
-  app->f_dist_elc = f_dist_elc;
-
-  char filename_phiVals[256];
-  sprintf(filename_phiVals, "%sphi.bin", filename_base);
-  size_t num_elements_phiVals;
-  double *phi_vals = load_binary_file(filename_phiVals, &num_elements_phiVals);
-  app->phi_vals = phi_vals; // Need to check units. I think this is kV
-
-  char filename_psiGrid[256];
-  sprintf(filename_psiGrid, "%spsiGrid.bin", filename_base);
-  size_t num_elements_psiGrid;
-  double *psi_grid = load_binary_file(filename_psiGrid, &num_elements_psiGrid);
-  app->psi_grid = psi_grid;
-
-  char filename_zGrid[256];
-  sprintf(filename_zGrid, "%szGrid.bin", filename_base);
-  size_t num_elements_zGrid;
-  double *z_grid = load_binary_file(filename_zGrid, &num_elements_zGrid);
-  app->z_grid = z_grid;
-
-  char filename_uGrid[256];
-  sprintf(filename_uGrid, "%suGrid.bin", filename_base);
-  size_t num_elements_uGrid;
-  double *u_grid = load_binary_file(filename_uGrid, &num_elements_uGrid);
-
-  char filename_v_norm[256];
-  sprintf(filename_v_norm, "%sv_norm.bin", filename_base);
-  size_t num_elements_v_norm;
-  double *v_norm = load_binary_file(filename_v_norm, &num_elements_v_norm);
-
-  // multiply every element of u_grid with v_norm and call it v_grid
-  double *v_grid = (double*)malloc(num_elements_uGrid * sizeof(double));
-  for (int i = 0; i < num_elements_uGrid; i++) {
-    v_grid[i] = u_grid[i] * v_norm[0];
-  }
-  free(v_norm); // free v_norm (not needed anymore
-  free(u_grid); // free u_grid (not needed anymore)
-  app->v_grid = v_grid;
-  size_t num_elements_vGrid = num_elements_uGrid;
-
-  char filename_theta[256];
-  sprintf(filename_theta, "%stheta.bin", filename_base);
-  size_t num_elements_theta;
-  double *theta_grid = load_binary_file(filename_theta, &num_elements_theta);
-  app->theta_grid = theta_grid;
-
-  char filename_BGrid[256];
-  sprintf(filename_BGrid, "%sBGrid.bin", filename_base);
-  size_t num_elements_BGrid;
-  double *B_grid = load_binary_file(filename_BGrid, &num_elements_BGrid);
-  app->B_grid = B_grid;
-
-  int rank = 4;
-  int *dims = (int*)malloc(rank * sizeof(int));
-  dims[0] = num_elements_psiGrid;
-  dims[1] = num_elements_zGrid;
-  dims[2] = num_elements_vGrid;
-  dims[3] = num_elements_theta;
-  app->dims = dims;
-  app->rank = rank;
-}
-
-void
-free_wham_distf(void* ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  free(app->f_dist_ion);
-  free(app->f_dist_elc);
-  free(app->phi_vals);
-  free(app->psi_grid);
-  free(app->z_grid);
-  free(app->v_grid);
-  free(app->theta_grid);
-  free(app->B_grid);
-  free(app->dims);
 }
 
 void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *ctx)
@@ -435,28 +112,6 @@ void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *
   }
   // Quadratic map in mu.
   vp[1] = mu_max_ion*pow(cmu,2);
-}
-
-void mapc2p_vel_elc(double t, const double *vc, double* GKYL_RESTRICT vp, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  double vpar_max_elc = app->vpar_max_elc;
-  double mu_max_elc = app->mu_max_elc;
-
-  double cvpar = vc[0], cmu = vc[1];
-  double b = 1.45;
-  double linear_velocity_threshold = 1./6.;
-  double frac_linear = 1/b*atan(linear_velocity_threshold*tan(b));
-  if (fabs(cvpar) < frac_linear) {
-    double func_frac = tan(frac_linear*b) / tan(b);
-    vp[0] = vpar_max_elc*func_frac*cvpar/frac_linear;
-  }
-  else {
-    vp[0] = vpar_max_elc*tan(cvpar*b)/tan(b);
-  }
-  // vp[0] = vc[0] * vpar_max_elc;
-  // Quadratic map in mu.
-  vp[1] = mu_max_elc*pow(cmu,2);
 }
 
 void
@@ -625,7 +280,6 @@ create_ctx(void)
     .dt_failure_tol = dt_failure_tol,
     .num_failures_max = num_failures_max,
   };
-  load_wham_distf(&ctx);
   return ctx;
 }
 
@@ -698,49 +352,6 @@ int main(int argc, char **argv)
   }
 #endif
 
-  struct gkyl_gyrokinetic_projection elc_ic = {
-      .proj_id = GKYL_PROJ_FUNC,
-      .func = read_elc_distf,
-      .ctx_func = &ctx,  
-  };
-  struct gkyl_gyrokinetic_species elc = {
-    .name = "elc",
-    .charge = ctx.qe,
-    .mass = ctx.me,
-    .lower = {-1.0, 0.0},
-    .upper = { 1.0, 1.0},
-    .cells = { cells_v[0], cells_v[1]},
-    .polarization_density = ctx.n0,
-    .no_by = true,
-    .projection = elc_ic,
-    .mapc2p = {
-      .mapping = mapc2p_vel_elc,
-      .ctx = &ctx,
-    },
-    .bcx = {
-      .lower={.type = GKYL_SPECIES_GK_SHEATH,},
-      .upper={.type = GKYL_SPECIES_GK_SHEATH,},
-    },
-    .collisions = {
-      .collision_id = GKYL_LBO_COLLISIONS,
-      .normNu = true,
-      .n_ref = ctx.n0,
-      .T_ref = ctx.Te0,
-      .nuFrac = ctx.elc_nuFrac,
-      .ctx = &ctx,
-      .self_nu = evalNuElc,
-      .num_cross_collisions = 1,
-      .collide_with = {"ion"},
-    },
-    .num_diag_moments = 8,
-    .diag_moments = {"BiMaxwellianMoments", "M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp" },
-  };
-
-  struct gkyl_gyrokinetic_projection ion_ic = {
-      .proj_id = GKYL_PROJ_FUNC,
-      .func = read_ion_distf,
-      .ctx_func = &ctx,  
-  };
   struct gkyl_gyrokinetic_species ion = {
     .name = "ion",
     .charge = ctx.qi,
@@ -750,7 +361,10 @@ int main(int argc, char **argv)
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
     .no_by = true,
-    .projection = ion_ic,
+    .init_from_file = {
+      .type = GKYL_IC_IMPORT_F,
+      .file_name = "/scratch/gpfs/mr1884/scratch/gkylmax/initial-conditions/boltz-elc-288z-nu2000/gk_wham-ion_400.gkyl",
+    },
     .mapc2p = {
       .mapping = mapc2p_vel_ion,
       .ctx = &ctx,
@@ -780,6 +394,7 @@ int main(int argc, char **argv)
       .integrated_diag_moments = { "FourMoments" },
     },
   };
+  
   struct gkyl_gyrokinetic_field field = {
     .gkfield_id = GKYL_GK_FIELD_BOLTZMANN,
     .electron_mass = ctx.me,
@@ -798,6 +413,7 @@ struct gkyl_efit_inp efit_inp = {
     .zmin = -2.0,  // Z of lower boundary
     .zmax =  2.0,  // Z of upper boundary 
   };
+
   struct gkyl_gk app_inp = {  // GK app
     .name = "gk_wham",
     .cdim = ctx.cdim ,  .vdim = ctx.vdim,
@@ -960,7 +576,6 @@ struct gkyl_efit_inp efit_inp = {
   freeresources:
   // Free resources after simulation completion.
   gkyl_gyrokinetic_app_release(app);
-  free_wham_distf(&ctx);
   gkyl_gyrokinetic_comms_release(comm);
 
 #ifdef GKYL_HAVE_MPI

@@ -60,6 +60,7 @@ struct gk_mirror_ctx
   double vpar_max_elc;
   double mu_max_ion;
   double mu_max_elc;
+  double skip_cell_threshold;
   int Nz;
   int Nvpar;
   int Nmu;
@@ -612,13 +613,14 @@ create_ctx(void)
   double mu_max_elc = me * pow(3. * vte, 2.) / (2. * B_p);
   double vpar_max_ion = 30 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
+  double skip_cell_threshold = 1e-5;
   int Nx = 16;
   int Nz = 288;
   int Nvpar = 32; // 96 uniform
   int Nmu = 32;  // 192 uniform
   int poly_order = 1;
-  double t_end = 4e-3;//100e-6;
-  int num_frames = 4e2;
+  double t_end = 10e-6;//100e-6;
+  int num_frames = 5;
   double write_phase_freq = 1;
   int int_diag_calc_num = num_frames*100;
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
@@ -665,6 +667,7 @@ create_ctx(void)
     .vpar_max_elc = vpar_max_elc,
     .mu_max_ion = mu_max_ion,
     .mu_max_elc = mu_max_elc,
+    .skip_cell_threshold = skip_cell_threshold,
     .Nz = Nz,
     .Nvpar = Nvpar,
     .Nmu = Nmu,
@@ -765,6 +768,7 @@ int main(int argc, char **argv)
     .lower = {-1.0, 0.0},
     .upper = { 1.0, 1.0},
     .cells = { cells_v[0], cells_v[1]},
+    // .skip_cell_threshold = 3.12e-8*ctx.skip_cell_threshold, 
     .polarization_density = ctx.n0,
     .no_by = true,
     .projection = elc_ic,
@@ -800,6 +804,7 @@ int main(int argc, char **argv)
     .name = "ion",
     .charge = ctx.qi,
     .mass = ctx.mi,
+    .skip_cell_threshold = 3.12e-8*ctx.skip_cell_threshold, 
     .lower = {-1.0, 0.0},
     .upper = { 1.0, 1.0},
     .cells = { cells_v[0], cells_v[1]},

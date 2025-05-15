@@ -24,13 +24,14 @@ saveLoc="python-plots/gk_wham"
 
 # pgkyl --c2p-vel gk_wham-ion_mapc2p_vel.gkyl gk_wham-ion_119.gkyl -t 'f119' gk_wham-ion_90.gkyl -t 'f0' interp sel --z0 0.0 ev 'f119 f0 - ' pl --title "f119-f0" --xlabel "v_{||}" --ylabel "\mu" --saveas "$saveLoc-ion-f119-f0.png" --no-show &
 
-# pgkyl --c2p-vel misc/gk_wham-ion_mapc2p_vel.gkyl Distributions/gk_wham-ion_400.gkyl interp sel --z0 0.0 ev 'f abs' pl --title "Midplane ion distribution function" --xlabel "$ v_{||}, v_{||th}$" --ylabel "$\mu, \mu_{th}$" --saveas "$saveLoc-ion-f400.png" --logz --zmin "1e-12" --xscale 0.158e-5 --yscale 0.27e15 --xmin '-6' --xmax '6'&
+pgkyl gk_wham-ion_BiMaxwellianMoments_60.gkyl ../stellar-wham1x-288z-adaptive-source/BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_400.gkyl interp pl -f0 --title "BiMaxwellianMoments" &
+pgkyl gk_wham-ion-cflrate_60.gkyl sel --z0 0.0 pl --title "cflrate at midplane" --logz &
+pgkyl gk_wham-ion-cflrate_60.gkyl sel --z0 1.42 pl --title "cflrate at max dB/dz" --logz &
+pgkyl gk_wham-ion-cflrate_60.gkyl sel --z0 1.5 pl --title "cflrate at mirror throat" --logz &
+pgkyl gk_wham-ion-cflrate_60.gkyl sel --z1 0.0 pl --title "cflrate at vpar = 0" --logz &
+pgkyl gk_wham-ion-cflrate_60.gkyl sel --z1 32 pl --title "cflrate at mu_max" --logz &
 
-pgkyl --c2p-vel misc/gk_wham-ion_mapc2p_vel.gkyl Distributions/gk_wham-ion_400.gkyl interp integ 1 ev 'f abs' pl --title "Ion distribution function, $\int f dv_{||}$" --xlabel "Field line length, rad" --ylabel "$\mu, \mu_{th}$" --saveas "$saveLoc-ion-integ1-f400.png" --logz --zmin "1e-12" --yscale 0.27e15 &
-
-pgkyl --c2p-vel misc/gk_wham-ion_mapc2p_vel.gkyl Distributions/gk_wham-ion_400.gkyl interp integ 2 ev 'f abs' pl --title "Ion distribution function, $\int f d\mu$" --xlabel "Field line length, rad" --ylabel "$ v_{||}, v_{||th}$" --saveas "$saveLoc-ion-integ2-f400.png" --logz --zmin "1e-27" --yscale 0.158e-5 --ymin '-6' --ymax '6'&
-
-# pgkyl --c2p-vel misc/gk_wham-ion_mapc2p_vel.gkyl Distributions/gk_wham-ion_400.gkyl interp sel --z0 0.0 ev 'f abs' pl --title "Midplane ion distribution function" --xlabel "$ v_{||}, v_{||th}$" --ylabel "$\mu, \mu_{th}$" --saveas "$saveLoc-ion-f119.png" --xscale 0.158e-5 --yscale 0.27e15  --xmin '-6' --xmax '6'&
+# pgkyl --c2p-vel misc/gk_wham-ion_mapc2p_vel.gkyl Distributions/gk_wham-ion_400.gkyl interp sel --z0 0.0 ev 'f abs' pl --title "Midplane ion distribution function" --xlabel "$ v_{||}, v_{||th}$" --ylabel "$\mu, \mu_{th}$" --saveas "$saveLoc-ion-f119.png" --logz --zmin "1e-20" --xscale 0.158e-5 --yscale 0.27e15 --zmax "1e-10"&
 
 # pgkyl --c2p-vel gk_wham-ion_mapc2p_vel.gkyl gk_wham-ion_90.gkyl interp sel --z0 0.0 pl --title "f90" --xlabel "v_{||}" --ylabel "\mu" --saveas "$saveLoc-ion-f90.png" --no-show &
 # pgkyl --c2p-vel gk_wham-ion_mapc2p_vel.gkyl gk_wham-ion_0.gkyl interp sel --z0 0.0 pl --title "f0" --xlabel "v_{||}" --ylabel "\mu" --saveas "$saveLoc-ion-f0.png"  &
