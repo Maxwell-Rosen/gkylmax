@@ -11,7 +11,7 @@
 #. Stellar AMD Rome nodes have 128 cords, 2 GPUs, 550 GB RAM
 #SBATCH -N 1
 #SBATCH --ntasks-per-node 1
-#SBATCH --mem=250000
+#SBATCH --mem=200000
 
 #.Specify GPU needs:
 #SBATCH --gres=gpu:1

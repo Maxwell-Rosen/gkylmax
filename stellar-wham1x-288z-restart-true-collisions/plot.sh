@@ -3,8 +3,73 @@
 # name2="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nosource_nonuniform"
 name="gk_wham"
 # name="outputs/gk_mirror_adiabatic_elc_1x2v_p1_nosource_nonuniform"
-species="ion"
+species="elc"
 saveLoc="python-plots/gk_wham"
+
+# pgkyl old-run-before-restart-fix/misc/gk_wham-ion_integrated_moms.gkyl pl --title "ion integrated moms" -s &
+# pgkyl old-run-before-restart-fix/misc/gk_wham-ion_source_integrated_moms.gkyl pl --title "source" -s &
+
+# pgkyl old-run-before-restart-fix/BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_0.gkyl -t "initial" old-run-before-restart-fix/BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_141.gkyl -t "last step" interp pl --title "BiMaxwellianMoments evolution" -f0 &
+# pgkyl old-run-before-restart-fix/BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_141.gkyl interp pl --title "1" -s &
+# pgkyl "gk_wham-ion_BiMaxwellianMoments_[0-9]*.gkyl" interp anim --float &
+# pgkyl gk_wham-ion_integrated_moms.gkyl ../stellar-wham1x-288z-run-with-source-reduced-mass/misc/gk_wham-ion_integrated_moms.gkyl pl -f0 &
+# pgkyl gk_wham-ion_source_integrated_moms.gkyl pl --xmin "2e-3"&
+# pgkyl gk_wham-ion_integrated_moms.gkyl pl --xmin "2e-3"&
+# pgkyl "gk_wham-ion_[0-9]*.gkyl" interp sel --z0 288 anim --float --title "f" &
+# pgkyl "gk_wham-ion_source_[0-9]*.gkyl" interp sel --z0 288 anim --float --title "source" &
+# pgkyl gk_wham-ion_131.gkyl interp sel --z0 0 pl --logz &
+# pgkyl gk_wham-ion_131.gkyl interp sel --z0 144 pl --logz &
+# pgkyl gk_wham-ion_131.gkyl interp sel --z0 150 pl --logz &
+# pgkyl gk_wham-ion_131.gkyl interp sel --z0 288 pl --logz &
+
+# pgkyl --c2p-vel gk_wham-ion_mapc2p_vel.gkyl gk_wham-ion_119.gkyl -t 'f119' gk_wham-ion_90.gkyl -t 'f0' interp sel --z0 0.0 ev 'f119 f0 - ' pl --title "f119-f0" --xlabel "v_{||}" --ylabel "\mu" --saveas "$saveLoc-ion-f119-f0.png" --no-show &
+
+# pgkyl --c2p-vel misc/gk_wham-ion_mapc2p_vel.gkyl Distributions/gk_wham-ion_400.gkyl interp sel --z0 0.0 ev 'f abs' pl --title "Midplane ion distribution function" --xlabel "$ v_{||}, v_{||th}$" --ylabel "$\mu, \mu_{th}$" --saveas "$saveLoc-ion-f400.png" --logz --zmin "1e-12" --xscale 0.158e-5 --yscale 0.27e15 --xmin '-6' --xmax '6'&
+
+# pgkyl --c2p-vel misc/gk_wham-ion_mapc2p_vel.gkyl Distributions/gk_wham-ion_400.gkyl interp integ 1 ev 'f abs' pl --title "Ion distribution function, $\int f dv_{||}$" --xlabel "Field line length, rad" --ylabel "$\mu, \mu_{th}$" --saveas "$saveLoc-ion-integ1-f400.png" --logz --zmin "1e-12" --yscale 0.27e15 &
+
+# pgkyl --c2p-vel misc/gk_wham-ion_mapc2p_vel.gkyl Distributions/gk_wham-ion_400.gkyl interp integ 2 ev 'f abs' pl --title "Ion distribution function, $\int f d\mu$" --xlabel "Field line length, rad" --ylabel "$ v_{||}, v_{||th}$" --saveas "$saveLoc-ion-integ2-f400.png" --logz --zmin "1e-27" --yscale 0.158e-5 --ymin '-6' --ymax '6'&
+
+# pgkyl --c2p-vel misc/gk_wham-ion_mapc2p_vel.gkyl Distributions/gk_wham-ion_400.gkyl interp sel --z0 0.0 ev 'f abs' pl --title "Midplane ion distribution function" --xlabel "$ v_{||}, v_{||th}$" --ylabel "$\mu, \mu_{th}$" --saveas "$saveLoc-ion-f119.png" --xscale 0.158e-5 --yscale 0.27e15  --xmin '-6' --xmax '6'&
+
+# pgkyl --c2p-vel gk_wham-ion_mapc2p_vel.gkyl gk_wham-ion_90.gkyl interp sel --z0 0.0 pl --title "f90" --xlabel "v_{||}" --ylabel "\mu" --saveas "$saveLoc-ion-f90.png" --no-show &
+# pgkyl --c2p-vel gk_wham-ion_mapc2p_vel.gkyl gk_wham-ion_0.gkyl interp sel --z0 0.0 pl --title "f0" --xlabel "v_{||}" --ylabel "\mu" --saveas "$saveLoc-ion-f0.png"  &
+
+# pgkyl --c2p-vel gk_wham-ion_mapc2p_vel.gkyl gk_wham-ion_source_0.gkyl interp sel --z0 0.0 pl --title "source" --xlabel "v_{||}" --ylabel "\mu" --saveas "$saveLoc-ion-source.png"  &
+
+# pgkyl gk_wham-ion_integrated_moms.gkyl pl --saveas "$saveLoc-ion_integrated_moms.png" &
+
+# pgkyl BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_0.gkyl -t 'vtpar2' gk_wham-ion_nu_sum_0.gkyl -t 'nu' activ -t 'vtpar2' interp sel -c2 ev -t 'transit' '2 vtpar2 sqrt /' activ -t 'nu' interp ev -t 'collision' '1 nu /' activ -t 'collision','transit' pl --logy -f0 --legend --xlabel 'z_comp' --ylabel 't, s' --title 'Collision and transit times' --saveas "$saveLoc-ion-collision-transit.png" &
+# pgkyl gk_wham-ion_BiMaxwellianMoments_59.gkyl -t 'vtpar2' gk_wham-ion_nu_sum_59.gkyl -t 'nu' activ -t 'vtpar2' interp sel -c2 ev -t 'transit' '2 vtpar2 sqrt /' activ -t 'nu' interp ev -t 'collision' '2000 nu /' activ -t 'collision','transit' pl --logy -f0 --legend --xlabel 'z_comp' --ylabel 't, s' --title 'Ion collision and transit times' --saveas "$saveLoc-ion-collision-transit.png" &
+
+# pgkyl source-100/misc/gk_wham-ion_integrated_moms.gkyl ../stellar-wham1x-192z-run-with-source-reduced-mass/source-90/misc/gk_wham-ion_integrated_moms.gkyl \
+#   ../stellar-wham1x-192z-run-with-source-reduced-mass/source-140-nu-2000/misc/gk_wham-ion_integrated_moms.gkyl source-130/misc/gk_wham-ion_integrated_moms.gkyl \
+#   source-66,5/misc/gk_wham-ion_integrated_moms.gkyl ../stellar-wham1x-192z-run-with-source-reduced-mass/source-75/misc/gk_wham-ion_integrated_moms.gkyl\
+#   gk_wham-ion_integrated_moms.gkyl ../stellar-wham1x-192z-run-with-source-reduced-mass/gk_wham-ion_integrated_moms.gkyl \
+#   pl -f0 --no-legend&
+
+# pgkyl BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_100.gkyl BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_0.gkyl interp pl -f0 --xlabel "field line length" &
+
+
+# pgkyl gk_wham-ion_integrated_moms.gkyl ev "f[:][0] f[:][2] f[:][3] 2 * + * 3 /" pl --saveas "python-plots/integrated-energy-trace.png"
+
+# pgkyl Geometry/gk_wham-jacobgeo.gkyl interp -b ms -p1 pl --title "jacobgeo" --saveas "$saveLoc-jacobgeo.png" --no-show &
+# pgkyl Geometry/gk_wham-jacobtot.gkyl interp -b ms -p1 pl --title "jacobtot" --saveas "$saveLoc-jacobtot.png" --no-show &
+# pgkyl Geometry/gk_wham-jacobtot_inv.gkyl interp -b ms -p1 pl --title "jacobtot_inv" --saveas "$saveLoc-jacobtot_inv.png" --no-show &
+# pgkyl Geometry/gk_wham-jacobgeo_inv.gkyl interp -b ms -p1 pl --title "jacobgeo_inv" --saveas "$saveLoc-jacobgeo_inv.png" --no-show &
+# pgkyl Geometry/gk_wham-b_i.gkyl interp -b ms -p1 pl --title "b_i" --saveas "$saveLoc-b_i.png" --no-show &
+# pgkyl Geometry/gk_wham-mapc2p.gkyl interp -b ms -p1 pl --title "mapc2p" --saveas "$saveLoc-mapc2p.png" --no-show &
+# pgkyl Geometry/gk_wham-bmag.gkyl interp -b ms -p1 pl --title "bmag" --saveas "$saveLoc-bmag.png" --no-show &
+# pgkyl Geometry/gk_wham-bmag_inv.gkyl interp -b ms -p1 pl --title "bmag_inv" --saveas "$saveLoc-bmag_inv.png" --no-show &
+# pgkyl Geometry/gk_wham-bmag_inv_sq.gkyl interp -b ms -p1 pl --title "bmag_inv_sq" --saveas "$saveLoc-bmag_inv_sq.png" --no-show &
+# pgkyl Geometry/gk_wham-cmag.gkyl interp -b ms -p1 pl --title "cmag" --saveas "$saveLoc-cmag.png" --no-show &
+# pgkyl Geometry/gk_wham-mc2nu_pos.gkyl interp -b ms -p1 pl --title "mc2nu_pos" --saveas "$saveLoc-mc2nu_pos.png" --no-show &
+# pgkyl Geometry/gk_wham-mc2nu_pos.gkyl interp -b ms -p1 ev "f grad" sel -c2 pl --title "mc2nu_pos" --logy --saveas "$saveLoc-mc2nu_pos_grad.png" --no-show &
+# pgkyl Geometry/gk_wham-nodes.gkyl pl --title "nodes" --saveas "$saveLoc-nodes.png" --no-show &
+
+# pgkyl BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_0.gkyl interp pl --title "Initial" --saveas "$saveLoc-ion-BiMaxwellianMoments-0.png" --no-show &
+# pgkyl BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_1.gkyl interp pl --title "1" --saveas "$saveLoc-ion-BiMaxwellianMoments-1.png" --no-show &
+# pgkyl Geometry/gk_wham-bmag.gkyl pl --title "bmag" --saveas "$saveLoc-bmag-zoom.png" --no-show --xlim '-3.14159, -2.8' &
 
 
 
@@ -25,7 +90,11 @@ saveLoc="python-plots/gk_wham"
 
 # pgkyl --c2p-vel "$hiresLoc/gk_wham_modified-"$species"_mapc2p_vel.gkyl" "$hiresLoc/Distributions/gk_wham_modified-"$species"_[0-9]*.gkyl" interp sel --z0 2 anim --logz --zmin 1e-20 &
 # pgkyl --c2p-vel "$hiresLoc/gk_wham_modified-"$species"_mapc2p_vel.gkyl" "$hiresLoc/Distributions/gk_wham_modified-"$species"_[0-9]*.gkyl" interp sel --z0 2 anim --float &
-\
+
+frame=16
+# pgkyl --c2p-vel "$hiresLoc/gk_wham_modified-"$species"_mapc2p_vel.gkyl" "$hiresLoc/Distributions/gk_wham_modified-"$species"_"$frame".gkyl" interp sel --z2 0. --z0 -2. pl --title "288 cells $species" --logz --zmin 1e-20 &
+# pgkyl --c2p-vel "$name"-"$species"_mapc2p_vel.gkyl Distributions/"$name"-"$species"_"$frame".gkyl interp sel --z2 0. --z0 -2. pl --title "32 cells $species" --logz --zmin 1e-20 &
+
 # pgkyl --c2p-vel "$hiresLoc/gk_wham_modified-"$species"_mapc2p_vel.gkyl" "$hiresLoc/Distributions/gk_wham_modified-"$species"_"$frame".gkyl" interp sel --z0 0.0 pl --logz --zmin 1e-20 --title "288 cells midplane $species"&
 # pgkyl --c2p-vel "$name"-ion_mapc2p_vel.gkyl Distributions/"$name"-"$species"_"$frame".gkyl interp sel --z0 0.0 pl --title "32 cells midplane $species" --logz --zmin 1e-20 &
 
@@ -72,15 +141,15 @@ saveLoc="python-plots/gk_wham"
 #  interp -b gkhyb -p1 integrate 1 pl &
 
 
-pgkyl "$name-"b_i.gkyl interp -b ms -p1 pl --title "b_i" --saveas "$saveLoc-geo-b_i.png" --no-show &
-pgkyl "$name-"bmag_inv_sq.gkyl interp -b ms -p1 pl --title "bmag_inv_sq" --saveas "$saveLoc-geo-bmag_inv_sq.png" --no-show &
-pgkyl "$name-"bmag_inv.gkyl interp -b ms -p1 pl --title "bmag_inv" --saveas "$saveLoc-geo-bmag_inv.png" --no-show &
-pgkyl "$name-"bmag.gkyl interp -b ms -p1 pl --title "bmag" --saveas "$saveLoc-geo-bmag.png" --no-show &
-pgkyl "$name-"cmag.gkyl interp -b ms -p1 pl --title "cmag" --saveas "$saveLoc-geo-cmag.png" --no-show &
-pgkyl "$name-"jacobtot_inv.gkyl interp -b ms -p1 pl --title "jacobtot_inv" --saveas "$saveLoc-geo-jacobtot_inv.png" --no-show &
-pgkyl "$name-"jacobgeo.gkyl interp -b ms -p1 pl --title "jacobgeo" --saveas "$saveLoc-geo-jacobgeo.png" --no-show &
-pgkyl "$name-"jacobtot.gkyl interp -b ms -p1 pl --title "jacobtot" --saveas "$saveLoc-geo-jacobtot.png" --no-show &
-pgkyl "$name-"mapc2p.gkyl interp -b ms -p1 pl --title "mapc2p" --saveas "$saveLoc-geo-mapc2p.png" --no-show &
+# pgkyl "Geometry/$name-"b_i.gkyl interp -b ms -p1 pl --title "b_i" --saveas "$saveLoc-geo-b_i.png" --no-show &
+# pgkyl "Geometry/$name-"bmag_inv_sq.gkyl interp -b ms -p1 pl --title "bmag_inv_sq" --saveas "$saveLoc-geo-bmag_inv_sq.png" --no-show &
+# pgkyl "Geometry/$name-"bmag_inv.gkyl interp -b ms -p1 pl --title "bmag_inv" --saveas "$saveLoc-geo-bmag_inv.png" --no-show &
+# pgkyl "Geometry/$name-"bmag.gkyl interp -b ms -p1 pl --title "bmag" --saveas "$saveLoc-geo-bmag.png" --no-show &
+# pgkyl "Geometry/$name-"cmag.gkyl interp -b ms -p1 pl --title "cmag" --saveas "$saveLoc-geo-cmag.png" --no-show &
+# pgkyl "Geometry/$name-"jacobtot_inv.gkyl interp -b ms -p1 pl --title "jacobtot_inv" --saveas "$saveLoc-geo-jacobtot_inv.png" --no-show &
+# pgkyl "Geometry/$name-"jacobgeo.gkyl interp -b ms -p1 pl --title "jacobgeo" --saveas "$saveLoc-geo-jacobgeo.png" --no-show &
+# pgkyl "Geometry/$name-"jacobtot.gkyl interp -b ms -p1 pl --title "jacobtot" --saveas "$saveLoc-geo-jacobtot.png" --no-show &
+# pgkyl "Geometry/$name-"mapc2p.gkyl interp -b ms -p1 pl --title "mapc2p" --saveas "$saveLoc-geo-mapc2p.png" --no-show &
 
 frame=98
 # pgkyl "BiMaxwellianMoments/$name-"$species"_BiMaxwellianMoments_[0-9]*.gkyl" interp -b ms -p1 anim &
@@ -197,6 +266,7 @@ frame=98
 # pgkyl bmag_inv.gkyl interp -b ms -p1 pl --title "bmag_inv"&
 # pgkyl bmag_inv_sq.gkyl interp -b ms -p1 pl --title "bmag_inv_sq"&
 # pgkyl cmag.gkyl interp -b ms -p1 pl --title "cmag"&
+
 
 # Distribution function at a single velocity space point at all z
 # "$name-"$species"_[0-9]*.gkyl"\

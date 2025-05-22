@@ -16,16 +16,16 @@ from scipy.integrate import cumulative_trapezoid as cumtrapz
 import imageio.v2 as imageio
 from scipy.optimize import curve_fit
 
-frame = 50
+frame = 0
 
-uniformBiMax_name = './data-unif/gk_wham-ion_BiMaxwellianMoments_'+str(frame)+'.gkyl'
-nonunifBiMax_name = './data-nonunif/gk_wham-ion_BiMaxwellianMoments_'+str(frame)+'.gkyl'
+uniformBiMax_name = './sim-unif/BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_'+str(frame)+'.gkyl'
+nonunifBiMax_name = './sim-nonunif/BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_'+str(frame)+'.gkyl'
 
-uniformField_name = './data-unif/gk_wham-field_'+str(frame)+'.gkyl'
-nonunifField_name = './data-nonunif/gk_wham-field_'+str(frame)+'.gkyl'
+uniformField_name = './sim-unif/Field/gk_wham-field_'+str(frame)+'.gkyl'
+nonunifField_name = './sim-nonunif/Field/gk_wham-field_'+str(frame)+'.gkyl'
 
-uniformPosMap_name = './data-unif/gk_wham-mc2nu_pos.gkyl'
-nonunifPosMap_name = './data-nonunif/gk_wham-mc2nu_pos.gkyl'
+uniformPosMap_name = './sim-unif/Geometry/gk_wham-mc2nu_pos.gkyl'
+nonunifPosMap_name = './sim-nonunif/Geometry/gk_wham-mc2nu_pos.gkyl'
 
 uniformBiMax_pgdata = pg.GData(uniformBiMax_name)
 nonunifBiMax_pgdata = pg.GData(nonunifBiMax_name)

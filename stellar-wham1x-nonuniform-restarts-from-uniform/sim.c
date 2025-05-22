@@ -179,7 +179,7 @@ load_ion_donor(void* ctx)
   // Potential future issue by using the M0 ranges and basis for the position map
   struct gkyl_position_map *gpm = gkyl_position_map_new(pmap_inp, 
     mc2nu_pos_grid, local, local_ext, local, local_ext, basis);
-  gkyl_position_map_set(gpm, mc2nu_pos);
+  gkyl_position_map_set_mc2nu(gpm, mc2nu_pos);
   app->position_map = gpm;
 }
 

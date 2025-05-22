@@ -146,7 +146,7 @@ load_ion_donor(void* ctx)
   // Potential future issue by using the M0 ranges and basis for the position map
   struct gkyl_position_map *gpm = gkyl_position_map_new(pmap_inp, 
     mc2nu_pos_grid, local, local_ext, local, local_ext, basis);
-  gkyl_position_map_set(gpm, mc2nu_pos);
+  gkyl_position_map_set_mc2nu(gpm, mc2nu_pos);
   app->position_map = gpm;
 }
 
@@ -342,6 +342,8 @@ botlzmann_elc_field(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTR
   double x_log = (z_computational - cxc[0]) / (grid.dx[0]*0.5);
   double field_val = basis.eval_expand(&x_log, field_coeffs);
 
+  if (field_val < 10.0)
+   field_val = 10.0;
   fout[0] = field_val;
 }
 
@@ -499,18 +501,18 @@ create_ctx(void)
   int Nvpar = 32; // 96 uniform
   int Nmu = 32;  // 192 uniform
   int poly_order = 1;
-  double t_end = 100e-6;//100e-6;
-  int num_frames = 100;
+  double t_end = 1000e-6;//100e-6;
+  int num_frames = 1000;
   double write_phase_freq = 1;
   int int_diag_calc_num = num_frames*100;
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
   int num_failures_max = 20; // Maximum allowable number of consecutive small time-steps.
 
   // Source parameters
-  double ion_source_amplitude = 45e21;
+  double ion_source_amplitude = 7.39462473347548e22;
   double ion_source_sigma = 0.1;
-  double ion_source_temp = 9000. * eV;
-  double elc_source_amplitude = 45e21;
+  double ion_source_temp = 5000. * eV;
+  double elc_source_amplitude = 7.39462473347548e22;
   double elc_source_sigma = 0.1;
   double elc_source_temp = Te0;
 
@@ -650,6 +652,7 @@ int main(int argc, char **argv)
     .upar = boltzmann_elc_upar,
     .ctx_upar = &ctx,
   };
+
   struct gkyl_gyrokinetic_species elc = {
     .name = "elc",
     .charge = ctx.qe,
@@ -660,6 +663,10 @@ int main(int argc, char **argv)
     .polarization_density = ctx.n0,
     .no_by = true,
     .projection = elc_ic,
+    // .init_from_file = {
+    //   .type = GKYL_IC_IMPORT_F,
+    //   .file_name = "gk_wham-elc_0.gkyl",
+    // },
     .mapc2p = {
       .mapping = mapc2p_vel_elc,
       .ctx = &ctx,
@@ -673,15 +680,41 @@ int main(int argc, char **argv)
       .normNu = true,
       .n_ref = ctx.n0,
       .T_ref = ctx.Te0,
-      .nuFrac = ctx.elc_nuFrac,
       .ctx = &ctx,
       .self_nu = evalNuElc,
       .num_cross_collisions = 1,
-      .write_diagnostics = true, 
       .collide_with = {"ion"},
+      .write_diagnostics = true, 
+      .nuFrac = ctx.elc_nuFrac * 2000.0,
+    },
+    .source = {
+      .source_id = GKYL_PROJ_SOURCE,
+      .num_sources = 1,
+      .evolve = true,
+      .projection[0] = {
+        .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM, 
+        .ctx_density = &ctx,
+        .density = eval_density_elc_source,
+        .ctx_upar = &ctx,
+        .upar= eval_upar_elc_source,
+        .ctx_temp = &ctx,
+        .temp = eval_temp_elc_source,      
+      }, 
+      .diagnostics = { 
+        .num_diag_moments = 6,
+        .diag_moments = { "BiMaxwellianMoments", "M0", "M1", "M2", "M2par", "M2perp" },
+      },
     },
     .num_diag_moments = 8,
-    .diag_moments = {"BiMaxwellianMoments", "M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp" },
+    .diag_moments = { "BiMaxwellianMoments", "M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp" },
+    .num_integrated_diag_moments = 1,
+    .integrated_diag_moments = { "FourMoments" },
+    .time_rate_diagnostics = true,
+
+    .boundary_flux_diagnostics = {
+      .num_integrated_diag_moments = 1,
+      .integrated_diag_moments = { "FourMoments" },
+    },
   };
 
   struct gkyl_gyrokinetic_species ion = {
@@ -694,7 +727,6 @@ int main(int argc, char **argv)
     .polarization_density = ctx.n0,
     .scale_with_polarization = true,
     .no_by = true,
-    // .projection = ion_ic,
     .mapc2p = {
       .mapping = mapc2p_vel_ion,
       .ctx = &ctx,
@@ -705,8 +737,8 @@ int main(int argc, char **argv)
     },    
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
-      .file_name = "/home/mr1884/scratch/gkylmax/initial-conditions/boltz-elc-288z-nu2000/gk_wham-ion_400.gkyl",
-    },
+      .file_name = "../initial-conditions/boltz-elc-288z-nu2000/gk_wham-ion_400.gkyl",
+    }, 
     .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
       .normNu = true,
@@ -717,7 +749,25 @@ int main(int argc, char **argv)
       .num_cross_collisions = 1,
       .collide_with = {"elc"},
       .write_diagnostics = true, 
-      // .nuFrac = 2000.0,
+      .nuFrac = 2000.0,
+    },
+    .source = {
+      .source_id = GKYL_PROJ_SOURCE,
+      .num_sources = 1,
+      .evolve = true,
+      .projection[0] = {
+        .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM, 
+        .ctx_density = &ctx,
+        .density = eval_density_ion_source,
+        .ctx_upar = &ctx,
+        .upar= eval_upar_ion_source,
+        .ctx_temp = &ctx,
+        .temp = eval_temp_ion_source,      
+      }, 
+      .diagnostics = { 
+        .num_diag_moments = 6,
+        .diag_moments = { "BiMaxwellianMoments", "M0", "M1", "M2", "M2par", "M2perp" },
+      },
     },
     .num_diag_moments = 8,
     .diag_moments = { "BiMaxwellianMoments", "M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp" },
@@ -774,7 +824,7 @@ struct gkyl_efit_inp efit_inp = {
     .num_periodic_dir = 0,
     .periodic_dirs = {},
     .num_species = 2,
-    .species = {elc, ion},
+    .species = {ion, elc},
     .field = field,
     .parallelism = {
       .use_gpu = app_args.use_gpu,
@@ -785,7 +835,7 @@ struct gkyl_efit_inp efit_inp = {
   
   // Create app object.
 
-  output_diagnostics(ctx, &app_inp, app_args);
+  // output_diagnostics(ctx, &app_inp, app_args);
 
   clock_t start_time = clock();
   gkyl_gyrokinetic_app *app = gkyl_gyrokinetic_app_new(&app_inp);
