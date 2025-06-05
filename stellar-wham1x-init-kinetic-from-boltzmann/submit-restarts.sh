@@ -8,7 +8,7 @@ first_job_id=$(sbatch jobscript-gkyl-stellar-amd | awk '{print $4}')
 job_ids+=($first_job_id)
 
 # Submit subsequent jobs with dependency on the previous job
-for i in {2..5} # Adjust the range as needed for the number of jobs
+for i in {2..10} # Adjust the range as needed for the number of jobs
 do
   previous_job_id=${job_ids[-1]}
   next_job_id=$(sbatch --dependency=afterany:$previous_job_id jobscript-gkyl-stellar-amd | awk '{print $4}')
