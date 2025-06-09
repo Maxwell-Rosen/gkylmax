@@ -9,7 +9,6 @@
 #include <gkyl_fem_parproj.h>
 #include <gkyl_fem_poisson_bctype.h>
 #include <gkyl_gyrokinetic.h>
-#include <gkyl_mirror_geo.h>
 #include <gkyl_math.h>
 
 #include <rt_arg_parse.h>
@@ -76,7 +75,7 @@ struct gk_mirror_ctx
   double ion_source_amplitude;
   double ion_source_sigma;
   double ion_source_temp;
-  
+
   // Initial conditions reading
   double *f_dist_ion;
   double *f_dist_elc;
@@ -103,364 +102,6 @@ evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, 
 {
   struct gk_mirror_ctx *app = ctx;
   fout[0] = app->nuIon;
-}
-
-int get_lower_index(const int nx, const double *x, const double xP)
-  //  nx: number of cells in the dimension
-  //  x: grid points in the dimension
-  //  xP: point to interpolate at
-{
-  if(xP < x[0])
-      return 0;
-  else if(xP > x[nx-1])
-      return nx-2;
-  else
-  {
-    // Return the rounded down index of the point we are closest to in x
-    // use midpoint rule to find the right index
-    int i = 0;
-    int j = nx-1;
-    while(j-i > 1)
-    {
-      int k = (i+j)/2;
-      if(xP < x[k])
-        j = k;
-      else
-        i = k;
-    }
-    return i;
-  }
-}
-
-double LI_2D(const int *ncells,  // array of number of cells
-             const double *x,            // x grid values
-             const double *y,            // y grid values
-             const double *f,            // field of function values over the x, y grid (1-D row major)
-             const double *pt           // point to interpolate at
-             )
-{
-    int i = get_lower_index(ncells[0],x,pt[0]);
-    int j = get_lower_index(ncells[1],y,pt[1]);
-    int ip = i+1;
-    int jp = j+1;
-    double xWta = fmax(0, fmin(1, (pt[0] - x[i])/(x[i+1]-x[i])));
-    double yWta = fmax(0, fmin(1, (pt[1] - y[j])/(y[j+1]-y[j])));
-    double xWtb = 1-xWta;
-    double yWtb = 1-yWta;
-    return (f[i *ncells[1] +j ]*xWtb +                    // return f[i ][j ]*xWtb*yWtb +
-            f[ip*ncells[1] +j ]*xWta) * yWtb +            //        f[ip][j ]*xWta*yWtb +
-           (f[i *ncells[1] +jp]*xWtb +                    //        f[i ][jp]*xWtb*yWta +
-            f[ip*ncells[1] +jp]*xWta) * yWta;             //        f[ip][jp]*xWta*yWta;
-}
-
-double LI_4D(const int *ncells, // array of number of cells
-             const double *x, // psi grid for data
-             const double *y, // z grid for data
-             const double *z, // vpar grid for data
-             const double *w, // mu grid for data
-             const double *f, // distribution function at grid locations
-             const double *pt // point to interpolate at
-             )
-{
-  // Heavily inspired by  yet adapted from the algorythm at 
-  // https://github.com/BYUignite/multilinear_interpolation
-  int i = get_lower_index(ncells[0],x,pt[0]); //16
-  int j = get_lower_index(ncells[1],y,pt[1]);
-  int k = get_lower_index(ncells[2],z,pt[2]);
-  int l = get_lower_index(ncells[3],w,pt[3]);
-
-  // Linear interpolate
-  int ip = i+1;
-  int jp = j+1;
-  int kp = k+1;
-  int lp = l+1;
-  double xWta = fmax(0, fmin(1, (pt[0] - x[i])/(x[i+1]-x[i])));
-  double yWta = fmax(0, fmin(1, (pt[1] - y[j])/(y[j+1]-y[j])));
-  double zWta = fmax(0, fmin(1, (pt[2] - z[k])/(z[k+1]-z[k])));
-  double wWta = fmax(0, fmin(1, (pt[3] - w[l])/(w[l+1]-w[l])));
-  double xWtb = 1-xWta;
-  double yWtb = 1-yWta;
-  double zWtb = 1-zWta;
-  double wWtb = 1-wWta;
-  int nwzy = ncells[3]*ncells[2]*ncells[1];
-  int nwz = ncells[3]*ncells[2];
-  int nw = ncells[3];
-  return (((f[i *nwzy + j *nwz + k *nw + l ]*xWtb +                                // return f[i ][j ][k ][l ]*xWtb*yWtb*zWtb*wWtb +
-            f[ip*nwzy + j *nwz + k *nw + l ]*xWta) * yWtb +                        //        f[ip][j ][k ][l ]*xWta*yWtb*zWtb*wWtb +
-            (f[i *nwzy + jp*nwz + k *nw + l ]*xWtb +                                //        f[i ][jp][k ][l ]*xWtb*yWta*zWtb*wWtb +
-            f[ip*nwzy + jp*nwz + k *nw + l ]*xWta) * yWta) * zWtb +                //        f[ip][jp][k ][l ]*xWta*yWta*zWtb*wWtb +
-          ((f[i *nwzy + j *nwz + kp*nw + l ]*xWtb +                                //        f[i ][j ][kp][l ]*xWtb*yWtb*zWta*wWtb +
-            f[ip*nwzy + j *nwz + kp*nw + l ]*xWta) * yWtb +                        //        f[ip][j ][kp][l ]*xWta*yWtb*zWta*wWtb +    
-            (f[i *nwzy + jp*nwz + kp*nw + l ]*xWtb +                                //        f[i ][jp][kp][l ]*xWtb*yWta*zWta*wWtb +
-            f[ip*nwzy + jp*nwz + kp*nw + l ]*xWta) * yWta) * zWta) * wWtb +        //        f[ip][jp][kp][l ]*xWta*yWta*zWta*wWtb +
-          (((f[i *nwzy + j *nwz + k *nw + lp]*xWtb +                                //        f[i ][j ][k ][lp]*xWtb*yWtb*zWtb*wWta +
-            f[ip*nwzy + j *nwz + k *nw + lp]*xWta) * yWtb +                        //        f[ip][j ][k ][lp]*xWta*yWtb*zWtb*wWta +
-            (f[i *nwzy + jp*nwz + k *nw + lp]*xWtb +                                //        f[i ][jp][k ][lp]*xWtb*yWta*zWtb*wWta +
-            f[ip*nwzy + jp*nwz + k *nw + lp]*xWta) * yWta) * zWtb +                //        f[ip][jp][k ][lp]*xWta*yWta*zWtb*wWta +
-          ((f[i *nwzy + j *nwz + kp*nw + lp]*xWtb +                                //        f[i ][j ][kp][lp]*xWtb*yWtb*zWta*wWta +
-            f[ip*nwzy + j *nwz + kp*nw + lp]*xWta) * yWtb +                        //        f[ip][j ][kp][lp]*xWta*yWtb*zWta*wWta +    
-            (f[i *nwzy + jp*nwz + kp*nw + lp]*xWtb +                                //        f[i ][jp][kp][lp]*xWtb*yWta*zWta*wWta +
-            f[ip*nwzy + jp*nwz + kp*nw + lp]*xWta) * yWta) * zWta) * wWta;         //        f[ip][jp][kp][lp]*xWta*yWta*zWta*wWta;
-}
-
-double* load_binary_file(const char* filename, size_t* num_elements) {
-    FILE* file = fopen(filename, "rb");
-    // Determine the size of the file
-    fseek(file, 0, SEEK_END);
-    long file_size = ftell(file);
-    rewind(file);
-    *num_elements = file_size / sizeof(double);
-    double* data = (double*)malloc(file_size);
-    size_t elements_read = fread(data, sizeof(double), *num_elements, file);
-    fclose(file);
-    return data;
-}
-
-void
-read_ion_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx app = *(struct gk_mirror_ctx*)ctx;
-  double* f_dist = app.f_dist_ion;
-  double* psi_grid = app.psi_grid;
-  double* z_grid = app.z_grid;
-  double* v_grid = app.v_grid;
-  double* theta_grid = app.theta_grid;
-  int* dims = app.dims;
-
-  // FROM GEOMETRY INPUT HARDCOPY
-  double z_min_geo = -2.0;
-  double z_max_geo =  2.0;
-  double tmin = app.z_min;
-  double tmax = app.z_max;
-  double t_norm_cord = (xn[0] + tmin) / (tmax - tmin);
-  double z_cord = fabs(-z_min_geo + t_norm_cord * (z_max_geo - z_min_geo));
-
-  // Calculate magnetic field at this point
-  double interp_pt[4];
-  interp_pt[0] = app.psi_eval;
-  interp_pt[1] = z_cord;
-  double B_val = LI_2D(dims, psi_grid, z_grid, app.B_grid, interp_pt);
-
-  // Must convert the point xn from cartesian to polar
-  double vpar = xn[1];
-  double mu = xn[2];
-  double vperp = sqrt((2.0 * B_val * mu) / app.mi);
-  double v = sqrt(pow(vpar, 2) + pow(vperp, 2));
-  double theta = atan2(vperp, vpar);
-
-  interp_pt[2] = v;
-  interp_pt[3] = theta;
-
-  double interp_val = LI_4D(dims, psi_grid, z_grid, v_grid, theta_grid, f_dist, interp_pt);
-  if (interp_val < 0.0) {
-    interp_val = 0.0;
-  }
-  fout[0] = interp_val * 1.179; //*1.0786, 1.01802 phi 8
-}
-
-void
-read_elc_distf(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx app = *(struct gk_mirror_ctx*)ctx;
-  double* f_dist = app.f_dist_elc;
-  double* psi_grid = app.psi_grid;
-  double* z_grid = app.z_grid;
-  double* v_grid = app.v_grid;
-  double* theta_grid = app.theta_grid;
-  int* dims = app.dims;
-
-  // FROM GEOMETRY INPUT HARDCOPY
-  double z_min_geo = -2.0;
-  double z_max_geo =  2.0;
-  double tmin = app.z_min;
-  double tmax = app.z_max;
-  double t_norm_cord = (xn[0] + tmin) / (tmax - tmin);
-  double z_cord = fabs(-z_min_geo + t_norm_cord * (z_max_geo - z_min_geo));
-
-  double interp_pt[4];
-  interp_pt[0] = app.psi_eval;
-  interp_pt[1] = z_cord;
-  double B_val = LI_2D(dims, psi_grid, z_grid, app.B_grid, interp_pt);
-
-  // Must convert the point xn from cartesian to polar
-  double vpar = xn[1];
-  double mu = xn[2];
-  double vperp = sqrt((2.0 * B_val * mu) / app.me);
-  double v = sqrt(pow(vpar, 2) + pow(vperp, 2));
-  double theta = atan2(vperp, vpar);
-
-  interp_pt[2] = v;
-  interp_pt[3] = theta;
-
-  double interp_val = LI_4D(dims, psi_grid, z_grid, v_grid, theta_grid, f_dist, interp_pt);
-  if (interp_val < 0.0){
-    interp_val = 0.0;
-  }
-  // double radial_scaling = 1 - 0.9*pow((xn[0] - app.psi_min)/(app.psi_max - app.psi_min), 1.);
-  fout[0] = interp_val;
-  // fout[0] = interp_val;
-}
-
-void
-read_phi(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx app = *(struct gk_mirror_ctx*)ctx;
-  double* psi_grid = app.psi_grid;
-  double* z_grid = app.z_grid;
-  double* phi_vals = app.phi_vals;
-  int* dims = app.dims;
-
-  double interp_pt[2];
-  interp_pt[0] = app.psi_eval;
-
-  // FROM GEOMETRY INPUT HARDCOPY
-  double z_min_geo = -2.0;
-  double z_max_geo =  2.0;
-  double z_throat_approx = 1.0;
-  double tmin = app.z_min;
-  double tmax = app.z_max;
-  double t_norm_cord = (xn[0] + tmin) / (tmax - tmin);
-  double z_cord = fabs(-z_min_geo + t_norm_cord * (z_max_geo - z_min_geo));
-  interp_pt[1] = z_cord;
-
-  double interp_val = LI_2D(dims, psi_grid, z_grid, phi_vals, interp_pt);
-  fout[0] = interp_val;
-}
-
-void
-load_wham_distf(void* ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  char* filename_base = "/home/mr1884/scratch/gkylmax/binary_files/";
-
-  char filename_f_dist_ion[256];
-  sprintf(filename_f_dist_ion, "%sf_dist_ion.bin", filename_base);
-  size_t num_elements_f_dist_ion;
-  double* f_dist_ion = load_binary_file(filename_f_dist_ion, &num_elements_f_dist_ion);
-  app->f_dist_ion = f_dist_ion;
-
-  char filename_f_dist_elc[256];
-  sprintf(filename_f_dist_elc, "%sf_dist_elc.bin", filename_base);
-  size_t num_elements_f_dist_elc;
-  double* f_dist_elc = load_binary_file(filename_f_dist_elc, &num_elements_f_dist_elc);
-  app->f_dist_elc = f_dist_elc;
-
-  char filename_phiVals[256];
-  sprintf(filename_phiVals, "%sphi.bin", filename_base);
-  size_t num_elements_phiVals;
-  double *phi_vals = load_binary_file(filename_phiVals, &num_elements_phiVals);
-  app->phi_vals = phi_vals; // Need to check units. I think this is kV
-
-  char filename_psiGrid[256];
-  sprintf(filename_psiGrid, "%spsiGrid.bin", filename_base);
-  size_t num_elements_psiGrid;
-  double *psi_grid = load_binary_file(filename_psiGrid, &num_elements_psiGrid);
-  app->psi_grid = psi_grid;
-
-  char filename_zGrid[256];
-  sprintf(filename_zGrid, "%szGrid.bin", filename_base);
-  size_t num_elements_zGrid;
-  double *z_grid = load_binary_file(filename_zGrid, &num_elements_zGrid);
-  app->z_grid = z_grid;
-
-  char filename_uGrid[256];
-  sprintf(filename_uGrid, "%suGrid.bin", filename_base);
-  size_t num_elements_uGrid;
-  double *u_grid = load_binary_file(filename_uGrid, &num_elements_uGrid);
-
-  char filename_v_norm[256];
-  sprintf(filename_v_norm, "%sv_norm.bin", filename_base);
-  size_t num_elements_v_norm;
-  double *v_norm = load_binary_file(filename_v_norm, &num_elements_v_norm);
-
-  // multiply every element of u_grid with v_norm and call it v_grid
-  double *v_grid = (double*)malloc(num_elements_uGrid * sizeof(double));
-  for (int i = 0; i < num_elements_uGrid; i++) {
-    v_grid[i] = u_grid[i] * v_norm[0];
-  }
-  free(v_norm); // free v_norm (not needed anymore
-  free(u_grid); // free u_grid (not needed anymore)
-  app->v_grid = v_grid;
-  size_t num_elements_vGrid = num_elements_uGrid;
-
-  char filename_theta[256];
-  sprintf(filename_theta, "%stheta.bin", filename_base);
-  size_t num_elements_theta;
-  double *theta_grid = load_binary_file(filename_theta, &num_elements_theta);
-  app->theta_grid = theta_grid;
-
-  char filename_BGrid[256];
-  sprintf(filename_BGrid, "%sBGrid.bin", filename_base);
-  size_t num_elements_BGrid;
-  double *B_grid = load_binary_file(filename_BGrid, &num_elements_BGrid);
-  app->B_grid = B_grid;
-
-  int rank = 4;
-  int *dims = (int*)malloc(rank * sizeof(int));
-  dims[0] = num_elements_psiGrid;
-  dims[1] = num_elements_zGrid;
-  dims[2] = num_elements_vGrid;
-  dims[3] = num_elements_theta;
-  app->dims = dims;
-  app->rank = rank;
-}
-
-void
-free_wham_distf(void* ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  free(app->f_dist_ion);
-  free(app->f_dist_elc);
-  free(app->phi_vals);
-  free(app->psi_grid);
-  free(app->z_grid);
-  free(app->v_grid);
-  free(app->theta_grid);
-  free(app->B_grid);
-  free(app->dims);
-}
-
-void
-eval_density_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  double z = xn[0];
-  double src_amp = app->ion_source_amplitude;
-  double z_src = 0.0;
-  double src_sigma = app->ion_source_sigma;
-  double src_amp_floor = src_amp*1e-2;
-  if (fabs(z) <= 1.0)
-  {
-    fout[0] = fmax(src_amp_floor, (src_amp / sqrt(2.0 * M_PI * pow(src_sigma, 2))) *
-      exp(-1 * pow((z - z_src), 2) / (2.0 * pow(src_sigma, 2))));
-  }
-  else
-  {
-    fout[0] = 1e-16;
-  }
-}
-
-void
-eval_upar_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  fout[0] = 0.0;
-}
-
-void
-eval_temp_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  double z = xn[0];
-  double TSrc0 = app->ion_source_temp;
-  double Tfloor = TSrc0*1e-2;
-  if (fabs(z) <= 1.0)
-  {
-    fout[0] = TSrc0;
-  }
-  else
-  {
-    fout[0] = Tfloor;
-  }
 }
 
 void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *ctx)
@@ -601,8 +242,8 @@ create_ctx(void)
   double kperp = kperpRhos / rho_s;
 
   // Geometry parameters.
-  double z_min = -M_PI + 1e-2;
-  double z_max = M_PI - 1e-2;
+  double z_min = -2.0;
+  double z_max =  2.0;
   double psi_min = 1e-6; // Go smaller. 1e-4 might be too small
   double psi_eval= 1e-3;
   double psi_max = 3e-3; // aim for 2e-2
@@ -617,17 +258,17 @@ create_ctx(void)
   int Nvpar = 32; // 96 uniform
   int Nmu = 32;  // 192 uniform
   int poly_order = 1;
-  double t_end = 4e-3;//100e-6;
-  int num_frames = 4e2;
+  double t_end = 1000e-6;//100e-6;
+  int num_frames = 100;
   double write_phase_freq = 1;
   int int_diag_calc_num = num_frames*100;
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
   int num_failures_max = 20; // Maximum allowable number of consecutive small time-steps.
 
   // Source parameters
-  double ion_source_amplitude = 45e21;
-  double ion_source_sigma = 0.1;
-  double ion_source_temp = 5000. * eV;
+  // double ion_source_amplitude = 45e21;
+  // double ion_source_sigma = 0.1;
+  // double ion_source_temp = 5000. * eV;
 
   struct gk_mirror_ctx ctx = {
     .cdim = cdim,
@@ -655,7 +296,7 @@ create_ctx(void)
     .c_s = c_s,
     .omega_ci = omega_ci,
     .rho_s = rho_s,
-    .kperp = kperp, 
+    .kperp = kperp,
     .z_min = z_min,
     .z_max = z_max,
     .psi_min = psi_min,
@@ -676,11 +317,11 @@ create_ctx(void)
     .int_diag_calc_num = int_diag_calc_num,
     .dt_failure_tol = dt_failure_tol,
     .num_failures_max = num_failures_max,
-    .ion_source_amplitude = ion_source_amplitude,
-    .ion_source_sigma = ion_source_sigma,
-    .ion_source_temp = ion_source_temp,
+    // .ion_source_amplitude = ion_source_amplitude,
+    // .ion_source_sigma = ion_source_sigma,
+    // .ion_source_temp = ion_source_temp,
   };
-  load_wham_distf(&ctx);
+  // load_wham_distf(&ctx);
   return ctx;
 }
 
@@ -742,7 +383,7 @@ int main(int argc, char **argv)
 
   // Construct communicator for use in app.
   struct gkyl_comm *comm = gkyl_gyrokinetic_comms_new(app_args.use_mpi, app_args.use_gpu, stderr);
-  
+
   int my_rank = 0;
   int comm_sz = 1;
 #ifdef GKYL_HAVE_MPI
@@ -753,49 +394,11 @@ int main(int argc, char **argv)
   }
 #endif
 
-  struct gkyl_gyrokinetic_projection elc_ic = {
-      .proj_id = GKYL_PROJ_FUNC,
-      .func = read_elc_distf,
-      .ctx_func = &ctx,  
-  };
-  struct gkyl_gyrokinetic_species elc = {
-    .name = "elc",
-    .charge = ctx.qe,
-    .mass = ctx.me,
-    .lower = {-1.0, 0.0},
-    .upper = { 1.0, 1.0},
-    .cells = { cells_v[0], cells_v[1]},
-    .polarization_density = ctx.n0,
-    .no_by = true,
-    .projection = elc_ic,
-    .mapc2p = {
-      .mapping = mapc2p_vel_elc,
-      .ctx = &ctx,
-    },
-    .bcx = {
-      .lower={.type = GKYL_SPECIES_GK_SHEATH,},
-      .upper={.type = GKYL_SPECIES_GK_SHEATH,},
-    },
-    .collisions = {
-      .collision_id = GKYL_LBO_COLLISIONS,
-      .normNu = true,
-      .n_ref = ctx.n0,
-      .T_ref = ctx.Te0,
-      .nuFrac = ctx.elc_nuFrac,
-      .ctx = &ctx,
-      .self_nu = evalNuElc,
-      .num_cross_collisions = 1,
-      .collide_with = {"ion"},
-    },
-    .num_diag_moments = 8,
-    .diag_moments = {"BiMaxwellianMoments", "M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp" },
-  };
-
-  struct gkyl_gyrokinetic_projection ion_ic = {
-      .proj_id = GKYL_PROJ_FUNC,
-      .func = read_ion_distf,
-      .ctx_func = &ctx,  
-  };
+  // struct gkyl_gyrokinetic_projection ion_ic = {
+  //     .proj_id = GKYL_PROJ_FUNC,
+  //     .func = read_ion_distf,
+  //     .ctx_func = &ctx,
+  // };
   struct gkyl_gyrokinetic_species ion = {
     .name = "ion",
     .charge = ctx.qi,
@@ -805,60 +408,66 @@ int main(int argc, char **argv)
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
     .no_by = true,
-    .projection = ion_ic,    
-    // .init_from_file = {
-    //   .type = GKYL_IC_IMPORT_F,
-    //   .file_name = "initial-condition/gk_wham-ion_123.gkyl",
-    // },
+    // .projection = ion_ic,
+
+    .init_from_file = {
+      .type = GKYL_IC_IMPORT_F,
+      .file_name = "../initial-conditions/boltz-elc-288z-nu2000/gk_wham-ion_0.gkyl",
+    },
     .mapc2p = {
       .mapping = mapc2p_vel_ion,
       .ctx = &ctx,
     },
-    .source = {
-      .source_id = GKYL_BFLUX_SOURCE,
-      .source_species = "ion",
-      .evolve = true,
-      .M0_target = 1.2e19,
-      .M0_feedback_strength = 1.0e3,
-
-      .num_sources = 1,
-      .projection[0] = {
-        .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM, 
-        .ctx_density = &ctx,
-        .density = eval_density_ion_source,
-        .ctx_upar = &ctx,
-        .upar= eval_upar_ion_source,
-        .ctx_temp = &ctx,
-        .temp = eval_temp_ion_source,      
-      }, 
-      .diagnostics = { 
-        .num_diag_moments = 6,
-        .diag_moments = { "BiMaxwellianMoments", "M0", "M1", "M2", "M2par", "M2perp" },
-      },
-    },
-    .bcx = {
-      .lower={.type = GKYL_SPECIES_GK_SHEATH,},
-      .upper={.type = GKYL_SPECIES_GK_SHEATH,},
-    },    
     .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
       .normNu = true,
       .n_ref = ctx.n0,
       .T_ref = ctx.Ti0,
       .ctx = &ctx,
-      .self_nu = evalNuIon, 
-      .write_diagnostics = true, 
+      .self_nu = evalNuIon,
+      .write_diagnostics = true,
       .nuFrac = 2000.0,
     },
+    .source = {
+      .source_id = GKYL_PROJ_SOURCE,
+      .num_sources = 1,
+      .projection[0] = {
+        .proj_id = GKYL_PROJ_MAXWELLIAN_GAUSSIAN,
+        .center_gauss = {0.0},
+        .sigma_gauss = {0.2},
+        .particle = 0.0,
+        .energy = 0.0,
+        .temp_max = 10000*GKYL_ELEMENTARY_CHARGE,
+      },
+      .adapt[0] = {
+        .adapt_species_name = "ion",
+        .adapt_particle = true,
+        .adapt_energy = true,
+        .num_boundaries = 2,
+        .dir = {0, 0},
+        .edge = {GKYL_LOWER_EDGE, GKYL_UPPER_EDGE},
+      },
+      .diagnostics = {
+        .num_diag_moments = 5,
+        .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP },
+        .num_integrated_diag_moments = 1,
+        .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN },
+      }
+    },
+    .bcx = {
+      .lower={.type = GKYL_SPECIES_GK_SHEATH,},
+      .upper={.type = GKYL_SPECIES_GK_SHEATH,},
+    },
+    .write_omega_cfl = true,
     .num_diag_moments = 8,
-    .diag_moments = { "BiMaxwellianMoments", "M0", "M1", "M2", "M2par", "M2perp", "M3par", "M3perp" },
+    .diag_moments = {GKYL_F_MOMENT_BIMAXWELLIAN, GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_M3PAR, GKYL_F_MOMENT_M3PERP },
     .num_integrated_diag_moments = 1,
-    .integrated_diag_moments = { "FourMoments" },
+    .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN },
     .time_rate_diagnostics = true,
 
     .boundary_flux_diagnostics = {
       .num_integrated_diag_moments = 1,
-      .integrated_diag_moments = { "FourMoments" },
+      .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN },
     },
   };
   struct gkyl_gyrokinetic_field field = {
@@ -868,18 +477,15 @@ int main(int argc, char **argv)
     .electron_temp = ctx.Te0,
   };
 
-struct gkyl_efit_inp efit_inp = {
-    .filepath = "/home/mr1884/scratch/gkylmax/eqdsk/wham.geqdsk",
-    .rz_poly_order = 2,                     // polynomial order for psi(R,Z) used for field line tracing
-    .flux_poly_order = 1,                   // polynomial order for fpol(psi)
-  };
-
   struct gkyl_mirror_geo_grid_inp grid_inp = {
+    .filename_psi = "/home/mr1884/gkylzero/data/unit/wham_hires.geqdsk_psi.gkyl", // psi file to use
     .rclose = 0.2, // closest R to region of interest
     .zmin = -2.0,  // Z of lower boundary
-    .zmax =  2.0,  // Z of upper boundary 
-    // .use_cubics = true,
+    .zmax =  2.0,  // Z of upper boundary
+    .include_axis = false, // Include R=0 axis in grid
+    .fl_coord = GKYL_MIRROR_GRID_GEN_SQRT_PSI_CART_Z, // coordinate system for psi grid
   };
+
   struct gkyl_gk app_inp = {  // GK app
     .name = "gk_wham",
     .cdim = ctx.cdim ,  .vdim = ctx.vdim,
@@ -892,7 +498,6 @@ struct gkyl_efit_inp efit_inp = {
     .geometry = {
       .geometry_id = GKYL_MIRROR,
       .world = {ctx.psi_eval, 0.0},
-      .efit_info = efit_inp,
       .mirror_grid_info = grid_inp,
       // .position_map_info = {
       //   .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
@@ -912,7 +517,7 @@ struct gkyl_efit_inp efit_inp = {
       .comm = comm,
     },
   };
-  
+
   // Create app object.
 
   output_diagnostics(ctx, &app_inp, app_args);
@@ -945,7 +550,7 @@ struct gkyl_efit_inp efit_inp = {
   }
   else {
     gkyl_gyrokinetic_app_apply_ic(app, t_curr);
-  }  
+  }
   end_time = clock();
   if (my_rank == 0)
     printf("Time to load initial conditions: %g\n", (double)(end_time - start_time) / CLOCKS_PER_SEC);
@@ -974,7 +579,7 @@ struct gkyl_efit_inp efit_inp = {
   start_time = clock();
   double init_time = t_curr;
   while ((t_curr < t_end) && (step <= app_args.num_steps)) {
-    struct gkyl_update_status status = gkyl_gyrokinetic_update(app, dt);    
+    struct gkyl_update_status status = gkyl_gyrokinetic_update(app, dt);
     if (step % 1000 == 0 || step == 1) {
       gkyl_gyrokinetic_app_cout(app, stdout, "Taking time-step %ld at t = %g ...", step, t_curr);
       gkyl_gyrokinetic_app_cout(app, stdout, " dt = %g ... ", status.dt_actual);
@@ -1019,8 +624,8 @@ struct gkyl_efit_inp efit_inp = {
   }
 
   gkyl_gyrokinetic_app_stat_write(app);
-  
-  struct gkyl_gyrokinetic_stat stat = gkyl_gyrokinetic_app_stat(app);
+
+  struct gkyl_gyrokinetic_stat stat = gkyl_gyrokinetic_app_stat(app); // fetch simulation statistics
   gkyl_gyrokinetic_app_cout(app, stdout, "\n");
   gkyl_gyrokinetic_app_cout(app, stdout, "Number of update calls %ld\n", stat.nup);
   gkyl_gyrokinetic_app_cout(app, stdout, "Number of forward-Euler calls %ld\n", stat.nfeuler);
@@ -1031,18 +636,13 @@ struct gkyl_efit_inp efit_inp = {
     gkyl_gyrokinetic_app_cout(app, stdout, "Min rel dt diff for RK stage-2 failures %g\n", stat.stage_2_dt_diff[0]);
   }
   gkyl_gyrokinetic_app_cout(app, stdout, "Number of RK stage-3 failures %ld\n", stat.nstage_3_fail);
-  gkyl_gyrokinetic_app_cout(app, stdout, "Species RHS calc took %g secs\n", stat.species_rhs_tm);
-  gkyl_gyrokinetic_app_cout(app, stdout, "Species collisions RHS calc took %g secs\n", stat.species_coll_tm);
-  gkyl_gyrokinetic_app_cout(app, stdout, "Field RHS calc took %g secs\n", stat.field_rhs_tm);
-  gkyl_gyrokinetic_app_cout(app, stdout, "Species collisional moments took %g secs\n", stat.species_coll_mom_tm);
-  gkyl_gyrokinetic_app_cout(app, stdout, "Updates took %g secs\n", stat.total_tm);
-  gkyl_gyrokinetic_app_cout(app, stdout, "Number of write calls %ld,\n", stat.n_io);
-  gkyl_gyrokinetic_app_cout(app, stdout, "IO time took %g secs \n", stat.io_tm);
+  gkyl_gyrokinetic_app_cout(app, stdout, "Number of write calls %ld\n", stat.n_io);
+  gkyl_gyrokinetic_app_print_timings(app, stdout);
 
   freeresources:
   // Free resources after simulation completion.
   gkyl_gyrokinetic_app_release(app);
-  free_wham_distf(&ctx);
+  // free_wham_distf(&ctx);
   gkyl_gyrokinetic_comms_release(comm);
 
 #ifdef GKYL_HAVE_MPI

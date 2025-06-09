@@ -664,7 +664,7 @@ int main(int argc, char **argv)
     // .projection = elc_ic,
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
-      .file_name = "Distributions/gk_wham-elc_144.gkyl",
+      .file_name = "../initial-conditions/kinet-elc-288z-nu2000/gk_wham-elc_0.gkyl",
     },
     .mapc2p = {
       .mapping = mapc2p_vel_elc,
@@ -685,15 +685,21 @@ int main(int argc, char **argv)
     .source = {
       .source_id = GKYL_PROJ_SOURCE,
       .num_sources = 1,
-      .evolve = true,
       .projection[0] = {
-        .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
-        .ctx_density = &ctx,
-        .density = eval_density_elc_source,
-        .ctx_upar = &ctx,
-        .upar= eval_upar_elc_source,
-        .ctx_temp = &ctx,
-        .temp = eval_temp_elc_source,
+        .proj_id = GKYL_PROJ_MAXWELLIAN_GAUSSIAN,
+        .center_gauss = {0.0},
+        .sigma_gauss = {0.2},
+        .particle = 0.0,
+        .energy = 0.0,
+        .temp_max = 10000*GKYL_ELEMENTARY_CHARGE,
+      },
+      .adapt[0] = {
+        .adapt_species_name = "ion",
+        .adapt_particle = true,
+        .adapt_energy = true,
+        .num_boundaries = 2,
+        .dir = {0, 0},
+        .edge = {GKYL_LOWER_EDGE, GKYL_UPPER_EDGE},
       },
       .diagnostics = {
         .num_diag_moments = 5,
@@ -739,7 +745,7 @@ int main(int argc, char **argv)
     },
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
-      .file_name = "Distributions/gk_wham-ion_144.gkyl",
+      .file_name = "../initial-conditions/kinet-elc-288z-nu2000/gk_wham-ion_0.gkyl",
     },
     .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
@@ -756,15 +762,21 @@ int main(int argc, char **argv)
     .source = {
       .source_id = GKYL_PROJ_SOURCE,
       .num_sources = 1,
-      .evolve = true,
       .projection[0] = {
-        .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
-        .ctx_density = &ctx,
-        .density = eval_density_ion_source,
-        .ctx_upar = &ctx,
-        .upar= eval_upar_ion_source,
-        .ctx_temp = &ctx,
-        .temp = eval_temp_ion_source,
+        .proj_id = GKYL_PROJ_MAXWELLIAN_GAUSSIAN,
+        .center_gauss = {0.0},
+        .sigma_gauss = {0.2},
+        .particle = 0.0,
+        .energy = 0.0,
+        .temp_max = 10000*GKYL_ELEMENTARY_CHARGE,
+      },
+      .adapt[0] = {
+        .adapt_species_name = "ion",
+        .adapt_particle = true,
+        .adapt_energy = true,
+        .num_boundaries = 2,
+        .dir = {0, 0},
+        .edge = {GKYL_LOWER_EDGE, GKYL_UPPER_EDGE},
       },
       .diagnostics = {
         .num_diag_moments = 5,
