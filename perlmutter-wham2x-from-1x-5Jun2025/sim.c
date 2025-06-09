@@ -385,9 +385,9 @@ int main(int argc, char **argv)
         .adapt_species_name = "ion",
         .adapt_particle = true,
         .adapt_energy = true,
-        .num_boundaries = 4,
-        .dir = {0, 0, 1, 1},
-        .edge = {GKYL_LOWER_EDGE, GKYL_UPPER_EDGE, GKYL_LOWER_EDGE, GKYL_UPPER_EDGE},
+        .num_boundaries = 3,
+        .dir = {0, 0, 1},
+        .edge = {GKYL_LOWER_EDGE, GKYL_UPPER_EDGE, GKYL_LOWER_EDGE},
       },
       .diagnostics = {
         .num_diag_moments = 6,
@@ -398,7 +398,7 @@ int main(int argc, char **argv)
     },
     .bcx = {
       .lower = {.type = GKYL_SPECIES_REFLECT},
-      .upper = {.type = GKYL_SPECIES_ABSORB},
+      .upper = {.type = GKYL_SPECIES_ZERO_FLUX},
     },
     .bcy = {
       .lower={.type = GKYL_SPECIES_GK_SHEATH,},
@@ -458,9 +458,9 @@ int main(int argc, char **argv)
         .adapt_species_name = "ion",
         .adapt_particle = true,
         .adapt_energy = true,
-        .num_boundaries = 4,
-        .dir = {0, 0, 1, 1},
-        .edge = {GKYL_LOWER_EDGE, GKYL_UPPER_EDGE, GKYL_LOWER_EDGE, GKYL_UPPER_EDGE},
+        .num_boundaries = 3,
+        .dir = {0, 0, 1},
+        .edge = {GKYL_LOWER_EDGE, GKYL_UPPER_EDGE, GKYL_LOWER_EDGE},
       },
       .diagnostics = {
         .num_diag_moments = 6,
@@ -471,7 +471,7 @@ int main(int argc, char **argv)
     },
     .bcx = {
       .lower = {.type = GKYL_SPECIES_REFLECT},
-      .upper = {.type = GKYL_SPECIES_ABSORB},
+      .upper = {.type = GKYL_SPECIES_ZERO_FLUX},
     },
     .bcy = {
       .lower={.type = GKYL_SPECIES_GK_SHEATH,},
