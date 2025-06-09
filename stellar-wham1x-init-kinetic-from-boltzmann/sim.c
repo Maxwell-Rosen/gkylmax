@@ -96,6 +96,12 @@ struct gk_mirror_ctx
   double target_z_fa;
 };
 
+void
+scaleIC(double t, const double *xn, double *fout, void *ctx)
+{
+  fout[0] = 1.0/3.0; // Scale factor for initial conditions
+}
+
 // Evaluate collision frequencies
 void
 evalNuElc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
@@ -664,6 +670,8 @@ int main(int argc, char **argv)
     // .projection = elc_ic,
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
+      // .conf_scale = &scaleIC,
+      // .conf_scale_ctx = &ctx,
       .file_name = "../initial-conditions/kinet-elc-288z-nu2000/gk_wham-elc_0.gkyl",
     },
     .mapc2p = {
@@ -745,7 +753,9 @@ int main(int argc, char **argv)
       .upper={.type = GKYL_SPECIES_GK_SHEATH,},
     },
     .init_from_file = {
-      .type = GKYL_IC_IMPORT_F,
+      .type = GKYL_IC_IMPORT_AF,
+      .conf_scale = &scaleIC,
+      .conf_scale_ctx = &ctx,
       .file_name = "../initial-conditions/kinet-elc-288z-nu2000/gk_wham-ion_0.gkyl",
     },
     .collisions = {

@@ -89,6 +89,12 @@ struct gk_mirror_ctx
   int rank;
 };
 
+// void
+// scaleIC(double t, const double *xn, double *fout, void *ctx)
+// {
+//   fout[0] = 1.0/4.0; // Scale factor for initial conditions
+// }
+
 // Evaluate collision frequencies
 void
 evalNuElc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
@@ -412,6 +418,8 @@ int main(int argc, char **argv)
 
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
+      // .conf_scale = &scaleIC,
+      // .conf_scale_ctx = &ctx,
       .file_name = "../initial-conditions/boltz-elc-288z-nu2000/gk_wham-ion_0.gkyl",
     },
     .mapc2p = {
