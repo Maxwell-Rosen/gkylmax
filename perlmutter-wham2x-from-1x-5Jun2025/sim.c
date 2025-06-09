@@ -386,7 +386,7 @@ int main(int argc, char **argv)
         .adapt_particle = true,
         .adapt_energy = true,
         .num_boundaries = 3,
-        .dir = {0, 0, 1},
+        .dir = {1, 1, 0},
         .edge = {GKYL_LOWER_EDGE, GKYL_UPPER_EDGE, GKYL_LOWER_EDGE},
       },
       .diagnostics = {
@@ -459,7 +459,7 @@ int main(int argc, char **argv)
         .adapt_particle = true,
         .adapt_energy = true,
         .num_boundaries = 3,
-        .dir = {0, 0, 1},
+        .dir = {1, 1, 0},
         .edge = {GKYL_LOWER_EDGE, GKYL_UPPER_EDGE, GKYL_LOWER_EDGE},
       },
       .diagnostics = {
