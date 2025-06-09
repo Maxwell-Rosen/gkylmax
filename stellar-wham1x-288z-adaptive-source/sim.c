@@ -259,7 +259,7 @@ create_ctx(void)
   int Nmu = 32;  // 192 uniform
   int poly_order = 1;
   double t_end = 1000e-6;//100e-6;
-  int num_frames = 100;
+  int num_frames = 1000;
   double write_phase_freq = 1;
   int int_diag_calc_num = num_frames*100;
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
@@ -431,6 +431,7 @@ int main(int argc, char **argv)
     .source = {
       .source_id = GKYL_PROJ_SOURCE,
       .num_sources = 1,
+      .num_adapt_sources = 1,
       .projection[0] = {
         .proj_id = GKYL_PROJ_MAXWELLIAN_GAUSSIAN,
         .center_gauss = {0.0},
@@ -448,11 +449,11 @@ int main(int argc, char **argv)
         .edge = {GKYL_LOWER_EDGE, GKYL_UPPER_EDGE},
       },
       .diagnostics = {
-        .num_diag_moments = 5,
-        .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP },
+        .num_diag_moments = 6,
+        .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_HAMILTONIAN},
         .num_integrated_diag_moments = 1,
         .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN },
-      }
+      },
     },
     .bcx = {
       .lower={.type = GKYL_SPECIES_GK_SHEATH,},
