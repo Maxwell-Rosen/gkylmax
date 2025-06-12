@@ -264,8 +264,8 @@ create_ctx(void)
   int Nvpar = 32; // 96 uniform
   int Nmu = 32;  // 192 uniform
   int poly_order = 1;
-  double t_end = 1000e-6;//100e-6;
-  int num_frames = 1000;
+  double t_end = 4e-3;//100e-6;
+  int num_frames = 400;
   double write_phase_freq = 1;
   int int_diag_calc_num = num_frames*100;
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
@@ -332,29 +332,32 @@ create_ctx(void)
 }
 
 void
-calc_integrated_diagnostics(struct gkyl_tm_trigger* iot, gkyl_gyrokinetic_app* app, double t_curr, bool force_calc)
+calc_integrated_diagnostics(struct gkyl_tm_trigger* iot, gkyl_gyrokinetic_app* app,
+  double t_curr, bool is_restart_IC, bool force_calc, double dt)
 {
-  if (gkyl_tm_trigger_check_and_bump(iot, t_curr) || force_calc) {
+  if (!is_restart_IC && (gkyl_tm_trigger_check_and_bump(iot, t_curr) || force_calc)) {
     gkyl_gyrokinetic_app_calc_field_energy(app, t_curr);
     gkyl_gyrokinetic_app_calc_integrated_mom(app, t_curr);
+
+    if ( !(dt < 0.0) )
+      gkyl_gyrokinetic_app_save_dt(app, t_curr, dt);
   }
 }
 
 void
 write_data(struct gkyl_tm_trigger* iot_conf, struct gkyl_tm_trigger* iot_phase,
-  gkyl_gyrokinetic_app* app, double t_curr, bool force_write)
+  gkyl_gyrokinetic_app* app, double t_curr, bool is_restart_IC, bool force_write)
 {
   bool trig_now_conf = gkyl_tm_trigger_check_and_bump(iot_conf, t_curr);
   if (trig_now_conf || force_write) {
     int frame = (!trig_now_conf) && force_write? iot_conf->curr : iot_conf->curr-1;
-
     gkyl_gyrokinetic_app_write_conf(app, t_curr, frame);
 
-    gkyl_gyrokinetic_app_calc_field_energy(app, t_curr);
-    gkyl_gyrokinetic_app_write_field_energy(app);
-
-    gkyl_gyrokinetic_app_calc_integrated_mom(app, t_curr);
-    gkyl_gyrokinetic_app_write_integrated_mom(app);
+    if (!is_restart_IC) {
+      gkyl_gyrokinetic_app_write_field_energy(app);
+      gkyl_gyrokinetic_app_write_integrated_mom(app);
+      gkyl_gyrokinetic_app_write_dt(app);
+    }
   }
 
   bool trig_now_phase = gkyl_tm_trigger_check_and_bump(iot_phase, t_curr);
@@ -364,6 +367,7 @@ write_data(struct gkyl_tm_trigger* iot_conf, struct gkyl_tm_trigger* iot_phase,
     gkyl_gyrokinetic_app_write_phase(app, t_curr, frame);
   }
 }
+
 
 int main(int argc, char **argv)
 {
@@ -573,8 +577,8 @@ int main(int argc, char **argv)
     .tcurr = t_curr, .curr = frame_curr };
 
   // Write out ICs (if restart, it overwrites the restart frame).
-  calc_integrated_diagnostics(&trig_calc_intdiag, app, t_curr, false);
-  write_data(&trig_write_conf, &trig_write_phase, app, t_curr, false);
+  calc_integrated_diagnostics(&trig_calc_intdiag, app, t_curr, app_args.is_restart, false, -1.0);
+  write_data(&trig_write_conf, &trig_write_phase, app, t_curr, app_args.is_restart, false);
 
   double dt = t_end-t_curr; // Initial time step.
   // Initialize small time-step check.
@@ -605,8 +609,8 @@ int main(int argc, char **argv)
     t_curr += status.dt_actual;
       dt = status.dt_suggested;
 
-    calc_integrated_diagnostics(&trig_calc_intdiag, app, t_curr, t_curr > t_end);
-    write_data(&trig_write_conf, &trig_write_phase, app, t_curr, t_curr > t_end);
+    calc_integrated_diagnostics(&trig_calc_intdiag, app, t_curr, false, t_curr > t_end, status.dt_actual);
+    write_data(&trig_write_conf, &trig_write_phase, app, t_curr, false, t_curr > t_end);
 
     if (dt_init < 0.0) {
       dt_init = status.dt_actual;
@@ -620,8 +624,8 @@ int main(int argc, char **argv)
       if (num_failures >= num_failures_max) {
         gkyl_gyrokinetic_app_cout(app, stdout, "ERROR: Time-step was below %g*dt_init ", dt_failure_tol);
         gkyl_gyrokinetic_app_cout(app, stdout, "%d consecutive times. Aborting simulation ....\n", num_failures_max);
-        calc_integrated_diagnostics(&trig_calc_intdiag, app, t_curr, true);
-        write_data(&trig_write_conf, &trig_write_phase, app, t_curr, true);
+        calc_integrated_diagnostics(&trig_calc_intdiag, app, t_curr, false, true, status.dt_actual);
+        write_data(&trig_write_conf, &trig_write_phase, app, t_curr, false, true);
         break;
       }
     }

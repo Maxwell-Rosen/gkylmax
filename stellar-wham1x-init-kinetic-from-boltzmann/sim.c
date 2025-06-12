@@ -117,240 +117,154 @@ evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, 
   fout[0] = app->nuIon;
 }
 
-// void
-// load_ion_donor(void* ctx)
-// {
-//   struct gk_mirror_ctx *app = ctx;
-//   struct gkyl_rect_grid field_grid, mc2nu_pos_grid, M0_grid;
-//   struct gkyl_array *field, *mc2nu_pos, *M0;
+void
+load_ion_donor(void* ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  struct gkyl_rect_grid field_grid, mc2nu_pos_grid, M0_grid;
+  struct gkyl_array *field, *mc2nu_pos, *M0;
 
-//   field     = gkyl_grid_array_new_from_file(&field_grid,
-//     "/home/mr1884/scratch/gkylmax/initial-conditions/boltz-elc-288z-nu2000/gk_wham-field_400.gkyl");
-//   mc2nu_pos = gkyl_grid_array_new_from_file(&mc2nu_pos_grid,
-//     "/home/mr1884/scratch/gkylmax/initial-conditions/boltz-elc-288z-nu2000/gk_wham-mc2nu_pos.gkyl");
-//   M0 = gkyl_grid_array_new_from_file(&M0_grid,
-//     "/home/mr1884/scratch/gkylmax/initial-conditions/boltz-elc-288z-nu2000/gk_wham-ion_M0_400.gkyl");
+  field     = gkyl_grid_array_new_from_file(&field_grid, 
+    "/home/mr1884/scratch/gkylmax/initial-conditions/boltz-elc-288z-nu2000/gk_wham-field_0.gkyl");
+  mc2nu_pos = gkyl_grid_array_new_from_file(&mc2nu_pos_grid, 
+    "/home/mr1884/scratch/gkylmax/initial-conditions/boltz-elc-288z-nu2000/gk_wham-mc2nu_pos.gkyl");
+  M0 = gkyl_grid_array_new_from_file(&M0_grid, 
+    "/home/mr1884/scratch/gkylmax/initial-conditions/boltz-elc-288z-nu2000/gk_wham-ion_M0_0.gkyl");
 
-//   app->field = field;
-//   app->ion_M0 = M0;
+  app->field = field;
+  app->ion_M0 = M0;
 
-//   int lower_cell[] = {1};
-//   int upper_cell[] = {M0_grid.cells[0]};
+  int lower_cell[] = {1};
+  int upper_cell[] = {M0_grid.cells[0]};
 
-//   int poly_order = 1;
-//   int cdim = 1;
-//   struct gkyl_basis basis;
-//   gkyl_cart_modal_serendip(&basis, cdim, poly_order);
+  int poly_order = 1;
+  int cdim = 1;
+  struct gkyl_basis basis;
+  gkyl_cart_modal_serendip(&basis, cdim, poly_order);
 
-//   int nghost[] = { 0, 0, 0 };
-//   struct gkyl_range local, local_ext;
-//   gkyl_create_grid_ranges(&M0_grid, nghost, &local, &local_ext);
+  int nghost[] = { 0, 0, 0 };
+  struct gkyl_range local, local_ext;
+  gkyl_create_grid_ranges(&M0_grid, nghost, &local, &local_ext);
 
-//   // Create a position map object
-//   struct gkyl_position_map_inp pmap_inp = { };
-//   // Potential future issue by using the M0 ranges and basis for the position map
-//   struct gkyl_position_map *gpm = gkyl_position_map_new(pmap_inp,
-//     mc2nu_pos_grid, local, local_ext, local, local_ext, basis);
-//   gkyl_position_map_set_mc2nu(gpm, mc2nu_pos);
-//   app->position_map = gpm;
-// }
+  // Create a position map object
+  struct gkyl_position_map_inp pmap_inp = { };
+  // Potential future issue by using the M0 ranges and basis for the position map
+  struct gkyl_position_map *gpm = gkyl_position_map_new(pmap_inp, 
+    mc2nu_pos_grid, local, local_ext, local, local_ext, basis);
+  gkyl_position_map_set_mc2nu(gpm, mc2nu_pos);
+  app->position_map = gpm;
+}
 
-// void
-// free_ion_donor(void* ctx)
-// {
-//   struct gk_mirror_ctx *app = ctx;
-//   gkyl_array_release(app->field);
-//   gkyl_array_release(app->ion_M0);
-//   gkyl_position_map_release(app->position_map);
-// }
+void
+free_ion_donor(void* ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  gkyl_array_release(app->field);
+  gkyl_array_release(app->ion_M0);
+  gkyl_position_map_release(app->position_map);
+}
 
-// static double
-// invert_position_map_func(double x, void *ctx)
-// {
-//   struct gk_mirror_ctx *app = ctx;
-//   double xc[] = {x};
-//   double xfa[3];
-//   gkyl_position_map_eval_mc2nu(app->position_map, xc, xfa);
-//   // printf("xc = %g maps to xfa = %g \n", x, xfa[0]);
-//   return xfa[0] - app->target_z_fa;
-// }
+static double
+invert_position_map_func(double x, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  double xc[] = {x};
+  double xfa[3];
+  gkyl_position_map_eval_mc2nu(app->position_map, xc, xfa);
+  // printf("xc = %g maps to xfa = %g \n", x, xfa[0]);
+  return xfa[0] - app->target_z_fa;
+}
 
-// void
-// botlzmann_elc_density(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-// {
-//   // Since boltzmann electrons are particle density and gyrokinetic sims take guiding center density
-//   // Boltzmann electron simulations have n_i = n_e, and we must determine the ion density
-//   // using the polarization density.
+void
+botlzmann_elc_density(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  // Since boltzmann electrons are particle density and gyrokinetic sims take guiding center density
+  // Boltzmann electron simulations have n_i = n_e, and we must determine the ion density
+  // using the polarization density.
 
-//   struct gk_mirror_ctx *app = ctx;
-//   double z_field_aligned = xn[0];
+  struct gk_mirror_ctx *app = ctx;
+  double z_field_aligned = xn[0];
 
-//   // First we must determine the computational coordinate in non-uniform space
-//   app->target_z_fa = z_field_aligned;
-//   double interval_lower = -M_PI;
-//   double interval_upper = M_PI;
-//   double interval_lower_eval = invert_position_map_func(interval_lower, ctx);
-//   double interval_upper_eval = invert_position_map_func(interval_upper, ctx);
-//   struct gkyl_qr_res res = gkyl_ridders(invert_position_map_func, ctx,
-//     interval_lower, interval_upper, interval_lower_eval, interval_upper_eval, 10, 1e-6);
-//   double z_computational = res.res;
+  // First we must determine the computational coordinate in non-uniform space
+  app->target_z_fa = z_field_aligned;
+  double interval_lower = -M_PI;
+  double interval_upper = M_PI;
+  double interval_lower_eval = invert_position_map_func(interval_lower, ctx);
+  double interval_upper_eval = invert_position_map_func(interval_upper, ctx);
+  struct gkyl_qr_res res = gkyl_ridders(invert_position_map_func, ctx,
+    interval_lower, interval_upper, interval_lower_eval, interval_upper_eval, 10, 1e-6);
+  double z_computational = res.res;
 
-//   // Now we calculate the value of the field at this computational coordinate
-//   int cdim = 1;
-//   struct gkyl_basis basis = app->position_map->basis;
-//   struct gkyl_rect_grid grid = app->position_map->grid;
-//   struct gkyl_range local = app->position_map->local;
+  // Now we calculate the value of the field at this computational coordinate
+  int cdim = 1;
+  struct gkyl_basis basis = app->position_map->basis;
+  struct gkyl_rect_grid grid = app->position_map->grid;
+  struct gkyl_range local = app->position_map->local;
 
-//   // I'm limiting myself to 1x
-//   int idx_temp = local.lower[0] + (int) floor((z_computational - grid.lower[0]) / grid.dx[0]);
-//   idx_temp = GKYL_MAX2(local.lower[0], GKYL_MIN2(local.upper[0], idx_temp));
-//   long lidx = gkyl_range_idx(&local, &idx_temp);
-//   const double *field_coeffs = gkyl_array_cfetch(app->ion_M0, lidx);
-//   double cxc[3];
-//   gkyl_rect_grid_cell_center(&grid, &idx_temp, cxc);
-//   double x_log = (z_computational - cxc[0]) / (grid.dx[0]*0.5);
-//   double M0_val = basis.eval_expand(&x_log, field_coeffs);
+  // I'm limiting myself to 1x
+  int idx_temp = local.lower[0] + (int) floor((z_computational - grid.lower[0]) / grid.dx[0]);
+  idx_temp = GKYL_MAX2(local.lower[0], GKYL_MIN2(local.upper[0], idx_temp));
+  long lidx = gkyl_range_idx(&local, &idx_temp);
+  const double *field_coeffs = gkyl_array_cfetch(app->ion_M0, lidx);
+  double cxc[3];
+  gkyl_rect_grid_cell_center(&grid, &idx_temp, cxc);
+  double x_log = (z_computational - cxc[0]) / (grid.dx[0]*0.5);
+  double M0_val = basis.eval_expand(&x_log, field_coeffs);
 
-//   fout[0] = M0_val;
-// }
+  fout[0] = M0_val;
+}
 
-// void
-// boltzmann_elc_upar(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-// {
-//   fout[0] = 0.0;
-// }
+void
+boltzmann_elc_upar(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  fout[0] = 0.0;
+}
 
-// void
-// boltzmann_elc_T(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-// {
-//   struct gk_mirror_ctx *app = ctx;
-//   fout[0] = app->Te0;
-// }
-
-// void
-// eval_density_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-// {
-//   struct gk_mirror_ctx *app = ctx;
-//   double z = xn[0];
-//   double src_amp = app->ion_source_amplitude;
-//   double z_src = 0.0;
-//   double src_sigma = app->ion_source_sigma;
-//   double src_amp_floor = src_amp*1e-2;
-//   if (fabs(z) <= 1.0)
-//   {
-//     fout[0] = fmax(src_amp_floor, (src_amp / sqrt(2.0 * M_PI * pow(src_sigma, 2))) *
-//       exp(-1 * pow((z - z_src), 2) / (2.0 * pow(src_sigma, 2))));
-//   }
-//   else
-//   {
-//     fout[0] = 1e-16;
-//   }
-// }
-
-// void
-// eval_upar_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-// {
-//   fout[0] = 0.0;
-// }
-
-// void
-// eval_temp_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-// {
-//   struct gk_mirror_ctx *app = ctx;
-//   double z = xn[0];
-//   double TSrc0 = app->ion_source_temp;
-//   double Tfloor = TSrc0*1e-2;
-//   if (fabs(z) <= 1.0)
-//   {
-//     fout[0] = TSrc0;
-//   }
-//   else
-//   {
-//     fout[0] = Tfloor;
-//   }
-// }
+void
+boltzmann_elc_T(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  fout[0] = app->Te0;
+}
 
 
-// void
-// eval_density_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-// {
-//   struct gk_mirror_ctx *app = ctx;
-//   double z = xn[0];
-//   double src_amp = app->elc_source_amplitude;
-//   double z_src = 0.0;
-//   double src_sigma = app->elc_source_sigma;
-//   double src_amp_floor = src_amp*1e-2;
-//   if (fabs(z) <= 1.0)
-//   {
-//     fout[0] = fmax(src_amp_floor, (src_amp / sqrt(2.0 * M_PI * pow(src_sigma, 2))) *
-//       exp(-1 * pow((z - z_src), 2) / (2.0 * pow(src_sigma, 2))));
-//   }
-//   else
-//   {
-//     fout[0] = 1e-16;
-//   }
-// }
+void
+botlzmann_elc_field(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  // There is no position map in the polarization solve presently. It needs that
+  double z_field_aligned = xn[0];
 
-// void
-// eval_upar_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-// {
-//   fout[0] = 0.0;
-// }
+  // First we must determine the computational coordinate in non-uniform space
+  app->target_z_fa = z_field_aligned;
+  double interval_lower = -M_PI;
+  double interval_upper = M_PI;
+  double interval_lower_eval = invert_position_map_func(interval_lower, ctx);
+  double interval_upper_eval = invert_position_map_func(interval_upper, ctx);
+  struct gkyl_qr_res res = gkyl_ridders(invert_position_map_func, ctx,
+    interval_lower, interval_upper, interval_lower_eval, interval_upper_eval, 10, 1e-6);
+  double z_computational = res.res;
 
-// void
-// eval_temp_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-// {
-//   struct gk_mirror_ctx *app = ctx;
-//   double z = xn[0];
-//   double TSrc0 = app->elc_source_temp;
-//   double Tfloor = TSrc0*1e-2;
-//   if (fabs(z) <= 1.0)
-//   {
-//     fout[0] = TSrc0;
-//   }
-//   else
-//   {
-//     fout[0] = Tfloor;
-//   }
-// }
+  // Now we calculate the value of the field at this computational coordinate
+  int cdim = 1;
+  struct gkyl_basis basis = app->position_map->basis;
+  struct gkyl_rect_grid grid = app->position_map->grid;
+  struct gkyl_range local = app->position_map->local;
 
-// void
-// botlzmann_elc_field(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-// {
-//   struct gk_mirror_ctx *app = ctx;
-//   // There is no position map in the polarization solve presently. It needs that
-//   double z_field_aligned = xn[0];
+  // I'm limiting myself to 1x
+  int idx_temp = local.lower[0] + (int) floor((z_computational - grid.lower[0]) / grid.dx[0]);
+  idx_temp = GKYL_MAX2(local.lower[0], GKYL_MIN2(local.upper[0], idx_temp));
+  long lidx = gkyl_range_idx(&local, &idx_temp);
+  const double *field_coeffs = gkyl_array_cfetch(app->field, lidx);
+  double cxc[3];
+  gkyl_rect_grid_cell_center(&grid, &idx_temp, cxc);
+  double x_log = (z_computational - cxc[0]) / (grid.dx[0]*0.5);
+  double field_val = basis.eval_expand(&x_log, field_coeffs);
 
-//   // First we must determine the computational coordinate in non-uniform space
-//   app->target_z_fa = z_field_aligned;
-//   double interval_lower = -M_PI;
-//   double interval_upper = M_PI;
-//   double interval_lower_eval = invert_position_map_func(interval_lower, ctx);
-//   double interval_upper_eval = invert_position_map_func(interval_upper, ctx);
-//   struct gkyl_qr_res res = gkyl_ridders(invert_position_map_func, ctx,
-//     interval_lower, interval_upper, interval_lower_eval, interval_upper_eval, 10, 1e-6);
-//   double z_computational = res.res;
-
-//   // Now we calculate the value of the field at this computational coordinate
-//   int cdim = 1;
-//   struct gkyl_basis basis = app->position_map->basis;
-//   struct gkyl_rect_grid grid = app->position_map->grid;
-//   struct gkyl_range local = app->position_map->local;
-
-//   // I'm limiting myself to 1x
-//   int idx_temp = local.lower[0] + (int) floor((z_computational - grid.lower[0]) / grid.dx[0]);
-//   idx_temp = GKYL_MAX2(local.lower[0], GKYL_MIN2(local.upper[0], idx_temp));
-//   long lidx = gkyl_range_idx(&local, &idx_temp);
-//   const double *field_coeffs = gkyl_array_cfetch(app->field, lidx);
-//   double cxc[3];
-//   gkyl_rect_grid_cell_center(&grid, &idx_temp, cxc);
-//   double x_log = (z_computational - cxc[0]) / (grid.dx[0]*0.5);
-//   double field_val = basis.eval_expand(&x_log, field_coeffs);
-
-//   if (field_val < 10.0)
-//    field_val = 10.0;
-//   fout[0] = field_val;
-// }
+  if (field_val < 10.0)
+   field_val = 10.0;
+  fout[0] = field_val;
+}
 
 void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *ctx)
 {
@@ -506,8 +420,8 @@ create_ctx(void)
   int Nvpar = 32; // 96 uniform
   int Nmu = 32;  // 192 uniform
   int poly_order = 1;
-  double t_end = 1000e-6;//100e-6;
-  int num_frames = 1000;
+  double t_end = 1e-9;//100e-6;
+  int num_frames = 10;
   double write_phase_freq = 1;
   int int_diag_calc_num = num_frames*100;
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
@@ -575,34 +489,37 @@ create_ctx(void)
     .elc_source_sigma = elc_source_sigma,
     .elc_source_temp = elc_source_temp,
   };
-  // load_ion_donor(&ctx);
+  load_ion_donor(&ctx);
   return ctx;
 }
 
 void
-calc_integrated_diagnostics(struct gkyl_tm_trigger* iot, gkyl_gyrokinetic_app* app, double t_curr, bool force_calc)
+calc_integrated_diagnostics(struct gkyl_tm_trigger* iot, gkyl_gyrokinetic_app* app,
+  double t_curr, bool is_restart_IC, bool force_calc, double dt)
 {
-  if (gkyl_tm_trigger_check_and_bump(iot, t_curr) || force_calc) {
+  if (!is_restart_IC && (gkyl_tm_trigger_check_and_bump(iot, t_curr) || force_calc)) {
     gkyl_gyrokinetic_app_calc_field_energy(app, t_curr);
     gkyl_gyrokinetic_app_calc_integrated_mom(app, t_curr);
+
+    if ( !(dt < 0.0) )
+      gkyl_gyrokinetic_app_save_dt(app, t_curr, dt);
   }
 }
 
 void
 write_data(struct gkyl_tm_trigger* iot_conf, struct gkyl_tm_trigger* iot_phase,
-  gkyl_gyrokinetic_app* app, double t_curr, bool force_write)
+  gkyl_gyrokinetic_app* app, double t_curr, bool is_restart_IC, bool force_write)
 {
   bool trig_now_conf = gkyl_tm_trigger_check_and_bump(iot_conf, t_curr);
   if (trig_now_conf || force_write) {
     int frame = (!trig_now_conf) && force_write? iot_conf->curr : iot_conf->curr-1;
-
     gkyl_gyrokinetic_app_write_conf(app, t_curr, frame);
 
-    gkyl_gyrokinetic_app_calc_field_energy(app, t_curr);
-    gkyl_gyrokinetic_app_write_field_energy(app);
-
-    gkyl_gyrokinetic_app_calc_integrated_mom(app, t_curr);
-    gkyl_gyrokinetic_app_write_integrated_mom(app);
+    if (!is_restart_IC) {
+      gkyl_gyrokinetic_app_write_field_energy(app);
+      gkyl_gyrokinetic_app_write_integrated_mom(app);
+      gkyl_gyrokinetic_app_write_dt(app);
+    }
   }
 
   bool trig_now_phase = gkyl_tm_trigger_check_and_bump(iot_phase, t_curr);
@@ -637,7 +554,7 @@ int main(int argc, char **argv)
 
   // Construct communicator for use in app.
   struct gkyl_comm *comm = gkyl_gyrokinetic_comms_new(app_args.use_mpi, app_args.use_gpu, stderr);
-
+  
   int my_rank = 0;
   int comm_sz = 1;
 #ifdef GKYL_HAVE_MPI
@@ -648,15 +565,15 @@ int main(int argc, char **argv)
   }
 #endif
 
-  // struct gkyl_gyrokinetic_projection elc_ic = {
-  //   .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
-  //   .density = botlzmann_elc_density,
-  //   .ctx_density = &ctx,
-  //   .temp = boltzmann_elc_T,
-  //   .ctx_temp = &ctx,
-  //   .upar = boltzmann_elc_upar,
-  //   .ctx_upar = &ctx,
-  // };
+  struct gkyl_gyrokinetic_projection elc_ic = {
+    .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
+    .density = botlzmann_elc_density,
+    .ctx_density = &ctx,
+    .temp = boltzmann_elc_T,
+    .ctx_temp = &ctx,
+    .upar = boltzmann_elc_upar,
+    .ctx_upar = &ctx,
+  };
 
   struct gkyl_gyrokinetic_species elc = {
     .name = "elc",
@@ -667,16 +584,18 @@ int main(int argc, char **argv)
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
     .no_by = true,
-    // .projection = elc_ic,
-    .init_from_file = {
-      .type = GKYL_IC_IMPORT_F,
-      // .conf_scale = &scaleIC,
-      // .conf_scale_ctx = &ctx,
-      .file_name = "../initial-conditions/kinet-elc-288z-nu2000/gk_wham-elc_0.gkyl",
-    },
+    .projection = elc_ic,
+    // .init_from_file = {
+    //   .type = GKYL_IC_IMPORT_F,
+    //   .file_name = "gk_wham-elc_0.gkyl",
+    // },
     .mapc2p = {
       .mapping = mapc2p_vel_elc,
       .ctx = &ctx,
+    },
+    .bcx = {
+      .lower={.type = GKYL_SPECIES_GK_SHEATH,},
+      .upper={.type = GKYL_SPECIES_GK_SHEATH,},
     },
     .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
@@ -717,10 +636,6 @@ int main(int argc, char **argv)
         .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN },
       },
     },
-    .bcx = {
-      .lower={.type = GKYL_SPECIES_GK_SHEATH,},
-      .upper={.type = GKYL_SPECIES_GK_SHEATH,},
-    },
     .write_omega_cfl = true,
     .num_diag_moments = 8,
     .diag_moments = {GKYL_F_MOMENT_BIMAXWELLIAN, GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_M3PAR, GKYL_F_MOMENT_M3PERP },
@@ -742,7 +657,7 @@ int main(int argc, char **argv)
     .upper = { 1.0, 1.0},
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
-    // .scale_with_polarization = true,
+    .scale_with_polarization = true,
     .no_by = true,
     .mapc2p = {
       .mapping = mapc2p_vel_ion,
@@ -753,9 +668,9 @@ int main(int argc, char **argv)
       .upper={.type = GKYL_SPECIES_GK_SHEATH,},
     },
     .init_from_file = {
-      .type = GKYL_IC_IMPORT_AF,
-      .conf_scale = &scaleIC,
-      .conf_scale_ctx = &ctx,
+      .type = GKYL_IC_IMPORT_F,
+      // .conf_scale = &scaleIC,
+      // .conf_scale_ctx = &ctx,
       .file_name = "../initial-conditions/kinet-elc-288z-nu2000/gk_wham-ion_0.gkyl",
     },
     .collisions = {
@@ -773,6 +688,7 @@ int main(int argc, char **argv)
     .source = {
       .source_id = GKYL_PROJ_SOURCE,
       .num_sources = 1,
+      .num_adapt_sources = 1,
       .projection[0] = {
         .proj_id = GKYL_PROJ_MAXWELLIAN_GAUSSIAN,
         .center_gauss = {0.0},
@@ -816,8 +732,8 @@ int main(int argc, char **argv)
   struct gkyl_gyrokinetic_field field = {
     .polarization_bmag = ctx.B_p,
     .kperpSq = pow(ctx.kperp, 2.),
-    // .polarization_potential = botlzmann_elc_field,
-    // .polarization_potential_ctx = &ctx,
+    .polarization_potential = botlzmann_elc_field,
+    .polarization_potential_ctx = &ctx,
   };
 
   struct gkyl_mirror_geo_grid_inp grid_inp = {
@@ -901,8 +817,8 @@ int main(int argc, char **argv)
     .tcurr = t_curr, .curr = frame_curr };
 
   // Write out ICs (if restart, it overwrites the restart frame).
-  calc_integrated_diagnostics(&trig_calc_intdiag, app, t_curr, false);
-  write_data(&trig_write_conf, &trig_write_phase, app, t_curr, false);
+  calc_integrated_diagnostics(&trig_calc_intdiag, app, t_curr, app_args.is_restart, false, -1.0);
+  write_data(&trig_write_conf, &trig_write_phase, app, t_curr, app_args.is_restart, false);
 
   double dt = t_end-t_curr; // Initial time step.
   // Initialize small time-step check.
@@ -933,8 +849,8 @@ int main(int argc, char **argv)
     t_curr += status.dt_actual;
       dt = status.dt_suggested;
 
-    calc_integrated_diagnostics(&trig_calc_intdiag, app, t_curr, t_curr > t_end);
-    write_data(&trig_write_conf, &trig_write_phase, app, t_curr, t_curr > t_end);
+    calc_integrated_diagnostics(&trig_calc_intdiag, app, t_curr, false, t_curr > t_end, status.dt_actual);
+    write_data(&trig_write_conf, &trig_write_phase, app, t_curr, false, t_curr > t_end);
 
     if (dt_init < 0.0) {
       dt_init = status.dt_actual;
@@ -948,8 +864,8 @@ int main(int argc, char **argv)
       if (num_failures >= num_failures_max) {
         gkyl_gyrokinetic_app_cout(app, stdout, "ERROR: Time-step was below %g*dt_init ", dt_failure_tol);
         gkyl_gyrokinetic_app_cout(app, stdout, "%d consecutive times. Aborting simulation ....\n", num_failures_max);
-        calc_integrated_diagnostics(&trig_calc_intdiag, app, t_curr, true);
-        write_data(&trig_write_conf, &trig_write_phase, app, t_curr, true);
+        calc_integrated_diagnostics(&trig_calc_intdiag, app, t_curr, false, true, status.dt_actual);
+        write_data(&trig_write_conf, &trig_write_phase, app, t_curr, false, true);
         break;
       }
     }
@@ -979,7 +895,7 @@ int main(int argc, char **argv)
   freeresources:
   // Free resources after simulation completion.
   gkyl_gyrokinetic_app_release(app);
-  // free_ion_donor(&ctx);
+  free_ion_donor(&ctx);
   gkyl_gyrokinetic_comms_release(comm);
 
 #ifdef GKYL_HAVE_MPI

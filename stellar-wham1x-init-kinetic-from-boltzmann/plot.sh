@@ -6,16 +6,27 @@ name="gk_wham"
 species="elc"
 saveLoc="python-plots/gk_wham"
 
-pgkyl gk_wham-field_[0-9]*.gkyl interp col sel --z1 0.0 pl --saveas "$saveLoc-field-midplane.png" --title "Field at midplane" --xlabel "time, s" --ylabel "Potential, V" &
-pgkyl gk_wham-field_0.gkyl gk_wham-field_144.gkyl interp pl --saveas "$saveLoc-field-0-144.png" --title "Field 0-144" --xlabel "z" --ylabel "Potential, V" -f0 &
-pgkyl gk_wham-field_0.gkyl gk_wham-field_144.gkyl interp ev "f[:] grad abs" pl --saveas "$saveLoc-field-grad-0-144.png" --title "Grad abs Field 0-144" --xlabel "z" --ylabel "abs(E), V/m" -f0 --logy&
-pgkyl gk_wham-ion_integrated_moms.gkyl gk_wham-elc_integrated_moms.gkyl sel -c0 pl -f0 --saveas "$saveLoc-integrated-moms.png" --title "Integrated density" --xlabel "time, s" --ylabel "Density, m^-2" &
+# pgkyl gk_wham-field_[0-9]*.gkyl interp col sel --z1 0.0 pl --saveas "$saveLoc-field-midplane.png" --title "Field at midplane" --xlabel "time, s" --ylabel "Potential, V" &
+# pgkyl gk_wham-field_0.gkyl gk_wham-field_144.gkyl interp pl --saveas "$saveLoc-field-0-144.png" --title "Field 0-144" --xlabel "z" --ylabel "Potential, V" -f0 &
+# pgkyl gk_wham-field_0.gkyl gk_wham-field_144.gkyl interp ev "f[:] grad abs" pl --saveas "$saveLoc-field-grad-0-144.png" --title "Grad abs Field 0-144" --xlabel "z" --ylabel "abs(E), V/m" -f0 --logy&
+# pgkyl gk_wham-ion_integrated_moms.gkyl gk_wham-elc_integrated_moms.gkyl sel -c0 pl -f0 --saveas "$saveLoc-integrated-moms.png" --title "Integrated density" --xlabel "time, s" --ylabel "Density, m^-2" &
 
-pgkyl gk_wham-ion_BiMaxwellianMoments_[0-9]*.gkyl interp col pl --saveas "$saveLoc-ion-BiMaxwellianMoments.png" --title "Ion BiMaxwellian moments" --xlabel "time, s"&
-pgkyl gk_wham-elc_BiMaxwellianMoments_[0-9]*.gkyl interp col pl --saveas "$saveLoc-elc-BiMaxwellianMoments.png" --title "Electron BiMaxwellian moments" --xlabel "time, s"&
+# pgkyl gk_wham-ion_BiMaxwellianMoments_[0-9]*.gkyl interp col pl --saveas "$saveLoc-ion-BiMaxwellianMoments.png" --title "Ion BiMaxwellian moments" --xlabel "time, s"&
+# pgkyl gk_wham-elc_BiMaxwellianMoments_[0-9]*.gkyl interp col pl --saveas "$saveLoc-elc-BiMaxwellianMoments.png" --title "Electron BiMaxwellian moments" --xlabel "time, s"&
 
-pgkyl gk_wham-ion_BiMaxwellianMoments_0.gkyl gk_wham-ion_BiMaxwellianMoments_144.gkyl interp pl -f0 --saveas "$saveLoc-ion-BiMaxwellianMoments-0-144.png" --title "Ion BiMaxwellian moments 0-144" --xlabel "z" --ylabel "Density, m^-3" &
-pgkyl gk_wham-elc_BiMaxwellianMoments_0.gkyl gk_wham-elc_BiMaxwellianMoments_144.gkyl interp pl -f0 --saveas "$saveLoc-elc-BiMaxwellianMoments-0-144.png" --title "Electron BiMaxwellian moments 0-144" --xlabel "z" --ylabel "Density, m^-3" &
+# pgkyl gk_wham-ion_BiMaxwellianMoments_[0-9]*.gkyl interp anim --title "Ion BiMaxwellian moments" --float &
+# pgkyl gk_wham-elc_BiMaxwellianMoments_[0-9]*.gkyl interp anim --title "Electron BiMaxwellian moments" --float &
+# pgkyl "gk_wham-ion_source_M0_[0-9]*.gkyl" interp anim --title "Ion source M0 moments" --float &
+# pgkyl "gk_wham-elc_source_M0_[0-9]*.gkyl" interp anim --title "Electron source M0 moments" --float &
+
+# pgkyl gk_wham-ion_source_integrated_moms.gkyl gk_wham-elc_source_integrated_moms.gkyl pl -f0 --saveas "$saveLoc-source-integrated-moms.png" --title "Source integrated moments" --xlabel "time, s" &
+
+pgkyl gk_wham-field_[0-9]*.gkyl interp col sel --z1 0.0 pl --title "Field" --xlabel "time, s" --ylabel "Potential, V" &
+
+
+
+# pgkyl gk_wham-ion_BiMaxwellianMoments_0.gkyl gk_wham-ion_BiMaxwellianMoments_144.gkyl interp pl -f0 --saveas "$saveLoc-ion-BiMaxwellianMoments-0-144.png" --title "Ion BiMaxwellian moments 0-144" --xlabel "z" --ylabel "Density, m^-3" &
+# pgkyl gk_wham-elc_BiMaxwellianMoments_0.gkyl gk_wham-elc_BiMaxwellianMoments_144.gkyl interp pl -f0 --saveas "$saveLoc-elc-BiMaxwellianMoments-0-144.png" --title "Electron BiMaxwellian moments 0-144" --xlabel "z" --ylabel "Density, m^-3" &
 
 # Plot elc,ion distributions at the middle, mirror throat, and expander, divide by jacobian and use --c2p-vel.
 # Energy conservation plots for the new geometry
