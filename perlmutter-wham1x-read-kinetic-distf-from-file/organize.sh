@@ -46,22 +46,6 @@ if [ ! -d "Slurmscripts" ]; then
 fi
 mv *.out Slurmscripts/
 
-if [ ! -d "Source" ]; then
-  mkdir Source
-fi
-mv *_source_* source/
-
-if [ ! -d "Coll" ]; then
-  mkdir Coll
-fi
-mv *_nu_sum_* Coll/
-mv *_nu_prim_moms_* Coll/
-
-if [ ! -d "PrimMoms" ]; then
-  mkdir PrimMoms
-fi
-mv *_prim_moms_* PrimMoms/
-
 if [ ! -d "M" ]; then
   mkdir M
 fi

@@ -9,15 +9,17 @@
 #SBATCH -q regular
 
 #.Number of nodes to request (Perlmutter has 64 cores and 4 GPUs per node)
-#SBATCH -N 4
-#SBATCH --ntasks 16
+#SBATCH -N 2
+#SBATCH --ntasks 8
 
 #.Specify GPU needs:
 #SBATCH --constraint gpu
-#SBATCH --gpus 16
+#SBATCH --gpus 8
 
 #.Request wall time
 #SBATCH -t 24:00:00
+
+num_gpu=4
 
 #.Load modules (this must match those in the machines/configure script).
 module load PrgEnv-gnu/8.5.0
@@ -59,8 +61,8 @@ if [ "$max_number" -eq 0 ]; then
     echo "./sim -g"
     ./sim -g
   else
-    echo "srun -u -n $num_gpu ./sim -g -M -c $num_gpu"
-    srun -u -n $num_gpu ./sim -g -M -c $num_gpu
+    echo "srun -u -n $num_gpu ./sim -g -M -d $num_gpu"
+    srun -u -n $num_gpu ./sim -g -M -d $num_gpu
   fi
 else
   echo "Resuming from file $max_number"
@@ -68,9 +70,9 @@ else
     echo "./sim -g -r $max_number"
     ./sim -g -r $max_number
   else
-    echo "srun -u -n $num_gpu ./sim -g -M -c $num_gpu -r $max_number"
-    srun -u -n $num_gpu ./sim -g -M -c $num_gpu -r $max_number
+    echo "srun -u -n $num_gpu ./sim -g -M -d $num_gpu -r $max_number"
+    srun -u -n $num_gpu ./sim -g -M -d $num_gpu -r $max_number
   fi
 fi
 
-bash organize.sh
+# bash organize.sh

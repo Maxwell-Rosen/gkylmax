@@ -9,13 +9,33 @@ species="ion"
 # Make a loop to set species to "ion" and "elc"
 frame=0
 
-pgkyl ../initial-conditions/kinet-elc-288z-nu2000/gk_wham-ion_M0_0.gkyl interp pl --title "1x IC M0, frame 0" --saveas "python-plots/gk_wham-1x-ion_M0_0.png" --no-show &
+# pgkyl ../initial-conditions/kinet-elc-288z-nu2000/gk_wham-ion_M0_0.gkyl interp pl --title "1x IC M0 ion, frame 0" --saveas "python-plots/gk_wham-1x-ion_M0_0.png" --no-show &
+# pgkyl ../initial-conditions/kinet-elc-288z-nu2000/gk_wham-elc_M0_0.gkyl interp pl --title "1x IC M0 elc, frame 0" --saveas "python-plots/gk_wham-1x-elc_M0_0.png" --no-show &
 
-pgkyl gk_wham-ion_M0_0.gkyl interp pl --title "M0, frame 0" --saveas "python-plots/gk_wham-ion_M0_0.png" --no-show &
-pgkyl gk_wham-ion_M0_0.gkyl interp sel --z1 0.0 pl --title "M0, frame 0" --saveas "python-plots/gk_wham-ion_M0_0-z1-0.0.png" --no-show &
-pgkyl gk_wham-ion_M0_0.gkyl interp sel --z0 0.003 pl --title "M0, frame 0" --saveas "python-plots/gk_wham-ion_M0_0-z0-0.003.png" --no-show &
-pgkyl gk_wham-field_0.gkyl interp pl --title "field, frame 0" --saveas "python-plots/gk_wham-field_0.png" --no-show &
+# pgkyl gk_wham-ion_M0_0.gkyl interp pl --title "M0, frame 0" --saveas "python-plots/gk_wham-ion_M0_0.png" --no-show &
+# pgkyl gk_wham-ion_M0_0.gkyl interp sel --z1 0.0 pl --title "M0, frame 0" --saveas "python-plots/gk_wham-ion_M0_0-z1-0.0.png" --no-show &
+# pgkyl gk_wham-ion_M0_0.gkyl interp sel --z0 0.003 pl --title "M0, frame 0" --saveas "python-plots/gk_wham-ion_M0_0-z0-0.003.png" --no-show &
 
+# pgkyl gk_wham-field_0.gkyl interp pl --title "field, frame 0" --saveas "python-plots/gk_wham-field_0.png" --no-show &
+# pgkyl gk_wham-field_1.gkyl interp pl --title "field, frame 1" --saveas "python-plots/gk_wham-field_1.png" --no-show &
+
+
+# pgkyl gk_wham-elc_M0_0.gkyl interp pl --title "M0, frame 0" --saveas "python-plots/gk_wham-elc_M0_0.png" --no-show &
+# pgkyl gk_wham-elc_M0_0.gkyl interp sel --z1 0.0 pl --title "M0, frame 0" --saveas "python-plots/gk_wham-elc_M0_0-z1-0.0.png" --no-show &
+# pgkyl gk_wham-elc_M0_0.gkyl interp sel --z0 0.003 pl --title "M0, frame 0" --saveas "python-plots/gk_wham-elc_M0_0-z0-0.003.png" --no-show &
+
+# pgkyl --c2p gk_wham-mapc2p_deflated.gkyl gk_wham-ion_BiMaxwellianMoments_0.gkyl interp pl --title "Ion BiMaxwellianMoments, frame 0" --saveas "python-plots/gk_wham-ion_BiMaxwellianMoments_0.png" --no-show &
+# pgkyl --c2p gk_wham-mapc2p_deflated.gkyl gk_wham-elc_BiMaxwellianMoments_0.gkyl interp pl --title "Elc BiMaxwellianMoments, frame 0" --saveas "python-plots/gk_wham-elc_BiMaxwellianMoments_0.png" --no-show &
+
+# pgkyl --c2p gk_wham-mapc2p_deflated.gkyl gk_wham-ion_BiMaxwellianMoments_1.gkyl interp pl --title "Ion BiMaxwellianMoments, frame 1" --saveas "python-plots/gk_wham-ion_BiMaxwellianMoments_1.png" --no-show &
+# pgkyl --c2p gk_wham-mapc2p_deflated.gkyl gk_wham-elc_BiMaxwellianMoments_1.gkyl interp pl --title "Elc BiMaxwellianMoments, frame 1" --saveas "python-plots/gk_wham-elc_BiMaxwellianMoments_1.png" --no-show &
+
+# pgkyl --c2p gk_wham-mapc2p_deflated.gkyl gk_wham-ion_BiMaxwellianMoments_10.gkyl interp pl --title "Ion BiMaxwellianMoments, frame 10" --saveas "python-plots/gk_wham-ion_BiMaxwellianMoments_10.png" --no-show &
+# pgkyl --c2p gk_wham-mapc2p_deflated.gkyl gk_wham-elc_BiMaxwellianMoments_10.gkyl interp pl --title "Elc BiMaxwellianMoments, frame 10" --saveas "python-plots/gk_wham-elc_BiMaxwellianMoments_10.png" --no-show &
+
+
+pgkyl --c2p Geometry/gk_wham-mapc2p_deflated.gkyl "BiMaxwellianMoments/gk_wham-elc_BiMaxwellianMoments_[0-9]*.gkyl" interp anim --float --saveas "python-plots/gk_wham-elc_BiMaxwellianMoments.mp4" --no-show --fps 50 &
+pgkyl --c2p Geometry/gk_wham-mapc2p_deflated.gkyl "BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_[0-9]*.gkyl" interp anim --float --saveas "python-plots/gk_wham-ion_BiMaxwellianMoments.mp4" --no-show --fps 50
 
 # pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 sel --z0 0.002 --z1 0.0 pl --title "$species frame $frame z=0" \
 #   --saveas "python-plots/$name-$species-$frame-1d-z=0.png" --no-show -x "vpar" -y "mu" &

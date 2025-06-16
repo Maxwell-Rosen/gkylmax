@@ -17,7 +17,6 @@ UNAME = $(shell uname)
 LAPACK_INC = $(PREFIX)/OpenBLAS/include
 LAPACK_LIB_DIR = $(PREFIX)/OpenBLAS/lib
 LAPACK_LIB = -lopenblas
-
 # SuperLU includes and librararies
 SUPERLU_INC = $(PREFIX)/superlu/include
 ifeq ($(UNAME_S),Linux)
@@ -31,7 +30,7 @@ endif
 # Include config.mak file (if it exists)
 -include /global/homes/m/mhrosen/gkylsoft/gkylzero/share/config.mak
 
-CFLAGS = -O3 -g -ffast-math -I.
+CFLAGS = -O3 -g -ffast-math -I. 
 
 G0_INC_DIR = ${PREFIX}/gkylzero/include
 G0_LIB_DIR = ${PREFIX}/gkylzero/lib
@@ -80,6 +79,10 @@ ifeq (${USE_MPI}, 1)
 	CFLAGS += -DGKYL_HAVE_MPI
 endif
 
+# Directory for storing shared data, like ADAS
+GKYL_SHARE_DIR ?= "${INSTALL_PREFIX}/gkylzero/share"
+CFLAGS += -DGKYL_SHARE_DIR=$(GKYL_SHARE_DIR)
+
 # Read NCCL paths and flags if needed (needs MPI and NVCC)
 USING_NCCL =
 NCCL_INC_DIR = zero # dummy
@@ -96,6 +99,22 @@ endif
 endif
 endif
 
+# Read CUDSS paths and flags if needed (needs MPI and NVCC)
+USING_CUDSS =
+CUDSS_INC_DIR = zero # dummy
+CUDSS_LIB_DIR = .
+CUDSS_RPATH =
+ifeq (${USE_CUDSS}, 1)
+ifdef USING_NVCC
+	USING_CUDSS = yes
+	CUDSS_INC_DIR = ${CONF_CUDSS_INC_DIR}
+	CUDSS_LIB_DIR = ${CONF_CUDSS_LIB_DIR}
+	CUDSS_RPATH = -Xlinker "-rpath,${CONF_CUDSS_LIB_DIR}"
+	CUDSS_LIBS = -lcudss
+	CFLAGS += -DGKYL_HAVE_CUDSS
+endif
+endif
+
 # Read LUA paths and flags if needed 
 LUA_RPATH = 
 LUA_INC_DIR = zero # dummy
@@ -109,9 +128,9 @@ ifeq (${USE_LUA}, 1)
 	CFLAGS += -DGKYL_HAVE_LUA
 endif
 
-INCLUDES = -I${G0_INC_DIR} -I${LAPACK_INC} -I${SUPERLU_INC} -I${MPI_INC_DIR} -I${LUA_INC_DIR} -I${NCCL_INC_DIR}
-LIB_DIRS = -L${LAPACK_LIB_DIR} -L${SUPERLU_LIB_DIR} -L${MPI_LIB_DIR} -L${LUA_LIB_DIR} -L${NCCL_LIB_DIR}
-EXT_LIBS = ${LAPACK_LIB} ${SUPERLU_LIB} ${MPI_RPATH} ${MPI_LIBS} ${LUA_RPATH} ${LUA_LIBS} ${NCCL_LIBS} -lm -lpthread -ldl
+INCLUDES = -I${G0_INC_DIR} -I${LAPACK_INC} -I${SUPERLU_INC} -I${MPI_INC_DIR} -I${LUA_INC_DIR} -I${NCCL_INC_DIR} -I${CUDSS_INC_DIR}
+LIB_DIRS = -L${LAPACK_LIB_DIR} -L${SUPERLU_LIB_DIR} -L${MPI_LIB_DIR} -L${LUA_LIB_DIR} -L${NCCL_LIB_DIR} -L${CUDSS_LIB_DIR}
+EXT_LIBS = ${LAPACK_LIB} ${SUPERLU_LIB} ${MPI_RPATH} ${MPI_LIBS} ${LUA_RPATH} ${LUA_LIBS} ${NCCL_LIBS} ${CUDSS_RPATH} ${CUDSS_LIBS} -lm -lpthread -ldl
 
 all: sim
 
