@@ -13,15 +13,6 @@
 
 #include <rt_arg_parse.h>
 
-// Neccisary for the boltzmann electron density reading
-#include <gkyl_array.h>
-#include <gkyl_array_rio.h>
-#include <gkyl_basis.h>
-#include <gkyl_range.h>
-#include <gkyl_rect_grid.h>
-#include <gkyl_rect_decomp.h>
-#include <gkyl_position_map.h>
-
 // Define the context of the simulation. This is basically all the globals
 struct gk_mirror_ctx
 {
@@ -84,26 +75,27 @@ struct gk_mirror_ctx
   double ion_source_amplitude;
   double ion_source_sigma;
   double ion_source_temp;
-  double elc_source_amplitude;
-  double elc_source_sigma;
-  double elc_source_temp;
 
-  // Boltzmann electron reading
-  struct gkyl_array *field;
-  struct gkyl_array *ion_M0;
-  double ni_sheath;
-  struct gkyl_position_map *position_map;
-  double target_z_fa;
+  // Initial conditions reading
+  double *f_dist_ion;
+  double *f_dist_elc;
+  double *phi_vals;
+  double *psi_grid;
+  double *z_grid;
+  double *v_grid;
+  double *theta_grid;
+  double *B_grid;
+  int *dims;
+  int rank;
 };
 
-// Evaluate collision frequencies
-void
-evalNuElc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  fout[0] = app->nuElc;
-}
+// void
+// scaleIC(double t, const double *xn, double *fout, void *ctx)
+// {
+//   fout[0] = 1.0/4.0; // Scale factor for initial conditions
+// }
 
+// Evaluate collision frequencies
 void
 evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
@@ -112,152 +104,46 @@ evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, 
 }
 
 void
-load_ion_donor(void* ctx)
+eval_density_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  struct gkyl_rect_grid field_grid, mc2nu_pos_grid, M0_grid;
-  struct gkyl_array *field, *mc2nu_pos, *M0;
-
-  field     = gkyl_grid_array_new_from_file(&field_grid,
-    "../initial-conditions/boltz-elc-288z-nu2000/gk_wham-field_1500.gkyl");
-  mc2nu_pos = gkyl_grid_array_new_from_file(&mc2nu_pos_grid,
-    "../initial-conditions/boltz-elc-288z-nu2000/gk_wham-mc2nu_pos.gkyl");
-  M0 = gkyl_grid_array_new_from_file(&M0_grid,
-    "../initial-conditions/boltz-elc-288z-nu2000/gk_wham-ion_M0_1500.gkyl");
-
-  app->field = field;
-  app->ion_M0 = M0;
-
-  int lower_cell[] = {1};
-  int upper_cell[] = {M0_grid.cells[0]};
-
-  int poly_order = 1;
-  int cdim = 1;
-  struct gkyl_basis basis;
-  gkyl_cart_modal_serendip(&basis, cdim, poly_order);
-
-  int nghost[] = { 0, 0, 0 };
-  struct gkyl_range local, local_ext;
-  gkyl_create_grid_ranges(&M0_grid, nghost, &local, &local_ext);
-
-  // Create a position map object
-  struct gkyl_position_map_inp pmap_inp = { };
-  // Potential future issue by using the M0 ranges and basis for the position map
-  struct gkyl_position_map *gpm = gkyl_position_map_new(pmap_inp,
-    mc2nu_pos_grid, local, local_ext, local, local_ext, basis);
-  gkyl_position_map_set_mc2nu(gpm, mc2nu_pos);
-  app->position_map = gpm;
+  double z = xn[0];
+  double src_amp = app->ion_source_amplitude;
+  double z_src = 0.0;
+  double src_sigma = app->ion_source_sigma;
+  double src_amp_floor = src_amp*1e-2;
+  if (fabs(z) <= 1.0)
+  {
+    fout[0] = fmax(src_amp_floor, (src_amp / sqrt(2.0 * M_PI * pow(src_sigma, 2))) *
+      exp(-1 * pow((z - z_src), 2) / (2.0 * pow(src_sigma, 2))));
+  }
+  else
+  {
+    fout[0] = 1e-16;
+  }
 }
 
 void
-free_ion_donor(void* ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  gkyl_array_release(app->field);
-  gkyl_array_release(app->ion_M0);
-  gkyl_position_map_release(app->position_map);
-}
-
-static double
-invert_position_map_func(double x, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  double xc[] = {x};
-  double xfa[3];
-  gkyl_position_map_eval_mc2nu(app->position_map, xc, xfa);
-  // printf("xc = %g maps to xfa = %g \n", x, xfa[0]);
-  return xfa[0] - app->target_z_fa;
-}
-
-void
-botlzmann_elc_density(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  // Since boltzmann electrons are particle density and gyrokinetic sims take guiding center density
-  // Boltzmann electron simulations have n_i = n_e, and we must determine the ion density
-  // using the polarization density.
-
-  struct gk_mirror_ctx *app = ctx;
-  double z_field_aligned = xn[0];
-
-  // First we must determine the computational coordinate in non-uniform space
-  app->target_z_fa = z_field_aligned;
-  double interval_lower = -2.0;
-  double interval_upper = 2.0;
-  double interval_lower_eval = invert_position_map_func(interval_lower, ctx);
-  double interval_upper_eval = invert_position_map_func(interval_upper, ctx);
-  struct gkyl_qr_res res = gkyl_ridders(invert_position_map_func, ctx,
-    interval_lower, interval_upper, interval_lower_eval, interval_upper_eval, 10, 1e-6);
-  double z_computational = res.res;
-
-  // Now we calculate the value of the field at this computational coordinate
-  int cdim = 1;
-  struct gkyl_basis basis = app->position_map->basis;
-  struct gkyl_rect_grid grid = app->position_map->grid;
-  struct gkyl_range local = app->position_map->local;
-
-  // I'm limiting myself to 1x
-  int idx_temp = local.lower[0] + (int) floor((z_computational - grid.lower[0]) / grid.dx[0]);
-  idx_temp = GKYL_MAX2(local.lower[0], GKYL_MIN2(local.upper[0], idx_temp));
-  long lidx = gkyl_range_idx(&local, &idx_temp);
-  const double *field_coeffs = gkyl_array_cfetch(app->ion_M0, lidx);
-  double cxc[3];
-  gkyl_rect_grid_cell_center(&grid, &idx_temp, cxc);
-  double x_log = (z_computational - cxc[0]) / (grid.dx[0]*0.5);
-  double M0_val = basis.eval_expand(&x_log, field_coeffs);
-
-  fout[0] = M0_val;
-}
-
-void
-boltzmann_elc_upar(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+eval_upar_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   fout[0] = 0.0;
 }
 
 void
-boltzmann_elc_T(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+eval_temp_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  fout[0] = app->Te0;
-}
-
-
-void
-botlzmann_elc_field(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  // There is no position map in the polarization solve presently. It needs that
-  double z_field_aligned = xn[0];
-
-  // First we must determine the computational coordinate in non-uniform space
-  app->target_z_fa = z_field_aligned;
-  double interval_lower = -2.0;
-  double interval_upper = 2.0;
-  double interval_lower_eval = invert_position_map_func(interval_lower, ctx);
-  double interval_upper_eval = invert_position_map_func(interval_upper, ctx);
-  struct gkyl_qr_res res = gkyl_ridders(invert_position_map_func, ctx,
-    interval_lower, interval_upper, interval_lower_eval, interval_upper_eval, 10, 1e-6);
-  double z_computational = res.res;
-
-  // Now we calculate the value of the field at this computational coordinate
-  int cdim = 1;
-  struct gkyl_basis basis = app->position_map->basis;
-  struct gkyl_rect_grid grid = app->position_map->grid;
-  struct gkyl_range local = app->position_map->local;
-
-  // I'm limiting myself to 1x
-  int idx_temp = local.lower[0] + (int) floor((z_computational - grid.lower[0]) / grid.dx[0]);
-  idx_temp = GKYL_MAX2(local.lower[0], GKYL_MIN2(local.upper[0], idx_temp));
-  long lidx = gkyl_range_idx(&local, &idx_temp);
-  const double *field_coeffs = gkyl_array_cfetch(app->field, lidx);
-  double cxc[3];
-  gkyl_rect_grid_cell_center(&grid, &idx_temp, cxc);
-  double x_log = (z_computational - cxc[0]) / (grid.dx[0]*0.5);
-  double field_val = basis.eval_expand(&x_log, field_coeffs);
-
-  if (field_val < 10.0)
-   field_val = 10.0;
-  fout[0] = field_val;
+  double z = xn[0];
+  double TSrc0 = app->ion_source_temp;
+  double Tfloor = TSrc0*1e-2;
+  if (fabs(z) <= 1.0)
+  {
+    fout[0] = TSrc0;
+  }
+  else
+  {
+    fout[0] = Tfloor;
+  }
 }
 
 void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *ctx)
@@ -414,21 +300,17 @@ create_ctx(void)
   int Nvpar = 32; // 96 uniform
   int Nmu = 32;  // 192 uniform
   int poly_order = 1;
-  double t_end = 200e-6;//100e-6;
-  int num_frames = 2000;
-  double write_phase_freq = 1;
+  double t_end = 1.5e-3;//100e-6;
+  int num_frames = 1500;
+  double write_phase_freq = 0.1;
   int int_diag_calc_num = num_frames*100;
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
   int num_failures_max = 20; // Maximum allowable number of consecutive small time-steps.
 
   // Source parameters
-
   double ion_source_amplitude = 3e23;
   double ion_source_sigma = 0.1*2.0/M_PI;
   double ion_source_temp = 5000. * eV;
-  double elc_source_amplitude = 3e23;
-  double elc_source_sigma = 0.1*2.0/M_PI;
-  double elc_source_temp = Te0;
 
   struct gk_mirror_ctx ctx = {
     .cdim = cdim,
@@ -480,11 +362,8 @@ create_ctx(void)
     .ion_source_amplitude = ion_source_amplitude,
     .ion_source_sigma = ion_source_sigma,
     .ion_source_temp = ion_source_temp,
-    .elc_source_amplitude = elc_source_amplitude,
-    .elc_source_sigma = elc_source_sigma,
-    .elc_source_temp = elc_source_temp,
   };
-  load_ion_donor(&ctx);
+  // load_wham_distf(&ctx);
   return ctx;
 }
 
@@ -525,6 +404,7 @@ write_data(struct gkyl_tm_trigger* iot_conf, struct gkyl_tm_trigger* iot_phase,
   }
 }
 
+
 int main(int argc, char **argv)
 {
   struct gkyl_app_args app_args = parse_app_args(argc, argv);
@@ -560,86 +440,6 @@ int main(int argc, char **argv)
   }
 #endif
 
-  struct gkyl_gyrokinetic_projection elc_ic = {
-    .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
-    .density = botlzmann_elc_density,
-    .ctx_density = &ctx,
-    .temp = boltzmann_elc_T,
-    .ctx_temp = &ctx,
-    .upar = boltzmann_elc_upar,
-    .ctx_upar = &ctx,
-  };
-
-  struct gkyl_gyrokinetic_species elc = {
-    .name = "elc",
-    .charge = ctx.qe,
-    .mass = ctx.me,
-    .lower = {-1.0, 0.0},
-    .upper = { 1.0, 1.0},
-    .cells = { cells_v[0], cells_v[1]},
-    .polarization_density = ctx.n0,
-    .no_by = true,
-    .projection = elc_ic,
-    .mapc2p = {
-      .mapping = mapc2p_vel_elc,
-      .ctx = &ctx,
-    },
-    .bcx = {
-      .lower={.type = GKYL_SPECIES_GK_SHEATH,},
-      .upper={.type = GKYL_SPECIES_GK_SHEATH,},
-    },
-    .collisions = {
-      .collision_id = GKYL_LBO_COLLISIONS,
-      .normNu = true,
-      .n_ref = ctx.n0,
-      .T_ref = ctx.Te0,
-      .ctx = &ctx,
-      .self_nu = evalNuElc,
-      .num_cross_collisions = 1,
-      .collide_with = {"ion"},
-      .write_diagnostics = true,
-      .nuFrac = ctx.elc_nuFrac * 2000.0,
-    },
-    .source = {
-      .source_id = GKYL_PROJ_SOURCE,
-      .num_sources = 1,
-      .num_adapt_sources = 1,
-      .projection[0] = {
-        .proj_id = GKYL_PROJ_MAXWELLIAN_GAUSSIAN,
-        .gaussian_mean = {0.0},
-        .gaussian_std_dev = {ctx.elc_source_sigma},
-        .total_num_particles = 0.0,
-        .total_kin_energy = 0.0,
-        .temp_max = 5.0*ctx.Te0,
-      },
-      .adapt[0] = {
-        .adapt_to_species = "ion",
-        .adapt_particle = true,
-        .adapt_energy = true,
-        .num_boundaries = 2,
-        .dir = {0, 0},
-        .edge = {GKYL_LOWER_EDGE, GKYL_UPPER_EDGE},
-      },
-      .diagnostics = {
-        .num_diag_moments = 6,
-        .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_HAMILTONIAN},
-        .num_integrated_diag_moments = 1,
-        .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
-      },
-    },
-    .write_omega_cfl = true,
-    .num_diag_moments = 8,
-    .diag_moments = {GKYL_F_MOMENT_BIMAXWELLIAN, GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_M3PAR, GKYL_F_MOMENT_M3PERP },
-    .num_integrated_diag_moments = 1,
-    .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
-    .time_rate_diagnostics = true,
-
-    .boundary_flux_diagnostics = {
-      .num_integrated_diag_moments = 1,
-      .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
-    },
-  };
-
   struct gkyl_gyrokinetic_species ion = {
     .name = "ion",
     .charge = ctx.qi,
@@ -648,19 +448,18 @@ int main(int argc, char **argv)
     .upper = { 1.0, 1.0},
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
-    .scale_with_polarization = true,
     .no_by = true,
+    .projection = {
+        .proj_id = GKYL_PROJ_MAXWELLIAN_GAUSSIAN,
+        .gaussian_mean = {0.0},
+        .gaussian_std_dev = {0.8},
+        .total_num_particles = 3e18,
+        .total_kin_energy = 6e31,
+        .temp_max = 5.0*ctx.Te0,
+    },
     .mapc2p = {
       .mapping = mapc2p_vel_ion,
       .ctx = &ctx,
-    },
-    .bcx = {
-      .lower={.type = GKYL_SPECIES_GK_SHEATH,},
-      .upper={.type = GKYL_SPECIES_GK_SHEATH,},
-    },
-    .init_from_file = {
-      .type = GKYL_IC_IMPORT_F,
-      .file_name = "../initial-conditions/boltz-elc-288z-nu2000/gk_wham-ion_1500.gkyl",
     },
     .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
@@ -669,37 +468,31 @@ int main(int argc, char **argv)
       .T_ref = ctx.Ti0,
       .ctx = &ctx,
       .self_nu = evalNuIon,
-      .num_cross_collisions = 1,
-      .collide_with = {"elc"},
       .write_diagnostics = true,
       .nuFrac = 2000.0,
     },
     .source = {
       .source_id = GKYL_PROJ_SOURCE,
       .num_sources = 1,
-      .num_adapt_sources = 1,
       .projection[0] = {
-        .proj_id = GKYL_PROJ_MAXWELLIAN_GAUSSIAN,
-        .gaussian_mean = {0.0},
-        .gaussian_std_dev = {ctx.ion_source_sigma},
-        .total_num_particles = 0.0,
-        .total_kin_energy = 0.0,
-        .temp_max = 5.0*ctx.Te0,
-      },
-      .adapt[0] = {
-        .adapt_to_species = "ion",
-        .adapt_particle = true,
-        .adapt_energy = true,
-        .num_boundaries = 2,
-        .dir = {0, 0},
-        .edge = {GKYL_LOWER_EDGE, GKYL_UPPER_EDGE},
+        .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM, 
+        .ctx_density = &ctx,
+        .density = eval_density_ion_source,
+        .ctx_upar = &ctx,
+        .upar= eval_upar_ion_source,
+        .ctx_temp = &ctx,
+        .temp = eval_temp_ion_source,      
       },
       .diagnostics = {
         .num_diag_moments = 6,
         .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_HAMILTONIAN},
         .num_integrated_diag_moments = 1,
-        .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
+        .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN },
       },
+    },
+    .bcx = {
+      .lower={.type = GKYL_SPECIES_GK_SHEATH,},
+      .upper={.type = GKYL_SPECIES_GK_SHEATH,},
     },
     .write_omega_cfl = true,
     .num_diag_moments = 8,
@@ -713,16 +506,15 @@ int main(int argc, char **argv)
       .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP},
     },
   };
-
   struct gkyl_gyrokinetic_field field = {
-    .polarization_bmag = ctx.B_p,
-    .kperpSq = pow(ctx.kperp, 2.),
-    .polarization_potential = botlzmann_elc_field,
-    .polarization_potential_ctx = &ctx,
+    .gkfield_id = GKYL_GK_FIELD_BOLTZMANN,
+    .electron_mass = ctx.me,
+    .electron_charge = ctx.qe,
+    .electron_temp = ctx.Te0,
   };
 
   struct gkyl_mirror_geo_grid_inp grid_inp = {
-    .filename_psi = "../eqdsk/wham_hires.geqdsk_psi.gkyl", // psi file to use
+    .filename_psi = "/home/mr1884/gkylzero/data/unit/wham_hires.geqdsk_psi.gkyl", // psi file to use
     .rclose = 0.2, // closest R to region of interest
     .zmin = -2.0,  // Z of lower boundary
     .zmax =  2.0,  // Z of upper boundary
@@ -746,8 +538,8 @@ int main(int argc, char **argv)
     },
     .num_periodic_dir = 0,
     .periodic_dirs = {},
-    .num_species = 2,
-    .species = {ion, elc},
+    .num_species = 1,
+    .species = {ion},
     .field = field,
     .parallelism = {
       .use_gpu = app_args.use_gpu,
@@ -880,7 +672,7 @@ int main(int argc, char **argv)
   freeresources:
   // Free resources after simulation completion.
   gkyl_gyrokinetic_app_release(app);
-  free_ion_donor(&ctx);
+  // free_wham_distf(&ctx);
   gkyl_gyrokinetic_comms_release(comm);
 
 #ifdef GKYL_HAVE_MPI

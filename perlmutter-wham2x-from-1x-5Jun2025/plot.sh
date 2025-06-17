@@ -9,6 +9,63 @@ species="ion"
 # Make a loop to set species to "ion" and "elc"
 frame=0
 
+
+pgkyl --c2p-vel misc/gk_wham-ion_mapc2p_vel.gkyl Distributions/gk_wham-ion_4600.gkyl interp sel --z0 0 --z1 1.5 pl --logz --zmin 1e-20 --title "gk_wham-ion_4600, z0=0, z1=1.5" --saveas "python-plots/gk_wham-ion_4600-z0-0-z1-1.5.png" --no-show --no-show --xlabel " $ v_{||}, m/s$" --ylabel " $ \mu$" &
+pgkyl --c2p-vel misc/gk_wham-ion_mapc2p_vel.gkyl Distributions/gk_wham-ion_4600.gkyl interp sel --z0 15 --z1 1.5 pl --logz --zmin 1e-20 --title "gk_wham-ion_4600, z0=15, z1=1.5" --saveas "python-plots/gk_wham-ion_4600-z0-15-z1-1.5.png" --no-show --no-show --xlabel " $ v_{||}, m/s$" --ylabel " $ \mu$" &
+
+# Electron distribution function at z0=0, z1=1.5
+pgkyl --c2p-vel misc/gk_wham-elc_mapc2p_vel.gkyl Distributions/gk_wham-elc_4600.gkyl interp sel --z0 0 --z1 1.5 pl --logz --title "gk_wham-elc_4600, z0=0, z1=1.5" --saveas "python-plots/gk_wham-elc_4600-z0-0-z1-1.5.png" --no-show --no-show --xlabel " $ v_{||}, m/s$" --ylabel " $ \mu$" &
+pgkyl --c2p-vel misc/gk_wham-elc_mapc2p_vel.gkyl Distributions/gk_wham-elc_4600.gkyl interp sel --z0 15 --z1 1.5 pl --logz --title "gk_wham-elc_4600, z0=15, z1=1.5" --saveas "python-plots/gk_wham-elc_4600-z0-15-z1-1.5.png" --no-show --xlabel " $ v_{||}, m/s$" --ylabel " $ \mu$" &
+
+# Integrate distribution function at z0=0, z1=1.5 over mu
+pgkyl --c2p-vel misc/gk_wham-ion_mapc2p_vel.gkyl Distributions/gk_wham-ion_4600.gkyl interp sel --z0 0 --z1 1.5 integ 3 pl --xlabel "Z, (m) cylindrical axis" --ylabel "f" --xlabel "vpar, (m/s)" --title "gk_wham-ion_4600, z0=0, Z=1.5, integ 3" --saveas "python-plots/gk_wham-ion_4600-z0-0-Z-1.5-integ3.png" --no-show &
+pgkyl --c2p-vel misc/gk_wham-ion_mapc2p_vel.gkyl Distributions/gk_wham-ion_4600.gkyl interp sel --z0 15 --z1 1.5 integ 3 pl --logz --xlabel "Z, (m) cylindrical axis" --ylabel "f" --xlabel "vpar, (m/s)" --title "gk_wham-ion_4600, z0=15, Z=1.5, integ 3" --saveas "python-plots/gk_wham-ion_4600-z0-15-Z-1.5-integ3.png" --no-show &
+
+pgkyl --c2p-vel misc/gk_wham-elc_mapc2p_vel.gkyl Distributions/gk_wham-elc_4600.gkyl interp sel --z0 0 --z1 1.5 integ 3 pl --xlabel "Z, (m) cylindrical axis" --ylabel "f" --xlabel "vpar, (m/s)" --title "gk_wham-elc_4600, z0=0, Z=1.5, integ 3" --saveas "python-plots/gk_wham-elc_4600-z0-0-Z-1.5-integ3.png" --no-show &
+pgkyl --c2p-vel misc/gk_wham-elc_mapc2p_vel.gkyl Distributions/gk_wham-elc_4600.gkyl interp sel --z0 15 --z1 1.5 integ 3 pl --logz --xlabel "Z, (m) cylindrical axis" --ylabel "f" --xlabel "vpar, (m/s)" --title "gk_wham-elc_4600, z0=15, Z=1.5, integ 3" --saveas "python-plots/gk_wham-elc_4600-z0-15-Z-1.5-integ3.png" --no-show &
+
+
+
+pgkyl --c2p-vel misc/gk_wham-ion_mapc2p_vel.gkyl Distributions/gk_wham-ion_4600.gkyl interp sel --z0 0 integ 3 pl --logz --zmin "1e-31" --xlabel "Z, (m) cylindrical axis" --ylabel "vpar, (m/s)" --title "gk_wham-ion_4600, z0=0, integ 3" --saveas "python-plots/gk_wham-ion_4600-z0-0-integ3.png" --no-show &
+
+
+pgkyl --c2p-vel misc/gk_wham-elc_mapc2p_vel.gkyl Distributions/gk_wham-elc_4600.gkyl interp sel --z0 0 integ 3 pl --logz --zmin "1e-38" --xlabel "Z, (m) cylindrical axis" --ylabel "vpar, (m/s)" --title "gk_wham-elc_4600, z0=0, integ 3" --saveas "python-plots/gk_wham-elc_4600-z0-0-integ3.png" --no-show &
+
+
+
+pgkyl --c2p Geometry/gk_wham-mapc2p_deflated.gkyl Field/gk_wham-field_4600.gkyl interp pl --title "gk_wham-field 4.6 \mu s, volts" --saveas "python-plots/gk_wham-field_4600.png" --no-show &
+pgkyl --c2p Geometry/gk_wham-mapc2p_deflated.gkyl Field/gk_wham-field_0.gkyl interp pl --title "gk_wham-field 0 \mu s, volts" --saveas "python-plots/gk_wham-field_0.png" --no-show &
+
+# Plot the field at the midplane at all frames
+
+pgkyl Field/gk_wham-field_[0-9]*0.gkyl interp sel --z1 0.0 --z0 0 coll pl --title "gk_wham-field, z=0.0, psi = psi_min" --xlabel "time, s" --ylabel "phi, V" --saveas "python-plots/gk_wham-field-midpoint.png" --no-show &
+
+pgkyl --c2p Geometry/gk_wham-mapc2p_deflated.gkyl BiMaxwellianMoments/gk_wham-elc_BiMaxwellianMoments_4600.gkyl interp pl --title "gk_wham-elc BiMaxwellianMoments 4.6 \mu s" --saveas "python-plots/gk_wham-elc_BiMaxwellianMoments_4600.png" --no-show &
+pgkyl --c2p Geometry/gk_wham-mapc2p_deflated.gkyl BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_4600.gkyl interp pl --title "gk_wham-ion BiMaxwellianMoments 4.6 \mu s" --saveas "python-plots/gk_wham-ion_BiMaxwellianMoments_4600.png" --no-show &
+
+# Initial biMaxwellian moments
+pgkyl --c2p Geometry/gk_wham-mapc2p_deflated.gkyl BiMaxwellianMoments/gk_wham-elc_BiMaxwellianMoments_0.gkyl interp pl --title "gk_wham-elc BiMaxwellianMoments 0 \mu s" --saveas "python-plots/gk_wham-elc_BiMaxwellianMoments_0.png" --no-show &
+pgkyl --c2p Geometry/gk_wham-mapc2p_deflated.gkyl BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_0.gkyl interp pl --title "gk_wham-ion BiMaxwellianMoments 0 \mu s" --saveas "python-plots/gk_wham-ion_BiMaxwellianMoments_0.png" --no-show &
+
+pgkyl --c2p Geometry/gk_wham-mapc2p_deflated.gkyl BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_4600.gkyl interp sel -c2 ev " f 1.672621898e-27 * 2.014 * 1.602176634e-19 /" pl --clabel "Tpar (ev)" --title "ion Tpar at 4.6 microseconds" --saveas "python-plots/gk_wham-ion_BiMaxwellianMoments_4600-Tpar-ev.png" --no-show &
+pgkyl --c2p Geometry/gk_wham-mapc2p_deflated.gkyl BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_4600.gkyl interp sel -c3 ev " f 1.672621898e-27 * 2.014 * 1.602176634e-19 /" pl --clabel "Tperp (ev)" --title "ion Tperp at 4.6 microseconds" --saveas "python-plots/gk_wham-ion_BiMaxwellianMoments_4600-Tperp-ev.png" --no-show &
+
+# Electron tpar and tperp in ev
+pgkyl --c2p Geometry/gk_wham-mapc2p_deflated.gkyl BiMaxwellianMoments/gk_wham-elc_BiMaxwellianMoments_4600.gkyl interp sel -c2 ev " f 9.10938356e-31 * 1.602176634e-19 /" pl --clabel "Tpar (ev)" --title "elc Tpar at 4.6 microseconds" --saveas "python-plots/gk_wham-elc_BiMaxwellianMoments_4600-Tpar-ev.png" --no-show &
+pgkyl --c2p Geometry/gk_wham-mapc2p_deflated.gkyl BiMaxwellianMoments/gk_wham-elc_BiMaxwellianMoments_4600.gkyl interp sel -c3 ev " f 9.10938356e-31 * 1.602176634e-19 /" pl --clabel "Tperp (ev)" --title "elc Tperp at 4.6 microseconds" --saveas "python-plots/gk_wham-elc_BiMaxwellianMoments_4600-Tperp-ev.png" --no-show &
+
+# Plot radial density profiles
+pgkyl M/gk_wham-elc_M0_0.gkyl interp sel --z1 0.0 pl --title "gk_wham-elc M0, z=0.0" --saveas "python-plots/gk_wham-elc_M0_0-midplane.png" --no-show &
+pgkyl M/gk_wham-ion_M0_0.gkyl interp sel --z1 0.0 pl --title "gk_wham-ion M0, z=0.0" --saveas "python-plots/gk_wham-ion_M0_0-midplane.png" --no-show &
+
+# radial density profles at midplane final
+pgkyl M/gk_wham-elc_M0_4600.gkyl interp sel --z1 0.0 pl --title "gk_wham-elc M0, z=0.0" --saveas "python-plots/gk_wham-elc_M0_4600-midplane.png" --no-show &
+pgkyl M/gk_wham-ion_M0_4600.gkyl interp sel --z1 0.0 pl --title "gk_wham-ion M0, z=0.0" --saveas "python-plots/gk_wham-ion_M0_4600-midplane.png" --no-show &
+
+
+# pgkyl --c2p Geometry/gk_wham-mapc2p_deflated.gkyl "BiMaxwellianMoments/gk_wham-elc_BiMaxwellianMoments_[0-9]*.gkyl" interp anim --float --saveas "python-plots/gk_wham-elc_BiMaxwellianMoments.mp4" --no-show --fps 50 &
+# pgkyl --c2p Geometry/gk_wham-mapc2p_deflated.gkyl "BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_[0-9]*.gkyl" interp anim --float --saveas "python-plots/gk_wham-ion_BiMaxwellianMoments.mp4" --no-show --fps 50
+
 # pgkyl ../initial-conditions/kinet-elc-288z-nu2000/gk_wham-ion_M0_0.gkyl interp pl --title "1x IC M0 ion, frame 0" --saveas "python-plots/gk_wham-1x-ion_M0_0.png" --no-show &
 # pgkyl ../initial-conditions/kinet-elc-288z-nu2000/gk_wham-elc_M0_0.gkyl interp pl --title "1x IC M0 elc, frame 0" --saveas "python-plots/gk_wham-1x-elc_M0_0.png" --no-show &
 
@@ -33,9 +90,6 @@ frame=0
 # pgkyl --c2p gk_wham-mapc2p_deflated.gkyl gk_wham-ion_BiMaxwellianMoments_10.gkyl interp pl --title "Ion BiMaxwellianMoments, frame 10" --saveas "python-plots/gk_wham-ion_BiMaxwellianMoments_10.png" --no-show &
 # pgkyl --c2p gk_wham-mapc2p_deflated.gkyl gk_wham-elc_BiMaxwellianMoments_10.gkyl interp pl --title "Elc BiMaxwellianMoments, frame 10" --saveas "python-plots/gk_wham-elc_BiMaxwellianMoments_10.png" --no-show &
 
-
-pgkyl --c2p Geometry/gk_wham-mapc2p_deflated.gkyl "BiMaxwellianMoments/gk_wham-elc_BiMaxwellianMoments_[0-9]*.gkyl" interp anim --float --saveas "python-plots/gk_wham-elc_BiMaxwellianMoments.mp4" --no-show --fps 50 &
-pgkyl --c2p Geometry/gk_wham-mapc2p_deflated.gkyl "BiMaxwellianMoments/gk_wham-ion_BiMaxwellianMoments_[0-9]*.gkyl" interp anim --float --saveas "python-plots/gk_wham-ion_BiMaxwellianMoments.mp4" --no-show --fps 50
 
 # pgkyl "$name-"$species"_$frame.gkyl" interp -b gkhyb -p1 sel --z0 0.002 --z1 0.0 pl --title "$species frame $frame z=0" \
 #   --saveas "python-plots/$name-$species-$frame-1d-z=0.png" --no-show -x "vpar" -y "mu" &

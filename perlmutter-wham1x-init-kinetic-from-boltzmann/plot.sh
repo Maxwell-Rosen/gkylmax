@@ -6,16 +6,16 @@ name="gk_wham"
 species="elc"
 saveLoc="python-plots/gk_wham"
 
-pgkyl "gk_wham-elc_M0_0.gkyl" interp pl --title "Initial electron density" --saveas "$saveLoc-kinetic-elc-M0-0.png" --ylabel "Density" --xlabel "z" &
-pgkyl "gk_wham-field_0.gkyl" interp pl --title "Initial field" --saveas "$saveLoc-field-0.png" --ylabel "Potential, V" --xlabel "z" &
-pgkyl "gk_wham-ion_M0_0.gkyl" interp pl --title "Initial ion density" --saveas "$saveLoc-kinetic-ion-M0-0.png" --ylabel "Density" --xlabel "z" &
-pgkyl "gk_wham-elc_M0_0.gkyl" -t "ion" "gk_wham-ion_M0_0.gkyl" -t "elc" interp pl --logy -f0 --title "Initial density" --saveas "$saveLoc-kinetic-M0-0.png" --ylabel "Density" --xlabel "z" &
+pgkyl "gk_wham-elc_M0_0.gkyl" interp pl --title "Initial electron density" --saveas "$saveLoc-kinetic-elc-M0-0.png" --ylabel "Density" --xlabel "z" --no-show &
+pgkyl "gk_wham-field_0.gkyl" interp pl --title "Initial field" --saveas "$saveLoc-field-0.png" --ylabel "Potential, V" --xlabel "z" --no-show &
+pgkyl "gk_wham-ion_M0_0.gkyl" interp pl --title "Initial ion density" --saveas "$saveLoc-kinetic-ion-M0-0.png" --ylabel "Density" --xlabel "z" --no-show &
+pgkyl "gk_wham-elc_M0_0.gkyl" -t "ion" "gk_wham-ion_M0_0.gkyl" -t "elc" interp pl --logy -f0 --title "Initial density" --saveas "$saveLoc-kinetic-M0-0.png" --ylabel "Density" --xlabel "z" --no-show &
 
-pgkyl "64-cells/gk_wham-ion_M0_300.gkyl" interp pl --logy --title "300 microseconds donor ion density" --saveas "$saveLoc-boltzmann-ion-M0-300.png" --ylabel "Density" --xlabel "z" &
-pgkyl "64-cells/gk_wham-field_300.gkyl" interp pl --title "300 microseconds donor field" --saveas "$saveLoc-boltzmann-field-300.png" --ylabel "Potential, V" --xlabel "z" &
+# pgkyl "64-cells/gk_wham-ion_M0_300.gkyl" interp pl --logy --title "300 microseconds donor ion density" --saveas "$saveLoc-boltzmann-ion-M0-300.png" --ylabel "Density" --xlabel "z" &
+# pgkyl "64-cells/gk_wham-field_300.gkyl" interp pl --title "300 microseconds donor field" --saveas "$saveLoc-boltzmann-field-300.png" --ylabel "Potential, V" --xlabel "z" &
 
-pgkyl "288-cells-uniform/gk_wham-ion_M0_300.gkyl" interp pl --title "300 microseconds uniform ion density" --saveas "$saveLoc-uniform-ion-M0-300.png" --ylabel "Density" --xlabel "z" &
-pgkyl "288-cells-uniform/gk_wham-field_300.gkyl" interp pl --title "300 microseconds uniform field" --saveas "$saveLoc-uniform-field-300.png" --ylabel "Potential, V" --xlabel "z" &
+# pgkyl "288-cells-uniform/gk_wham-ion_M0_300.gkyl" interp pl --title "300 microseconds uniform ion density" --saveas "$saveLoc-uniform-ion-M0-300.png" --ylabel "Density" --xlabel "z" &
+# pgkyl "288-cells-uniform/gk_wham-field_300.gkyl" interp pl --title "300 microseconds uniform field" --saveas "$saveLoc-uniform-field-300.png" --ylabel "Potential, V" --xlabel "z" &
 
 # pgkyl 64-cells/gk_wham-field_300.gkyl gk_wham-field_0.gkyl interp pl --title "300 microseconds" --saveas "$saveLoc-field-comparison.png" &
 
