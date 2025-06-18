@@ -49,7 +49,7 @@ mv *.out Slurmscripts/
 if [ ! -d "Source" ]; then
   mkdir Source
 fi
-mv *_source_* source/
+mv *_source_* Source/
 
 if [ ! -d "Coll" ]; then
   mkdir Coll

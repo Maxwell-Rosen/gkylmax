@@ -1,10 +1,11 @@
 # simFolder="../stellar-wham1x-288z-restart-true-collisions"
 # simFolder="../stellar-wham1x-288z-adaptive-source"
-simFolder="../perlmutter-wham1x-read-kinetic-distf-from-file"
-targetFolder="kinet-elc-288z-nu2000"
-# targetFolder="boltz-elc-288z-nu2000"
-frame=144
-kinetic=true
+# simFolder="../stellar-wham1x-init-kinetic-from-boltzmann/old-geom"
+simFolder="../stellar-wham1x-288z-boltz-elc"
+# targetFolder="kinet-elc-288z-nu2000/old-geom"
+targetFolder="boltz-elc-288z-nu2000"
+frame=1500
+kinetic=false
 isOrganized=true
 
 if [ ! -d "$simFolder" ]; then
