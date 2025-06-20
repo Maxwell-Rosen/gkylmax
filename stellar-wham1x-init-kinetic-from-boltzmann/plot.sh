@@ -14,14 +14,20 @@ saveLoc="python-plots/gk_wham"
 # pgkyl gk_wham-ion_BiMaxwellianMoments_[0-9]*.gkyl interp col pl --saveas "$saveLoc-ion-BiMaxwellianMoments.png" --title "Ion BiMaxwellian moments" --xlabel "time, s"&
 # pgkyl gk_wham-elc_BiMaxwellianMoments_[0-9]*.gkyl interp col pl --saveas "$saveLoc-elc-BiMaxwellianMoments.png" --title "Electron BiMaxwellian moments" --xlabel "time, s"&
 
-# pgkyl gk_wham-ion_BiMaxwellianMoments_[0-9]*.gkyl interp anim --title "Ion BiMaxwellian moments" --float &
-# pgkyl gk_wham-elc_BiMaxwellianMoments_[0-9]*.gkyl interp anim --title "Electron BiMaxwellian moments" --float &
+# pgkyl "gk_wham-ion_BiMaxwellianMoments_[0-9]*.gkyl" interp anim --title "Ion BiMaxwellian moments" --float &
+# pgkyl "gk_wham-elc_BiMaxwellianMoments_[0-9]*.gkyl" interp anim --title "Electron BiMaxwellian moments" --float &
+# pgkyl "gk_wham-ion_BiMaxwellianMoments_[0-9]*.gkyl" interp col pl --title "Ion BiMaxwellian moments" &
+# pgkyl "gk_wham-elc_BiMaxwellianMoments_[0-9]*.gkyl" interp col pl --title "Electron BiMaxwellian moments"&
+
+pgkyl --c2p-vel gk_wham-ion_mapc2p_vel.gkyl "gk_wham-ion_[0-9]*.gkyl" interp sel --z0 1.5 ev 'f abs' anim --title "Ion distribution function at midplane" --xlabel "vpar" --ylabel "mu" --logz --zmin 1e-20 --fps 4 &
+pgkyl --c2p-vel gk_wham-elc_mapc2p_vel.gkyl "gk_wham-elc_[0-9]*.gkyl" interp sel --z0 1.5 ev 'f abs' anim --title "Elc distribution function at midplane" --xlabel "vpar" --ylabel "mu" --logz --zmin 1e-25  --fps 4 &
+
 # pgkyl "gk_wham-ion_source_M0_[0-9]*.gkyl" interp anim --title "Ion source M0 moments" --float &
 # pgkyl "gk_wham-elc_source_M0_[0-9]*.gkyl" interp anim --title "Electron source M0 moments" --float &
 
 # pgkyl gk_wham-ion_source_integrated_moms.gkyl gk_wham-elc_source_integrated_moms.gkyl pl -f0 --saveas "$saveLoc-source-integrated-moms.png" --title "Source integrated moments" --xlabel "time, s" &
 
-pgkyl gk_wham-field_[0-9]*.gkyl interp col sel --z1 0.0 pl --title "Field" --xlabel "time, s" --ylabel "Potential, V" &
+# pgkyl gk_wham-field_[0-9]*.gkyl interp col pl --title "Field" --xlabel "time, s" --ylabel "Potential, V" &
 
 
 

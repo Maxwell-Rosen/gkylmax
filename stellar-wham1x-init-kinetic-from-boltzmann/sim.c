@@ -96,12 +96,6 @@ struct gk_mirror_ctx
   double target_z_fa;
 };
 
-void
-scaleIC(double t, const double *xn, double *fout, void *ctx)
-{
-  fout[0] = 1.0/3.0; // Scale factor for initial conditions
-}
-
 // Evaluate collision frequencies
 void
 evalNuElc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
@@ -124,12 +118,12 @@ load_ion_donor(void* ctx)
   struct gkyl_rect_grid field_grid, mc2nu_pos_grid, M0_grid;
   struct gkyl_array *field, *mc2nu_pos, *M0;
 
-  field     = gkyl_grid_array_new_from_file(&field_grid, 
-    "/home/mr1884/scratch/gkylmax/initial-conditions/boltz-elc-288z-nu2000/gk_wham-field_0.gkyl");
-  mc2nu_pos = gkyl_grid_array_new_from_file(&mc2nu_pos_grid, 
-    "/home/mr1884/scratch/gkylmax/initial-conditions/boltz-elc-288z-nu2000/gk_wham-mc2nu_pos.gkyl");
-  M0 = gkyl_grid_array_new_from_file(&M0_grid, 
-    "/home/mr1884/scratch/gkylmax/initial-conditions/boltz-elc-288z-nu2000/gk_wham-ion_M0_0.gkyl");
+  field     = gkyl_grid_array_new_from_file(&field_grid,
+    "../initial-conditions/boltz-elc-288z-nu2000/gk_wham-field_1500.gkyl");
+  mc2nu_pos = gkyl_grid_array_new_from_file(&mc2nu_pos_grid,
+    "../initial-conditions/boltz-elc-288z-nu2000/gk_wham-mc2nu_pos.gkyl");
+  M0 = gkyl_grid_array_new_from_file(&M0_grid,
+    "../initial-conditions/boltz-elc-288z-nu2000/gk_wham-ion_M0_1500.gkyl");
 
   app->field = field;
   app->ion_M0 = M0;
@@ -149,7 +143,7 @@ load_ion_donor(void* ctx)
   // Create a position map object
   struct gkyl_position_map_inp pmap_inp = { };
   // Potential future issue by using the M0 ranges and basis for the position map
-  struct gkyl_position_map *gpm = gkyl_position_map_new(pmap_inp, 
+  struct gkyl_position_map *gpm = gkyl_position_map_new(pmap_inp,
     mc2nu_pos_grid, local, local_ext, local, local_ext, basis);
   gkyl_position_map_set_mc2nu(gpm, mc2nu_pos);
   app->position_map = gpm;
@@ -187,8 +181,8 @@ botlzmann_elc_density(double t, const double *GKYL_RESTRICT xn, double *GKYL_RES
 
   // First we must determine the computational coordinate in non-uniform space
   app->target_z_fa = z_field_aligned;
-  double interval_lower = -M_PI;
-  double interval_upper = M_PI;
+  double interval_lower = -2.0;
+  double interval_upper = 2.0;
   double interval_lower_eval = invert_position_map_func(interval_lower, ctx);
   double interval_upper_eval = invert_position_map_func(interval_upper, ctx);
   struct gkyl_qr_res res = gkyl_ridders(invert_position_map_func, ctx,
@@ -237,8 +231,8 @@ botlzmann_elc_field(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTR
 
   // First we must determine the computational coordinate in non-uniform space
   app->target_z_fa = z_field_aligned;
-  double interval_lower = -M_PI;
-  double interval_upper = M_PI;
+  double interval_lower = -2.0;
+  double interval_upper = 2.0;
   double interval_lower_eval = invert_position_map_func(interval_lower, ctx);
   double interval_upper_eval = invert_position_map_func(interval_upper, ctx);
   struct gkyl_qr_res res = gkyl_ridders(invert_position_map_func, ctx,
@@ -373,7 +367,6 @@ create_ctx(void)
   double beta = 0.4;
   double tau = pow(B_p, 2.) * beta / (2.0 * mu0 * n0 * Te0) - 1.;
   double Ti0 = tau * Te0;
-  double kperpRhos = 0.1;
 
   // Parameters controlling initial conditions.
   double alim = 0.125;
@@ -401,13 +394,14 @@ create_ctx(void)
   double rho_s = c_s / omega_ci;
 
   // Perpendicular wavenumber in SI units:
-  double kperp = kperpRhos / rho_s;
+  double kperp = 2.0 * M_PI / 0.075;
+  double kperpRhos = kperp * rho_s;
 
   // Geometry parameters.
   double z_min = -2.0;
   double z_max =  2.0;
   double psi_min = 1e-6; // Go smaller. 1e-4 might be too small
-  double psi_eval= 1e-3;
+  double psi_eval= 5e-5;
   double psi_max = 3e-3; // aim for 2e-2
 
   // Grid parameters
@@ -420,19 +414,20 @@ create_ctx(void)
   int Nvpar = 32; // 96 uniform
   int Nmu = 32;  // 192 uniform
   int poly_order = 1;
-  double t_end = 1e-9;//100e-6;
-  int num_frames = 10;
+  double t_end = 10e-6;//100e-6;
+  int num_frames = 100;
   double write_phase_freq = 1;
   int int_diag_calc_num = num_frames*100;
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
   int num_failures_max = 20; // Maximum allowable number of consecutive small time-steps.
 
   // Source parameters
-  double ion_source_amplitude = 7.39462473347548e22;
-  double ion_source_sigma = 0.1;
+
+  double ion_source_amplitude = 3e23;
+  double ion_source_sigma = 0.1*2.0/M_PI;
   double ion_source_temp = 5000. * eV;
-  double elc_source_amplitude = 7.39462473347548e22;
-  double elc_source_sigma = 0.1;
+  double elc_source_amplitude = 3e23;
+  double elc_source_sigma = 0.1*2.0/M_PI;
   double elc_source_temp = Te0;
 
   struct gk_mirror_ctx ctx = {
@@ -554,7 +549,7 @@ int main(int argc, char **argv)
 
   // Construct communicator for use in app.
   struct gkyl_comm *comm = gkyl_gyrokinetic_comms_new(app_args.use_mpi, app_args.use_gpu, stderr);
-  
+
   int my_rank = 0;
   int comm_sz = 1;
 #ifdef GKYL_HAVE_MPI
@@ -585,10 +580,6 @@ int main(int argc, char **argv)
     .polarization_density = ctx.n0,
     .no_by = true,
     .projection = elc_ic,
-    // .init_from_file = {
-    //   .type = GKYL_IC_IMPORT_F,
-    //   .file_name = "gk_wham-elc_0.gkyl",
-    // },
     .mapc2p = {
       .mapping = mapc2p_vel_elc,
       .ctx = &ctx,
@@ -615,14 +606,14 @@ int main(int argc, char **argv)
       .num_adapt_sources = 1,
       .projection[0] = {
         .proj_id = GKYL_PROJ_MAXWELLIAN_GAUSSIAN,
-        .center_gauss = {0.0},
-        .sigma_gauss = {0.2},
-        .particle = 0.0,
-        .energy = 0.0,
-        .temp_max = 10000*GKYL_ELEMENTARY_CHARGE,
+        .gaussian_mean = {0.0},
+        .gaussian_std_dev = {ctx.elc_source_sigma},
+        .total_num_particles = 0.0,
+        .total_kin_energy = 0.0,
+        .temp_max = 5.0*ctx.Te0,
       },
       .adapt[0] = {
-        .adapt_species_name = "ion",
+        .adapt_to_species = "ion",
         .adapt_particle = true,
         .adapt_energy = true,
         .num_boundaries = 2,
@@ -633,19 +624,19 @@ int main(int argc, char **argv)
         .num_diag_moments = 6,
         .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_HAMILTONIAN},
         .num_integrated_diag_moments = 1,
-        .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN },
+        .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
       },
     },
     .write_omega_cfl = true,
     .num_diag_moments = 8,
     .diag_moments = {GKYL_F_MOMENT_BIMAXWELLIAN, GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_M3PAR, GKYL_F_MOMENT_M3PERP },
     .num_integrated_diag_moments = 1,
-    .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN },
+    .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
     .time_rate_diagnostics = true,
 
     .boundary_flux_diagnostics = {
       .num_integrated_diag_moments = 1,
-      .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN },
+      .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
     },
   };
 
@@ -669,9 +660,7 @@ int main(int argc, char **argv)
     },
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
-      // .conf_scale = &scaleIC,
-      // .conf_scale_ctx = &ctx,
-      .file_name = "../initial-conditions/kinet-elc-288z-nu2000/gk_wham-ion_0.gkyl",
+      .file_name = "../initial-conditions/boltz-elc-288z-nu2000/gk_wham-ion_1500.gkyl",
     },
     .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
@@ -691,14 +680,14 @@ int main(int argc, char **argv)
       .num_adapt_sources = 1,
       .projection[0] = {
         .proj_id = GKYL_PROJ_MAXWELLIAN_GAUSSIAN,
-        .center_gauss = {0.0},
-        .sigma_gauss = {0.2},
-        .particle = 0.0,
-        .energy = 0.0,
-        .temp_max = 10000*GKYL_ELEMENTARY_CHARGE,
+        .gaussian_mean = {0.0},
+        .gaussian_std_dev = {ctx.ion_source_sigma},
+        .total_num_particles = 0.0,
+        .total_kin_energy = 0.0,
+        .temp_max = 5.0*ctx.Te0,
       },
       .adapt[0] = {
-        .adapt_species_name = "ion",
+        .adapt_to_species = "ion",
         .adapt_particle = true,
         .adapt_energy = true,
         .num_boundaries = 2,
@@ -706,26 +695,22 @@ int main(int argc, char **argv)
         .edge = {GKYL_LOWER_EDGE, GKYL_UPPER_EDGE},
       },
       .diagnostics = {
-        .num_diag_moments = 5,
-        .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP },
+        .num_diag_moments = 6,
+        .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_HAMILTONIAN},
         .num_integrated_diag_moments = 1,
-        .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN },
-      }
-    },
-    .bcx = {
-      .lower={.type = GKYL_SPECIES_GK_SHEATH,},
-      .upper={.type = GKYL_SPECIES_GK_SHEATH,},
+        .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
+      },
     },
     .write_omega_cfl = true,
     .num_diag_moments = 8,
     .diag_moments = {GKYL_F_MOMENT_BIMAXWELLIAN, GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_M3PAR, GKYL_F_MOMENT_M3PERP },
     .num_integrated_diag_moments = 1,
-    .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN },
+    .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
     .time_rate_diagnostics = true,
 
     .boundary_flux_diagnostics = {
       .num_integrated_diag_moments = 1,
-      .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN },
+      .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP},
     },
   };
 
@@ -737,7 +722,7 @@ int main(int argc, char **argv)
   };
 
   struct gkyl_mirror_geo_grid_inp grid_inp = {
-    .filename_psi = "/home/mr1884/gkylzero/data/unit/wham_hires.geqdsk_psi.gkyl", // psi file to use
+    .filename_psi = "../eqdsk/wham_hires.geqdsk_psi.gkyl", // psi file to use
     .rclose = 0.2, // closest R to region of interest
     .zmin = -2.0,  // Z of lower boundary
     .zmax =  2.0,  // Z of upper boundary
@@ -753,7 +738,7 @@ int main(int argc, char **argv)
     .cells = { cells_x[0] },
     .poly_order = ctx.poly_order,
     .basis_type = app_args.basis_type,
-    .enforce_positivity = true,
+    // .enforce_positivity = true,
     .geometry = {
       .geometry_id = GKYL_MIRROR,
       .world = {ctx.psi_eval, 0.0},
