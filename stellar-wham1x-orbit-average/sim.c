@@ -87,6 +87,11 @@ struct gk_mirror_ctx
   double *B_grid;
   int *dims;
   int rank;
+
+  double alpha; // Multirate factor.
+  bool static_field; // Whether the potential is constant in time.
+  double I_loss; // Value of the mask in the loss region.
+  enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type; // Type of df/dt multiplier.
 };
 
 // void
@@ -101,6 +106,34 @@ evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, 
 {
   struct gk_mirror_ctx *app = ctx;
   fout[0] = app->nuIon;
+}
+
+void
+eval_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  fout[0] = 1e19;
+}
+
+void
+eval_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  fout[0] = 0.0;
+}
+
+void
+eval_temp_par_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  fout[0] = app->Ti0;
+}
+
+void
+eval_temp_perp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  fout[0] = app->Ti0;
 }
 
 void
@@ -165,70 +198,6 @@ void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *
   }
   // Quadratic map in mu.
   vp[1] = mu_max_ion*pow(cmu,2);
-}
-
-void mapc2p_vel_elc(double t, const double *vc, double* GKYL_RESTRICT vp, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  double vpar_max_elc = app->vpar_max_elc;
-  double mu_max_elc = app->mu_max_elc;
-
-  double cvpar = vc[0], cmu = vc[1];
-  double b = 1.45;
-  double linear_velocity_threshold = 1./6.;
-  double frac_linear = 1/b*atan(linear_velocity_threshold*tan(b));
-  if (fabs(cvpar) < frac_linear) {
-    double func_frac = tan(frac_linear*b) / tan(b);
-    vp[0] = vpar_max_elc*func_frac*cvpar/frac_linear;
-  }
-  else {
-    vp[0] = vpar_max_elc*tan(cvpar*b)/tan(b);
-  }
-  // vp[0] = vc[0] * vpar_max_elc;
-  // Quadratic map in mu.
-  vp[1] = mu_max_elc*pow(cmu,2);
-}
-
-void
-output_diagnostics(struct gk_mirror_ctx ctx, void *app_inp, struct gkyl_app_args app_args)
-{
-  struct gkyl_gk *app = app_inp;
-  int my_rank = 0;
-  int comm_sz = 1;
-#ifdef GKYL_HAVE_MPI
-  if (app_args.use_mpi){
-    gkyl_comm_get_rank(app->parallelism.comm, &my_rank);
-    int comm_sz;
-    gkyl_comm_get_size(app->parallelism.comm, &comm_sz);
-  }
-#endif
-  if (my_rank == 0) {
-    if (app->cdim == 1){printf("Grid size = %d in Z\n", app->cells[0]);}
-    else if (app->cdim == 2){printf("Grid size = %d in psi, %d in Z\n", app->cells[0], app->cells[1]);}
-    else if (app->cdim == 3){printf("Grid size = %d in psi, %d in Z, %d in theta\n", app->cells[0], app->cells[1], app->cells[2]);}
-
-    printf("Velocity grid is %d in vpar and %d in mu \n", ctx.Nvpar, ctx.Nmu);
-    if (app_args.use_mpi)
-      printf("Number of MPI ranks: %d\n", app_args.cuts[0]);
-    if (app_args.use_gpu)
-      printf("Number of GPUs: %d\n", app_args.cuts[0]);
-    printf("psi_eval = %g, psi_min = %g, psi_max = %g\n", ctx.psi_eval, ctx.psi_min, ctx.psi_max);
-    printf("z_min = %g, z_max = %g\n", ctx.z_min, ctx.z_max);
-    printf("vpar_max_ion/vti = %g, mu_max_ion/mu_ti = %g\n", ctx.vpar_max_ion/ctx.vti, sqrt(ctx.mu_max_ion/ctx.mi*2.0*ctx.B_p)/ctx.vti);
-    printf("vpar_max_elc/vte = %g, mu_max_elc/mu_te = %g\n", ctx.vpar_max_elc/ctx.vte, sqrt(ctx.mu_max_elc/ctx.me*2.0*ctx.B_p)/ctx.vte);
-    printf("vti = %.4e, vte = %.4e, c_s = %.4e, mu_ti = %.4e, mu_te = %.4e\n", ctx.vti, ctx.vte, ctx.c_s, ctx.mi * pow(ctx.vti, 2.) / (2. * ctx.B_p),
-     ctx.me * pow(ctx.vte, 2.) / (2. * ctx.B_p));
-    printf("omega_ci = %.4e, rho_s = %.4e, kperp = %.4e\n", ctx.omega_ci, ctx.rho_s, ctx.kperp);
-    printf("nu_elc = %.4e, nu_ion = %.4e\n", ctx.nuElc, ctx.nuIon);
-    printf("1/nuElc = %.4e, 1/nuIon = %.4e\n", 1./ctx.nuElc, 1./ctx.nuIon);
-    printf("App name = %s\n", app->name);
-    printf("Using positivity = %d\n", app->enforce_positivity);
-    printf("Nonuniform mapping fraction = %g\n", app->geometry.position_map_info.map_strength);
-    // Print the clock time
-    time_t now;
-    time(&now);
-    printf("Date and time: %s", ctime(&now));
-  }
 }
 
 struct gk_mirror_ctx
@@ -300,15 +269,15 @@ create_ctx(void)
   int Nvpar = 32; // 96 uniform
   int Nmu = 32;  // 192 uniform
   int poly_order = 1;
-  double t_end = 1.5e-3;//100e-6;
-  int num_frames = 1500;
-  double write_phase_freq = 0.1;
-  int int_diag_calc_num = num_frames*100;
+  // double t_end = 1.5e-3;//100e-6;
+  // int num_frames = 1500;
+  double write_phase_freq = 1;
+  // int int_diag_calc_num = num_frames*100;
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
   int num_failures_max = 20; // Maximum allowable number of consecutive small time-steps.
 
   // Source parameters
-  double ion_source_amplitude = 3e23;
+  double ion_source_amplitude = 3e23/2000.;
   double ion_source_sigma = 0.1*2.0/M_PI;
   double ion_source_temp = 5000. * eV;
 
@@ -353,17 +322,17 @@ create_ctx(void)
     .Nmu = Nmu,
     .cells = {Nz, Nvpar, Nmu},
     .poly_order = poly_order,
-    .t_end = t_end,
-    .num_frames = num_frames,
+    // .t_end = t_end,
+    // .num_frames = num_frames,
     .write_phase_freq = write_phase_freq,
-    .int_diag_calc_num = int_diag_calc_num,
+    // .int_diag_calc_num = int_diag_calc_num,
     .dt_failure_tol = dt_failure_tol,
     .num_failures_max = num_failures_max,
     .ion_source_amplitude = ion_source_amplitude,
     .ion_source_sigma = ion_source_sigma,
     .ion_source_temp = ion_source_temp,
   };
-  // load_wham_distf(&ctx);
+  
   return ctx;
 }
 
@@ -430,6 +399,35 @@ int main(int argc, char **argv)
   // Construct communicator for use in app.
   struct gkyl_comm *comm = gkyl_gyrokinetic_comms_new(app_args.use_mpi, app_args.use_gpu, stderr);
 
+
+  printf("\n");
+  printf(" psi_eval = %e\n",ctx.psi_eval);
+  printf(" z_min    = %e\n",ctx.z_min   );
+  printf(" z_max    = %e\n",ctx.z_max   );
+  printf("\n");
+
+  // Extract variables from command line arguments.
+  sscanf(app_args.opt_args, "alpha=%lf,t_end=%lf,num_frames=%d,static_field=%d,I_loss=%lf,fdot_mult_type=%d",
+    &ctx.alpha, &ctx.t_end, &ctx.num_frames, &ctx.static_field, &ctx.I_loss, &ctx.fdot_mult_type);
+
+  // ctx.alpha = 0.01;
+  // ctx.t_end = 800.0; // in microseconds
+  // ctx.num_frames = 32;
+  // ctx.static_field = 1; // 1 for static field, 0 for dynamic
+  // ctx.I_loss = 0.0; // Mask value in the loss region.
+  // ctx.fdot_mult_type = 2; // Type of df/dt multiplier (0
+  // Convert t_end to seconds.
+  ctx.t_end = ctx.t_end*1e-6;
+  printf("Command line arguments:\n");
+  printf("  alpha = %.9e\n", ctx.alpha);
+  printf("  t_end = %.9e\n", ctx.t_end);
+  printf("  num_frames = %d\n", ctx.num_frames);
+  printf("  static_field = %d\n", ctx.static_field);
+  printf("  I_loss = %.9e\n", ctx.I_loss);
+  printf("  fdot_mult_type = %d\n", ctx.fdot_mult_type);
+  ctx.int_diag_calc_num = ctx.num_frames*100;
+
+
   int my_rank = 0;
   int comm_sz = 1;
 #ifdef GKYL_HAVE_MPI
@@ -449,18 +447,44 @@ int main(int argc, char **argv)
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
     .no_by = true,
+    // .init_from_file = {
+    //   .type = GKYL_IC_IMPORT_F,
+    //   .file_name = "../initial-conditions/boltz-elc-288z-nu2000/gk_wham-ion_1500.gkyl",
+    // },
+
+    // .projection = {
+    //     .proj_id = GKYL_PROJ_MAXWELLIAN_GAUSSIAN,
+    //     .gaussian_mean = {0.0},
+    //     .gaussian_std_dev = {0.8},
+    //     .total_num_particles = 3e18,
+    //     .total_kin_energy = 6e31,
+    //     .temp_max = 5.0*ctx.Te0,
+    // },
+
+
     .projection = {
-        .proj_id = GKYL_PROJ_MAXWELLIAN_GAUSSIAN,
-        .gaussian_mean = {0.0},
-        .gaussian_std_dev = {0.8},
-        .total_num_particles = 3e18,
-        .total_kin_energy = 6e31,
-        .temp_max = 5.0*ctx.Te0,
+      .proj_id = GKYL_PROJ_BIMAXWELLIAN,
+      .ctx_density = &ctx,
+      .density = eval_density_ion,
+      .ctx_upar = &ctx,
+      .upar= eval_upar_ion,
+      .ctx_temppar = &ctx,
+      .temppar = eval_temp_par_ion,
+      .ctx_tempperp = &ctx,
+      .tempperp = eval_temp_perp_ion,
     },
+
     .mapc2p = {
       .mapping = mapc2p_vel_ion,
       .ctx = &ctx,
     },
+
+    .collisionless_scale_factor = ctx.alpha,
+
+    .time_rate_multiplier = {
+      .type = ctx.fdot_mult_type,
+    },
+
     .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
       .normNu = true,
@@ -469,7 +493,6 @@ int main(int argc, char **argv)
       .ctx = &ctx,
       .self_nu = evalNuIon,
       .write_diagnostics = true,
-      .nuFrac = 2000.0,
     },
     .source = {
       .source_id = GKYL_PROJ_SOURCE,
@@ -511,6 +534,7 @@ int main(int argc, char **argv)
     .electron_mass = ctx.me,
     .electron_charge = ctx.qe,
     .electron_temp = ctx.Te0,
+    .is_static = ctx.static_field,
   };
 
   struct gkyl_mirror_geo_grid_inp grid_inp = {
@@ -549,8 +573,6 @@ int main(int argc, char **argv)
   };
 
   // Create app object.
-
-  output_diagnostics(ctx, &app_inp, app_args);
 
   clock_t start_time = clock();
   gkyl_gyrokinetic_app *app = gkyl_gyrokinetic_app_new(&app_inp);
