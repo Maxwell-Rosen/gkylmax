@@ -391,12 +391,6 @@ int main(int argc, char **argv)
   // Construct communicator for use in app.
   struct gkyl_comm *comm = gkyl_gyrokinetic_comms_new(app_args.use_mpi, app_args.use_gpu, stderr);
 
-  printf("\n");
-  printf(" psi_eval = %e\n",ctx.psi_eval);
-  printf(" z_min    = %e\n",ctx.z_min   );
-  printf(" z_max    = %e\n",ctx.z_max   );
-  printf("\n");
-
   // Extract variables from command line arguments.
   sscanf(app_args.opt_args, "alpha=%lf,t_end=%lf,num_frames=%d,static_field=%d,I_loss=%lf,fdot_mult_type=%d",
     &ctx.alpha, &ctx.t_end, &ctx.num_frames, &ctx.static_field, &ctx.I_loss, &ctx.fdot_mult_type);

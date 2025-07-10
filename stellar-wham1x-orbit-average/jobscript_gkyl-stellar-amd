@@ -17,6 +17,7 @@
 
 #.Request a GPU.
 #SBATCH --gres=gpu:2
+num_gpu=1             #[ Number of GPUs to use (1 or 2).
 
 #.Specify name format of output file.
 #SBATCH -o slurm-%j.out
@@ -27,75 +28,110 @@
 module load cudatoolkit/12.4
 module load openmpi/cuda-11.1/gcc/4.1.1
 
-#[ Alternate between a trapped equilibrium phase (TEP)
-#[ and an exact dynamics phase (EDP).
-alpha_tep=0.01         #[ Factor mulplying collisionless terms in TEP.
-alpha_edp=1.0          #[ Factor mulplying collisionless terms in EDP.
-tau_tep=800.0          #[ Simulation time for TEP (in microsec).
-tau_edp=8.0            #[ Simulation time for EDP (in microsec).
-tau_edp_extra=24.0     #[ Simulation time for final EDP (in microsec).
-static_field_tep=1     #[ Whether to use a static field in TEP.
-static_field_edp=0     #[ Whether to use a static field in EDP.
-mask_loss_fac_tep=0.0  #[ Value of the mask in the loss region in TEP.
-mask_loss_fac_edp=1.0  #[ Value of the mask in the loss region in EDP.
-fdot_mult_type_tep=2   #[ Type of mask applied to df/dt in TEP.
-fdot_mult_type_edp=0   #[ Type of mask applied to df/dt in EDP.
-num_cycles=2          #[ Number of TEP-EDP pairs to run.
-frames_per_phase=32    #[ Number of output frames for each of TEP/EDP.
+#[ Alternate between a regular dynamics phase (RDP)
+#[ and an orbit averaging phase (OAP).
+alpha_oap=0.1         #[ Factor mulplying collisionless terms in OAP.
+alpha_rdp=1.0          #[ Factor mulplying collisionless terms in RDP.
+tau_oap=0.5          #[ Simulation time for OAP (in microsec).
+tau_rdp=0.05            #[ Simulation time for RDP (in microsec).
+tau_rdp_extra=24.0     #[ Simulation time for final RDP (in microsec).
+static_field_oap=1     #[ Whether to use a static field in OAP.
+static_field_rdp=0     #[ Whether to use a static field in RDP.
+mask_loss_fac_oap=0.0  #[ Value of the mask in the loss region in OAP.
+mask_loss_fac_rdp=1.0  #[ Value of the mask in the loss region in RDP.
+fdot_mult_type_oap=2   #[ Type of mask applied to df/dt in OAP.
+fdot_mult_type_rdp=0   #[ Type of mask applied to df/dt in RDP.
+num_cycles=3          #[ Number of RDP-OAP pairs to run.
+frames_per_phase=5    #[ Number of output frames for each of RDP/OAP.
 
 frames_per_cycle=$(echo "$frames_per_phase * 2" | bc)
 
-#[ Trapped equilibrium phase (TEP).
-tfinal=$tau_tep
-new_frames=$frames_per_phase
-echo "TEP: i=0 | tfinal=$tfinal | prev_frames=0 | new_frames=$new_frames"
+# Function to run Orbit Averaging Phase (OAP)
+run_OAP() {
+    local i=$1
+    local tfinal=$2
+    local prev_frames=$3
+    local new_frames=$(echo "$prev_frames + $frames_per_phase" | bc)
+    
+    echo "OAP: i=$i | tfinal=$tfinal | prev_frames=$prev_frames | new_frames=$new_frames"
+    
+    # If previous frames are zero, drop that argument
+    if [ "$prev_frames" -eq 0 ]; then
+        if [ "$num_gpu" -eq 2 ]; then
+            echo "srun -n 2 ./sim -g -M -c 2 -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap"
+            srun -n 2 ./sim -g -M -c 2 -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap
+        else
+            echo "./sim -g -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap"
+            ./sim -g -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap
+        fi
+    else
+        if [ "$num_gpu" -eq 2 ]; then
+            echo "srun -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap"
+            srun -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap
+        else
+            echo "./sim -g -r $prev_frames -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap"
+            ./sim -g -r $prev_frames -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap
+        fi
+    fi
+}
 
-echo "srun -n 2 ./sim -g -M -c 2 -o alpha=$alpha_tep,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_tep,I_loss=$mask_loss_fac_tep,fdot_mult_type=$fdot_mult_type_tep"
-srun -n 2 ./sim -g -M -c 2 -o alpha=$alpha_tep,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_tep,I_loss=$mask_loss_fac_tep,fdot_mult_type=$fdot_mult_type_tep
+# Function to run Regular Dynamics Phase (RDP)
+run_RDP() {
+    local i=$1
+    local tfinal=$2
+    local prev_frames=$3
+    local frames_to_add=${4:-$frames_per_phase}  # Default to frames_per_phase if not specified
+    local new_frames=$(echo "$prev_frames + $frames_to_add" | bc)
+    
+    echo "RDP: i=$i | tfinal=$tfinal | prev_frames=$prev_frames | new_frames=$new_frames"
+    
+    # If previous frames are zero, drop that argument
+    if [ "$prev_frames" -eq 0 ]; then
+        if [ "$num_gpu" -eq 2 ]; then
+            echo "srun -n 2 ./sim -g -M -c 2 -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp"
+            srun -n 2 ./sim -g -M -c 2 -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp
+        else
+            echo "./sim -g -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp"
+            ./sim -g -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp
+        fi
+    else
+        if [ "$num_gpu" -eq 2 ]; then
+            echo "srun -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp"
+            srun -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp
+        else
+            echo "./sim -g -r $prev_frames -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp"
+            ./sim -g -r $prev_frames -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp
+        fi
+    fi
+}
 
-#[ Exact dynamics phase (EDP).
-tfinal=$(echo "$tau_tep + $tau_edp" | bc)
+# Initial RDP phase
+tfinal=$tau_rdp
+run_RDP 0 $tfinal 0
+
+# Initial OAP phase
+tfinal=$(echo "$tau_rdp + $tau_oap" | bc)
 prev_frames=$frames_per_phase
-new_frames=$(echo "$prev_frames + $frames_per_phase" | bc)
-echo "EDP: i=0 | tfinal=$tfinal | prev_frames=$prev_frames | new_frames=$new_frames"
+run_OAP 0 $tfinal $prev_frames
 
-echo "srun -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_edp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_edp,I_loss=$mask_loss_fac_edp,fdot_mult_type=$fdot_mult_type_edp"
-srun -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_edp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_edp,I_loss=$mask_loss_fac_edp,fdot_mult_type=$fdot_mult_type_edp
-
+# Main loop for alternating RDP-OAP cycles
 num_iter=$(echo "$num_cycles - 1" | bc)
-
-for ((i=1; i<=$num_iter; i++))
-do
-
-  #[ Trapped equilibrium phase (TEP).
-  tfinal=$(echo "$tau_tep + $tau_edp + $i * $tau_tep + ($i-1) * $tau_edp" | bc)
-  prev_frames=$(echo "$frames_per_cycle + ($i-1) * $frames_per_cycle" | bc)
-  new_frames=$(echo "$prev_frames + $frames_per_phase" | bc)
-  echo "TEP: i=$i | tfinal=$tfinal | prev_frames=$prev_frames | new_frames=$new_frames"
-
-  echo "srun -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_tep,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_tep,I_loss=$mask_loss_fac_tep,fdot_mult_type=$fdot_mult_type_tep"
-  srun -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_tep,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_tep,I_loss=$mask_loss_fac_tep,fdot_mult_type=$fdot_mult_type_tep
-
-  #[ Exact dynamics phase (EDP).
-  tfinal=$(echo "$tau_tep + $tau_edp + $i * $tau_tep + $i * $tau_edp" | bc)
-  prev_frames=$(echo "$frames_per_cycle + ($i-1) * $frames_per_cycle + $frames_per_phase" | bc)
-  new_frames=$(echo "$prev_frames + $frames_per_phase" | bc)
-  echo "EDP: t=$i | tfinal=$tfinal | prev_frames=$prev_frames | new_frames=$new_frames"
-
-  echo "srun -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_edp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_edp,I_loss=$mask_loss_fac_edp,fdot_mult_type=$fdot_mult_type_edp"
-  srun -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_edp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_edp,I_loss=$mask_loss_fac_edp,fdot_mult_type=$fdot_mult_type_edp
-
+for ((i=1; i<=$num_iter; i++)); do
+    # RDP phase
+    tfinal=$(echo "$tau_rdp + $tau_oap + $i * $tau_rdp + ($i-1) * $tau_oap" | bc)
+    prev_frames=$(echo "$frames_per_cycle + ($i-1) * $frames_per_cycle" | bc)
+    run_RDP $i $tfinal $prev_frames
+    
+    # OAP phase
+    tfinal=$(echo "$tau_rdp + $tau_oap + $i * $tau_rdp + $i * $tau_oap" | bc)
+    prev_frames=$(echo "$frames_per_cycle + ($i-1) * $frames_per_cycle + $frames_per_phase" | bc)
+    run_OAP $i $tfinal $prev_frames
 done
 
-#[ Additional exact dynamics phase (EDP).
-tfinal=$(echo "$num_cycles * ($tau_tep + $tau_edp) + $tau_edp_extra" | bc)
+# # Final RDP phase with a few extra frames
+tfinal=$(echo "$num_cycles * ($tau_rdp + $tau_oap) + $tau_rdp_extra" | bc)
 prev_frames=$(echo "$num_cycles * $frames_per_cycle" | bc)
-new_frames=$(echo "$prev_frames + ($tau_edp_extra / $tau_edp) * $frames_per_phase" | bc)
-echo "EDP: i=$num_cycles | tfinal=$tfinal | prev_frames=$prev_frames | new_frames=$new_frames"
-
-echo "srun -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_edp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_edp,I_loss=$mask_loss_fac_edp,fdot_mult_type=$fdot_mult_type_edp"
-srun -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_edp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_edp,I_loss=$mask_loss_fac_edp,fdot_mult_type=$fdot_mult_type_edp
-
-cp ./slurm-$SLURM_JOBID.out $recdir
+extra_frames=$(echo "($tau_rdp_extra / $tau_rdp) * $frames_per_phase" | bc)
+run_RDP $num_cycles $tfinal $prev_frames $extra_frames
 
 exit 0
