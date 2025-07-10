@@ -10,7 +10,6 @@
 #SBATCH -N 1
 
 #.Total number of cores (96 per node).
-# aSBATCH -n 288
 #SBATCH --tasks-per-node=4
 
 #.Request wall time
@@ -18,10 +17,6 @@
 
 #.Request a GPU.
 #SBATCH --gres=gpu:2
-
-#.Mail is sent to you when the job starts and when it terminates or aborts.
-#SBATCH --mail-user=mfrancis@pppl.gov
-#SBATCH --mail-type=END,FAIL,REQUEUE
 
 #.Specify name format of output file.
 #SBATCH -o slurm-%j.out
@@ -31,13 +26,6 @@
 
 module load cudatoolkit/12.4
 module load openmpi/cuda-11.1/gcc/4.1.1
-
-#.Create record-keeping directory (not purged).
-export recdir="$HOME/gkeyll/data/$SLURM_JOBID/"
-mkdir -p $recdir
-#.Copy files used for this run into record directory.
-cp ./gz57_1x2v_p1.c $recdir
-cp ./jobScript_gkyl-stellar-amd_restart $recdir
 
 #[ Alternate between a trapped equilibrium phase (TEP)
 #[ and an exact dynamics phase (EDP).
@@ -52,7 +40,7 @@ mask_loss_fac_tep=0.0  #[ Value of the mask in the loss region in TEP.
 mask_loss_fac_edp=1.0  #[ Value of the mask in the loss region in EDP.
 fdot_mult_type_tep=2   #[ Type of mask applied to df/dt in TEP.
 fdot_mult_type_edp=0   #[ Type of mask applied to df/dt in EDP.
-num_cycles=45          #[ Number of TEP-EDP pairs to run.
+num_cycles=2          #[ Number of TEP-EDP pairs to run.
 frames_per_phase=32    #[ Number of output frames for each of TEP/EDP.
 
 frames_per_cycle=$(echo "$frames_per_phase * 2" | bc)
@@ -60,10 +48,10 @@ frames_per_cycle=$(echo "$frames_per_phase * 2" | bc)
 #[ Trapped equilibrium phase (TEP).
 tfinal=$tau_tep
 new_frames=$frames_per_phase
-echo "TEP: i=$i | tfinal=$tfinal | prev_frames=0 | new_frames=$new_frames"
+echo "TEP: i=0 | tfinal=$tfinal | prev_frames=0 | new_frames=$new_frames"
 
-echo "mpirun -np 2 ./gz57_1x2v_p1 -g -M -c 2 -o alpha=$alpha_tep,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_tep,I_loss=$mask_loss_fac_tep,fdot_mult_type=$fdot_mult_type_tep"
-mpirun -np 2 ./gz57_1x2v_p1 -g -M -c 2 -o alpha=$alpha_tep,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_tep,I_loss=$mask_loss_fac_tep,fdot_mult_type=$fdot_mult_type_tep
+echo "srun -n 2 ./gz57_1x2v_p1 -g -M -c 2 -o alpha=$alpha_tep,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_tep,I_loss=$mask_loss_fac_tep,fdot_mult_type=$fdot_mult_type_tep"
+srun -n 2 ./gz57_1x2v_p1 -g -M -c 2 -o alpha=$alpha_tep,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_tep,I_loss=$mask_loss_fac_tep,fdot_mult_type=$fdot_mult_type_tep
 
 #[ Exact dynamics phase (EDP).
 tfinal=$(echo "$tau_tep + $tau_edp" | bc)
@@ -71,8 +59,8 @@ prev_frames=$frames_per_phase
 new_frames=$(echo "$prev_frames + $frames_per_phase" | bc)
 echo "EDP: i=0 | tfinal=$tfinal | prev_frames=$prev_frames | new_frames=$new_frames"
 
-echo "mpirun -np 2 ./gz57_1x2v_p1 -g -M -c 2 -r $prev_frames -o alpha=$alpha_edp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_edp,I_loss=$mask_loss_fac_edp,fdot_mult_type=$fdot_mult_type_edp"
-mpirun -np 2 ./gz57_1x2v_p1 -g -M -c 2 -r $prev_frames -o alpha=$alpha_edp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_edp,I_loss=$mask_loss_fac_edp,fdot_mult_type=$fdot_mult_type_edp
+echo "srun -n 2 ./gz57_1x2v_p1 -g -M -c 2 -r $prev_frames -o alpha=$alpha_edp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_edp,I_loss=$mask_loss_fac_edp,fdot_mult_type=$fdot_mult_type_edp"
+srun -n 2 ./gz57_1x2v_p1 -g -M -c 2 -r $prev_frames -o alpha=$alpha_edp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_edp,I_loss=$mask_loss_fac_edp,fdot_mult_type=$fdot_mult_type_edp
 
 num_iter=$(echo "$num_cycles - 1" | bc)
 
@@ -85,8 +73,8 @@ do
   new_frames=$(echo "$prev_frames + $frames_per_phase" | bc)
   echo "TEP: i=$i | tfinal=$tfinal | prev_frames=$prev_frames | new_frames=$new_frames"
 
-  echo "mpirun -np 2 ./gz57_1x2v_p1 -g -M -c 2 -r $prev_frames -o alpha=$alpha_tep,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_tep,I_loss=$mask_loss_fac_tep,fdot_mult_type=$fdot_mult_type_tep"
-  mpirun -np 2 ./gz57_1x2v_p1 -g -M -c 2 -r $prev_frames -o alpha=$alpha_tep,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_tep,I_loss=$mask_loss_fac_tep,fdot_mult_type=$fdot_mult_type_tep
+  echo "srun -n 2 ./gz57_1x2v_p1 -g -M -c 2 -r $prev_frames -o alpha=$alpha_tep,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_tep,I_loss=$mask_loss_fac_tep,fdot_mult_type=$fdot_mult_type_tep"
+  srun -n 2 ./gz57_1x2v_p1 -g -M -c 2 -r $prev_frames -o alpha=$alpha_tep,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_tep,I_loss=$mask_loss_fac_tep,fdot_mult_type=$fdot_mult_type_tep
 
   #[ Exact dynamics phase (EDP).
   tfinal=$(echo "$tau_tep + $tau_edp + $i * $tau_tep + $i * $tau_edp" | bc)
@@ -94,8 +82,8 @@ do
   new_frames=$(echo "$prev_frames + $frames_per_phase" | bc)
   echo "EDP: t=$i | tfinal=$tfinal | prev_frames=$prev_frames | new_frames=$new_frames"
 
-  echo "mpirun -np 2 ./gz57_1x2v_p1 -g -M -c 2 -r $prev_frames -o alpha=$alpha_edp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_edp,I_loss=$mask_loss_fac_edp,fdot_mult_type=$fdot_mult_type_edp"
-  mpirun -np 2 ./gz57_1x2v_p1 -g -M -c 2 -r $prev_frames -o alpha=$alpha_edp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_edp,I_loss=$mask_loss_fac_edp,fdot_mult_type=$fdot_mult_type_edp
+  echo "srun -n 2 ./gz57_1x2v_p1 -g -M -c 2 -r $prev_frames -o alpha=$alpha_edp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_edp,I_loss=$mask_loss_fac_edp,fdot_mult_type=$fdot_mult_type_edp"
+  srun -n 2 ./gz57_1x2v_p1 -g -M -c 2 -r $prev_frames -o alpha=$alpha_edp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_edp,I_loss=$mask_loss_fac_edp,fdot_mult_type=$fdot_mult_type_edp
 
 done
 
@@ -105,8 +93,8 @@ prev_frames=$(echo "$num_cycles * $frames_per_cycle" | bc)
 new_frames=$(echo "$prev_frames + ($tau_edp_extra / $tau_edp) * $frames_per_phase" | bc)
 echo "EDP: i=$num_cycles | tfinal=$tfinal | prev_frames=$prev_frames | new_frames=$new_frames"
 
-echo "mpirun -np 2 ./gz57_1x2v_p1 -g -M -c 2 -r $prev_frames -o alpha=$alpha_edp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_edp,I_loss=$mask_loss_fac_edp,fdot_mult_type=$fdot_mult_type_edp"
-mpirun -np 2 ./gz57_1x2v_p1 -g -M -c 2 -r $prev_frames -o alpha=$alpha_edp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_edp,I_loss=$mask_loss_fac_edp,fdot_mult_type=$fdot_mult_type_edp
+echo "srun -n 2 ./gz57_1x2v_p1 -g -M -c 2 -r $prev_frames -o alpha=$alpha_edp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_edp,I_loss=$mask_loss_fac_edp,fdot_mult_type=$fdot_mult_type_edp"
+srun -n 2 ./gz57_1x2v_p1 -g -M -c 2 -r $prev_frames -o alpha=$alpha_edp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_edp,I_loss=$mask_loss_fac_edp,fdot_mult_type=$fdot_mult_type_edp
 
 cp ./slurm-$SLURM_JOBID.out $recdir
 
