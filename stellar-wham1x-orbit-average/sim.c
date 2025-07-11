@@ -416,7 +416,8 @@ int main(int argc, char **argv)
     .no_by = true,
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
-      .file_name = "../initial-conditions/boltz-elc-288z-nu2000/gk_wham-ion_1500.gkyl",
+      // .file_name = "../initial-conditions/boltz-elc-288z-nu2000/gk_wham-ion_1500.gkyl",
+      .file_name = "../stellar-wham1x-288z-restart-true-collisions/gk_wham-ion_463.gkyl",
     },
 
     // .projection = {
@@ -589,7 +590,7 @@ int main(int argc, char **argv)
   long step = 1, num_steps = app_args.num_steps;
   while ((t_curr < t_end) && (step <= num_steps)) {
     if (step == 1 || step % 100 == 0)
-      gkyl_gyrokinetic_app_cout(app, stdout, "Taking time-step at t = %g ...", t_curr);
+      gkyl_gyrokinetic_app_cout(app, stdout, "Taking time-step %i at t = %g ...", step, t_curr);
 
     struct gkyl_update_status status = gkyl_gyrokinetic_update(app, dt);
 

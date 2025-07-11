@@ -17,7 +17,7 @@
 
 #.Request a GPU.
 #SBATCH --gres=gpu:2
-num_gpu=1             #[ Number of GPUs to use (1 or 2).
+num_gpu=2             #[ Number of GPUs to use (1 or 2).
 
 #.Specify name format of output file.
 #SBATCH -o slurm-%j.out
@@ -30,10 +30,10 @@ module load openmpi/cuda-11.1/gcc/4.1.1
 
 #[ Alternate between a regular dynamics phase (RDP)
 #[ and an orbit averaging phase (OAP).
-alpha_oap=0.1         #[ Factor mulplying collisionless terms in OAP.
+alpha_oap=0.001         #[ Factor mulplying collisionless terms in OAP.
 alpha_rdp=1.0          #[ Factor mulplying collisionless terms in RDP.
-tau_oap=0.5          #[ Simulation time for OAP (in microsec).
-tau_rdp=0.05            #[ Simulation time for RDP (in microsec).
+tau_oap=1000          #[ Simulation time for OAP (in microsec).
+tau_rdp=1            #[ Simulation time for RDP (in microsec).
 tau_rdp_extra=24.0     #[ Simulation time for final RDP (in microsec).
 static_field_oap=1     #[ Whether to use a static field in OAP.
 static_field_rdp=0     #[ Whether to use a static field in RDP.
@@ -41,7 +41,7 @@ mask_loss_fac_oap=0.0  #[ Value of the mask in the loss region in OAP.
 mask_loss_fac_rdp=1.0  #[ Value of the mask in the loss region in RDP.
 fdot_mult_type_oap=2   #[ Type of mask applied to df/dt in OAP.
 fdot_mult_type_rdp=0   #[ Type of mask applied to df/dt in RDP.
-num_cycles=3          #[ Number of RDP-OAP pairs to run.
+num_cycles=20          #[ Number of RDP-OAP pairs to run.
 frames_per_phase=5    #[ Number of output frames for each of RDP/OAP.
 
 frames_per_cycle=$(echo "$frames_per_phase * 2" | bc)
@@ -59,7 +59,7 @@ run_OAP() {
     if [ "$prev_frames" -eq 0 ]; then
         if [ "$num_gpu" -eq 2 ]; then
             echo "srun -n 2 ./sim -g -M -c 2 -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap"
-            srun -n 2 ./sim -g -M -c 2 -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap
+            srun -u -n 2 ./sim -g -M -c 2 -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap
         else
             echo "./sim -g -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap"
             ./sim -g -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap
@@ -67,7 +67,7 @@ run_OAP() {
     else
         if [ "$num_gpu" -eq 2 ]; then
             echo "srun -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap"
-            srun -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap
+            srun -u -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap
         else
             echo "./sim -g -r $prev_frames -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap"
             ./sim -g -r $prev_frames -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap
@@ -89,7 +89,7 @@ run_RDP() {
     if [ "$prev_frames" -eq 0 ]; then
         if [ "$num_gpu" -eq 2 ]; then
             echo "srun -n 2 ./sim -g -M -c 2 -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp"
-            srun -n 2 ./sim -g -M -c 2 -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp
+            srun -u -n 2 ./sim -g -M -c 2 -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp
         else
             echo "./sim -g -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp"
             ./sim -g -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp
@@ -97,7 +97,7 @@ run_RDP() {
     else
         if [ "$num_gpu" -eq 2 ]; then
             echo "srun -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp"
-            srun -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp
+            srun -u -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp
         else
             echo "./sim -g -r $prev_frames -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp"
             ./sim -g -r $prev_frames -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp
@@ -129,6 +129,7 @@ for ((i=1; i<=$num_iter; i++)); do
 done
 
 # # Final RDP phase with a few extra frames
+echo "Final RDP phase with extra frames"
 tfinal=$(echo "$num_cycles * ($tau_rdp + $tau_oap) + $tau_rdp_extra" | bc)
 prev_frames=$(echo "$num_cycles * $frames_per_cycle" | bc)
 extra_frames=$(echo "($tau_rdp_extra / $tau_rdp) * $frames_per_phase" | bc)
