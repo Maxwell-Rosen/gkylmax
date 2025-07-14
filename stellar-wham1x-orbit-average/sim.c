@@ -391,18 +391,31 @@ int main(int argc, char **argv)
   // Construct communicator for use in app.
   struct gkyl_comm *comm = gkyl_gyrokinetic_comms_new(app_args.use_mpi, app_args.use_gpu, stderr);
 
+
+  int my_rank = 0;
+  int comm_sz = 1;
+#ifdef GKYL_HAVE_MPI
+  if (app_args.use_mpi){
+    gkyl_comm_get_rank(comm, &my_rank);
+    int comm_sz;
+    gkyl_comm_get_size(comm, &comm_sz);
+  }
+#endif
+
   // Extract variables from command line arguments.
   sscanf(app_args.opt_args, "alpha=%lf,t_end=%lf,num_frames=%d,static_field=%d,I_loss=%lf,fdot_mult_type=%d",
     &ctx.alpha, &ctx.t_end, &ctx.num_frames, &ctx.static_field, &ctx.I_loss, &ctx.fdot_mult_type);
   // Convert t_end to seconds.
   ctx.t_end = ctx.t_end*1e-6;
-  printf("Command line arguments:\n");
-  printf("  alpha = %.9e\n", ctx.alpha);
-  printf("  t_end = %.9e\n", ctx.t_end);
-  printf("  num_frames = %d\n", ctx.num_frames);
-  printf("  static_field = %d\n", ctx.static_field);
-  printf("  I_loss = %.9e\n", ctx.I_loss);
-  printf("  fdot_mult_type = %d\n", ctx.fdot_mult_type);
+  if (my_rank == 0) {
+    printf("Using command line arguments:\n");
+    printf("  alpha = %.9e\n", ctx.alpha);
+    printf("  t_end = %.9e s\n", ctx.t_end);
+    printf("  num_frames = %d\n", ctx.num_frames);
+    printf("  static_field = %d\n", ctx.static_field);
+    printf("  I_loss = %.9e\n", ctx.I_loss);
+    printf("  fdot_mult_type = %d\n", ctx.fdot_mult_type);
+  }
   ctx.int_diag_calc_num = ctx.num_frames*100;
 
   struct gkyl_gyrokinetic_species ion = {
@@ -417,7 +430,8 @@ int main(int argc, char **argv)
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
       // .file_name = "../initial-conditions/boltz-elc-288z-nu2000/gk_wham-ion_1500.gkyl",
-      .file_name = "../stellar-wham1x-288z-restart-true-collisions/gk_wham-ion_463.gkyl",
+      // .file_name = "../stellar-wham1x-288z-restart-true-collisions/gk_wham-ion_463.gkyl",
+      .file_name = "../stellar-wham1x-288z-restart-true-collisions/Distributions/gk_wham-ion_0.gkyl",
     },
 
     // .projection = {
@@ -592,6 +606,7 @@ int main(int argc, char **argv)
     if (step == 1 || step % 100 == 0)
       gkyl_gyrokinetic_app_cout(app, stdout, "Taking time-step %i at t = %g ...", step, t_curr);
 
+    dt = t_end - t_curr;
     struct gkyl_update_status status = gkyl_gyrokinetic_update(app, dt);
 
     if (step == 1 || step % 100 == 0)
@@ -637,6 +652,7 @@ int main(int argc, char **argv)
   struct gkyl_gyrokinetic_stat stat = gkyl_gyrokinetic_app_stat(app);
 
   gkyl_gyrokinetic_app_cout(app, stdout, "\n");
+  gkyl_gyrokinetic_app_cout(app, stdout, "Simulation completed at t = %g s\n", t_curr);
   gkyl_gyrokinetic_app_cout(app, stdout, "Number of update calls %ld\n", stat.nup);
   gkyl_gyrokinetic_app_cout(app, stdout, "Number of forward-Euler calls %ld\n", stat.nfeuler);
   gkyl_gyrokinetic_app_cout(app, stdout, "Number of RK stage-2 failures %ld\n", stat.nstage_2_fail);
