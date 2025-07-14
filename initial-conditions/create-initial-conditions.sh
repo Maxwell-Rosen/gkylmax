@@ -1,11 +1,11 @@
 # simFolder="../stellar-wham1x-288z-restart-true-collisions"
 # simFolder="../stellar-wham1x-288z-adaptive-source"
 # simFolder="../stellar-wham1x-init-kinetic-from-boltzmann/old-geom"
-simFolder="../stellar-wham1x-288z-boltz-elc"
+simFolder="../perlmutter-wham1x-init-kinetic-from-boltzmann"
 # targetFolder="kinet-elc-288z-nu2000/old-geom"
-targetFolder="boltz-elc-288z-nu2000"
-frame=1500
-kinetic=false
+targetFolder="kinet-elc-288z-nu2000"
+frame=800
+kinetic=true
 isOrganized=true
 
 if [ ! -d "$simFolder" ]; then
@@ -47,6 +47,7 @@ if [ "$kinetic" = true ]; then
     cp "$simFolder/Geometry/gk_wham-jacobgeo.gkyl" "$targetFolder"
     cp "$simFolder/Geometry/gk_wham-jacobgeo_inv.gkyl" "$targetFolder"
     cp "$simFolder/Geometry/gk_wham-jacobtot.gkyl" "$targetFolder"
+    cp "$simFolder/Geometry/gk_wham-jacobtot_inv.gkyl" "$targetFolder"
     cp "$simFolder/Geometry/gk_wham-mapc2p.gkyl" "$targetFolder"
     cp "$simFolder/Geometry/gk_wham-mc2nu_pos.gkyl" "$targetFolder"
     cp "$simFolder/Geometry/gk_wham-nodes.gkyl" "$targetFolder"
@@ -64,6 +65,7 @@ if [ "$kinetic" = true ]; then
     cp "$simFolder/gk_wham-jacobgeo.gkyl" "$targetFolder"
     cp "$simFolder/gk_wham-jacobgeo_inv.gkyl" "$targetFolder"
     cp "$simFolder/gk_wham-jacobtot.gkyl" "$targetFolder"
+    cp "$simFolder/gk_wham-jacobtot_inv.gkyl" "$targetFolder"
     cp "$simFolder/gk_wham-mapc2p.gkyl" "$targetFolder"
     cp "$simFolder/gk_wham-mc2nu_pos.gkyl" "$targetFolder"
     cp "$simFolder/gk_wham-nodes.gkyl" "$targetFolder"
@@ -79,6 +81,7 @@ else
     cp "$simFolder/gk_wham-jacobgeo.gkyl" "$targetFolder"
     cp "$simFolder/gk_wham-jacobgeo_inv.gkyl" "$targetFolder"
     cp "$simFolder/gk_wham-jacobtot.gkyl" "$targetFolder"
+    cp "$simFolder/gk_wham-jacobtot_inv.gkyl" "$targetFolder"
     cp "$simFolder/gk_wham-mapc2p.gkyl" "$targetFolder"
     cp "$simFolder/gk_wham-mc2nu_pos.gkyl" "$targetFolder"
     cp "$simFolder/gk_wham-nodes.gkyl" "$targetFolder"
@@ -92,6 +95,7 @@ else
     cp "$simFolder/Geometry/gk_wham-jacobgeo.gkyl" "$targetFolder"
     cp "$simFolder/Geometry/gk_wham-jacobgeo_inv.gkyl" "$targetFolder"
     cp "$simFolder/Geometry/gk_wham-jacobtot.gkyl" "$targetFolder"
+    cp "$simFolder/Geometry/gk_wham-jacobtot_inv.gkyl" "$targetFolder"
     cp "$simFolder/Geometry/gk_wham-mapc2p.gkyl" "$targetFolder"
     cp "$simFolder/Geometry/gk_wham-mc2nu_pos.gkyl" "$targetFolder"
     cp "$simFolder/Geometry/gk_wham-nodes.gkyl" "$targetFolder"
