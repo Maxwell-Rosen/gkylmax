@@ -44,132 +44,118 @@ fdot_mult_type_oap=2   #[ Type of mask applied to df/dt in OAP.
 fdot_mult_type_rdp=0   #[ Type of mask applied to df/dt in RDP.
 positivity_oap=0       #[ Whether to use positivity hack in OAP.
 positivity_rdp=1       #[ Whether to use positivity hack in RDP.
-num_cycles=100          #[ Number of RDP-OAP pairs to run.
+num_cycles=2          #[ Number of RDP-OAP pairs to run.
 frames_per_phase=5    #[ Number of output frames for each of RDP/OAP.
 
 frames_per_cycle=$(echo "$frames_per_phase * 2" | bc)
 
 # Function to run Orbit Averaging Phase (OAP)
 run_OAP() {
-    local i=$1
-    local tfinal=$2
-    local prev_frames=$3
-    local new_frames=$(echo "$prev_frames + $frames_per_phase" | bc)
-    
-    echo "OAP: i=$i | tfinal=$tfinal | prev_frames=$prev_frames | new_frames=$new_frames"
-    
-    # If previous frames are zero, drop that argument
-    if [ "$prev_frames" -eq 0 ]; then
+    local tfinal=$1
+    local frame_start_phase=$2
+    local frame_end_phase=$3
+
+    echo "OAP: tfinal=$tfinal | frame_start_phase=$frame_start_phase | frame_end_phase=$frame_end_phase"
+
+    option_string="alpha=$alpha_oap,t_end=$tfinal,num_frames=$frame_end_phase,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap,use_positivity_hack=$positivity_oap"
+    # If previous frames are zero, drop the restart argument
+    if [ "$frame_start_phase" -eq 0 ]; then
         if [ "$num_gpu" -eq 2 ]; then
-            echo "srun -n 2 ./sim -g -M -c 2 -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap,use_positivity_hack=$positivity_oap"
-            srun -u -n 2 ./sim -g -M -c 2 -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap,use_positivity_hack=$positivity_oap
+            echo "srun -n 2 ./sim -g -M -c 2 -o $option_string"
+            srun -u -n 2 ./sim -g -M -c 2 -o $option_string
         else
-            echo "./sim -g -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap,use_positivity_hack=$positivity_oap"
-            ./sim -g -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap,use_positivity_hack=$positivity_oap
+            echo "./sim -g -o $option_string"
+            ./sim -g -o $option_string
         fi
     else
         if [ "$num_gpu" -eq 2 ]; then
-            echo "srun -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap,use_positivity_hack=$positivity_oap"
-            srun -u -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap,use_positivity_hack=$positivity_oap
+            echo "srun -n 2 ./sim -g -M -c 2 -r $frame_start_phase -o $option_string"
+            srun -u -n 2 ./sim -g -M -c 2 -r $frame_start_phase -o $option_string
         else
-            echo "./sim -g -r $prev_frames -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap,use_positivity_hack=$positivity_oap"
-            ./sim -g -r $prev_frames -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap,use_positivity_hack=$positivity_oap
+            echo "./sim -g -r $frame_start_phase -o $option_string"
+            ./sim -g -r $frame_start_phase -o $option_string
         fi
     fi
 }
 
 # Function to run Regular Dynamics Phase (RDP)
 run_RDP() {
-    local i=$1
-    local tfinal=$2
-    local prev_frames=$3
-    local frames_to_add=${4:-$frames_per_phase}  # Default to frames_per_phase if not specified
-    local new_frames=$(echo "$prev_frames + $frames_to_add" | bc)
-    
-    echo "RDP: i=$i | tfinal=$tfinal | prev_frames=$prev_frames | new_frames=$new_frames"
-    
-    # If previous frames are zero, drop that argument
-    if [ "$prev_frames" -eq 0 ]; then
+    local tfinal=$1
+    local frame_start_phase=$2
+    local frame_end_phase=$3
+
+    echo "RDP: tfinal=$tfinal | frame_start_phase=$frame_start_phase | frame_end_phase=$frame_end_phase"
+
+    option_string="alpha=$alpha_rdp,t_end=$tfinal,num_frames=$frame_end_phase,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp,use_positivity_hack=$positivity_rdp"
+    # If previous frames are zero, drop the restart argument
+    if [ "$frame_start_phase" -eq 0 ]; then
         if [ "$num_gpu" -eq 2 ]; then
-            echo "srun -n 2 ./sim -g -M -c 2 -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp,use_positivity_hack=$positivity_rdp"
-            srun -u -n 2 ./sim -g -M -c 2 -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp,use_positivity_hack=$positivity_rdp
+            echo "srun -n 2 ./sim -g -M -c 2 -o $option_string"
+            srun -u -n 2 ./sim -g -M -c 2 -o $option_string
         else
-            echo "./sim -g -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp,use_positivity_hack=$positivity_rdp"
-            ./sim -g -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp,use_positivity_hack=$positivity_rdp
+            echo "./sim -g -o $option_string"
+            ./sim -g -o $option_string
         fi
     else
         if [ "$num_gpu" -eq 2 ]; then
-            echo "srun -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp,use_positivity_hack=$positivity_rdp"
-            srun -u -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp,use_positivity_hack=$positivity_rdp
+            echo "srun -n 2 ./sim -g -M -c 2 -r $frame_start_phase -o $option_string"
+            srun -u -n 2 ./sim -g -M -c 2 -r $frame_start_phase -o $option_string
         else
-            echo "./sim -g -r $prev_frames -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp,use_positivity_hack=$positivity_rdp"
-            ./sim -g -r $prev_frames -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp,use_positivity_hack=$positivity_rdp
+            echo "./sim -g -r $frame_start_phase -o $option_string"
+            ./sim -g -r $frame_start_phase -o $option_string
         fi
     fi
 }
 
+tfinal=0.0  # Initialize final time
+frame_end_phase=0  # Initialize previous frames
 if [ "$oap_first" -eq 1 ]; then
     echo "Running OAP first"
-    # Initial OAP phase
-    tfinal=$tau_oap
-    run_OAP 0 $tfinal 0
-
-    # Initial RDP phase
-    tfinal=$(echo "$tau_oap + $tau_rdp" | bc)
-    prev_frames=$frames_per_phase
-    run_RDP 0 $tfinal $prev_frames
-
     # Main loop for alternating OAP-RDP cycles
-    num_iter=$(echo "$num_cycles - 1" | bc)
-    for ((i=1; i<=$num_iter; i++)); do
+    for ((i=0; i<$num_cycles; i++)); do
         # OAP phase
-        tfinal=$(echo "$tau_rdp + $tau_oap + $i * $tau_rdp + ($i-1) * $tau_oap" | bc)
-        prev_frames=$(echo "$frames_per_cycle + ($i-1) * $frames_per_cycle" | bc)
-        run_OAP $i $tfinal $prev_frames
+        tfinal=$(echo "$tfinal + $tau_oap" | bc)
+        frame_start_phase=$frame_end_phase
+        frame_end_phase=$((frame_end_phase + frames_per_phase))
+        run_OAP $tfinal $frame_start_phase $frame_end_phase
 
         # RDP phase
-        tfinal=$(echo "$tau_rdp + $tau_oap + $i * $tau_rdp + $i * $tau_oap" | bc)
-        prev_frames=$(echo "$frames_per_cycle + ($i-1) * $frames_per_cycle + $frames_per_phase" | bc)
-        run_RDP $i $tfinal $prev_frames
+        tfinal=$(echo "$tfinal + $tau_rdp" | bc)
+        frame_start_phase=$frame_end_phase
+        frame_end_phase=$((frame_end_phase + frames_per_phase))
+        run_RDP $tfinal $frame_start_phase $frame_end_phase
     done
 
     # # Final RDP phase with a few extra frames
     echo "Final RDP phase with extra frames"
-    tfinal=$(echo "$num_cycles * ($tau_rdp + $tau_oap) + $tau_rdp_extra" | bc)
-    prev_frames=$(echo "$num_cycles * $frames_per_cycle" | bc)
-    extra_frames=$(echo "($tau_rdp_extra / $tau_rdp) * $frames_per_phase" | bc)
-    run_RDP $num_cycles $tfinal $prev_frames $extra_frames
+    tfinal=$(echo "$tfinal + $tau_rdp_extra" | bc)
+    frame_start_phase=$frame_end_phase
+    frame_end_phase=$(echo "$frame_end_phase + ($tau_rdp_extra / $tau_rdp) * $frames_per_phase" | bc)
+    run_RDP $tfinal $frame_start_phase $frame_end_phase
 
 else
-    # Initial RDP phase
-    tfinal=$tau_rdp
-    run_RDP 0 $tfinal 0
-
-    # Initial OAP phase
-    tfinal=$(echo "$tau_rdp + $tau_oap" | bc)
-    prev_frames=$frames_per_phase
-    run_OAP 0 $tfinal $prev_frames
-
+    echo "Running RDP first"
     # Main loop for alternating RDP-OAP cycles
-    num_iter=$(echo "$num_cycles - 1" | bc)
-    for ((i=1; i<=$num_iter; i++)); do
+    for ((i=0; i<$num_cycles; i++)); do
         # RDP phase
-        tfinal=$(echo "$tau_rdp + $tau_oap + $i * $tau_rdp + ($i-1) * $tau_oap" | bc)
-        prev_frames=$(echo "$frames_per_cycle + ($i-1) * $frames_per_cycle" | bc)
-        run_RDP $i $tfinal $prev_frames
-        
+        tfinal=$(echo "$tfinal+$tau_rdp" | bc)
+        frame_start_phase=$frame_end_phase
+        frame_end_phase=$((frame_end_phase + frames_per_phase))
+        run_RDP $tfinal $frame_start_phase $frame_end_phase
+
         # OAP phase
-        tfinal=$(echo "$tau_rdp + $tau_oap + $i * $tau_rdp + $i * $tau_oap" | bc)
-        prev_frames=$(echo "$frames_per_cycle + ($i-1) * $frames_per_cycle + $frames_per_phase" | bc)
-        run_OAP $i $tfinal $prev_frames
+        tfinal=$(echo "$tfinal + $tau_oap" | bc)
+        frame_start_phase=$frame_end_phase
+        frame_end_phase=$((frame_end_phase + frames_per_phase))
+        run_OAP $tfinal $frame_start_phase $frame_end_phase
     done
 
     # # Final RDP phase with a few extra frames
     echo "Final RDP phase with extra frames"
-    tfinal=$(echo "$num_cycles * ($tau_rdp + $tau_oap) + $tau_rdp_extra" | bc)
-    prev_frames=$(echo "$num_cycles * $frames_per_cycle" | bc)
-    extra_frames=$(echo "($tau_rdp_extra / $tau_rdp) * $frames_per_phase" | bc)
-    run_RDP $num_cycles $tfinal $prev_frames $extra_frames
+    tfinal=$(echo "$tfinal + $tau_rdp_extra" | bc)
+    frame_start_phase=$frame_end_phase
+    frame_end_phase=$(echo "$frame_end_phase + ($tau_rdp_extra / $tau_rdp) * $frames_per_phase" | bc)
+    run_RDP $tfinal $frame_start_phase $frame_end_phase
 fi
 
 exit 0

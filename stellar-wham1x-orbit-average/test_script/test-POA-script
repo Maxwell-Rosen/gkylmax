@@ -52,57 +52,59 @@ frames_per_cycle=$(echo "$frames_per_phase * 2" | bc)
 # Function to run Orbit Averaging Phase (OAP)
 run_OAP() {
     local tfinal=$1
-    local frame_end_phase=$2
+    local frame_start_phase=$2
+    local frame_end_phase=$3
 
-    echo "OAP: tfinal=$tfinal | frame_end_phase=$frame_end_phase"
+    echo "OAP: tfinal=$tfinal | frame_start_phase=$frame_start_phase | frame_end_phase=$frame_end_phase"
 
     option_string="alpha=$alpha_oap,t_end=$tfinal,num_frames=$frame_end_phase,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap,use_positivity_hack=$positivity_oap"
-    # If previous frames are zero, drop that argument
-    # if [ "$(printf "%.0f" "$frame_end_phase")" -eq "$frames_per_phase" ]; then
-    #     if [ "$num_gpu" -eq 2 ]; then
-    #         echo "srun -n 2 ./sim -g -M -c 2 -o $option_string"
-    #         srun -u -n 2 ./sim -g -M -c 2 -o $option_string
-    #     else
-    #         echo "./sim -g -o $option_string"
-    #         ./sim -g -o $option_string
-    #     fi
-    # else
-    #     if [ "$num_gpu" -eq 2 ]; then
-    #         echo "srun -n 2 ./sim -g -M -c 2 -r $frame_end_phase -o $option_string"
-    #         srun -u -n 2 ./sim -g -M -c 2 -r $frame_end_phase -o $option_string
-    #     else
-    #         echo "./sim -g -r $frame_end_phase -o $option_string"
-    #         ./sim -g -r $frame_end_phase -o $option_string
-    #     fi
-    # fi
+    # If previous frames are zero, drop the restart argument
+    if [ "$frame_start_phase" -eq 0 ]; then
+        if [ "$num_gpu" -eq 2 ]; then
+            echo "srun -n 2 ./sim -g -M -c 2 -o $option_string"
+            srun -u -n 2 ./sim -g -M -c 2 -o $option_string
+        else
+            echo "./sim -g -o $option_string"
+            ./sim -g -o $option_string
+        fi
+    else
+        if [ "$num_gpu" -eq 2 ]; then
+            echo "srun -n 2 ./sim -g -M -c 2 -r $frame_start_phase -o $option_string"
+            srun -u -n 2 ./sim -g -M -c 2 -r $frame_start_phase -o $option_string
+        else
+            echo "./sim -g -r $frame_start_phase -o $option_string"
+            ./sim -g -r $frame_start_phase -o $option_string
+        fi
+    fi
 }
 
 # Function to run Regular Dynamics Phase (RDP)
 run_RDP() {
     local tfinal=$1
-    local frame_end_phase=$2
+    local frame_start_phase=$2
+    local frame_end_phase=$3
 
-    echo "RDP: tfinal=$tfinal | frame_end_phase=$frame_end_phase"
+    echo "RDP: tfinal=$tfinal | frame_start_phase=$frame_start_phase | frame_end_phase=$frame_end_phase"
 
     option_string="alpha=$alpha_rdp,t_end=$tfinal,num_frames=$frame_end_phase,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp,use_positivity_hack=$positivity_rdp"
-    # If previous frames are zero, drop that argument
-    # if [ "$(printf "%.0f" "$frame_end_phase")" -eq "$frames_per_phase" ]; then
-    #     if [ "$num_gpu" -eq 2 ]; then
-    #         echo "srun -n 2 ./sim -g -M -c 2 -o $option_string"
-    #         srun -u -n 2 ./sim -g -M -c 2 -o $option_string
-    #     else
-    #         echo "./sim -g -o $option_string"
-    #         ./sim -g -o $option_string
-    #     fi
-    # else
-    #     if [ "$num_gpu" -eq 2 ]; then
-    #         echo "srun -n 2 ./sim -g -M -c 2 -r $frame_end_phase -o $option_string"
-    #         srun -u -n 2 ./sim -g -M -c 2 -r $frame_end_phase -o $option_string
-    #     else
-    #         echo "./sim -g -r $frame_end_phase -o $option_string"
-    #         ./sim -g -r $frame_end_phase -o $option_string
-    #     fi
-    # fi
+    # If previous frames are zero, drop the restart argument
+    if [ "$frame_start_phase" -eq 0 ]; then
+        if [ "$num_gpu" -eq 2 ]; then
+            echo "srun -n 2 ./sim -g -M -c 2 -o $option_string"
+            srun -u -n 2 ./sim -g -M -c 2 -o $option_string
+        else
+            echo "./sim -g -o $option_string"
+            ./sim -g -o $option_string
+        fi
+    else
+        if [ "$num_gpu" -eq 2 ]; then
+            echo "srun -n 2 ./sim -g -M -c 2 -r $frame_start_phase -o $option_string"
+            srun -u -n 2 ./sim -g -M -c 2 -r $frame_start_phase -o $option_string
+        else
+            echo "./sim -g -r $frame_start_phase -o $option_string"
+            ./sim -g -r $frame_start_phase -o $option_string
+        fi
+    fi
 }
 
 tfinal=0.0  # Initialize final time
@@ -113,20 +115,23 @@ if [ "$oap_first" -eq 1 ]; then
     for ((i=0; i<$num_cycles; i++)); do
         # OAP phase
         tfinal=$(echo "$tfinal + $tau_oap" | bc)
+        frame_start_phase=$frame_end_phase
         frame_end_phase=$((frame_end_phase + frames_per_phase))
-        run_OAP $tfinal $frame_end_phase
+        run_OAP $tfinal $frame_start_phase $frame_end_phase
 
         # RDP phase
         tfinal=$(echo "$tfinal + $tau_rdp" | bc)
+        frame_start_phase=$frame_end_phase
         frame_end_phase=$((frame_end_phase + frames_per_phase))
-        run_RDP $tfinal $frame_end_phase
+        run_RDP $tfinal $frame_start_phase $frame_end_phase
     done
 
     # # Final RDP phase with a few extra frames
     echo "Final RDP phase with extra frames"
     tfinal=$(echo "$tfinal + $tau_rdp_extra" | bc)
+    frame_start_phase=$frame_end_phase
     frame_end_phase=$(echo "$frame_end_phase + ($tau_rdp_extra / $tau_rdp) * $frames_per_phase" | bc)
-    run_RDP $tfinal $frame_end_phase
+    run_RDP $tfinal $frame_start_phase $frame_end_phase
 
 else
     echo "Running RDP first"
@@ -134,20 +139,23 @@ else
     for ((i=0; i<$num_cycles; i++)); do
         # RDP phase
         tfinal=$(echo "$tfinal+$tau_rdp" | bc)
+        frame_start_phase=$frame_end_phase
         frame_end_phase=$((frame_end_phase + frames_per_phase))
-        run_RDP $tfinal $frame_end_phase
-        
+        run_RDP $tfinal $frame_start_phase $frame_end_phase
+
         # OAP phase
         tfinal=$(echo "$tfinal + $tau_oap" | bc)
+        frame_start_phase=$frame_end_phase
         frame_end_phase=$((frame_end_phase + frames_per_phase))
-        run_OAP $tfinal $frame_end_phase
+        run_OAP $tfinal $frame_start_phase $frame_end_phase
     done
 
     # # Final RDP phase with a few extra frames
     echo "Final RDP phase with extra frames"
     tfinal=$(echo "$tfinal + $tau_rdp_extra" | bc)
+    frame_start_phase=$frame_end_phase
     frame_end_phase=$(echo "$frame_end_phase + ($tau_rdp_extra / $tau_rdp) * $frames_per_phase" | bc)
-    run_RDP $tfinal $frame_end_phase
+    run_RDP $tfinal $frame_start_phase $frame_end_phase
 fi
 
 exit 0
