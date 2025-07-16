@@ -92,6 +92,7 @@ struct gk_mirror_ctx
   bool static_field; // Whether the potential is constant in time.
   double I_loss; // Value of the mask in the loss region.
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type; // Type of df/dt multiplier.
+  bool use_positivity_hack; // Whether to use positivity hack in OAP/RDP.
 };
 
 // void
@@ -147,8 +148,11 @@ eval_density_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_R
   double src_amp_floor = src_amp*1e-2;
   if (fabs(z) <= 1.0)
   {
-    fout[0] = fmax(src_amp_floor, (src_amp / sqrt(2.0 * M_PI * pow(src_sigma, 2))) *
-      exp(-1 * pow((z - z_src), 2) / (2.0 * pow(src_sigma, 2))));
+    // fout[0] = fmax(src_amp_floor, (src_amp / sqrt(2.0 * M_PI * pow(src_sigma, 2))) *
+      // exp(-1 * pow((z - z_src), 2) / (2.0 * pow(src_sigma, 2))));
+    
+      // cubic polynomial drop of to the edge
+    fout[0] = src_amp * (1 - pow(fabs(z), 6));
   }
   else
   {
@@ -277,8 +281,8 @@ create_ctx(void)
   int num_failures_max = 20; // Maximum allowable number of consecutive small time-steps.
 
   // Source parameters
-  double ion_source_amplitude = 3e23/2000.;
-  double ion_source_sigma = 0.1*2.0/M_PI;
+  double ion_source_amplitude = 1.e20;
+  double ion_source_sigma = 0.5;
   double ion_source_temp = 5000. * eV;
 
   struct gk_mirror_ctx ctx = {
@@ -403,8 +407,8 @@ int main(int argc, char **argv)
 #endif
 
   // Extract variables from command line arguments.
-  sscanf(app_args.opt_args, "alpha=%lf,t_end=%lf,num_frames=%d,static_field=%d,I_loss=%lf,fdot_mult_type=%d",
-    &ctx.alpha, &ctx.t_end, &ctx.num_frames, &ctx.static_field, &ctx.I_loss, &ctx.fdot_mult_type);
+  sscanf(app_args.opt_args, "alpha=%lf,t_end=%lf,num_frames=%d,static_field=%d,I_loss=%lf,fdot_mult_type=%d,use_positivity_hack=%d",
+    &ctx.alpha, &ctx.t_end, &ctx.num_frames, &ctx.static_field, &ctx.I_loss, &ctx.fdot_mult_type, &ctx.use_positivity_hack);
   // Convert t_end to seconds.
   ctx.t_end = ctx.t_end*1e-6;
   if (my_rank == 0) {
@@ -429,32 +433,9 @@ int main(int argc, char **argv)
     .no_by = true,
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
-      // .file_name = "../initial-conditions/boltz-elc-288z-nu2000/gk_wham-ion_1500.gkyl",
-      // .file_name = "../stellar-wham1x-288z-restart-true-collisions/gk_wham-ion_463.gkyl",
+      // .file_name = "../stellar-wham1x-288z-restart-true-collisions/Distributions/gk_wham-ion_1500.gkyl",
       .file_name = "../stellar-wham1x-288z-restart-true-collisions/Distributions/gk_wham-ion_0.gkyl",
     },
-
-    // .projection = {
-    //     .proj_id = GKYL_PROJ_MAXWELLIAN_GAUSSIAN,
-    //     .gaussian_mean = {0.0},
-    //     .gaussian_std_dev = {0.8},
-    //     .total_num_particles = 3e18,
-    //     .total_kin_energy = 6e31,
-    //     .temp_max = 5.0*ctx.Te0,
-    // },
-
-
-    // .projection = {
-    //   .proj_id = GKYL_PROJ_BIMAXWELLIAN,
-    //   .ctx_density = &ctx,
-    //   .density = eval_density_ion,
-    //   .ctx_upar = &ctx,
-    //   .upar= eval_upar_ion,
-    //   .ctx_temppar = &ctx,
-    //   .temppar = eval_temp_par_ion,
-    //   .ctx_tempperp = &ctx,
-    //   .tempperp = eval_temp_perp_ion,
-    // },
 
     .mapc2p = {
       .mapping = mapc2p_vel_ion,
@@ -492,7 +473,7 @@ int main(int argc, char **argv)
         .num_diag_moments = 6,
         .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_HAMILTONIAN},
         .num_integrated_diag_moments = 1,
-        .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN },
+        .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
       },
     },
     .bcx = {
@@ -536,7 +517,7 @@ int main(int argc, char **argv)
     .cells = { cells_x[0] },
     .poly_order = ctx.poly_order,
     .basis_type = app_args.basis_type,
-    // .enforce_positivity = true,
+    .enforce_positivity = ctx.use_positivity_hack,
     .geometry = {
       .geometry_id = GKYL_MIRROR,
       .world = {ctx.psi_eval, 0.0},
@@ -619,8 +600,8 @@ int main(int argc, char **argv)
     t_curr += status.dt_actual;
     dt = status.dt_suggested;
 
-    calc_integrated_diagnostics(&trig_calc_intdiag, app, t_curr, t_curr > t_end);
-    write_data(&trig_write_conf, &trig_write_phase, app, t_curr, t_curr > t_end);
+    calc_integrated_diagnostics(&trig_calc_intdiag, app, t_curr, t_curr >= t_end);
+    write_data(&trig_write_conf, &trig_write_phase, app, t_curr, t_curr >= t_end);
 
     if (dt_init < 0.0) {
       dt_init = status.dt_actual;

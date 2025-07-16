@@ -31,19 +31,21 @@ module load openmpi/cuda-11.1/gcc/4.1.1
 #[ Alternate between a regular dynamics phase (RDP)
 #[ and an orbit averaging phase (OAP).
 oap_first=0          #[ Whether to run OAP first (1) or RDP first (0).
-alpha_oap=0.01         #[ Factor mulplying collisionless terms in OAP.
+alpha_oap=0.000005         #[ Factor mulplying collisionless terms in OAP.
 alpha_rdp=1.0          #[ Factor mulplying collisionless terms in RDP.
-tau_oap=100          #[ Simulation time for OAP (in microsec).
-tau_rdp=1            #[ Simulation time for RDP (in microsec).
-tau_rdp_extra=24.0     #[ Simulation time for final RDP (in microsec).
+tau_oap=500000          #[ Simulation time for OAP (in microsec).
+tau_rdp=10            #[ Simulation time for RDP (in microsec).
+tau_rdp_extra=100.0     #[ Simulation time for final RDP (in microsec).
 static_field_oap=0     #[ Whether to use a static field in OAP.
 static_field_rdp=0     #[ Whether to use a static field in RDP.
 mask_loss_fac_oap=0.0  #[ Value of the mask in the loss region in OAP.
 mask_loss_fac_rdp=1.0  #[ Value of the mask in the loss region in RDP.
 fdot_mult_type_oap=2   #[ Type of mask applied to df/dt in OAP.
 fdot_mult_type_rdp=0   #[ Type of mask applied to df/dt in RDP.
-num_cycles=200          #[ Number of RDP-OAP pairs to run.
-frames_per_phase=10    #[ Number of output frames for each of RDP/OAP.
+positivity_oap=0       #[ Whether to use positivity hack in OAP.
+positivity_rdp=1       #[ Whether to use positivity hack in RDP.
+num_cycles=100          #[ Number of RDP-OAP pairs to run.
+frames_per_phase=5    #[ Number of output frames for each of RDP/OAP.
 
 frames_per_cycle=$(echo "$frames_per_phase * 2" | bc)
 
@@ -59,19 +61,19 @@ run_OAP() {
     # If previous frames are zero, drop that argument
     if [ "$prev_frames" -eq 0 ]; then
         if [ "$num_gpu" -eq 2 ]; then
-            echo "srun -n 2 ./sim -g -M -c 2 -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap"
-            srun -u -n 2 ./sim -g -M -c 2 -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap
+            echo "srun -n 2 ./sim -g -M -c 2 -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap,use_positivity_hack=$positivity_oap"
+            srun -u -n 2 ./sim -g -M -c 2 -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap,use_positivity_hack=$positivity_oap
         else
-            echo "./sim -g -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap"
-            ./sim -g -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap
+            echo "./sim -g -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap,use_positivity_hack=$positivity_oap"
+            ./sim -g -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap,use_positivity_hack=$positivity_oap
         fi
     else
         if [ "$num_gpu" -eq 2 ]; then
-            echo "srun -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap"
-            srun -u -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap
+            echo "srun -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap,use_positivity_hack=$positivity_oap"
+            srun -u -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap,use_positivity_hack=$positivity_oap
         else
-            echo "./sim -g -r $prev_frames -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap"
-            ./sim -g -r $prev_frames -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap
+            echo "./sim -g -r $prev_frames -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap,use_positivity_hack=$positivity_oap"
+            ./sim -g -r $prev_frames -o alpha=$alpha_oap,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap,use_positivity_hack=$positivity_oap
         fi
     fi
 }
@@ -89,19 +91,19 @@ run_RDP() {
     # If previous frames are zero, drop that argument
     if [ "$prev_frames" -eq 0 ]; then
         if [ "$num_gpu" -eq 2 ]; then
-            echo "srun -n 2 ./sim -g -M -c 2 -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp"
-            srun -u -n 2 ./sim -g -M -c 2 -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp
+            echo "srun -n 2 ./sim -g -M -c 2 -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp,use_positivity_hack=$positivity_rdp"
+            srun -u -n 2 ./sim -g -M -c 2 -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp,use_positivity_hack=$positivity_rdp
         else
-            echo "./sim -g -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp"
-            ./sim -g -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp
+            echo "./sim -g -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp,use_positivity_hack=$positivity_rdp"
+            ./sim -g -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp,use_positivity_hack=$positivity_rdp
         fi
     else
         if [ "$num_gpu" -eq 2 ]; then
-            echo "srun -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp"
-            srun -u -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp
+            echo "srun -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp,use_positivity_hack=$positivity_rdp"
+            srun -u -n 2 ./sim -g -M -c 2 -r $prev_frames -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp,use_positivity_hack=$positivity_rdp
         else
-            echo "./sim -g -r $prev_frames -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp"
-            ./sim -g -r $prev_frames -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp
+            echo "./sim -g -r $prev_frames -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp,use_positivity_hack=$positivity_rdp"
+            ./sim -g -r $prev_frames -o alpha=$alpha_rdp,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp,use_positivity_hack=$positivity_rdp
         fi
     fi
 }
