@@ -19,10 +19,11 @@ frame=0
 # pgkyl ../initial-conditions/kinet-elc-288z-nu2000/gk_wham-field_800.gkyl interp pl --title "field IC, frame 0" --saveas "python-plots/gk_wham-field_0-1x.png" --no-show &
 # pgkyl ../initial-conditions/kinet-elc-288z-nu2000/gk_wham-field_800.gkyl -t IC gk_wham-field_0.gkyl -t new interp activ -t new sel --z0 0 -t new_0 activ -t new_0,IC pl -f0 --title "field IC, frame 0" --saveas "python-plots/gk_wham-field_0-1x-new.png" --no-show &
 
-pgkyl gk_wham-ion_BiMaxwellianMoments_0.gkyl interp pl --title "gk_wham-ion BiMaxwellianMoments 0 \mu s" --saveas "python-plots/gk_wham-ion_BiMaxwellianMoments_0.png" --no-show &
-pgkyl gk_wham-elc_BiMaxwellianMoments_0.gkyl interp pl --title "gk_wham-elc BiMaxwellianMoments 0 \mu s" --saveas "python-plots/gk_wham-elc_BiMaxwellianMoments_0.png" --no-show &
-pgkyl gk_wham-jacobgeo.gkyl interp pl --title "gk_wham-jacobgeo" --saveas "python-plots/gk_wham-jacobgeo.png" --no-show &
-pgkyl gk_wham-field_0.gkyl interp pl --title "gk_wham-field 0 \mu s, volts" --saveas "python-plots/gk_wham-field_0.png" --no-show &
+pgkyl --c2p gk_wham-mapc2p_deflated.gkyl gk_wham-ion_BiMaxwellianMoments_0.gkyl interp pl --title "gk_wham-ion BiMaxwellianMoments 0 \mu s" --saveas "python-plots/gk_wham-ion_BiMaxwellianMoments_0.png" --no-show &
+pgkyl --c2p gk_wham-mapc2p_deflated.gkyl gk_wham-elc_BiMaxwellianMoments_0.gkyl interp pl --title "gk_wham-elc BiMaxwellianMoments 0 \mu s" --saveas "python-plots/gk_wham-elc_BiMaxwellianMoments_0.png" --no-show &
+pgkyl --c2p gk_wham-mapc2p_deflated.gkyl gk_wham-jacobgeo.gkyl interp pl --title "gk_wham-jacobgeo" --saveas "python-plots/gk_wham-jacobgeo.png" --no-show &
+pgkyl --c2p gk_wham-mapc2p_deflated.gkyl gk_wham-field_0.gkyl interp pl --title "gk_wham-field 0 \mu s, volts" --saveas "python-plots/gk_wham-field_0.png" --no-show &
+
 # pgkyl gk_wham-jacobgeo_inv.gkyl interp pl --title "gk_wham-jacobgeo_inv" --saveas "python-plots/gk_wham-jacobgeo_inv.png" --no-show 
 
 # ## Compare the intensities of the two terms in the poisson equation
