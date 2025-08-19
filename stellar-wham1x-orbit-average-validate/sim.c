@@ -92,6 +92,7 @@ struct gk_mirror_ctx
   bool static_field; // Whether the potential is constant in time.
   double I_loss; // Value of the mask in the loss region.
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type; // Type of df/dt multiplier.
+  bool use_positivity_hack; // Whether to use positivity hack in OAP/RDP.
 };
 
 // void
@@ -147,8 +148,11 @@ eval_density_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_R
   double src_amp_floor = src_amp*1e-2;
   if (fabs(z) <= 1.0)
   {
-    fout[0] = fmax(src_amp_floor, (src_amp / sqrt(2.0 * M_PI * pow(src_sigma, 2))) *
-      exp(-1 * pow((z - z_src), 2) / (2.0 * pow(src_sigma, 2))));
+    // fout[0] = fmax(src_amp_floor, (src_amp / sqrt(2.0 * M_PI * pow(src_sigma, 2))) *
+      // exp(-1 * pow((z - z_src), 2) / (2.0 * pow(src_sigma, 2))));
+    
+      // cubic polynomial drop of to the edge
+    fout[0] = src_amp * (1 - pow(fabs(z), 6));
   }
   else
   {
@@ -277,8 +281,8 @@ create_ctx(void)
   int num_failures_max = 20; // Maximum allowable number of consecutive small time-steps.
 
   // Source parameters
-  double ion_source_amplitude = 3e23/2000.;
-  double ion_source_sigma = 0.1*2.0/M_PI;
+  double ion_source_amplitude = 1.e20;
+  double ion_source_sigma = 0.5;
   double ion_source_temp = 5000. * eV;
 
   struct gk_mirror_ctx ctx = {
@@ -403,10 +407,17 @@ int main(int argc, char **argv)
 #endif
 
   // Extract variables from command line arguments.
-  sscanf(app_args.opt_args, "alpha=%lf,t_end=%lf,num_frames=%d,static_field=%d,I_loss=%lf,fdot_mult_type=%d",
-    &ctx.alpha, &ctx.t_end, &ctx.num_frames, &ctx.static_field, &ctx.I_loss, &ctx.fdot_mult_type);
+  // sscanf(app_args.opt_args, "alpha=%lf,t_end=%lf,num_frames=%d,static_field=%d,I_loss=%lf,fdot_mult_type=%d,use_positivity_hack=%d",
+    // &ctx.alpha, &ctx.t_end, &ctx.num_frames, &ctx.static_field, &ctx.I_loss, &ctx.fdot_mult_type, &ctx.use_positivity_hack);
+  ctx.alpha = 1.0;
+  ctx.t_end = 1e-3; // 1 ms
+  ctx.num_frames = 100; // Number of frames to write
+  ctx.static_field = false; // Whether the potential is static in time.
+  ctx.fdot_mult_type = 0;
+  ctx.use_positivity_hack = true; // Whether to use positivity hack in OAP/RDP.
+
   // Convert t_end to seconds.
-  ctx.t_end = ctx.t_end*1e-6;
+  // ctx.t_end = ctx.t_end*1e-6;
   if (my_rank == 0) {
     printf("Using command line arguments:\n");
     printf("  alpha = %.9e\n", ctx.alpha);
@@ -430,7 +441,7 @@ int main(int argc, char **argv)
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
       // .file_name = "../stellar-wham1x-288z-restart-true-collisions/Distributions/gk_wham-ion_1500.gkyl",
-      .file_name = "../stellar-wham1x-orbit-average/gk_wham-ion_613.gkyl",
+      .file_name = "../stellar-wham1x-orbit-average/gk_wham-ion_1368.gkyl",
     },
 
     .mapc2p = {
@@ -438,11 +449,11 @@ int main(int argc, char **argv)
       .ctx = &ctx,
     },
 
-    .collisionless_scale_factor = ctx.alpha,
+    // .collisionless_scale_factor = ctx.alpha,
 
-    .time_rate_multiplier = {
-      .type = ctx.fdot_mult_type,
-    },
+    // .time_rate_multiplier = {
+    //   .type = ctx.fdot_mult_type,
+    // },
 
     .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
@@ -469,7 +480,7 @@ int main(int argc, char **argv)
         .num_diag_moments = 6,
         .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_HAMILTONIAN},
         .num_integrated_diag_moments = 1,
-        .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN },
+        .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
       },
     },
     .bcx = {
@@ -493,7 +504,7 @@ int main(int argc, char **argv)
     .electron_mass = ctx.me,
     .electron_charge = ctx.qe,
     .electron_temp = ctx.Te0,
-    .is_static = ctx.static_field,
+    // .is_static = ctx.static_field,
   };
 
   struct gkyl_mirror_geo_grid_inp grid_inp = {
@@ -513,7 +524,7 @@ int main(int argc, char **argv)
     .cells = { cells_x[0] },
     .poly_order = ctx.poly_order,
     .basis_type = app_args.basis_type,
-    // .enforce_positivity = true,
+    .enforce_positivity = ctx.use_positivity_hack,
     .geometry = {
       .geometry_id = GKYL_MIRROR,
       .world = {ctx.psi_eval, 0.0},

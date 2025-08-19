@@ -1,0 +1,31 @@
+#!/bin/bash -l
+
+#.Declare a name for this job to be my_serial_job
+#.it is recommended that this name be kept to 16 characters or less
+#SBATCH -J w1xOA
+
+#SBATCH --qos pppl-short
+
+#.Number of nodes to request (Cori has 32/64 physics/logical cores per node)
+#SBATCH -N 1
+
+#.Total number of cores (96 per node).
+#SBATCH --tasks-per-node=4
+
+#.Request wall time
+#SBATCH -t 24:00:00
+
+#.Request a GPU.
+#SBATCH --gres=gpu:2
+num_gpu=2             #[ Number of GPUs to use (1 or 2).
+
+#.Specify name format of output file.
+#SBATCH -o slurm-%j.out
+
+# If doing a restart indicate restart file path. Must also
+# add it as a command line argument after outdir below.
+
+module load cudatoolkit/12.4
+module load openmpi/cuda-11.1/gcc/4.1.1
+
+srun -u -n $num_gpu ./sim -g -M -c $num_gpu -r 88

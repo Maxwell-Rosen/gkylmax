@@ -1,0 +1,294 @@
+#!/bin/bash -l
+
+#.Declare a name for this job to be my_serial_job
+#.it is recommended that this name be kept to 16 characters or less
+#SBATCH -J w1xOA
+
+#SBATCH --qos pppl-short
+
+#.Number of nodes to request (Cori has 32/64 physics/logical cores per node)
+#SBATCH -N 1
+
+#.Total number of cores (96 per node).
+#SBATCH --tasks-per-node=4
+
+#.Request wall time
+#SBATCH -t 24:00:00
+
+#.Request a GPU.
+#SBATCH --gres=gpu:2
+num_gpu=2             #[ Number of GPUs to use (1 or 2).
+
+#.Specify name format of output file.
+#SBATCH -o slurm-%j.out
+
+# If doing a restart indicate restart file path. Must also
+# add it as a command line argument after outdir below.
+
+module load cudatoolkit/12.4
+module load openmpi/cuda-11.1/gcc/4.1.1
+
+#[ Alternate between a regular dynamics phase (RDP)
+#[ and an orbit averaging phase (OAP).
+alpha_oap_ion=0.000005         #[ Factor mulplying collisionless terms in OAP.
+alpha_rdp_ion=1.0          #[ Factor mulplying collisionless terms in RDP.
+alpha_oap_elc=0.000005         #[ Factor mulplying collisionless terms in OAP.
+alpha_rdp_elc=1.0          #[ Factor mulplying collisionless terms in
+tau_oap_ion=20          #[ Simulation time for OAP (in microsec).
+tau_rdp_ion=2            #[ Simulation time for RDP (in microsec).
+tau_oap_elc=3          #[ Simulation time for OAP (in microsec).
+tau_rdp_elc=1            #[ Simulation time for RDP (in microsec).
+static_field_oap_ion=0     #[ Whether to use a static field in OAP.
+static_field_rdp_ion=0     #[ Whether to use a static field in RDP.
+static_field_oap_both=0     #[ Whether to use a static field in OAP.
+static_field_rdp_elc=0     #[ Whether to use a static field in RDP
+mask_loss_fac_oap_ion=0.0  #[ Value of the mask in the loss region in OAP.
+mask_loss_fac_rdp_ion=1.0  #[ Value of the mask in the loss region in RDP.
+mask_loss_fac_oap_elc=0.0  #[ Value of the mask in the loss region in OAP.
+mask_loss_fac_rdp_elc=1.0  #[ Value of the mask in the
+fdot_mult_type_oap_ion=2   #[ Type of mask applied to df/dt in OAP.
+fdot_mult_type_rdp_ion=0   #[ Type of mask applied to df/dt in RDP.
+fdot_mult_type_oap_elc=2   #[ Type of mask applied to df/dt in OAP.
+fdot_mult_type_rdp_elc=0   #[ Type of mask applied to df/dt in RDP.
+positivity_oap=0       #[ Whether to use positivity hack in OAP.
+positivity_rdp=1       #[ Whether to use positivity hack in RDP.
+
+num_elc_cycles_per_elc_freeze=4  #[ Number of electron cycles per ion cycle.
+num_total_cycles=2
+frames_per_phase=5    #[ Number of output frames for each of RDP/OAP.
+
+tau_rdp_extra=1.0     #[ Simulation time for final RDP (in microsec). Both species are in RDP
+frames_rdp_extra=100
+
+# Multiscale integrator has 4 stages
+# 1. Electron RDP: Ion frozen
+# 2. Electron OAP: Ion RDP
+# 3. Electron OAP: Ion OAP
+# 4. Electron Frozen: Ion OAP
+
+elc_RDP() {
+    local tfinal=$1
+    local prev_frames=$2
+    local new_frames=$3
+
+    static_ion=1
+    static_elc=0
+    
+    echo "Electron RDP / Ion Frozen: tfinal=$tfinal | prev_frames=$prev_frames | new_frames=$new_frames"
+
+    option_string="alpha_ion=$alpha_rdp_ion,alpha_elc=$alpha_rdp_elc,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp_elc,I_loss_ion=$mask_loss_fac_rdp_ion,I_loss_elc=$mask_loss_fac_rdp_elc,fdot_mult_type_ion=$fdot_mult_type_rdp_ion,fdot_mult_type_elc=$fdot_mult_type_rdp_ion,use_positivity_hack=$positivity_rdp,static_ion=$static_ion,static_elc=$static_elc"
+    # If previous frames are zero, drop that argument
+    if [ "$prev_frames" -eq 0 ]; then
+        if [ "$num_gpu" -eq 2 ]; then
+            echo "srun -n 2 ./sim -g -M -c 2 -o $option_string"
+            srun -u -n 2 ./sim -g -M -c 2 -o $option_string
+        else
+            echo "./sim -g -o $option_string"
+            ./sim -g -o $option_string
+        fi
+    else
+        if [ "$num_gpu" -eq 2 ]; then
+            echo "srun -n 2 ./sim -g -M -c 2 -r $prev_frames -o $option_string"
+            srun -u -n 2 ./sim -g -M -c 2 -r $prev_frames -o $option_string
+        else
+            echo "./sim -g -r $prev_frames -o $option_string"
+            ./sim -g -r $prev_frames -o $option_string
+        fi
+    fi
+
+}
+ion_RDP() {
+    local tfinal=$1
+    local prev_frames=$2
+    local new_frames=$3
+
+    static_ion=1
+    static_elc=0
+
+    echo "Ion RDP / Electron Frozen: tfinal=$tfinal | prev_frames=$prev_frames | new_frames=$new_frames"
+
+    option_string="alpha_ion=$alpha_rdp_ion,alpha_elc=$alpha_rdp_elc,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_rdp_ion,I_loss_ion=$mask_loss_fac_rdp_ion,I_loss_elc=$mask_loss_fac_rdp_elc,fdot_mult_type_ion=$fdot_mult_type_rdp_ion,fdot_mult_type_elc=$fdot_mult_type_rdp_ion,use_positivity_hack=$positivity_rdp,static_ion=$static_ion,static_elc=$static_elc"
+    # If previous frames are zero, drop that argument
+    if [ "$prev_frames" -eq 0 ]; then
+        if [ "$num_gpu" -eq 2 ]; then
+            echo "srun -n 2 ./sim -g -M -c 2 -o $option_string"
+            srun -u -n 2 ./sim -g -M -c 2 -o $option_string
+        else
+            echo "./sim -g -o $option_string"
+            ./sim -g -o $option_string
+        fi
+    else
+        if [ "$num_gpu" -eq 2 ]; then
+            echo "srun -n 2 ./sim -g -M -c 2 -r $prev_frames -o $option_string"
+            srun -u -n 2 ./sim -g -M -c 2 -r $prev_frames -o $option_string
+        else
+            echo "./sim -g -r $prev_frames -o $option_string"
+            ./sim -g -r $prev_frames -o $option_string
+        fi
+    fi
+
+}
+both_OAP() {
+    local tfinal=$1
+    local prev_frames=$2
+    local new_frames=$3
+
+    static_ion=0
+    static_elc=0
+
+    echo "Both OAP: tfinal=$tfinal | prev_frames=$prev_frames | new_frames=$new_frames"
+
+    option_string="alpha_ion=$alpha_oap_ion,alpha_elc=$alpha_oap_elc,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap_both,I_loss_ion=$mask_loss_fac_oap_ion,I_loss_elc=$mask_loss_fac_oap_elc,fdot_mult_type_ion=$fdot_mult_type_oap_ion,fdot_mult_type_elc=$fdot_mult_type_oap_ion,use_positivity_hack=$positivity_oap,static_ion=$static_ion,static_elc=$static_elc"
+
+    # If previous frames are zero, drop that argument
+    if [ "$prev_frames" -eq 0 ]; then
+        if [ "$num_gpu" -eq 2 ]; then
+            echo "srun -n 2 ./sim -g -M -c 2 -o $option_string"
+            srun -u -n 2 ./sim -g -M -c 2 -o $option_string
+        else
+            echo "./sim -g -o $option_string"
+            ./sim -g -o $option_string
+        fi
+    else
+        if [ "$num_gpu" -eq 2 ]; then
+            echo "srun -n 2 ./sim -g -M -c 2 -r $prev_frames -o $option_string"
+            srun -u -n 2 ./sim -g -M -c 2 -r $prev_frames -o $option_string
+        else
+            echo "./sim -g -r $prev_frames -o $option_string"
+            ./sim -g -r $prev_frames -o $option_string
+        fi
+    fi
+}
+ion_only_OAP() {
+    local tfinal=$1
+    local prev_frames=$2
+    local new_frames=$3
+
+    static_ion=0
+    static_elc=1
+
+    echo "Ion Only OAP: tfinal=$tfinal | prev_frames=$prev_frames | new_frames=$new_frames"
+
+    option_string="alpha_ion=$alpha_oap_ion,alpha_elc=$alpha_oap_elc,t_end=$tfinal,num_frames=$new_frames,static_field=$static_field_oap_ion,I_loss_ion=$mask_loss_fac_oap_ion,I_loss_elc=$mask_loss_fac_oap_elc,fdot_mult_type_ion=$fdot_mult_type_oap_ion,fdot_mult_type_elc=$fdot_mult_type_oap_ion,use_positivity_hack=$positivity_oap,static_ion=$static_ion,static_elc=$static_elc"
+
+    # If previous frames are zero, drop that argument
+    if [ "$prev_frames" -eq 0 ]; then
+        if [ "$num_gpu" -eq 2 ]; then
+            echo "srun -n 2 ./sim -g -M -c 2 -o $option_string"
+            srun -u -n 2 ./sim -g -M -c 2 -o $option_string
+        else
+            echo "./sim -g -o $option_string"
+            ./sim -g -o $option_string
+        fi
+    else
+        if [ "$num_gpu" -eq 2 ]; then
+            echo "srun -n 2 ./sim -g -M -c 2 -r $prev_frames -o $option_string"
+            srun -u -n 2 ./sim -g -M -c 2 -r $prev_frames -o $option_string
+        else
+            echo "./sim -g -r $prev_frames -o $option_string"
+            ./sim -g -r $prev_frames -o $option_string
+        fi
+    fi
+}
+
+prev_frames=0
+end_frame=0
+tfinal=0.0
+
+cycle_t_ion=0.0
+cycle_t_elc=0.0
+
+cycle_t_ion_total=$(echo "$tau_rdp_ion + $tau_oap_ion" | bc)
+cycle_t_elc_total=$(echo "$tau_rdp_elc + $tau_oap_elc" | bc)
+
+phase=-1
+# Create phases data file
+rm -f phases_data.txt
+for ((ii=0; ii<$num_total_cycles; ii++)); do
+    ie=0
+    while [ $ie -lt $num_elc_cycles_per_elc_freeze ]; do
+        # Calculate the time until either subcycle time would reset
+        # Minimum of cycle_t_elc_total - cycle_t_elc and cycle_t_ion_total - cycle_t_ion
+        elc_remaining=$(echo "$cycle_t_elc_total - $cycle_t_elc" | bc)
+        ion_remaining=$(echo "$cycle_t_ion_total - $cycle_t_ion" | bc)
+        
+        # Use bc to find minimum
+        if (( $(echo "$elc_remaining <= $ion_remaining" | bc -l) )); then
+            reset_time=$elc_remaining
+        else
+            reset_time=$ion_remaining
+        fi
+
+        tstart=$(echo "$tfinal" | bc)
+        end_frame=$(echo "$prev_frames + $frames_per_phase" | bc)
+
+        # Determine what phase we are in
+        if (( $(echo "$cycle_t_elc < $tau_rdp_elc" | bc -l) )); then
+            # echo "Phase 0: Electron RDP phase"
+            phase=0  # Electron RDP phase
+            cycle_t_elc=$(echo "$cycle_t_elc + $tau_rdp_elc" | bc)
+            tfinal=$(echo "$tfinal + $tau_rdp_elc" | bc)
+            # elc_RDP $tfinal $prev_frames $end_frame
+        elif (( $(echo "$cycle_t_ion < $tau_rdp_ion" | bc -l) )); then
+            # echo "Phase 1: Ion RDP phase"
+            phase=1  # Ion RDP phase
+            cycle_t_ion=$(echo "$cycle_t_ion + $tau_rdp_ion" | bc)
+            cycle_t_elc=$(echo "$cycle_t_elc + $tau_rdp_ion" | bc)
+            tfinal=$(echo "$tfinal + $tau_rdp_ion" | bc)
+            # ion_RDP $tfinal $prev_frames $end_frame
+        else
+            # echo "Phase 2: Both OAP phase"
+            phase=2  # Both OAP phase
+            cycle_t_ion=$(echo "$cycle_t_ion + $reset_time" | bc)
+            cycle_t_elc=$(echo "$cycle_t_elc + $reset_time" | bc)
+            tfinal=$(echo "$tfinal + $reset_time" | bc)
+            # ion_only_OAP $tfinal $prev_frames $end_frame
+        fi
+
+        echo "$phase, $ii, $ie, $tstart, $tfinal, $prev_frames, $end_frame, $cycle_t_elc, $cycle_t_ion" >> phases_data.txt
+        echo "Phase $phase: ($ii, $ie), tstart=$tstart, tfinal=$tfinal, prev_frames=$prev_frames, end_frame=$end_frame, cycle_t_elc=$cycle_t_elc, cycle_t_ion=$cycle_t_ion"
+
+        # If the cycle time exceeds the total cycle time, adjust it to be the relative time
+        if (( $(echo "$cycle_t_ion >= $cycle_t_ion_total" | bc -l) )); then
+            cycle_t_ion=$(echo "$cycle_t_ion - $cycle_t_ion_total" | bc)
+        fi
+        if (( $(echo "$cycle_t_elc >= $cycle_t_elc_total" | bc -l) )); then
+            cycle_t_elc=$(echo "$cycle_t_elc - $cycle_t_elc_total" | bc)
+            ie=$(($ie + 1))  # Move to the next electron cycle
+        fi
+        prev_frames=$end_frame
+    done
+
+    # After all electron cycles, we do a huge ion-only OAP phase
+    phase=3
+    tstart=$(echo "$tfinal" | bc)
+    end_frame=$(echo "$prev_frames + $frames_per_phase" | bc)
+    tfinal=$(echo "$tfinal + $tau_oap_ion - $cycle_t_ion" | bc)
+    # ion_only_OAP $tfinal $prev_frames
+    echo "$phase, $ii, $num_elc_cycles_per_elc_freeze, $tstart, $tfinal, $prev_frames, $end_frame, $cycle_t_elc, $cycle_t_ion" >> phases_data.txt
+    # Reset cycle times for the next cycle
+    cycle_t_ion=0.0
+    cycle_t_elc=0.0
+
+done
+# One big ion_only_OAP phase
+tstart=$tfinal
+tfinal=$(echo "$tfinal + $tau_rdp_extra" | bc)
+prev_frames=$(echo "$prev_frames + $frames_rdp_extra" | bc)
+# ion_only_OAP $tfinal $prev_frames
+# echo "[$phase, $ii, $num_elc_cycles_per_elc_freeze, $tstart, $tfinal, $prev_frames, $cycle_t_elc, $cycle_t_ion],"
+
+
+# For testing, I want to make a plot in python to visualize what phase things are in
+# The array should look like this. Let's make a table
+
+# Phase type | Total cycles | Electron cycles | Time start | Time end | Electron cycle time | Ion cycle time
+# 0          | 0            | 0               | 0          | 1        | 1                   | 0
+# 1          | 0            | 0               | 1          | 20       | 20                  | 19
+# 2          | 0            | 0               | 20         | 59       | 60                  | 59
+# 0          | 0            | 1               | 59         | 60       | 1                   | 59
+# 2          | 0            | 1               | 60         | 120      | 60                  | 118
+
+ 
+
+exit 0

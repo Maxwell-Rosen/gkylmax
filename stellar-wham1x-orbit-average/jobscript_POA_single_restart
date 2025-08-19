@@ -1,0 +1,289 @@
+#!/bin/bash -l
+
+#.Declare a name for this job to be my_serial_job
+#.it is recommended that this name be kept to 16 characters or less
+#SBATCH -J w1xOA
+
+#SBATCH --qos pppl-short
+
+#.Number of nodes to request (Cori has 32/64 physics/logical cores per node)
+#SBATCH -N 1
+
+#.Total number of cores (96 per node).
+#SBATCH --tasks-per-node=4
+
+#.Request wall time
+#SBATCH -t 24:00:00
+
+#.Request a GPU.
+#SBATCH --gres=gpu:2
+num_gpu=2             #[ Number of GPUs to use (1 or 2).
+
+#.Specify name format of output file.
+#SBATCH -o slurm-%j.out
+
+# If doing a restart indicate restart file path. Must also
+# add it as a command line argument after outdir below.
+#
+# RESTART INSTRUCTIONS:
+# To restart from a specific point, modify these variables below:
+# - restart_time_offset: Set to the simulation time you want to restart from
+# - restart_frame_offset: Set to the frame number you want to restart from  
+# - restart_cycle_offset: Set to the cycle number (0-based) you want to restart from
+# - restart_in_oap_phase: Set to 1 if restarting in OAP phase, 0 if in RDP phase
+#
+# Example: To restart from cycle 1, frame 10, time 500010, in RDP phase:
+# restart_time_offset=500010.0
+# restart_frame_offset=10
+# restart_cycle_offset=1
+# restart_in_oap_phase=0
+
+# OAP: i=66 | tfinal=33500670 | prev_frames=665 | new_frames=670
+# srun -n 2 ./sim -g -M -c 2 -r 665 -o alpha=0.000005,t_end=33500670,num_frames=670,static_field=0,I_loss=0.0,fdot_mult_type=2,use_positivity_hack=0
+
+#[ Restart parameters - set these to restart from a specific point
+restart_time_offset=33000670   #[ Time offset to start from (in microsec).
+restart_frame_offset=665    #[ Frame number to start from.
+restart_cycle_offset=0    #[ Which cycle to start from (0-based).
+restart_in_oap_phase=1    #[ If restarting mid-cycle: 1 if in OAP phase, 0 if in RDP phase.
+
+module load cudatoolkit/12.4
+module load openmpi/cuda-11.1/gcc/4.1.1
+
+#[ Alternate between a regular dynamics phase (RDP)
+#[ and an orbit averaging phase (OAP).
+oap_first=0          #[ Whether to run OAP first (1) or RDP first (0).
+alpha_oap=0.000005         #[ Factor mulplying collisionless terms in OAP.
+alpha_rdp=1.0          #[ Factor mulplying collisionless terms in RDP.
+tau_oap=500000          #[ Simulation time for OAP (in microsec).
+tau_rdp=10            #[ Simulation time for RDP (in microsec).
+tau_rdp_extra=100.0     #[ Simulation time for final RDP (in microsec).
+static_field_oap=0     #[ Whether to use a static field in OAP.
+static_field_rdp=0     #[ Whether to use a static field in RDP.
+mask_loss_fac_oap=0.0  #[ Value of the mask in the loss region in OAP.
+mask_loss_fac_rdp=1.0  #[ Value of the mask in the loss region in RDP.
+fdot_mult_type_oap=2   #[ Type of mask applied to df/dt in OAP.
+fdot_mult_type_rdp=0   #[ Type of mask applied to df/dt in RDP.
+positivity_oap=0       #[ Whether to use positivity hack in OAP.
+positivity_rdp=1       #[ Whether to use positivity hack in RDP.
+num_cycles=100          #[ Number of RDP-OAP pairs to run.
+frames_per_phase=5    #[ Number of output frames for each of RDP/OAP.
+
+
+frames_per_cycle=$(echo "$frames_per_phase * 2" | bc)
+
+# Helper function to calculate restart parameters from frame number
+# Usage: calculate_restart_params <frame_number>
+# This will set the restart variables automatically
+calculate_restart_params() {
+    local target_frame=$1
+    
+    if [ "$target_frame" -eq 0 ]; then
+        restart_time_offset=0.0
+        restart_frame_offset=0
+        restart_cycle_offset=0
+        restart_in_oap_phase=0
+        return
+    fi
+    
+    # Calculate which cycle this frame belongs to
+    restart_cycle_offset=$((target_frame / (frames_per_phase * 2)))
+    frames_in_cycle=$((target_frame % (frames_per_phase * 2)))
+    
+    # Determine if we're in OAP or RDP phase within the cycle
+    if [ "$oap_first" -eq 1 ]; then
+        if [ "$frames_in_cycle" -lt "$frames_per_phase" ]; then
+            restart_in_oap_phase=1
+            # Calculate time: complete cycles + partial OAP
+            cycles_time=$(echo "$restart_cycle_offset * ($tau_oap + $tau_rdp)" | bc)
+            partial_time=$(echo "$frames_in_cycle * $tau_oap / $frames_per_phase" | bc)
+        else
+            restart_in_oap_phase=0
+            # Calculate time: complete cycles + full OAP + partial RDP
+            cycles_time=$(echo "$restart_cycle_offset * ($tau_oap + $tau_rdp)" | bc)
+            rdp_frames=$((frames_in_cycle - frames_per_phase))
+            partial_time=$(echo "$tau_oap + $rdp_frames * $tau_rdp / $frames_per_phase" | bc)
+        fi
+    else
+        if [ "$frames_in_cycle" -lt "$frames_per_phase" ]; then
+            restart_in_oap_phase=0
+            # Calculate time: complete cycles + partial RDP
+            cycles_time=$(echo "$restart_cycle_offset * ($tau_rdp + $tau_oap)" | bc)
+            partial_time=$(echo "$frames_in_cycle * $tau_rdp / $frames_per_phase" | bc)
+        else
+            restart_in_oap_phase=1
+            # Calculate time: complete cycles + full RDP + partial OAP
+            cycles_time=$(echo "$restart_cycle_offset * ($tau_rdp + $tau_oap)" | bc)
+            oap_frames=$((frames_in_cycle - frames_per_phase))
+            partial_time=$(echo "$tau_rdp + $oap_frames * $tau_oap / $frames_per_phase" | bc)
+        fi
+    fi
+    
+    restart_time_offset=$(echo "$cycles_time + $partial_time" | bc)
+    restart_frame_offset=$target_frame
+    
+    echo "Calculated restart parameters for frame $target_frame:"
+    echo "  restart_time_offset=$restart_time_offset"
+    echo "  restart_frame_offset=$restart_frame_offset"
+    echo "  restart_cycle_offset=$restart_cycle_offset"
+    echo "  restart_in_oap_phase=$restart_in_oap_phase"
+}
+
+# Uncomment and set target frame to auto-calculate restart parameters:
+# calculate_restart_params 15
+
+# Function to run Orbit Averaging Phase (OAP)
+run_OAP() {
+    local tfinal=$1
+    local frame_start_phase=$2
+    local frame_end_phase=$3
+
+    echo "OAP: tfinal=$tfinal | frame_start_phase=$frame_start_phase | frame_end_phase=$frame_end_phase"
+
+    option_string="alpha=$alpha_oap,t_end=$tfinal,num_frames=$frame_end_phase,static_field=$static_field_oap,I_loss=$mask_loss_fac_oap,fdot_mult_type=$fdot_mult_type_oap,use_positivity_hack=$positivity_oap"
+    # If previous frames are zero, drop the restart argument
+    if [ "$frame_start_phase" -eq 0 ]; then
+        if [ "$num_gpu" -eq 2 ]; then
+            echo "srun -n 2 ./sim -g -M -c 2 -o $option_string"
+            srun -u -n 2 ./sim -g -M -c 2 -o $option_string
+        else
+            echo "./sim -g -o $option_string"
+            ./sim -g -o $option_string
+        fi
+    else
+        if [ "$num_gpu" -eq 2 ]; then
+            echo "srun -n 2 ./sim -g -M -c 2 -r $frame_start_phase -o $option_string"
+            srun -u -n 2 ./sim -g -M -c 2 -r $frame_start_phase -o $option_string
+        else
+            echo "./sim -g -r $frame_start_phase -o $option_string"
+            ./sim -g -r $frame_start_phase -o $option_string
+        fi
+    fi
+}
+
+# Function to run Regular Dynamics Phase (RDP)
+run_RDP() {
+    local tfinal=$1
+    local frame_start_phase=$2
+    local frame_end_phase=$3
+
+    echo "RDP: tfinal=$tfinal | frame_start_phase=$frame_start_phase | frame_end_phase=$frame_end_phase"
+
+    option_string="alpha=$alpha_rdp,t_end=$tfinal,num_frames=$frame_end_phase,static_field=$static_field_rdp,I_loss=$mask_loss_fac_rdp,fdot_mult_type=$fdot_mult_type_rdp,use_positivity_hack=$positivity_rdp"
+    # If previous frames are zero, drop the restart argument
+    if [ "$frame_start_phase" -eq 0 ]; then
+        if [ "$num_gpu" -eq 2 ]; then
+            echo "srun -n 2 ./sim -g -M -c 2 -o $option_string"
+            srun -u -n 2 ./sim -g -M -c 2 -o $option_string
+        else
+            echo "./sim -g -o $option_string"
+            ./sim -g -o $option_string
+        fi
+    else
+        if [ "$num_gpu" -eq 2 ]; then
+            echo "srun -n 2 ./sim -g -M -c 2 -r $frame_start_phase -o $option_string"
+            srun -u -n 2 ./sim -g -M -c 2 -r $frame_start_phase -o $option_string
+        else
+            echo "./sim -g -r $frame_start_phase -o $option_string"
+            ./sim -g -r $frame_start_phase -o $option_string
+        fi
+    fi
+}
+
+tfinal=$restart_time_offset  # Initialize final time with restart offset
+frame_end_phase=$restart_frame_offset  # Initialize previous frames with restart offset
+
+# Display restart information
+if (( $(echo "$restart_time_offset > 0" | bc -l) )) || [ "$restart_frame_offset" -gt 0 ]; then
+    echo "=== RESTART MODE ==="
+    echo "Starting from time: $restart_time_offset microsec"
+    echo "Starting from frame: $restart_frame_offset"
+    echo "Starting from cycle: $restart_cycle_offset"
+    if [ "$restart_in_oap_phase" -eq 1 ]; then
+        echo "Restarting in OAP phase"
+    else
+        echo "Restarting in RDP phase"
+    fi
+    echo "===================="
+fi
+
+if [ "$oap_first" -eq 1 ]; then
+    # echo "Running OAP first"
+    # Main loop for alternating OAP-RDP cycles
+    for ((i=$restart_cycle_offset; i<$num_cycles; i++)); do
+        # Determine if we need to skip phases based on restart parameters
+        skip_oap=0
+        skip_rdp=0
+        
+        # If restarting mid-cycle, skip the appropriate phase
+        if [ "$i" -eq "$restart_cycle_offset" ] && [ "$restart_in_oap_phase" -eq 0 ]; then
+            skip_oap=1  # Skip OAP if restarting in RDP phase
+        elif [ "$i" -eq "$restart_cycle_offset" ] && [ "$restart_in_oap_phase" -eq 1 ]; then
+            skip_rdp=1  # Skip RDP if restarting in OAP phase
+        fi
+        
+        # OAP phase
+        if [ "$skip_oap" -eq 0 ]; then
+            tfinal=$(echo "$tfinal + $tau_oap" | bc)
+            frame_start_phase=$frame_end_phase
+            frame_end_phase=$((frame_end_phase + frames_per_phase))
+            run_OAP $tfinal $frame_start_phase $frame_end_phase
+        fi
+
+        # RDP phase
+        if [ "$skip_rdp" -eq 0 ]; then
+            tfinal=$(echo "$tfinal + $tau_rdp" | bc)
+            frame_start_phase=$frame_end_phase
+            frame_end_phase=$((frame_end_phase + frames_per_phase))
+            run_RDP $tfinal $frame_start_phase $frame_end_phase
+        fi
+    done
+
+    # # Final RDP phase with a few extra frames
+    echo "Final RDP phase with extra frames"
+    tfinal=$(echo "$tfinal + $tau_rdp_extra" | bc)
+    frame_start_phase=$frame_end_phase
+    frame_end_phase=$(echo "$frame_end_phase + ($tau_rdp_extra / $tau_rdp) * $frames_per_phase" | bc)
+    run_RDP $tfinal $frame_start_phase $frame_end_phase
+
+else
+    # echo "Running RDP first"
+    # Main loop for alternating RDP-OAP cycles
+    for ((i=$restart_cycle_offset; i<$num_cycles; i++)); do
+        # Determine if we need to skip phases based on restart parameters
+        skip_rdp=0
+        skip_oap=0
+        
+        # If restarting mid-cycle, skip the appropriate phase
+        if [ "$i" -eq "$restart_cycle_offset" ] && [ "$restart_in_oap_phase" -eq 1 ]; then
+            skip_rdp=1  # Skip RDP if restarting in OAP phase
+        elif [ "$i" -eq "$restart_cycle_offset" ] && [ "$restart_in_oap_phase" -eq 0 ]; then
+            skip_oap=1  # Skip OAP if restarting in RDP phase
+        fi
+        
+        # RDP phase
+        if [ "$skip_rdp" -eq 0 ]; then
+            tfinal=$(echo "$tfinal+$tau_rdp" | bc)
+            frame_start_phase=$frame_end_phase
+            frame_end_phase=$((frame_end_phase + frames_per_phase))
+            run_RDP $tfinal $frame_start_phase $frame_end_phase
+        fi
+
+        # OAP phase
+        if [ "$skip_oap" -eq 0 ]; then
+            tfinal=$(echo "$tfinal + $tau_oap" | bc)
+            frame_start_phase=$frame_end_phase
+            frame_end_phase=$((frame_end_phase + frames_per_phase))
+            run_OAP $tfinal $frame_start_phase $frame_end_phase
+        fi
+    done
+
+    # # Final RDP phase with a few extra frames
+    echo "Final RDP phase with extra frames"
+    tfinal=$(echo "$tfinal + $tau_rdp_extra" | bc)
+    frame_start_phase=$frame_end_phase
+    frame_end_phase=$(echo "$frame_end_phase + ($tau_rdp_extra / $tau_rdp) * $frames_per_phase" | bc)
+    run_RDP $tfinal $frame_start_phase $frame_end_phase
+fi
+
+exit 0

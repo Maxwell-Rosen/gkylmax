@@ -1,12 +1,12 @@
 # simFolder="../stellar-wham1x-288z-restart-true-collisions"
 # simFolder="../stellar-wham1x-288z-adaptive-source"
 # simFolder="../stellar-wham1x-init-kinetic-from-boltzmann/old-geom"
-simFolder="../perlmutter-wham1x-init-kinetic-from-boltzmann"
+simFolder="../stellar-wham1x-orbit-average"
 # targetFolder="kinet-elc-288z-nu2000/old-geom"
-targetFolder="kinet-elc-288z-nu2000"
-frame=800
-kinetic=true
-isOrganized=true
+targetFolder="boltz-elc-POA"
+frame=500
+kinetic=false
+isOrganized=false
 
 if [ ! -d "$simFolder" ]; then
   echo "Simulation folder $simFolder does not exist."
