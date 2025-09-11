@@ -101,7 +101,7 @@ radial_scale_elc(double t, const double *xn, double *fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
   double psi = xn[0];
-  fout[0] = 0.5*(1 - pow((psi - app->psi_min)/(app->psi_max - app->psi_min),1));
+  fout[0] = (1 - pow((psi - app->psi_min)/(app->psi_max - app->psi_min),1));
 }
 
 void
@@ -109,7 +109,7 @@ radial_scale_ion(double t, const double *xn, double *fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
   double psi = xn[0];
-  fout[0] = 12*(1 - pow((psi - app->psi_min)/(app->psi_max - app->psi_min),8));
+  fout[0] = 1.15*(1 - pow((psi - app->psi_min)/(app->psi_max - app->psi_min),4));
 }
 
 void load_field(void *ctx)
@@ -319,8 +319,10 @@ create_ctx(void)
   double z_min = -2.0;
   double z_max =  2.0;
   double z_m = 1.0;
-  double psi_min = 5e-5;
-  double psi_max = 3e-3;
+  double psi_min = sqrt(5e-5);
+  double psi_max = sqrt(3e-3);
+  // double psi_min = 5e-5;
+  // double psi_max = 3e-3;
 
   // Grid parameters
   double vpar_max_elc = 30 * vte;
@@ -333,7 +335,7 @@ create_ctx(void)
   int Nmu = 32;  // Number of cells in the mu direction 192
   int poly_order = 1;
 
-  double t_end = 1e-7;
+  double t_end = 10e-6;
   int num_frames = 100; // Number of output frames.
   double write_phase_freq = 1; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
   int int_diag_calc_num = num_frames*100;
@@ -638,8 +640,8 @@ int main(int argc, char **argv)
     .rclose = 0.2, // closest R to region of interest
     .zmin = -2.0,  // Z of lower boundary
     .zmax =  2.0,  // Z of upper boundary
-    .include_axis = true, // Include R=0 axis in grid
-    .fl_coord = GKYL_MIRROR_GRID_GEN_PSI_CART_Z, // coordinate system for psi grid
+    .include_axis = false, // Include R=0 axis in grid
+    .fl_coord = GKYL_MIRROR_GRID_GEN_SQRT_PSI_CART_Z, // coordinate system for psi grid
   };
 
   // GK app
@@ -746,6 +748,10 @@ int main(int argc, char **argv)
 
     t_curr += status.dt_actual;
     dt = status.dt_suggested;
+    if (dt <= 0.0) {
+      gkyl_gyrokinetic_app_cout(app, stdout, "** Update method suggested negative dt! Aborting simulation ....\n");
+      break;
+    }
 
     calc_integrated_diagnostics(&trig_calc_intdiag, app, t_curr, false, t_curr > t_end, status.dt_actual);
     write_data(&trig_write_conf, &trig_write_phase, app, t_curr, false, t_curr > t_end);
