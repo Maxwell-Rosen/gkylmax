@@ -34,6 +34,10 @@ pgkyl gk_wham-field_[0-9]*.gkyl interp sel --z0 0.5 col write -s -f field_time_t
 pgkyl gk_wham-field_[0-9]*.gkyl interp sel --z0 1.0 col write -s -f field_time_trace_z0_eq_1 &
 pgkyl gk_wham-field_[0-9]*.gkyl interp sel --z0 1.5 col write -s -f field_time_trace_z0_eq_1,5 &
 pgkyl gk_wham-field_[0-9]*.gkyl interp sel --z0 1.9 col write -s -f field_time_trace_z0_eq_1,9 &
+
+# Plot bimaxwellian moments at the final frame
+pgkyl gk_wham-ion_BiMaxwellianMoments_${frame}.gkyl interp ev 'f 2,3 1.67e-27 2.014 * 1.6e-19 / scale_comp' pl --title 'Final Bi-Maxwellian Moments' --saveas python-plots/ion_BiMaxwellianMoments_frame${frame}.png --no-show --no-legend --subplot-ylabels 'Density $m^3$, $U_\parallel m/s$, $T_\parallel$ eV, $T_\perp$ eV' &
+
 # pgkyl gk_wham-ion_BiMaxwellianMoments_12.gkyl gk_wham-ion_BiMaxwellianMoments_0.gkyl ../initial-conditions/boltz-elc-288z-nu2000/gk_wham-ion_BiMaxwellianMoments_1500.gkyl interp pl -f0
 
 # pgkyl good-run-enhanced-nu-IC/gk_wham-ion-cflrate_275.gkyl integ 1 pl --title 'cfl OAP integ 1 old' --logz &

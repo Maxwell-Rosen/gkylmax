@@ -1,7 +1,6 @@
 # -*- makefile-gmake -*-
 
-# Sample Makefile to use installed gkylzero library: copy and modify
-# for your needs
+# Makefile for C input files located outside of the gkeyll/ repository.
 
 ARCH_FLAGS ?= -march=native
 CUDA_ARCH ?= 70
@@ -28,13 +27,13 @@ else
 endif
 
 # Include config.mak file (if it exists)
--include /home/mr1884/gkylsoft/gkylzero/share/config.mak
+-include /home/mr1884/gkylsoft/gkeyll/share/config.mak
 
 CFLAGS = -O3 -g -ffast-math -I. 
 
-G0_INC_DIR = ${PREFIX}/gkylzero/include
-G0_LIB_DIR = ${PREFIX}/gkylzero/lib
-G0_LIB = -lgkylzero
+G0_INC_DIR = ${PREFIX}/gkeyll/include
+G0_LIB_DIR = ${PREFIX}/gkeyll/lib
+G0_LIB = ${FIN_APP_LIB}
 
 USING_NVCC =
 NVCC_FLAGS =
@@ -80,7 +79,7 @@ ifeq (${USE_MPI}, 1)
 endif
 
 # Directory for storing shared data, like ADAS
-GKYL_SHARE_DIR ?= "${INSTALL_PREFIX}/gkylzero/share"
+GKYL_SHARE_DIR ?= "${INSTALL_PREFIX}/gkeyll/share"
 CFLAGS += -DGKYL_SHARE_DIR=$(GKYL_SHARE_DIR)
 
 # Read NCCL paths and flags if needed (needs MPI and NVCC)
@@ -132,11 +131,26 @@ INCLUDES = -I${G0_INC_DIR} -I${LAPACK_INC} -I${SUPERLU_INC} -I${MPI_INC_DIR} -I$
 LIB_DIRS = -L${LAPACK_LIB_DIR} -L${SUPERLU_LIB_DIR} -L${MPI_LIB_DIR} -L${LUA_LIB_DIR} -L${NCCL_LIB_DIR} -L${CUDSS_LIB_DIR}
 EXT_LIBS = ${LAPACK_LIB} ${SUPERLU_LIB} ${MPI_RPATH} ${MPI_LIBS} ${LUA_RPATH} ${LUA_LIBS} ${NCCL_LIBS} ${CUDSS_RPATH} ${CUDSS_LIBS} -lm -lpthread -ldl
 
-all: sim
+# Find all .c files and generate corresponding executable names
+SRCS := $(wildcard *.c)
+BINS := $(SRCS:.c=)
 
-sim: sim.c
-	 ${CC} ${CFLAGS} ${INCLUDES} sim.c -o sim -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
+.PHONY: all clean help pkpm pkpm-unit pkpm-regression
+
+# Default target: build all if no FILE specified, otherwise build specific file
+all: $(if $(FILE),$(FILE:.c=),$(BINS))
+
+# Help target to show usage
+help:
+	@echo "Usage:"
+	@echo "  make           - Build all .c files into executables"
+	@echo "  make name      - Build only name.c into executable 'name'"
+	@echo "  make clean     - Remove all executables and generated files"
+	@echo "  make help      - Show this help message"
+
+# Pattern rule: build executable from .c source
+$(BINS): %: %.c
+	${CC} ${CFLAGS} ${INCLUDES} $< -o $@ -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
 
 clean:
-	rm -rf sim sim.dSYM
-
+	rm -rf $(BINS) *.d wk

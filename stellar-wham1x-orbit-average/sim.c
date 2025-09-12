@@ -124,14 +124,7 @@ eval_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fo
 }
 
 void
-eval_temp_par_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  fout[0] = app->Ti0;
-}
-
-void
-eval_temp_perp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+eval_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
   fout[0] = app->Ti0;
@@ -411,6 +404,7 @@ int main(int argc, char **argv)
     &ctx.alpha, &ctx.t_end, &ctx.num_frames, &ctx.static_field, &ctx.I_loss, &ctx.fdot_mult_type, &ctx.use_positivity_hack);
   // Convert t_end to seconds.
   ctx.t_end = ctx.t_end*1e-6;
+
   if (my_rank == 0) {
     printf("Using command line arguments:\n");
     printf("  alpha = %.9e\n", ctx.alpha);
@@ -431,10 +425,15 @@ int main(int argc, char **argv)
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
     .no_by = true,
-    .init_from_file = {
-      .type = GKYL_IC_IMPORT_F,
-      // .file_name = "../stellar-wham1x-288z-restart-true-collisions/Distributions/gk_wham-ion_1500.gkyl",
-      .file_name = "../stellar-wham1x-288z-restart-true-collisions/Distributions/gk_wham-ion_0.gkyl",
+
+    .projection = {
+      .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
+      .density = eval_density_ion,
+      .ctx_density = &ctx,
+      .upar = eval_upar_ion,
+      .ctx_upar = &ctx,
+      .temp = eval_temp_ion,
+      .ctx_temp = &ctx,
     },
 
     .mapc2p = {
@@ -501,12 +500,12 @@ int main(int argc, char **argv)
   };
 
   struct gkyl_mirror_geo_grid_inp grid_inp = {
-    .filename_psi = "/home/mr1884/gkylzero/data/unit/wham_hires.geqdsk_psi.gkyl", // psi file to use
+    .filename_psi = "/home/mr1884/gkeyll/core/data/unit/wham_hires.geqdsk_psi.gkyl", // psi file to use
     .rclose = 0.2, // closest R to region of interest
     .zmin = -2.0,  // Z of lower boundary
     .zmax =  2.0,  // Z of upper boundary
     .include_axis = false, // Include R=0 axis in grid
-    .fl_coord = GKYL_MIRROR_GRID_GEN_SQRT_PSI_CART_Z, // coordinate system for psi grid
+    .fl_coord = GKYL_MIRROR_GRID_GEN_PSI_CART_Z, // coordinate system for psi grid
   };
 
   struct gkyl_gk app_inp = {  // GK app
