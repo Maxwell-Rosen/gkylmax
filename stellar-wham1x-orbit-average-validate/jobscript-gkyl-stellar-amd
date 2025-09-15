@@ -28,4 +28,4 @@ num_gpu=2             #[ Number of GPUs to use (1 or 2).
 module load cudatoolkit/12.4
 module load openmpi/cuda-11.1/gcc/4.1.1
 
-srun -u -n $num_gpu ./sim -g -M -c $num_gpu -r 88
+srun -u -n $num_gpu ./sim -g -M -c $num_gpu

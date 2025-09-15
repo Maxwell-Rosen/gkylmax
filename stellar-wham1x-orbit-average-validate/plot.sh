@@ -1,12 +1,12 @@
 mkdir -p python-plots
 
-pgkyl "gk_wham-field_[0-9]*.gkyl" interp sel --z0 0.0 col ev 'f 13353 - 13353 /' pl --title 'Midplane electrostatic potential' --xlabel 'Time (s)' --ylabel 'Electric Potential φ (V)' --saveas python-plots/field_potential_z0_vs_time.png --no-show &
+pgkyl "gk_wham-field_[0-9]*.gkyl" interp sel --z0 0.0 col pl --title 'Midplane electrostatic potential' --xlabel 'Time (s)' --ylabel 'Electric Potential φ (V)' --saveas python-plots/field_potential_z0_vs_time.png --no-show &
 
 pgkyl gk_wham-ion_integrated_moms.gkyl sel -c0 ev 'f 1.1604e18 - 1.1604e18 /' pl --title 'Percent change of integrated ion density' --xlabel 'Time (s)' --ylabel 'Percent Change (%)' --saveas python-plots/ion_integrated_moms_percent_change_vs_time.png --no-show &
 
 pgkyl gk_wham-ion_BiMaxwellianMoments_0.gkyl gk_wham-ion_BiMaxwellianMoments_100.gkyl interp pl -f0 --title 'BiMaxwellian Moments at Frame 0 and 100' --xlabel 'z, m' --saveas python-plots/ion_BiMaxwellian_moments_frame0_vs_100.png --no-show &
 
-pgkyl gk_wham-ion_integrated_moms.gkyl sel -c2 info ev 'f 1.1604e18 - 1.1604e18 /' pl --title 'Fractional change of integrated ion M2par' --xlabel 'Time (s)' --ylabel 'Fractional Change (%)' --saveas python-plots/ion_integrated_moms_parallel_velocity_percent_change_vs_time.png --no-show &
+pgkyl gk_wham-ion_integrated_moms.gkyl sel -c2 ev 'f 1.1604e18 - 1.1604e18 /' pl --title 'Fractional change of integrated ion M2par' --xlabel 'Time (s)' --ylabel 'Fractional Change (%)' --saveas python-plots/ion_integrated_moms_parallel_velocity_percent_change_vs_time.png --no-show &
 
 pgkyl gk_wham-ion_bflux_xupper_integrated_M0M1M2parM2perp.gkyl pl --title 'Upper Boundary Flux' --xlabel 'Time (s)' --logy --scatter --saveas python-plots/ion_bflux_xupper_M0_vs_time.png --no-show --no-legend --subplot-ylabels 'M0,M1,M2Par,M2Perp' &
 
