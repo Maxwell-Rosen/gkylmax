@@ -18,7 +18,7 @@ matplotlib.rcParams.update({
     'ytick.labelsize': 10
 })
 
-last_frame = 91 # MUST UPDATE THIS TO 100 LATER
+last_frame = 9 # MUST UPDATE THIS TO 100 LATER
 
 # Universal constants (matching input_file.c)
 eps0 = 8.8541878128e-12  # F/m (permittivity of free space)

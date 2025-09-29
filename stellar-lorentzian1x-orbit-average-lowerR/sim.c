@@ -130,7 +130,157 @@ struct gk_mirror_ctx
   bool positivity_fdp; // Positivity hack setting for FDP phase
   int num_cycles; // Number of OAP/FDP cycles
   int frames_per_phase; // Number of frames to output per phase
+
+
+  // Magnetic equilibrium model parameters.
+  double mcB;
+  double gamma;
+  double Z_m;
+
+  double Z_min; // Minimum axial coordinate Z.
+  double Z_max; // Maximum axial coordinate Z.
+  double psi_in, z_in; // Auxiliary psi and z.
 };
+
+
+double
+psi_RZ(double RIn, double ZIn, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  double mcB = app->mcB;
+  double gamma = app->gamma;
+  double Z_m = app->Z_m;
+
+  double psi = 0.5 * pow(RIn, 2.) * mcB *
+               (1. / (M_PI * gamma * (1. + pow((ZIn - Z_m) / gamma, 2.))) +
+                1. / (M_PI * gamma * (1. + pow((ZIn + Z_m) / gamma, 2.))));
+  return psi;
+}
+
+double
+R_psiZ(double psiIn, double ZIn, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  double mcB = app->mcB;
+  double gamma = app->gamma;
+  double Z_m = app->Z_m;
+
+  double Rout = sqrt(2. * psiIn / (mcB * 
+    (1. / (M_PI * gamma * (1. + pow((ZIn - Z_m) / gamma, 2.))) +
+     1. / (M_PI * gamma * (1. + pow((ZIn + Z_m) / gamma, 2.))))));
+  return Rout;
+}
+
+void
+Bfield_psiZ(double psiIn, double ZIn, void *ctx, double *BRad, double *BZ, double *Bmag)
+{
+  struct gk_mirror_ctx *app = ctx;
+  double mcB = app->mcB;
+  double gamma = app->gamma;
+  double Z_m = app->Z_m;
+
+  double Rcoord = R_psiZ(psiIn, ZIn, ctx);
+
+  BRad[0] = -(1. / 2.) * Rcoord * mcB *
+          (-2. * (ZIn - Z_m) / (M_PI * pow(gamma, 3.) * (pow(1.0 + pow((ZIn - Z_m) / gamma, 2.), 2.)))
+           -2. * (ZIn + Z_m) / (M_PI * pow(gamma, 3.) * (pow(1.0 + pow((ZIn + Z_m) / gamma, 2.), 2.))));
+
+  BZ[0] = mcB *
+        ( 1. / (M_PI * gamma * (1. + pow((ZIn - Z_m) / gamma, 2.)))
+         +1. / (M_PI * gamma * (1. + pow((ZIn + Z_m) / gamma, 2.))) );
+
+  Bmag[0] = sqrt(pow(BRad[0], 2) + pow(BZ[0], 2));
+}
+
+double
+integrand_z_psiZ(double ZIn, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  double psi = app->psi_in;
+  double BRad, BZ, Bmag;
+  Bfield_psiZ(psi, ZIn, ctx, &BRad, &BZ, &Bmag);
+  return Bmag / BZ;
+}
+
+double
+z_psiZ(double psiIn, double ZIn, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  double eps = 0.0;
+  app->psi_in = psiIn;
+  struct gkyl_qr_res integral;
+  if (eps <= ZIn)
+  {
+    integral = gkyl_dbl_exp(integrand_z_psiZ, ctx, eps, ZIn, 7, 1e-14);
+  }
+  else
+  {
+    integral = gkyl_dbl_exp(integrand_z_psiZ, ctx, ZIn, eps, 7, 1e-14); 
+    integral.res = -integral.res;
+  }
+  return integral.res;
+}
+
+// Invert z(Z) via root-finding.
+double
+root_Z_psiz(double Z, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  return app->z_in - z_psiZ(app->psi_in, Z, ctx);
+}
+
+double
+Z_psiz(double psiIn, double zIn, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  double maxL = app->Z_max - app->Z_min;
+  double eps = maxL / app->Nz;   // Interestingly using a smaller eps yields larger errors in some geo quantities.
+  app->psi_in = psiIn;
+  app->z_in = zIn;
+  struct gkyl_qr_res Zout;
+  if (0.0 <= zIn)
+  {
+    double fl = root_Z_psiz(-eps, ctx);
+    double fr = root_Z_psiz(app->Z_max + eps, ctx);
+    Zout = gkyl_ridders(root_Z_psiz, ctx, -eps, app->Z_max + eps, fl, fr, 1000, 1e-14);
+  }
+  else
+  {
+    double fl = root_Z_psiz(app->Z_min - eps, ctx);
+    double fr = root_Z_psiz(eps, ctx);
+    Zout = gkyl_ridders(root_Z_psiz, ctx, app->Z_min - eps, eps, fl, fr, 1000, 1e-14);
+  }
+  return Zout.res;
+}
+
+// Geometry evaluation functions for the gk app
+void
+mapc2p(double t, const double *xc, double *GKYL_RESTRICT xp, void *ctx)
+{
+  double psi = xc[0], theta = xc[1], z = xc[2];
+
+  double Z = Z_psiz(psi, z, ctx);
+  double R = R_psiZ(psi, Z, ctx);
+
+  // Cartesian coordinates on plane perpendicular to Z axis.
+  double x = R * cos(theta);
+  double y = R * sin(theta);
+
+  xp[0] = x;  xp[1] = y;  xp[2] = Z;
+}
+
+void
+bmag_func(double t, const double *xc, double *GKYL_RESTRICT fout, void *ctx)
+{
+  double psi = xc[0], theta = xc[1], z = xc[2];
+
+  struct gk_mirror_ctx *app = ctx;
+  double Z = Z_psiz(psi, z, ctx);
+  double BRad, BZ, Bmag;
+  Bfield_psiZ(psi, Z, ctx, &BRad, &BZ, &Bmag);
+  fout[0] = Bmag;
+}
+
 
 // Evaluate collision frequencies
 void
@@ -170,13 +320,13 @@ eval_density_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_R
   double z_src = 0.0;
   double src_sigma = app->ion_source_sigma;
   double src_amp_floor = src_amp*1e-2;
-  if (fabs(z) <= 1.0)
+  if (fabs(z) <= 0.98)
   {
     // fout[0] = fmax(src_amp_floor, (src_amp / sqrt(2.0 * M_PI * pow(src_sigma, 2))) *
       // exp(-1 * pow((z - z_src), 2) / (2.0 * pow(src_sigma, 2))));
     
       // cubic polynomial drop of to the edge
-    fout[0] = src_amp * (1 - pow(fabs(z), 6));
+    fout[0] = src_amp * (1 - pow(fabs(z), 6)/0.98);
   }
   else
   {
@@ -197,7 +347,7 @@ eval_temp_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_REST
   double z = xn[0];
   double TSrc0 = app->ion_source_temp;
   double Tfloor = TSrc0*1e-2;
-  if (fabs(z) <= 1.0)
+  if (fabs(z) <= 0.98)
   {
     fout[0] = TSrc0;
   }
@@ -280,19 +430,11 @@ create_ctx(void)
   // Perpendicular wavenumber in SI units:
   double kperp = kperpRhos / rho_s;
 
-  // Geometry parameters.
-  double z_min = -2.0;
-  double z_max =  2.0;
-  double psi_min = 1e-6; // Go smaller. 1e-4 might be too small
-  double psi_eval= 5e-3;
-  double psi_max = 3e-3; // aim for 2e-2
-
   // Grid parameters
   double vpar_max_elc = 30 * vte;
   double mu_max_elc = me * pow(3. * vte, 2.) / (2. * B_p);
   double vpar_max_ion = 30 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
-  int Nx = 16;
   int Nz = 288;
   int Nvpar = 32; // 96 uniform
   int Nmu = 32;  // 192 uniform
@@ -324,6 +466,16 @@ create_ctx(void)
   int num_cycles = 100; // Number of OAP/FDP cycles
   int frames_per_phase = 5; // Frames per phase
 
+    // Geometry parameters.
+  double RatZeq0 = 0.10; // Radius of the field line at Z=0.
+  // Axial coordinate Z extents. Endure that Z=0 is not on
+  // the boundary of a cell (due to AD errors).
+  double Z_min = -2.5;
+  double Z_max =  2.5;
+  double mcB = 2.9;
+  double gamma = 0.3;
+  double Z_m = 0.98;
+
   struct gk_mirror_ctx ctx = {
     .cdim = cdim,
     .vdim = vdim,
@@ -351,11 +503,8 @@ create_ctx(void)
     .omega_ci = omega_ci,
     .rho_s = rho_s,
     .kperp = kperp,
-    .z_min = z_min,
-    .z_max = z_max,
-    .psi_min = psi_min,
-    .psi_eval = psi_eval,
-    .psi_max = psi_max,
+    .z_min = Z_min,
+    .z_max = Z_max,
     .vpar_max_ion = vpar_max_ion,
     .vpar_max_elc = vpar_max_elc,
     .mu_max_ion = mu_max_ion,
@@ -388,8 +537,21 @@ create_ctx(void)
     .positivity_fdp = positivity_fdp,
     .num_cycles = num_cycles,
     .frames_per_phase = frames_per_phase,
+
+    .mcB = mcB,
+    .gamma = gamma,
+    .Z_m = Z_m,
+    .Z_min = Z_min,
+    .Z_max = Z_max,
+    .RatZeq0 = RatZeq0,
   };
   
+  // Populate a couple more values in the context.
+  ctx.psi_eval = psi_RZ(ctx.RatZeq0, 0., &ctx);
+  ctx.z_min    = z_psiZ(ctx.psi_eval, ctx.Z_min, &ctx);
+  ctx.z_max    = z_psiZ(ctx.psi_eval, ctx.Z_max, &ctx);
+
+
   return ctx;
 }
 
@@ -721,17 +883,8 @@ int main(int argc, char **argv)
     .is_static = false,
   };
 
-  struct gkyl_mirror_geo_grid_inp grid_inp = {
-    .filename_psi = "/home/mr1884/gkeyll/core/data/unit/wham_hires.geqdsk_psi.gkyl", // psi file to use
-    .rclose = 0.2, // closest R to region of interest
-    .zmin = -2.0,  // Z of lower boundary
-    .zmax =  2.0,  // Z of upper boundary
-    .include_axis = false, // Include R=0 axis in grid
-    .fl_coord = GKYL_MIRROR_GRID_GEN_PSI_CART_Z, // coordinate system for psi grid
-  };
-
   struct gkyl_gk app_inp = {  // GK app
-    .name = "gk_wham",
+    .name = "gk_lorentzian_mirror",
     .cdim = ctx.cdim ,  .vdim = ctx.vdim,
     .lower = {ctx.z_min},
     .upper = {ctx.z_max},
@@ -739,10 +892,14 @@ int main(int argc, char **argv)
     .poly_order = ctx.poly_order,
     .basis_type = app_args.basis_type,
     .enforce_positivity = true,
+
     .geometry = {
-      .geometry_id = GKYL_MIRROR,
+      .geometry_id = GKYL_MAPC2P,
       .world = {ctx.psi_eval, 0.0},
-      .mirror_grid_info = grid_inp,
+      .mapc2p = mapc2p, // mapping of computational to physical space
+      .c2p_ctx = &ctx,
+      .bfield_func = bmag_func, // magnetic field magnitude
+      .bfield_ctx = &ctx
     },
 
     .num_periodic_dir = 0,

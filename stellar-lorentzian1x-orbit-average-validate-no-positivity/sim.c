@@ -326,7 +326,7 @@ eval_density_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_R
       // exp(-1 * pow((z - z_src), 2) / (2.0 * pow(src_sigma, 2))));
     
       // cubic polynomial drop of to the edge
-    fout[0] = src_amp * (1 - pow(fabs(z), 6));
+    fout[0] = src_amp * (1 - pow(fabs(z), 6)/0.98);
   }
   else
   {
@@ -440,7 +440,7 @@ create_ctx(void)
   int Nmu = 32;  // 192 uniform
   int poly_order = 1;
   double t_end = 1e-3;//100e-6;
-  int num_frames = 100;
+  int num_frames = 1000;
   double write_phase_freq = 1;
   int int_diag_calc_num = num_frames*100;
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
@@ -691,9 +691,9 @@ int main(int argc, char **argv)
         .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
       },
     },
-    .bcx = {
-      .lower={.type = GKYL_SPECIES_GK_SHEATH,},
-      .upper={.type = GKYL_SPECIES_GK_SHEATH,},
+    .bcs = {
+      { .dir = 0, .edge = GKYL_LOWER_EDGE, .type = GKYL_BC_GK_SPECIES_SHEATH },
+      { .dir = 0, .edge = GKYL_UPPER_EDGE, .type = GKYL_BC_GK_SPECIES_SHEATH },
     },
     .write_omega_cfl = true,
     .num_diag_moments = 8,
