@@ -20,10 +20,10 @@ matplotlib.rcParams.update({
     'ytick.labelsize': 10
 })
 
-read_frame = 650
+read_frame = 340
 
 # Hardcode a few tricky to read values from the data
-nu_ii = 2.972 # Read from the simulation at midplane
+nu_ii = 5.9034 # Read from the simulation at midplane
 
 # Universal constants (matching input_file.c)
 eps0 = 8.8541878128e-12  # F/m (permittivity of free space)
@@ -59,8 +59,11 @@ logLambdaElc = 6.6 - 0.5 * np.log(n0 / 1e20) + 1.5 * np.log(Te0 / eV)
 nuElc = elc_nuFrac * nuFrac * logLambdaElc * (eV**4) * n0 / (6 * np.sqrt(2) * (np.pi**(3/2)) * (eps0**2) * np.sqrt(me) * (Te0**(3/2)))
 
 # Geometry parameters
-z_min = -2.5
-z_max = 2.5
+z_min = -2.0
+z_max = 2.0
+psi_min = 1e-6
+psi_eval = 1e-3
+psi_max = 3e-3
 
 # Velocity space parameters
 vpar_max_elc = 30 * vte
@@ -75,7 +78,7 @@ ion_source_temp = 5000 * eV  # J
 
 def plot_biMax():
   # Plot BiMaxwellian Moments
-  data_BiMax = pg.GData('gk_lorentzian_mirror-ion_BiMaxwellianMoments_'+str(read_frame)+'.gkyl')
+  data_BiMax = pg.GData('gk_wham-ion_BiMaxwellianMoments_'+str(read_frame)+'.gkyl')
   data_BiMax.info()
   interp_BiMax = pg.GInterpModal(data_BiMax, 1, 'ms')
   x, dens = interp_BiMax.interpolate(0)
@@ -92,9 +95,9 @@ def plot_biMax():
   Tpar_ev = Tpar_div_m * mi / eV
   Tperp_ev = Tperp_div_m * mi / eV
 
-  data_mc2p = pg.GData('gk_lorentzian_mirror-mapc2p.gkyl')
+  data_mc2p = pg.GData('gk_wham-mapc2p.gkyl')
   interp_mc2p = pg.GInterpModal(data_mc2p, 1, 'ms')
-  nodes_Z = interp_mc2p.interpolate(2)[1]
+  nodes_Z = interp_mc2p.interpolate(1)[1]
   nodes_Z = np.squeeze(nodes_Z)
 
   fig, ax = plt.subplots( 2, 2, figsize=(10,6))
@@ -139,13 +142,13 @@ def plot_biMax():
 
   plt.tight_layout()
   # plt.show()
-  plt.savefig('./bimaxwellian_moments_lorentzian.pdf')
+  plt.savefig('./bimaxwellian_moments_wham.pdf')
   plt.close()  # Close figure to free memory
 
 def plot_field():
   data_0 = pg.GData('field_time_trace_z0_eq_0.gkyl')
   data_098 = pg.GData('field_time_trace_z0_eq_0,98.gkyl')
-  data_25 = pg.GData('field_time_trace_z0_eq_2,5.gkyl')
+  data_25 = pg.GData('field_time_trace_z0_eq_2.gkyl')
 
   t = data_0.get_grid()
   t = np.array(t[0])[:-1]
@@ -157,13 +160,13 @@ def plot_field():
   print('Potential drop from midplane to mirror: ' + str(phi_0[-1] - phi_098[-1]))
   print('Potential at z=0.98 to edge: ' + str(phi_098[-1]))
   # Get the final field
-  data_phi = pg.GData('gk_lorentzian_mirror-field_'+str(read_frame)+'.gkyl')
+  data_phi = pg.GData('gk_wham-field_'+str(read_frame)+'.gkyl')
   interp_phi = pg.GInterpModal(data_phi, 1, 'ms')
   x, phi_final = interp_phi.interpolate(0)
 
-  data_mc2p = pg.GData('gk_lorentzian_mirror-mapc2p.gkyl')
+  data_mc2p = pg.GData('gk_wham-mapc2p.gkyl')
   interp_mc2p = pg.GInterpModal(data_mc2p, 1, 'ms')
-  nodes_Z = interp_mc2p.interpolate(2)[1]
+  nodes_Z = interp_mc2p.interpolate(1)[1]
   nodes_Z = np.squeeze(nodes_Z)
 
   fig, ax = plt.subplots( 1, 2, figsize=(10,4))
@@ -172,7 +175,7 @@ def plot_field():
   # ax[0].plot(t, phi_05, label='z=0.5')
   ax[0].plot(t*nu_ii, phi_098, label='z=0.98')
   # ax[0].plot(t, phi_15, label='z=1.5')
-  ax[0].plot(t*nu_ii, phi_25, label='z=2.5')
+  ax[0].plot(t*nu_ii, phi_25, label='z=2')
 
   # Make a brace betwen the final value of phi_0 and phi_1
   # Draw a vertical bracket between phi_0[-1] and phi_1[-1] at t[-1]
@@ -298,11 +301,11 @@ def plot_field():
   ax[1].set_ylim(0, 15)
 
   plt.tight_layout()
-  plt.savefig('./field_fig_lorentzian.pdf')
+  plt.savefig('./field_fig_wham.pdf')
   plt.close()  # Close figure to free memory
 
 def plot_integrated_moments():
-  data = pg.GData('gk_lorentzian_mirror-ion_integrated_moms.gkyl')
+  data = pg.GData('gk_wham-ion_integrated_moms.gkyl')
 
   t = data.get_grid()
   t = np.array(t[0])[:-1] * nu_ii
@@ -344,13 +347,13 @@ def plot_integrated_moments():
   ax[1, 1].set_xlabel(r'$t \nu_{ii}$')
 
   plt.tight_layout()
-  plt.savefig('./integrated_moments_lorentzian.pdf')
+  plt.savefig('./integrated_moments_wham.pdf')
   plt.close()  # Close figure to free memory
 
 def plot_f_at_0():
   # Plot f at z=0
-  f_data = pg.GData('gk_lorentzian_mirror-ion_'+str(read_frame)+'.gkyl', mapc2p_vel_name='gk_lorentzian_mirror-ion_mapc2p_vel.gkyl')
-  Jv_data = pg.GData('gk_lorentzian_mirror-ion_jacobvel.gkyl')
+  f_data = pg.GData('gk_wham-ion_'+str(read_frame)+'.gkyl', mapc2p_vel_name='gk_wham-ion_mapc2p_vel.gkyl')
+  Jv_data = pg.GData('gk_wham-ion_jacobvel.gkyl')
   f_c = f_data.get_values()
   Jv_c = Jv_data.get_values()
   f_data._values = f_c/Jv_c
@@ -372,14 +375,14 @@ def plot_f_at_0():
   nxIntC_i = [np.size(xIntC_i[d]) for d in range(ndim)]
 
   # Calculate the loss cone
-  Bmin = 5.273183e-01
-  B075 = 2.046932e+00
-  B09 = 2.950965e+00
-  Bmax = 3.147247e+00
-  phi_center = 1.100236e+04
-  phi075 = 8.467886e+03
-  phi09 = 5.547371e+03
-  phi_mirror = 4.711717e+03
+  Bmin = 9.992183e-01
+  B075 = 4.156126e+00
+  B09 = 1.241527e+01
+  Bmax = 1.707887e+01
+  phi_center = 1.335168e+04
+  phi075 = 1.226901e+04
+  phi09 = 8.798876e+03
+  phi_mirror = 5.946193e+03
 
   mu_loss = (( 1/2 * mi * xInt_i[1]**2 ) + qi * (phi_center - phi_mirror)) / (Bmax - Bmin)
   mu_loss_075 = (( 1/2 * mi * xInt_i[1]**2 ) + qi * (phi075 - phi_mirror)) / (Bmax - B075)
@@ -395,7 +398,7 @@ def plot_f_at_0():
   xIntC_i[2] = xIntC_i[2]/(0.5*mi*(vti**2)/B_p)
 
   #[ Get indices along z of slices we wish to plot:
-  plot_z_locations = [0., 0.75, 0.9, 0.98, 1.1, 2.5]
+  plot_z_locations = [0., 0.75, 0.9, 0.98, 1.1, 2.]
 
   plotzIdx = [np.argmin(np.abs(xIntC_i[0]-val)) for val in plot_z_locations]
 
@@ -464,7 +467,7 @@ def plot_f_at_0():
 
   # plt.show()
   plt.tight_layout()
-  plt.savefig('./f_distributions_lorentzian.pdf')
+  plt.savefig('./f_distributions_wham.pdf')
   plt.close()  # Close figure to free memory
 
 def run_plotting_functions_parallel(functions):

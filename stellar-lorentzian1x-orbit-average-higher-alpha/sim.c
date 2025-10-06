@@ -451,7 +451,7 @@ create_ctx(void)
 
   // POA parameters  
   int oap_first = 1; // Start with OAP phase
-  double alpha_oap = 0.000005; // Alpha for OAP phase
+  double alpha_oap = 0.00005; // Alpha for OAP phase
   double alpha_fdp = 1.0; // Alpha for FDP phase
   double tau_oap = 300e-3; // OAP duration in microseconds
   double tau_fdp = 20e-6; // FDP duration in microseconds
@@ -473,8 +473,8 @@ create_ctx(void)
   // the boundary of a cell (due to AD errors).
   double Z_min = -2.5;
   double Z_max =  2.5;
-  double mcB = 2.9;
-  double gamma = 0.3;
+  double mcB = 6.51292;
+  double gamma = 0.124904;
   double Z_m = 0.98;
 
   struct gk_mirror_ctx ctx = {

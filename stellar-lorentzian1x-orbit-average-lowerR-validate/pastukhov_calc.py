@@ -7,9 +7,9 @@ from scipy import optimize
 
 
 # Calculate the Pastukhov potential confinement time from an adiabatic electron simulation
-Bmag0 = 0.5273183
-BmagThroat = 3.147247
-BmagExpander = 0.1343069
+Bmag0 = 5.273183e-01
+BmagThroat = 3.147247e+00
+BmagExpander = 1.343069e-01
 
 UparMirror = 3.928870e+05
 UparExpander = 1.695508e+06
@@ -69,7 +69,7 @@ def Rosen_Dougherty_confinement_time(P, R, ZpFl, coeff = 0):
 
     Loss_Rosen = 1/nuElc * \
         1/(2*ZpFl / (np.log((w_term+1)/(w_term-1)) - coeff) * (1-erf(a_term)))
-    print(Loss_Rosen)
+    
     return Loss_Rosen
 
 def tau_pi(R):
@@ -87,16 +87,13 @@ def tau_pi(R):
   return tau_pi
 
 def rootEq_dough(x,R):
-  return tau_pi(R)-Rosen_Dougherty_confinement_time(x,R,1,0.9)
+  return tau_pi(R)-Rosen_Dougherty_confinement_time(x,R,1,1.065)
 
 def rootEq_past(x,R):
   return tau_pi(R)-Pastukhov_confinement_time(x,R,1.0)
 
 def rootEq_najmabadi(x,R):
   return tau_pi(R)-Najmabadi_confinement_time(x,R)
-
-print(rootEq_dough(1,R))
-print(rootEq_dough(20,R))
 
 ephi_over_Te = optimize.ridder(rootEq_dough, 1, 20, args=(R))
 

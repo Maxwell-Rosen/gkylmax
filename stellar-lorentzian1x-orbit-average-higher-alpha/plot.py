@@ -20,10 +20,10 @@ matplotlib.rcParams.update({
     'ytick.labelsize': 10
 })
 
-read_frame = 650
+read_frame = 489
 
 # Hardcode a few tricky to read values from the data
-nu_ii = 2.972 # Read from the simulation at midplane
+nu_ii = 5.9034 # Read from the simulation at midplane
 
 # Universal constants (matching input_file.c)
 eps0 = 8.8541878128e-12  # F/m (permittivity of free space)
@@ -61,6 +61,9 @@ nuElc = elc_nuFrac * nuFrac * logLambdaElc * (eV**4) * n0 / (6 * np.sqrt(2) * (n
 # Geometry parameters
 z_min = -2.5
 z_max = 2.5
+psi_min = 1e-6
+psi_eval = 1e-3
+psi_max = 3e-3
 
 # Velocity space parameters
 vpar_max_elc = 30 * vte
@@ -139,7 +142,7 @@ def plot_biMax():
 
   plt.tight_layout()
   # plt.show()
-  plt.savefig('./bimaxwellian_moments_lorentzian.pdf')
+  plt.savefig('./python-plots/bimaxwellian_moments_lorentzian.pdf')
   plt.close()  # Close figure to free memory
 
 def plot_field():
@@ -298,7 +301,7 @@ def plot_field():
   ax[1].set_ylim(0, 15)
 
   plt.tight_layout()
-  plt.savefig('./field_fig_lorentzian.pdf')
+  plt.savefig('./python-plots/field_fig_lorentzian.pdf')
   plt.close()  # Close figure to free memory
 
 def plot_integrated_moments():
@@ -344,7 +347,7 @@ def plot_integrated_moments():
   ax[1, 1].set_xlabel(r'$t \nu_{ii}$')
 
   plt.tight_layout()
-  plt.savefig('./integrated_moments_lorentzian.pdf')
+  plt.savefig('./python-plots/integrated_moments_lorentzian.pdf')
   plt.close()  # Close figure to free memory
 
 def plot_f_at_0():
@@ -372,14 +375,14 @@ def plot_f_at_0():
   nxIntC_i = [np.size(xIntC_i[d]) for d in range(ndim)]
 
   # Calculate the loss cone
-  Bmin = 5.273183e-01
-  B075 = 2.046932e+00
-  B09 = 2.950965e+00
-  Bmax = 3.147247e+00
-  phi_center = 1.100236e+04
-  phi075 = 8.467886e+03
-  phi09 = 5.547371e+03
-  phi_mirror = 4.711717e+03
+  Bmin = 9.992183e-01
+  B075 = 4.156126e+00
+  B09 = 1.241527e+01
+  Bmax = 1.707887e+01
+  phi_center = 1.335168e+04
+  phi075 = 1.226901e+04
+  phi09 = 8.798876e+03
+  phi_mirror = 5.946193e+03
 
   mu_loss = (( 1/2 * mi * xInt_i[1]**2 ) + qi * (phi_center - phi_mirror)) / (Bmax - Bmin)
   mu_loss_075 = (( 1/2 * mi * xInt_i[1]**2 ) + qi * (phi075 - phi_mirror)) / (Bmax - B075)
@@ -464,7 +467,7 @@ def plot_f_at_0():
 
   # plt.show()
   plt.tight_layout()
-  plt.savefig('./f_distributions_lorentzian.pdf')
+  plt.savefig('./python-plots/f_distributions_lorentzian.pdf')
   plt.close()  # Close figure to free memory
 
 def run_plotting_functions_parallel(functions):

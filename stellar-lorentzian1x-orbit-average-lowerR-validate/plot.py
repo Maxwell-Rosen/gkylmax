@@ -23,7 +23,7 @@ matplotlib.rcParams.update({
 read_frame = 650
 
 # Hardcode a few tricky to read values from the data
-nu_ii = 2.972 # Read from the simulation at midplane
+nu_ii = 5.9034 # Read from the simulation at midplane
 
 # Universal constants (matching input_file.c)
 eps0 = 8.8541878128e-12  # F/m (permittivity of free space)
@@ -61,6 +61,9 @@ nuElc = elc_nuFrac * nuFrac * logLambdaElc * (eV**4) * n0 / (6 * np.sqrt(2) * (n
 # Geometry parameters
 z_min = -2.5
 z_max = 2.5
+psi_min = 1e-6
+psi_eval = 1e-3
+psi_max = 3e-3
 
 # Velocity space parameters
 vpar_max_elc = 30 * vte
