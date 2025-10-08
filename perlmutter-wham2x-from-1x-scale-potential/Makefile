@@ -1,5 +1,6 @@
-# Define the path to your gkeyll directory here (the one that contains gkylsoft and gkeyll directories)
-GKEYLL_DIR = ${HOME}
+# -*- makefile-gmake -*-
+
+# Makefile for C input files located outside of the gkeyll/ repository.
 
 ARCH_FLAGS ?= -march=native
 CUDA_ARCH ?= 70
@@ -26,13 +27,13 @@ else
 endif
 
 # Include config.mak file (if it exists)
--include ${GKEYLL_DIR}/gkylsoft/gkeyll/share/config.mak
+-include /global/homes/m/mhrosen/gkylsoft/gkeyll/share/config.mak
 
 CFLAGS = -O3 -g -ffast-math -I. 
 
 G0_INC_DIR = ${PREFIX}/gkeyll/include
 G0_LIB_DIR = ${PREFIX}/gkeyll/lib
-G0_LIB = -lg0gyrokinetic
+G0_LIB = ${FIN_APP_LIB}
 
 USING_NVCC =
 NVCC_FLAGS =
@@ -130,20 +131,26 @@ INCLUDES = -I${G0_INC_DIR} -I${LAPACK_INC} -I${SUPERLU_INC} -I${MPI_INC_DIR} -I$
 LIB_DIRS = -L${LAPACK_LIB_DIR} -L${SUPERLU_LIB_DIR} -L${MPI_LIB_DIR} -L${LUA_LIB_DIR} -L${NCCL_LIB_DIR} -L${CUDSS_LIB_DIR}
 EXT_LIBS = ${LAPACK_LIB} ${SUPERLU_LIB} ${MPI_RPATH} ${MPI_LIBS} ${LUA_RPATH} ${LUA_LIBS} ${NCCL_LIBS} ${CUDSS_RPATH} ${CUDSS_LIBS} -lm -lpthread -ldl
 
-all: copy-rt-arg-parse input setup
+# Find all .c files and generate corresponding executable names
+SRCS := $(wildcard *.c)
+BINS := $(SRCS:.c=)
 
-# copy the rt_arg_parse.h into the gkylsoft directory
-copy-rt-arg-parse:
-	cp ${GKEYLL_DIR}/gkeyll/gyrokinetic/creg/rt_arg_parse.h ${GKEYLL_DIR}/gkylsoft/gkeyll/include/.
+.PHONY: all clean help pkpm pkpm-unit pkpm-regression
 
-input: sim.c
-	${CC} ${CFLAGS} ${INCLUDES} sim.c -o gkl -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
+# Default target: build all if no FILE specified, otherwise build specific file
+all: $(if $(FILE),$(FILE:.c=),$(BINS))
 
-setup: gkl
-	mkdir -p wk
-	cp gkl wk
-	cp sim.c wk
-	cp Makefile wk
+# Help target to show usage
+help:
+	@echo "Usage:"
+	@echo "  make           - Build all .c files into executables"
+	@echo "  make name      - Build only name.c into executable 'name'"
+	@echo "  make clean     - Remove all executables and generated files"
+	@echo "  make help      - Show this help message"
+
+# Pattern rule: build executable from .c source
+$(BINS): %: %.c
+	${CC} ${CFLAGS} ${INCLUDES} $< -o $@ -L${G0_LIB_DIR} ${G0_RPATH} ${G0_LIBS} ${LIB_DIRS} ${EXT_LIBS}
 
 clean:
-	rm -rf gkl gkl.d wk/gkl wk/sim.c wk/Makefile
+	rm -rf $(BINS) *.d wk

@@ -9,7 +9,9 @@ tags
 *.h5
 *.nc
 *.gif
-
+*.pdf
+sim
+gkl
 h5py
 
 # Ignore compiled binaries and executables

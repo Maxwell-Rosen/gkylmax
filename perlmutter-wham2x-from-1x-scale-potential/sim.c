@@ -319,10 +319,10 @@ create_ctx(void)
   double z_min = -2.0;
   double z_max =  2.0;
   double z_m = 1.0;
-  double psi_min = sqrt(5e-5);
-  double psi_max = sqrt(3e-3);
-  // double psi_min = 5e-5;
-  // double psi_max = 3e-3;
+  // double psi_min = sqrt(5e-5);
+  // double psi_max = sqrt(3e-3);
+  double psi_min = 5e-5;
+  double psi_max = 3e-3;
 
   // Grid parameters
   double vpar_max_elc = 30 * vte;
@@ -625,7 +625,7 @@ int main(int argc, char **argv)
 
   struct gkyl_gyrokinetic_field field =
   {
-    .gkfield_id = GKYL_GK_FIELD_FULL_2X,
+    // .gkfield_id = GKYL_GK_FIELD_FULL_2X,
     .polarization_bmag = ctx.B_p,
     .poisson_bcs = {
       .lo_type = {GKYL_POISSON_NEUMANN, GKYL_POISSON_DIRICHLET},
@@ -641,7 +641,7 @@ int main(int argc, char **argv)
     .zmin = -2.0,  // Z of lower boundary
     .zmax =  2.0,  // Z of upper boundary
     .include_axis = false, // Include R=0 axis in grid
-    .fl_coord = GKYL_MIRROR_GRID_GEN_SQRT_PSI_CART_Z, // coordinate system for psi grid
+    .fl_coord = GKYL_MIRROR_GRID_GEN_PSI_CART_Z, // coordinate system for psi grid
   };
 
   // GK app

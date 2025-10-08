@@ -58,20 +58,20 @@ echo "Max number is $max_number"
 if [ "$max_number" -eq 0 ]; then
   echo "No matching files found. Starting from the begining"
   if [ "$num_gpu" -eq 1 ]; then
-    echo "./gkl -g"
-    ./gkl -g
+    echo "./sim -g"
+    ./sim -g
   else
-    echo "srun -u -n $num_gpu ./gkl -g -M -d $num_gpu"
-    srun -u -n $num_gpu ./gkl -g -M -d $num_gpu
+    echo "srun -u -n $num_gpu ./sim -g -M -d $num_gpu"
+    srun -u -n $num_gpu ./sim -g -M -d $num_gpu
   fi
 else
   echo "Resuming from file $max_number"
   if [ "$num_gpu" -eq 1 ]; then
-    echo "./gkl -g -r $max_number"
-    ./gkl -g -r $max_number
+    echo "./sim -g -r $max_number"
+    ./sim -g -r $max_number
   else
-    echo "srun -u -n $num_gpu ./gkl -g -M -d $num_gpu -r $max_number"
-    srun -u -n $num_gpu ./gkl -g -M -d $num_gpu -r $max_number
+    echo "srun -u -n $num_gpu ./sim -g -M -d $num_gpu -r $max_number"
+    srun -u -n $num_gpu ./sim -g -M -d $num_gpu -r $max_number
   fi
 fi
 
