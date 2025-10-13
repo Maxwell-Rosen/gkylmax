@@ -396,7 +396,7 @@ create_ctx(void)
   double mu_max_elc = me * pow(3. * vte, 2.) / (2. * B_p);
   double vpar_max_ion = 30 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
-  int Nz = 128;
+  int Nz = 64;
   int Nvpar = 64; // 96 uniform
   int Nmu = 32;  // 192 uniform
   int poly_order = 1;
@@ -829,7 +829,7 @@ int main(int argc, char **argv)
     .cells = { cells_x[0] },
     .poly_order = ctx.poly_order,
     .basis_type = app_args.basis_type,
-    // .enforce_positivity = true,
+    .enforce_positivity = true,
 
     .geometry = {
       .geometry_id = GKYL_MAPC2P,
