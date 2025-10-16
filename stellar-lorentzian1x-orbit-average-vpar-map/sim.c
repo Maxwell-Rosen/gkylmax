@@ -309,7 +309,7 @@ void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *
   double mu_max_ion = app->mu_max_ion;
 
   double cvpar = vc[0], cmu = vc[1];
-  double b = 1.3;
+  double b = 1.4;
   vp[0] = vpar_max_ion*tan(cvpar*b)/tan(b);
   // Cubic map in mu.
   vp[1] = mu_max_ion*pow(cmu,3);
@@ -806,6 +806,7 @@ int main(int argc, char **argv)
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
     .no_by = true,
+    .skip_cell_threshold = 1e-16,
 
     .projection = {
       .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
