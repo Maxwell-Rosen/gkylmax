@@ -430,7 +430,7 @@ create_ctx(void)
   poa_phases[num_phases-1].fdot_mult_type = fdot_mult_type_fdp;
   poa_phases[num_phases-1].is_positivity_enabled = is_positivity_enabled_fdp;
 
-  double write_phase_freq = 0.2; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
+  double write_phase_freq = 1.0; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
   double int_diag_calc_freq = 100; // Frequency of calculating integrated diagnostics (as a factor of num_frames).
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
   int num_failures_max = 20; // Maximum allowable number of consecutive small time-steps.
@@ -647,7 +647,7 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
 
   gkyl_gyrokinetic_app_cout(app, stdout, "----------------------------------------------\n");
   gkyl_gyrokinetic_app_cout(app, stdout, "Starting phase %d of type %s with parameters:\n",
-    (tfs->frame_curr==0)?1:(tfs->frame_curr/pparams->num_frames + 1),
+    (tfs->frame_curr==0)?1:((pparams->num_frames > 0)?(tfs->frame_curr/pparams->num_frames + 1):1),
     (pparams->phase == GK_POA_OAP)?"OAP":"FDP");
   gkyl_gyrokinetic_app_cout(app, stdout, "  Duration = %g\n", pparams->duration);
   gkyl_gyrokinetic_app_cout(app, stdout, "  Number of frames = %d\n", pparams->num_frames);
@@ -667,6 +667,10 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
   reset_io_triggers(ctx, tfs, trig_write_conf, trig_write_phase, trig_calc_intdiag);
 
   // Reset simulation parameters and function pointers.
+  struct gkyl_gyrokinetic_collisionless collisionless_inp = {
+    .type = GKYL_GK_COLLISIONLESS_ES,
+    .scale_factor = pparams->alpha,
+  };
   struct gkyl_gyrokinetic_fdot_multiplier fdot_mult = {
     .type = pparams->fdot_mult_type,
     .cellwise_const = true,
@@ -682,7 +686,7 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
   };
   double alpha = pparams->alpha;
   gkyl_gyrokinetic_app_reset_species_fdot_multiplier(app, t_curr, "ion", fdot_mult);
-  gkyl_gyrokinetic_app_reset_species_collisionless(app, t_curr, "ion", alpha);
+  gkyl_gyrokinetic_app_reset_species_collisionless(app, t_curr, "ion", collisionless_inp);
   gkyl_gyrokinetic_app_reset_species_positivity(app, t_curr, "ion", pparams->is_positivity_enabled);
   gkyl_gyrokinetic_app_reset_field(app, t_curr, reset_field);
 
@@ -714,17 +718,15 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
       double sim_time_elapsed = t_curr - t_start;
       double sim_time_remaining = t_end - t_curr;
       
-      if (sim_time_elapsed > 0 && step > 1) {
-        double wall_time_per_sim_time = wall_time_elapsed / sim_time_elapsed;
-        double wall_time_remaining = wall_time_per_sim_time * sim_time_remaining;
-        int hours = (int)(wall_time_remaining / 3600);
-        int minutes = (int)((wall_time_remaining - hours*3600) / 60);
-        int seconds = (int)(wall_time_remaining - hours*3600 - minutes*60);
-        
-        double progress_pct = 100.0 * sim_time_elapsed / (sim_time_elapsed + sim_time_remaining);
-        gkyl_gyrokinetic_app_cout(app, stdout, " dt = %g (phase %.1f%% complete, est. %dh %dm %ds remaining)\n", 
+      double wall_time_per_sim_time = wall_time_elapsed / sim_time_elapsed;
+      double wall_time_remaining = wall_time_per_sim_time * sim_time_remaining;
+      int hours = (int)(wall_time_remaining / 3600);
+      int minutes = (int)((wall_time_remaining - hours*3600) / 60);
+      int seconds = (int)(wall_time_remaining - hours*3600 - minutes*60);
+      
+      double progress_pct = 100.0 * sim_time_elapsed / (sim_time_elapsed + sim_time_remaining);
+      gkyl_gyrokinetic_app_cout(app, stdout, " dt = %g (phase %.1f%% complete, est. %dh %dm %ds remaining)\n", 
                                   status.dt_actual, progress_pct, hours, minutes, seconds);
-      }
     }
 
     if (!status.success)
@@ -805,7 +807,6 @@ int main(int argc, char **argv)
     .upper = { 1.0, 1.0},
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
-    .no_by = true,
     .skip_cell_threshold = 1e-16,
 
     .projection = {
@@ -823,7 +824,10 @@ int main(int argc, char **argv)
       .ctx = &ctx,
     },
 
-    .collisionless_scale_factor = 1.0,
+    .collisionless = {
+      .type = GKYL_GK_COLLISIONLESS_ES,
+      .scale_factor = 1.0, // Will be replaced below.
+    },
     .time_rate_multiplier = {
       .type = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE,
       .cellwise_const = true,
@@ -858,15 +862,10 @@ int main(int argc, char **argv)
         .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
       },
     },
-    .bcx = {
-      .lower={.type = GKYL_SPECIES_GK_SHEATH,},
-      .upper={.type = GKYL_SPECIES_GK_SHEATH,},
+    .bcs = {
+      { .dir = 0, .edge = GKYL_LOWER_EDGE, .type = GKYL_BC_GK_SPECIES_SHEATH },
+      { .dir = 0, .edge = GKYL_UPPER_EDGE, .type = GKYL_BC_GK_SPECIES_SHEATH },
     },
-
-    // .bcs = {
-    //   { .dir = 0, .edge = GKYL_LOWER_EDGE, .type = GKYL_BC_GK_SPECIES_SHEATH },
-    //   { .dir = 0, .edge = GKYL_UPPER_EDGE, .type = GKYL_BC_GK_SPECIES_SHEATH },
-    // },
     .write_omega_cfl = true,
     .num_diag_moments = 8,
     .diag_moments = {GKYL_F_MOMENT_BIMAXWELLIAN, GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_M3PAR, GKYL_F_MOMENT_M3PERP },
@@ -953,7 +952,7 @@ int main(int argc, char **argv)
     for (int pit=0; pit<ctx.num_phases; pit++) {
       time_count += ctx.poa_phases[pit].duration;
       frame_count += ctx.poa_phases[pit].num_frames;
-      if ((tfs.t_curr < time_count) && (tfs.frame_curr < frame_count)) {
+      if ((tfs.t_curr <= time_count) && (tfs.frame_curr <= frame_count)) {
         pit_curr = pit;
         break;
       }

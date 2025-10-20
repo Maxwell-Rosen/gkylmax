@@ -647,7 +647,7 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
 
   gkyl_gyrokinetic_app_cout(app, stdout, "----------------------------------------------\n");
   gkyl_gyrokinetic_app_cout(app, stdout, "Starting phase %d of type %s with parameters:\n",
-    (tfs->frame_curr==0)?1:(tfs->frame_curr/pparams->num_frames + 1),
+    (tfs->frame_curr==0)?1:((pparams->num_frames > 0)?(tfs->frame_curr/pparams->num_frames + 1):1),
     (pparams->phase == GK_POA_OAP)?"OAP":"FDP");
   gkyl_gyrokinetic_app_cout(app, stdout, "  Duration = %g\n", pparams->duration);
   gkyl_gyrokinetic_app_cout(app, stdout, "  Number of frames = %d\n", pparams->num_frames);
@@ -952,7 +952,7 @@ int main(int argc, char **argv)
     for (int pit=0; pit<ctx.num_phases; pit++) {
       time_count += ctx.poa_phases[pit].duration;
       frame_count += ctx.poa_phases[pit].num_frames;
-      if ((tfs.t_curr < time_count) && (tfs.frame_curr < frame_count)) {
+      if ((tfs.t_curr <= time_count) && (tfs.frame_curr <= frame_count)) {
         pit_curr = pit;
         break;
       }

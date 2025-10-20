@@ -44,12 +44,6 @@ pgkyl gk_lorentzian_mirror-ion_nu_sum_${frame}.gkyl interp pl --title 'Final Col
 
 pgkyl gk_lorentzian_mirror-ion_nu_sum_${frame}.gkyl interp ev '1 f /' pl --title 'Final Collision time τ' --xlabel 'Axial Position z (m)' --ylabel 'Collision Time τ (s)' --logy --saveas python-plots/ion_collision_time_tau_frame${frame}.png --no-show &
 
-pgkyl good-run-16-vth-b14/gk_lorentzian_mirror-ion_BiMaxwellianMoments_80.gkyl good-run-16-vth-b13/gk_lorentzian_mirror-ion_BiMaxwellianMoments_80.gkyl interp ev 'f 2,3 1.67e-27 2.014 * 1.6e-19 / scale_comp' pl --title 'BiMaxwellianMoments b=1.4 vs b=1.3 after 160 μs of FDP' -f0 --logy --saveas python-plots/ion_BiMaxwellianMoments_b14_vs_b13_frame80.png --no-show --legend "b=1.4,b=1.3" --subplot-ylabels 'Density $m^3$, $U_\parallel m/s$, $T_\parallel$ eV, $T_\perp$ eV' --xlabel 'Axial Position z (m)' &
-
-
-pgkyl good-run-16-vth-b14/gk_lorentzian_mirror-ion_BiMaxwellianMoments_80.gkyl good-run-48-cells-b14/gk_lorentzian_mirror-ion_BiMaxwellianMoments_80.gkyl interp ev 'f 2,3 1.67e-27 2.014 * 1.6e-19 / scale_comp' pl --title 'BiMaxwellianMoments 64 vs 48 cells after 160 μs of FDP' -f0 --logy --saveas python-plots/ion_BiMaxwellianMoments_64_vs_48_cells_frame80.png --no-show --legend "64,48" --subplot-ylabels 'Density $m^3$, $U_\parallel m/s$, $T_\parallel$ eV, $T_\perp$ eV' --xlabel 'Axial Position z (m)' &
-
-
 # pgkyl gk_lorentzian_mirror-ion_570.gkyl gk_lorentzian_mirror-ion_575.gkyl interp ev 'f[1] f[0] - f[0] / abs' sel --z0 0.0 pl --title 'Fractional error between begining and end of 570 and 575' --saveas python-plots/ion_distf_diff_570_575.png --no-show &
 
 # pgkyl gk_lorentzian_mirror-ion_BiMaxwellianMoments_12.gkyl gk_lorentzian_mirror-ion_BiMaxwellianMoments_0.gkyl ../initial-conditions/boltz-elc-288z-nu2000/gk_lorentzian_mirror-ion_BiMaxwellianMoments_1500.gkyl interp pl -f0
