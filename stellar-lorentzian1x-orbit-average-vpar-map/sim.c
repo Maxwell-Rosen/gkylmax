@@ -215,17 +215,22 @@ mapc2p(double t, const double *xc, double *GKYL_RESTRICT xp, void *ctx)
 }
 
 void
-bmag_func(double t, const double *xc, double *GKYL_RESTRICT fout, void *ctx)
+bfield_func(double t, const double *xc, double *GKYL_RESTRICT fout, void *ctx)
 {
-  double psi = xc[0], theta = xc[1], z = xc[2];
-
   struct gk_mirror_ctx *app = ctx;
+  double z = xc[2];
+  double psi = psi_RZ(app->RatZeq0, 0.0, ctx); // Magnetic flux function psi of field line.
   double Z = Z_psiz(psi, z, ctx);
   double BRad, BZ, Bmag;
   Bfield_psiZ(psi, Z, ctx, &BRad, &BZ, &Bmag);
-  fout[0] = Bmag;
-}
 
+  double phi = xc[1];
+  // zc are computational coords. 
+  // Set Cartesian components of magnetic field.
+  fout[0] = BRad*cos(phi);
+  fout[1] = BRad*sin(phi);
+  fout[2] = BZ;
+}
 
 // Evaluate collision frequencies
 void
@@ -378,7 +383,7 @@ create_ctx(void)
   double tau_oap = 500e-3;
   double tau_fdp = 20e-6;
   double tau_fdp_extra = 0.0;
-  int num_cycles = 8; // Number of OAP+FDP cycles to run.
+  int num_cycles = 10; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
   int num_frames_oap = 5;        // Frames per OAP phase
@@ -430,7 +435,7 @@ create_ctx(void)
   poa_phases[num_phases-1].fdot_mult_type = fdot_mult_type_fdp;
   poa_phases[num_phases-1].is_positivity_enabled = is_positivity_enabled_fdp;
 
-  double write_phase_freq = 1.0; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
+  double write_phase_freq = 0.2; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
   double int_diag_calc_freq = 100; // Frequency of calculating integrated diagnostics (as a factor of num_frames).
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
   int num_failures_max = 20; // Maximum allowable number of consecutive small time-steps.
@@ -671,12 +676,12 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
     .type = GKYL_GK_COLLISIONLESS_ES,
     .scale_factor = pparams->alpha,
   };
-  struct gkyl_gyrokinetic_fdot_multiplier fdot_mult = {
+  struct gkyl_gyrokinetic_fdot_multiplier fdot_mult_inp = {
     .type = pparams->fdot_mult_type,
     .cellwise_const = true,
     .write_diagnostics = true,
   };
-  struct gkyl_gyrokinetic_field reset_field = {
+  struct gkyl_gyrokinetic_field field_inp = {
     .gkfield_id = GKYL_GK_FIELD_BOLTZMANN,
     .electron_mass = ctx->me,
     .electron_charge = ctx->qe,
@@ -685,10 +690,11 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
     .is_static = pparams->is_static_field,
   };
   double alpha = pparams->alpha;
-  gkyl_gyrokinetic_app_reset_species_fdot_multiplier(app, t_curr, "ion", fdot_mult);
   gkyl_gyrokinetic_app_reset_species_collisionless(app, t_curr, "ion", collisionless_inp);
+  gkyl_gyrokinetic_app_reset_species_fdot_multiplier(app, t_curr, "ion", fdot_mult_inp);
   gkyl_gyrokinetic_app_reset_species_positivity(app, t_curr, "ion", pparams->is_positivity_enabled);
-  gkyl_gyrokinetic_app_reset_field(app, t_curr, reset_field);
+  gkyl_gyrokinetic_app_reset_field(app, t_curr, field_inp);
+
 
   // Compute initial guess of maximum stable time-step.
   double dt = t_end - t_curr;
@@ -807,7 +813,7 @@ int main(int argc, char **argv)
     .upper = { 1.0, 1.0},
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
-    .skip_cell_threshold = 1e-16,
+    // .skip_cell_threshold = 1e-16,
 
     .projection = {
       .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
@@ -827,6 +833,7 @@ int main(int argc, char **argv)
     .collisionless = {
       .type = GKYL_GK_COLLISIONLESS_ES,
       .scale_factor = 1.0, // Will be replaced below.
+      .write_diagnostics = true,
     },
     .time_rate_multiplier = {
       .type = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE,
@@ -862,6 +869,7 @@ int main(int argc, char **argv)
         .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
       },
     },
+
     .bcs = {
       { .dir = 0, .edge = GKYL_LOWER_EDGE, .type = GKYL_BC_GK_SPECIES_SHEATH },
       { .dir = 0, .edge = GKYL_UPPER_EDGE, .type = GKYL_BC_GK_SPECIES_SHEATH },
@@ -901,7 +909,7 @@ int main(int argc, char **argv)
       .world = {ctx.psi_eval, 0.0},
       .mapc2p = mapc2p, // mapping of computational to physical space
       .c2p_ctx = &ctx,
-      .bfield_func = bmag_func, // magnetic field magnitude
+      .bfield_func = bfield_func, // magnetic field magnitude
       .bfield_ctx = &ctx
     },
 
