@@ -355,7 +355,7 @@ create_ctx(void)
   // Grid parameters
   double vpar_max_ion = 16 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
-  int Nz = 288;
+  int Nz = 144;
   int Nvpar = 64; // 96 uniform
   int Nmu = 16;  // 192 uniform
   int poly_order = 1;
@@ -389,9 +389,11 @@ create_ctx(void)
   // Whether to evolve the field.
   bool is_static_field_oap = true;
   bool is_static_field_fdp = false;
+
   // Whether to enable positivity.
   bool is_positivity_enabled_oap = false;
-  bool is_positivity_enabled_fdp = true;
+  bool is_positivity_enabled_fdp = false;
+
   // Type of df/dt multipler.
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_oap = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE;
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_fdp = GKYL_GK_FDOT_MULTIPLIER_NONE;
@@ -728,7 +730,7 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
       
       double progress_pct = 100.0 * sim_time_elapsed / (sim_time_elapsed + sim_time_remaining);
       gkyl_gyrokinetic_app_cout(app, stdout, " dt = %g (phase %.1f%% complete, est. %dh %dm %ds remaining)\n", 
-                                  status.dt_actual, progress_pct, hours, minutes, seconds);
+                                status.dt_actual, progress_pct, hours, minutes, seconds);
     }
 
     if (!status.success)
@@ -809,7 +811,7 @@ int main(int argc, char **argv)
     .upper = { 1.0, 1.0},
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
-    // .skip_cell_threshold = 1e-16,
+    .skip_cell_threshold = 1e-16,
 
     .projection = {
       .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
@@ -906,7 +908,13 @@ int main(int argc, char **argv)
       .mapc2p = mapc2p, // mapping of computational to physical space
       .c2p_ctx = &ctx,
       .bfield_func = bfield_func, // magnetic field magnitude
-      .bfield_ctx = &ctx
+      .bfield_ctx = &ctx,
+      .position_map_info = {
+        .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
+        .map_strength = 0.5,
+        .maximum_slope_at_min_B = 2,
+        .moving_average_width = 0.5,
+      },
     },
 
     .num_periodic_dir = 0,

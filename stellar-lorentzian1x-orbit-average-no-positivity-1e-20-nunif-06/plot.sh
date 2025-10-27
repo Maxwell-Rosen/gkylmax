@@ -8,7 +8,8 @@ pgkyl gk_lorentzian_mirror-ion_integrated_moms.gkyl pl --title 'Integrated Ion M
 
 pgkyl "gk_lorentzian_mirror-ion_BiMaxwellianMoments_[0-9]*.gkyl" interp col ev 'f 2,3 1.67e-27 2.014 * 1.6e-19 / scale_comp' pl --xlabel 'Time (s)' --ylabel "Z, m" --saveas python-plots/ion_BiMaxwellian_moments_vs_time.png --no-show --no-legend --subplot-titles 'Density $m^3$, $U_\parallel m/s$, $T_\parallel$ eV, $T_\perp$ eV' &
 
-frame=$(ls gk_lorentzian_mirror-ion_cflrate_*.gkyl | sed -E 's/.*_([0-9]+)\.gkyl/\1/' | sort -n | tail -1)
+# frame=$(ls gk_lorentzian_mirror-ion_cflrate_*.gkyl | sed -E 's/.*_([0-9]+)\.gkyl/\1/' | sort -n | tail -1)
+frame=15
 pgkyl --c2p-vel gk_lorentzian_mirror-ion_mapc2p_vel.gkyl gk_lorentzian_mirror-ion_${frame}.gkyl interp sel --z0 0.0 ev 'f abs' pl --xlabel 'Parallel Velocity $v_\parallel$ (m/s)' --ylabel 'Magnetic Moment $\mu$ (J/T)' --logz --zmin 1e-20 --title "Ion Distribution Function at z=0.0 (Frame ${frame})" --saveas python-plots/ion_distf_z0.0_frame${frame}.png --no-show &
 pgkyl --c2p-vel gk_lorentzian_mirror-ion_mapc2p_vel.gkyl gk_lorentzian_mirror-ion_${frame}.gkyl interp sel --z0 0.5 ev 'f abs' pl --xlabel 'Parallel Velocity $v_\parallel$ (m/s)' --ylabel 'Magnetic Moment $\mu$ (J/T)' --logz --zmin 1e-20 --title "Ion Distribution Function at z=0.5 (Frame ${frame})" --saveas python-plots/ion_distf_z0.5_frame${frame}.png --no-show &
 pgkyl --c2p-vel gk_lorentzian_mirror-ion_mapc2p_vel.gkyl gk_lorentzian_mirror-ion_${frame}.gkyl interp sel --z0 0.98 ev 'f abs' pl --xlabel 'Parallel Velocity $v_\parallel$ (m/s)' --ylabel 'Magnetic Moment $\mu$ (J/T)' --logz --zmin 1e-20 --title "Ion Distribution Function at z=0.98 (Frame ${frame})" --saveas python-plots/ion_distf_z0.98_frame${frame}.png --no-show &
@@ -45,9 +46,8 @@ pgkyl gk_lorentzian_mirror-ion_nu_sum_${frame}.gkyl interp pl --title 'Final Col
 
 pgkyl gk_lorentzian_mirror-ion_nu_sum_${frame}.gkyl interp ev '1 f /' pl --title 'Final Collision time τ' --xlabel 'Axial Position z (m)' --ylabel 'Collision Time τ (s)' --logy --saveas python-plots/ion_collision_time_tau_frame${frame}.png --no-show &
 
-pgkyl gk_lorentzian_mirror-ion_BiMaxwellianMoments_100.gkyl interp ev 'f 2,3 1.67e-27 2.014 * 1.6e-19 / scale_comp' pl -f0 --legend "no_positivity,regular" --title 'Bi-Maxwellian Moments — comparison (frame 100)' --xlabel 'Axial Position z (m)' --subplot-ylabels 'Density $m^{-3}$, $U_\parallel$ (m/s), $T_\parallel$ (eV), $T_\perp$ (eV)' &
 
-# pgkyl gk_lorentzian_mirror-ion_BiMaxwellianMoments_55.gkyl ../stellar-lorentzian1x-orbit-average/gk_lorentzian_mirror-ion_BiMaxwellianMoments_55.gkyl interp ev 'f 2,3 1.67e-27 2.014 * 1.6e-19 / scale_comp' pl -f0 --legend "skip_cell,regular" --logy --title 'Bi-Maxwellian Moments — comparison (frame 55)' --xlabel 'Axial Position z (m)' --subplot-ylabels 'Density $m^{-3}$, $U_\parallel$ (m/s), $T_\parallel$ (eV), $T_\perp$ (eV)' --saveas python-plots/ion_BiMaxwellianMoments_compare_55.png &
+pgkyl gk_lorentzian_mirror-ion_BiMaxwellianMoments_100.gkyl ../stellar-lorentzian1x-orbit-average-no-positivity-1e-20/gk_lorentzian_mirror-ion_BiMaxwellianMoments_100.gkyl interp ev 'f 2,3 1.67e-27 2.014 * 1.6e-19 / scale_comp' pl -f0 --legend "nunif,unif" --logy --title 'Bi-Maxwellian Moments thresh=1e-20 npos' --xlabel 'Axial Position z (m)' --subplot-ylabels 'Density $m^{-3}$, $U_\parallel$ (m/s), $T_\parallel$ (eV), $T_\perp$ (eV)' --saveas python-plots/ion_BiMaxwellianMoments_compare_100.pdf &
 
 # pgkyl gk_lorentzian_mirror-ion_570.gkyl gk_lorentzian_mirror-ion_575.gkyl interp ev 'f[1] f[0] - f[0] / abs' sel --z0 0.0 pl --title 'Fractional error between begining and end of 570 and 575' --saveas python-plots/ion_distf_diff_570_575.png --no-show &
 
