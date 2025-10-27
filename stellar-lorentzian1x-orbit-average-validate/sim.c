@@ -215,17 +215,22 @@ mapc2p(double t, const double *xc, double *GKYL_RESTRICT xp, void *ctx)
 }
 
 void
-bmag_func(double t, const double *xc, double *GKYL_RESTRICT fout, void *ctx)
+bfield_func(double t, const double *xc, double *GKYL_RESTRICT fout, void *ctx)
 {
-  double psi = xc[0], theta = xc[1], z = xc[2];
-
   struct gk_mirror_ctx *app = ctx;
+  double z = xc[2];
+  double psi = psi_RZ(app->RatZeq0, 0.0, ctx); // Magnetic flux function psi of field line.
   double Z = Z_psiz(psi, z, ctx);
   double BRad, BZ, Bmag;
   Bfield_psiZ(psi, Z, ctx, &BRad, &BZ, &Bmag);
-  fout[0] = Bmag;
-}
 
+  double phi = xc[1];
+  // zc are computational coords. 
+  // Set Cartesian components of magnetic field.
+  fout[0] = BRad*cos(phi);
+  fout[1] = BRad*sin(phi);
+  fout[2] = BZ;
+}
 
 // Evaluate collision frequencies
 void
@@ -338,8 +343,8 @@ create_ctx(void)
   double tau = pow(B_p, 2.) * beta / (2.0 * mu0 * n0 * Te0) - 1.;
   double Ti0 = tau * Te0;
 
-  double nuFrac = 1.0;
   // Ion-ion collision freq.
+  double nuFrac = 1.0;
   double logLambdaIon = 6.6 - 0.5 * log(n0 / 1e20) + 1.5 * log(Ti0 / eV);
   double nuIon = nuFrac * logLambdaIon * pow(eV, 4.) * n0 /
                  (12 * pow(M_PI, 3. / 2.) * pow(eps0, 2.) * sqrt(mi) * pow(Ti0, 3. / 2.));
@@ -350,7 +355,7 @@ create_ctx(void)
   // Grid parameters
   double vpar_max_ion = 16 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
-  int Nz = 288;
+  int Nz = 216;
   int Nvpar = 64; // 96 uniform
   int Nmu = 16;  // 192 uniform
   int poly_order = 1;
@@ -362,8 +367,6 @@ create_ctx(void)
 
   // Geometry parameters.
   double RatZeq0 = 0.10; // Radius of the field line at Z=0.
-  // Axial coordinate Z extents. Endure that Z=0 is not on
-  // the boundary of a cell (due to AD errors).
   double Z_min = -2.5;
   double Z_max =  2.5;
   double mcB = 6.51292;
@@ -371,8 +374,7 @@ create_ctx(void)
   double Z_m = 0.98;
 
   // POA parameters  
-  // Factor multiplying collisionless terms.
-  double alpha_oap = 5e-6;
+  double alpha_oap = 5e-6;  // Factor multiplying collisionless terms.
   double alpha_fdp = 1.0;
   // Duration of each phase.
   double tau_oap = 0;
@@ -388,6 +390,7 @@ create_ctx(void)
   // Whether to evolve the field.
   bool is_static_field_oap = true;
   bool is_static_field_fdp = false;
+
   // Whether to enable positivity.
   bool is_positivity_enabled_oap = false;
   bool is_positivity_enabled_fdp = true;
@@ -667,12 +670,16 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
   reset_io_triggers(ctx, tfs, trig_write_conf, trig_write_phase, trig_calc_intdiag);
 
   // Reset simulation parameters and function pointers.
-  struct gkyl_gyrokinetic_fdot_multiplier fdot_mult = {
+  struct gkyl_gyrokinetic_collisionless collisionless_inp = {
+    .type = GKYL_GK_COLLISIONLESS_ES,
+    .scale_factor = pparams->alpha,
+  };
+  struct gkyl_gyrokinetic_fdot_multiplier fdot_mult_inp = {
     .type = pparams->fdot_mult_type,
     .cellwise_const = true,
     .write_diagnostics = true,
   };
-  struct gkyl_gyrokinetic_field reset_field = {
+  struct gkyl_gyrokinetic_field field_inp = {
     .gkfield_id = GKYL_GK_FIELD_BOLTZMANN,
     .electron_mass = ctx->me,
     .electron_charge = ctx->qe,
@@ -681,10 +688,11 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
     .is_static = pparams->is_static_field,
   };
   double alpha = pparams->alpha;
-  gkyl_gyrokinetic_app_reset_species_fdot_multiplier(app, t_curr, "ion", fdot_mult);
-  gkyl_gyrokinetic_app_reset_species_collisionless(app, t_curr, "ion", alpha);
+  gkyl_gyrokinetic_app_reset_species_collisionless(app, t_curr, "ion", collisionless_inp);
+  gkyl_gyrokinetic_app_reset_species_fdot_multiplier(app, t_curr, "ion", fdot_mult_inp);
   gkyl_gyrokinetic_app_reset_species_positivity(app, t_curr, "ion", pparams->is_positivity_enabled);
-  gkyl_gyrokinetic_app_reset_field(app, t_curr, reset_field);
+  gkyl_gyrokinetic_app_reset_field(app, t_curr, field_inp);
+
 
   // Compute initial guess of maximum stable time-step.
   double dt = t_end - t_curr;
@@ -714,17 +722,15 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
       double sim_time_elapsed = t_curr - t_start;
       double sim_time_remaining = t_end - t_curr;
       
-      if (sim_time_elapsed > 0 && step > 1) {
-        double wall_time_per_sim_time = wall_time_elapsed / sim_time_elapsed;
-        double wall_time_remaining = wall_time_per_sim_time * sim_time_remaining;
-        int hours = (int)(wall_time_remaining / 3600);
-        int minutes = (int)((wall_time_remaining - hours*3600) / 60);
-        int seconds = (int)(wall_time_remaining - hours*3600 - minutes*60);
-        
-        double progress_pct = 100.0 * sim_time_elapsed / (sim_time_elapsed + sim_time_remaining);
-        gkyl_gyrokinetic_app_cout(app, stdout, " dt = %g (phase %.1f%% complete, est. %dh %dm %ds remaining)\n", 
-                                  status.dt_actual, progress_pct, hours, minutes, seconds);
-      }
+      double wall_time_per_sim_time = wall_time_elapsed / sim_time_elapsed;
+      double wall_time_remaining = wall_time_per_sim_time * sim_time_remaining;
+      int hours = (int)(wall_time_remaining / 3600);
+      int minutes = (int)((wall_time_remaining - hours*3600) / 60);
+      int seconds = (int)(wall_time_remaining - hours*3600 - minutes*60);
+      
+      double progress_pct = 100.0 * sim_time_elapsed / (sim_time_elapsed + sim_time_remaining);
+      gkyl_gyrokinetic_app_cout(app, stdout, " dt = %g (phase %.1f%% complete, est. %dh %dm %ds remaining)\n", 
+                                status.dt_actual, progress_pct, hours, minutes, seconds);
     }
 
     if (!status.success)
@@ -805,7 +811,7 @@ int main(int argc, char **argv)
     .upper = { 1.0, 1.0},
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
-    .no_by = true,
+    .skip_cell_threshold = 1e-20,
 
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
@@ -826,12 +832,17 @@ int main(int argc, char **argv)
       .mapping = mapc2p_vel_ion,
       .ctx = &ctx,
     },
-    // .collisionless_scale_factor = 1.0,
-    // .time_rate_multiplier = {
-    //   .type = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE,
-    //   .cellwise_const = true,
-    //   .write_diagnostics = true,
-    // },
+
+    .collisionless = {
+      .type = GKYL_GK_COLLISIONLESS_ES,
+      .scale_factor = 1.0, // Will be replaced below.
+      .write_diagnostics = true,
+    },
+    .time_rate_multiplier = {
+      .type = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE,
+      .cellwise_const = true,
+      .write_diagnostics = true,
+    },
 
     .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
@@ -861,15 +872,11 @@ int main(int argc, char **argv)
         .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
       },
     },
-    .bcx = {
-      .lower={.type = GKYL_SPECIES_GK_SHEATH,},
-      .upper={.type = GKYL_SPECIES_GK_SHEATH,},
-    },
 
-    // .bcs = {
-    //   { .dir = 0, .edge = GKYL_LOWER_EDGE, .type = GKYL_BC_GK_SPECIES_SHEATH },
-    //   { .dir = 0, .edge = GKYL_UPPER_EDGE, .type = GKYL_BC_GK_SPECIES_SHEATH },
-    // },
+    .bcs = {
+      { .dir = 0, .edge = GKYL_LOWER_EDGE, .type = GKYL_BC_GK_SPECIES_SHEATH },
+      { .dir = 0, .edge = GKYL_UPPER_EDGE, .type = GKYL_BC_GK_SPECIES_SHEATH },
+    },
     .write_omega_cfl = true,
     .num_diag_moments = 8,
     .diag_moments = {GKYL_F_MOMENT_BIMAXWELLIAN, GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_M3PAR, GKYL_F_MOMENT_M3PERP },
@@ -905,8 +912,14 @@ int main(int argc, char **argv)
       .world = {ctx.psi_eval, 0.0},
       .mapc2p = mapc2p, // mapping of computational to physical space
       .c2p_ctx = &ctx,
-      .bfield_func = bmag_func, // magnetic field magnitude
-      .bfield_ctx = &ctx
+      .bfield_func = bfield_func, // magnetic field magnitude
+      .bfield_ctx = &ctx,
+      .position_map_info = {
+        .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
+        .map_strength = 0.5,
+        .maximum_slope_at_min_B = 2,
+        .moving_average_width = 0.5,
+      },
     },
 
     .num_periodic_dir = 0,

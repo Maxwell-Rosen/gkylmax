@@ -369,8 +369,8 @@ create_ctx(void)
   double RatZeq0 = 0.10; // Radius of the field line at Z=0.
   double Z_min = -2.5;
   double Z_max =  2.5;
-  double mcB = 6.51292;
-  double gamma = 0.124904;
+  double mcB = 3.691260;
+  double gamma = 0.226381;
   double Z_m = 0.98;
 
   // POA parameters  

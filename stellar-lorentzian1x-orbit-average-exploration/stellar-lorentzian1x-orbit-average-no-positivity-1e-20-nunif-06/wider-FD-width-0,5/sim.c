@@ -392,7 +392,8 @@ create_ctx(void)
 
   // Whether to enable positivity.
   bool is_positivity_enabled_oap = false;
-  bool is_positivity_enabled_fdp = true;
+  bool is_positivity_enabled_fdp = false;
+
   // Type of df/dt multipler.
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_oap = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE;
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_fdp = GKYL_GK_FDOT_MULTIPLIER_NONE;
@@ -910,9 +911,9 @@ int main(int argc, char **argv)
       .bfield_ctx = &ctx,
       .position_map_info = {
         .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
-        .map_strength = 0.5,
+        .map_strength = 0.6,
         .maximum_slope_at_min_B = 2,
-        .moving_average_width = 0.5,
+        .moving_average_width = 0.2,
       },
     },
 

@@ -355,7 +355,7 @@ create_ctx(void)
   // Grid parameters
   double vpar_max_ion = 16 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
-  int Nz = 216;
+  int Nz = 288;
   int Nvpar = 64; // 96 uniform
   int Nmu = 16;  // 192 uniform
   int poly_order = 1;
@@ -389,7 +389,6 @@ create_ctx(void)
   // Whether to evolve the field.
   bool is_static_field_oap = true;
   bool is_static_field_fdp = false;
-
   // Whether to enable positivity.
   bool is_positivity_enabled_oap = false;
   bool is_positivity_enabled_fdp = true;
@@ -810,7 +809,7 @@ int main(int argc, char **argv)
     .upper = { 1.0, 1.0},
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
-    .skip_cell_threshold = 1e-20,
+    .skip_cell_threshold = 1e-16,
 
     .projection = {
       .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
@@ -907,13 +906,7 @@ int main(int argc, char **argv)
       .mapc2p = mapc2p, // mapping of computational to physical space
       .c2p_ctx = &ctx,
       .bfield_func = bfield_func, // magnetic field magnitude
-      .bfield_ctx = &ctx,
-      .position_map_info = {
-        .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
-        .map_strength = 0.5,
-        .maximum_slope_at_min_B = 2,
-        .moving_average_width = 0.5,
-      },
+      .bfield_ctx = &ctx
     },
 
     .num_periodic_dir = 0,

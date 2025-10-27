@@ -355,9 +355,9 @@ create_ctx(void)
   // Grid parameters
   double vpar_max_ion = 16 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
-  int Nz = 216;
-  int Nvpar = 64; // 96 uniform
-  int Nmu = 16;  // 192 uniform
+  int Nz = 1500;
+  int Nvpar = 64;
+  int Nmu = 16;
   int poly_order = 1;
 
   // Source parameters
@@ -392,7 +392,8 @@ create_ctx(void)
 
   // Whether to enable positivity.
   bool is_positivity_enabled_oap = false;
-  bool is_positivity_enabled_fdp = true;
+  bool is_positivity_enabled_fdp = false;
+
   // Type of df/dt multipler.
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_oap = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE;
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_fdp = GKYL_GK_FDOT_MULTIPLIER_NONE;
@@ -908,12 +909,12 @@ int main(int argc, char **argv)
       .c2p_ctx = &ctx,
       .bfield_func = bfield_func, // magnetic field magnitude
       .bfield_ctx = &ctx,
-      .position_map_info = {
-        .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
-        .map_strength = 0.5,
-        .maximum_slope_at_min_B = 2,
-        .moving_average_width = 0.5,
-      },
+      // .position_map_info = {
+      //   .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
+      //   .map_strength = 1.0,
+      //   .maximum_slope_at_min_B = 4,
+      //   .moving_average_width = 0.5,
+      // },
     },
 
     .num_periodic_dir = 0,
