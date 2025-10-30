@@ -244,21 +244,30 @@ void
 eval_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  fout[0] = 1e17;
+  double b = 8;
+  double func = (atan(-(xn[0] - 0.7) * b) - atan(-(xn[0] + 0.7) * b))/M_PI;
+  fout[0] = 2e19*func;
+  // fout[0] = 1e17;
 }
 
 void
 eval_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  fout[0] = 0.0;
+  double b=30;
+  double func = (-atan(-(xn[0] - 0.98) * b) - atan(-(xn[0] + 0.98) * b))/M_PI;
+  fout[0] = 1.2e6*func;
+  // fout[0] = 0.0;
 }
 
 void
 eval_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  fout[0] = app->Ti0;
+  double b = 5;
+  double func = (atan(-(xn[0] - 0.7) * b) - atan(-(xn[0] + 0.7) * b))/M_PI;
+  fout[0] = 15000*GKYL_ELEMENTARY_CHARGE*func;
+  // fout[0] = app->Ti0;
 }
 
 void
@@ -378,13 +387,13 @@ create_ctx(void)
   double alpha_fdp = 1.0;
   double tau_oap = 500e-3;  // Duration of each phase.
   double tau_fdp = 20e-6;
-  double tau_fdp_extra = 0.0;
-  int num_cycles = 10; // Number of OAP+FDP cycles to run.
+  double tau_fdp_extra = 20e-6;
+  int num_cycles = 30; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
   int num_frames_oap = 5;        // Frames per OAP phase
   int num_frames_fdp = 5;        // Frames per FDP phase
-  int num_frames_fdp_extra = 0;  // Frames for the extra FDP phase
+  int num_frames_fdp_extra = 5;  // Frames for the extra FDP phase
   
   // Whether to evolve the field.
   bool is_static_field_oap = true;
@@ -406,23 +415,23 @@ create_ctx(void)
 
   struct gk_poa_phase_params *poa_phases = gkyl_malloc(num_phases * sizeof(struct gk_poa_phase_params));
   for (int i=0; i<(num_phases-1)/2; i++) {
-    // OAPs.
-    poa_phases[2*i].phase = GK_POA_OAP;
-    poa_phases[2*i].num_frames = num_frames_oap;
-    poa_phases[2*i].duration = tau_oap;
-    poa_phases[2*i].alpha = alpha_oap;
-    poa_phases[2*i].is_static_field = is_static_field_oap;
-    poa_phases[2*i].fdot_mult_type = fdot_mult_type_oap;
-    poa_phases[2*i].is_positivity_enabled = is_positivity_enabled_oap;
-
     // FDPs.
-    poa_phases[2*i+1].phase = GK_POA_FDP;
-    poa_phases[2*i+1].num_frames = num_frames_fdp;
-    poa_phases[2*i+1].duration = tau_fdp;
-    poa_phases[2*i+1].alpha = alpha_fdp;
-    poa_phases[2*i+1].is_static_field = is_static_field_fdp;
-    poa_phases[2*i+1].fdot_mult_type = fdot_mult_type_fdp;
-    poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_fdp;
+    poa_phases[2*i].phase = GK_POA_FDP;
+    poa_phases[2*i].num_frames = num_frames_fdp;
+    poa_phases[2*i].duration = tau_fdp;
+    poa_phases[2*i].alpha = alpha_fdp;
+    poa_phases[2*i].is_static_field = is_static_field_fdp;
+    poa_phases[2*i].fdot_mult_type = fdot_mult_type_fdp;
+    poa_phases[2*i].is_positivity_enabled = is_positivity_enabled_fdp;
+
+    // OAPs.
+    poa_phases[2*i+1].phase = GK_POA_OAP;
+    poa_phases[2*i+1].num_frames = num_frames_oap;
+    poa_phases[2*i+1].duration = tau_oap;
+    poa_phases[2*i+1].alpha = alpha_oap;
+    poa_phases[2*i+1].is_static_field = is_static_field_oap;
+    poa_phases[2*i+1].fdot_mult_type = fdot_mult_type_oap;
+    poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_oap;
   }
   // The final stage is an extra, longer FDP.
   poa_phases[num_phases-1].phase = GK_POA_FDP;
@@ -841,11 +850,8 @@ int main(int argc, char **argv)
 
     .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
-      .normNu = true,
-      .n_ref = ctx.n0,
-      .T_ref = ctx.Ti0,
-      .ctx = &ctx,
-      .self_nu = evalNuIon,
+      .den_ref = ctx.n0,
+      .temp_ref = ctx.Te0,
       .write_diagnostics = true,
     },
     .source = {

@@ -244,6 +244,9 @@ void
 eval_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
+  // double b = 8;
+  // double func = (atan(-(xn[0] - 0.7) * b) - atan(-(xn[0] + 0.7) * b))/M_PI;
+  // fout[0] = 1e17*func;
   fout[0] = 1e17;
 }
 
@@ -251,6 +254,9 @@ void
 eval_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
+  // double b=30;
+  // double func = (-atan(-(xn[0] - 0.98) * b) - atan(-(xn[0] + 0.98) * b))/M_PI;
+  // fout[0] = 1.2e6*func;
   fout[0] = 0.0;
 }
 
@@ -258,6 +264,9 @@ void
 eval_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
+  // double b = 5;
+  // double func = (atan(-(xn[0] - 0.7) * b) - atan(-(xn[0] + 0.7) * b))/M_PI;
+  // fout[0] = 15000*GKYL_ELEMENTARY_CHARGE*func;
   fout[0] = app->Ti0;
 }
 
@@ -376,16 +385,15 @@ create_ctx(void)
   // POA parameters  
   double alpha_oap = 5e-6;  // Factor multiplying collisionless terms.
   double alpha_fdp = 1.0;
-  // Duration of each phase.
-  double tau_oap = 0;
-  double tau_fdp = 0;
-  double tau_fdp_extra = 1e-3;
-  int num_cycles = 0; // Number of OAP+FDP cycles to run.
+  double tau_oap = 2.0;  // Duration of each phase.
+  double tau_fdp = 20e-6;
+  double tau_fdp_extra = 0.0;
+  int num_cycles = 10; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
   int num_frames_oap = 5;        // Frames per OAP phase
   int num_frames_fdp = 5;        // Frames per FDP phase
-  int num_frames_fdp_extra = 100;  // Frames for the extra FDP phase
+  int num_frames_fdp_extra = 0;  // Frames for the extra FDP phase
   
   // Whether to evolve the field.
   bool is_static_field_oap = true;
@@ -433,7 +441,7 @@ create_ctx(void)
   poa_phases[num_phases-1].fdot_mult_type = fdot_mult_type_fdp;
   poa_phases[num_phases-1].is_positivity_enabled = is_positivity_enabled_fdp;
 
-  double write_phase_freq = 1.0; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
+  double write_phase_freq = 0.2; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
   double int_diag_calc_freq = 100; // Frequency of calculating integrated diagnostics (as a factor of num_frames).
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
   int num_failures_max = 20; // Maximum allowable number of consecutive small time-steps.
@@ -811,22 +819,17 @@ int main(int argc, char **argv)
     .upper = { 1.0, 1.0},
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
-    .skip_cell_threshold = 1e-20,
+    // .skip_cell_threshold = 1e-20,
 
-    .init_from_file = {
-      .type = GKYL_IC_IMPORT_F,
-      .file_name = "initial-condition/gk_lorentzian_mirror-ion_100.gkyl",
+    .projection = {
+      .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
+      .density = eval_density_ion,
+      .ctx_density = &ctx,
+      .upar = eval_upar_ion,
+      .ctx_upar = &ctx,
+      .temp = eval_temp_ion,
+      .ctx_temp = &ctx,
     },
-
-    // .projection = {
-    //   .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
-    //   .density = eval_density_ion,
-    //   .ctx_density = &ctx,
-    //   .upar = eval_upar_ion,
-    //   .ctx_upar = &ctx,
-    //   .temp = eval_temp_ion,
-    //   .ctx_temp = &ctx,
-    // },
 
     .mapc2p = {
       .mapping = mapc2p_vel_ion,
@@ -846,11 +849,8 @@ int main(int argc, char **argv)
 
     .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
-      .normNu = true,
-      .n_ref = ctx.n0,
-      .T_ref = ctx.Ti0,
-      .ctx = &ctx,
-      .self_nu = evalNuIon,
+      .den_ref = ctx.n0,
+      .temp_ref = ctx.Te0,
       .write_diagnostics = true,
     },
     .source = {
