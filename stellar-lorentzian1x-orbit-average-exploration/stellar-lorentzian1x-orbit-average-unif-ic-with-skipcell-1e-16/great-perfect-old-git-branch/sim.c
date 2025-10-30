@@ -849,8 +849,11 @@ int main(int argc, char **argv)
 
     .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
-      .den_ref = ctx.n0,
-      .temp_ref = ctx.Te0,
+      .normNu = true,
+      .n_ref = ctx.n0,
+      .T_ref = ctx.Ti0,
+      .ctx = &ctx,
+      .self_nu = evalNuIon,
       .write_diagnostics = true,
     },
     .source = {
