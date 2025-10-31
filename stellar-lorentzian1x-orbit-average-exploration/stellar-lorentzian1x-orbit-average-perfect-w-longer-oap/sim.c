@@ -385,7 +385,7 @@ create_ctx(void)
   // POA parameters  
   double alpha_oap = 5e-6;  // Factor multiplying collisionless terms.
   double alpha_fdp = 1.0;
-  double tau_oap = 500e-3;  // Duration of each phase.
+  double tau_oap = 2.0;  // Duration of each phase.
   double tau_fdp = 20e-6;
   double tau_fdp_extra = 0.0;
   int num_cycles = 1; // Number of OAP+FDP cycles to run.

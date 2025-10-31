@@ -11,6 +11,8 @@ mcB_values=(2.130115 2.665626 3.691260 4.490901 5.168764)
 gamma_values=(0.451454 0.331696 0.226381 0.182792 0.157441)
 R_values=(3 5 10 15 20)
 
+mkdir -p R-scan
+
 rm core/sim
 
 # Submit jobs for paired mcB and gamma scans
@@ -30,17 +32,18 @@ for i in "${!mcB_values[@]}"; do
   # Change into the folder
   cd "$folder_name" || exit
 
-  sed -i "372s/.*/  double mcB = $mcB;/" sim.c
-  sed -i "373s/.*/  double gamma = $gamma;/" sim.c
+  sed -i "381s/.*/  double mcB = $mcB;/" sim.c
+  sed -i "382s/.*/  double gamma = $gamma;/" sim.c
   sed -i "4s/.*/#SBATCH -J poa-R-${R}/" jobscript-gkyl-stellar-amd
   
   # Build the simulation
+	make clean
   make
 
-  ./sim -s1
+  # ./sim -s1
 
   # Submit the job
-  # sbatch jobscript-gkyl-stellar-amd
+  sbatch jobscript-gkyl-stellar-amd
 
   # Print confirmation
   echo "submitted job for R = $R (mcB = $mcB, gamma = $gamma)"

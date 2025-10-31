@@ -244,30 +244,30 @@ void
 eval_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  // double b = 8;
-  // double func = (atan(-(xn[0] - 0.7) * b) - atan(-(xn[0] + 0.7) * b))/M_PI;
-  // fout[0] = 1e17*func;
-  fout[0] = 1e17;
+  double b = 8;
+  double func = (atan(-(xn[0] - 0.7) * b) - atan(-(xn[0] + 0.7) * b))/M_PI;
+  fout[0] = 1e17*func;
+  // fout[0] = 1e17;
 }
 
 void
 eval_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  // double b=30;
-  // double func = (-atan(-(xn[0] - 0.98) * b) - atan(-(xn[0] + 0.98) * b))/M_PI;
-  // fout[0] = 1.2e6*func;
-  fout[0] = 0.0;
+  double b=30;
+  double func = (-atan(-(xn[0] - 0.98) * b) - atan(-(xn[0] + 0.98) * b))/M_PI;
+  fout[0] = 1.2e6*func;
+  // fout[0] = 0.0;
 }
 
 void
 eval_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  // double b = 5;
-  // double func = (atan(-(xn[0] - 0.7) * b) - atan(-(xn[0] + 0.7) * b))/M_PI;
-  // fout[0] = 15000*GKYL_ELEMENTARY_CHARGE*func;
-  fout[0] = app->Ti0;
+  double b = 5;
+  double func = (atan(-(xn[0] - 0.7) * b) - atan(-(xn[0] + 0.7) * b))/M_PI;
+  fout[0] = 15000*GKYL_ELEMENTARY_CHARGE*func;
+  // fout[0] = app->Ti0;
 }
 
 void

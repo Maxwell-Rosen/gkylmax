@@ -364,7 +364,7 @@ create_ctx(void)
   // Grid parameters
   double vpar_max_ion = 16 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
-  int Nz = 216;
+  int Nz = 220;
   int Nvpar = 64; // 96 uniform
   int Nmu = 16;  // 192 uniform
   int poly_order = 1;
@@ -378,17 +378,17 @@ create_ctx(void)
   double RatZeq0 = 0.10; // Radius of the field line at Z=0.
   double Z_min = -2.5;
   double Z_max =  2.5;
-  double mcB = 5.168764;
-  double gamma = 0.157441;
+  double mcB = 6.51292;
+  double gamma = 0.124904;
   double Z_m = 0.98;
 
   // POA parameters  
   double alpha_oap = 5e-6;  // Factor multiplying collisionless terms.
   double alpha_fdp = 1.0;
-  double tau_oap = 2.0;  // Duration of each phase.
+  double tau_oap = 500e-3;  // Duration of each phase.
   double tau_fdp = 20e-6;
   double tau_fdp_extra = 0.0;
-  int num_cycles = 10; // Number of OAP+FDP cycles to run.
+  int num_cycles = 1; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
   int num_frames_oap = 5;        // Frames per OAP phase
