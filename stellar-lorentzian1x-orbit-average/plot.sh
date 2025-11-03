@@ -30,13 +30,13 @@ pgkyl gk_lorentzian_mirror-ion_cflrate_${frame}.gkyl sel --z0 0.0 pl --title 'CF
 pgkyl gk_lorentzian_mirror-ion_cflrate_$(($frame - 5)).gkyl sel --z0 0.0 pl --title 'CFL Rate at z=0.0 (5 frames ago)' --xlabel '$v_\parallel$ computational' --ylabel '$\mu$ computational' --logz --saveas python-plots/cfl_rate_z0.0_frame$(($frame - 5)).png --no-show &
 
 # Save data for the time trace of the field at z= 0.0, 0.5, 1.0, 1.5, and 1.9
-pgkyl gk_lorentzian_mirror-field_[0-9]*.gkyl interp sel --z0 0.0 col write -s -f field_time_trace_z0_eq_0 &
-pgkyl gk_lorentzian_mirror-field_[0-9]*.gkyl interp sel --z0 0.5 col write -s -f field_time_trace_z0_eq_0,5 &
-pgkyl gk_lorentzian_mirror-field_[0-9]*.gkyl interp sel --z0 0.98 col write -s -f field_time_trace_z0_eq_0,98 &
-pgkyl gk_lorentzian_mirror-field_[0-9]*.gkyl interp sel --z0 1.0 col write -s -f field_time_trace_z0_eq_1 &
-pgkyl gk_lorentzian_mirror-field_[0-9]*.gkyl interp sel --z0 1.5 col write -s -f field_time_trace_z0_eq_1,5 &
-pgkyl gk_lorentzian_mirror-field_[0-9]*.gkyl interp sel --z0 1.9 col write -s -f field_time_trace_z0_eq_1,9 &
-pgkyl gk_lorentzian_mirror-field_[0-9]*.gkyl interp sel --z0 2.5 col write -s -f field_time_trace_z0_eq_2,5 &
+pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-field_[0-9]*.gkyl interp sel --z0 0.0 col write -s -f field_time_trace_z0_eq_0 &
+pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-field_[0-9]*.gkyl interp sel --z0 0.5 col write -s -f field_time_trace_z0_eq_0,5 &
+pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-field_[0-9]*.gkyl interp sel --z0 0.98 col write -s -f field_time_trace_z0_eq_0,98 &
+pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-field_[0-9]*.gkyl interp sel --z0 1.0 col write -s -f field_time_trace_z0_eq_1 &
+pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-field_[0-9]*.gkyl interp sel --z0 1.5 col write -s -f field_time_trace_z0_eq_1,5 &
+pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-field_[0-9]*.gkyl interp sel --z0 1.9 col write -s -f field_time_trace_z0_eq_1,9 &
+pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-field_[0-9]*.gkyl interp sel --z0 2.5 col write -s -f field_time_trace_z0_eq_2,5 &
 
 # Plot bimaxwellian moments at the final frame
 pgkyl gk_lorentzian_mirror-ion_BiMaxwellianMoments_${frame}.gkyl interp ev 'f 2,3 1.67e-27 2.014 * 1.6e-19 / scale_comp' pl --title 'Final Bi-Maxwellian Moments' --saveas python-plots/ion_BiMaxwellianMoments_frame${frame}.png --no-show --no-legend --subplot-ylabels 'Density $m^3$, $U_\parallel m/s$, $T_\parallel$ eV, $T_\perp$ eV' &

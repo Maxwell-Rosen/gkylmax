@@ -244,6 +244,9 @@ void
 eval_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
+  // double b = 8;
+  // double func = (atan(-(xn[0] - 0.7) * b) - atan(-(xn[0] + 0.7) * b))/M_PI;
+  // fout[0] = 1e17*func;
   fout[0] = 1e17;
 }
 
@@ -251,6 +254,9 @@ void
 eval_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
+  // double b=30;
+  // double func = (-atan(-(xn[0] - 0.98) * b) - atan(-(xn[0] + 0.98) * b))/M_PI;
+  // fout[0] = 1.2e6*func;
   fout[0] = 0.0;
 }
 
@@ -258,6 +264,9 @@ void
 eval_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
+  // double b = 5;
+  // double func = (atan(-(xn[0] - 0.7) * b) - atan(-(xn[0] + 0.7) * b))/M_PI;
+  // fout[0] = 15000*GKYL_ELEMENTARY_CHARGE*func;
   fout[0] = app->Ti0;
 }
 
@@ -383,8 +392,8 @@ create_ctx(void)
   int num_cycles = 0; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
-  int num_frames_oap = 5;        // Frames per OAP phase
-  int num_frames_fdp = 5;        // Frames per FDP phase
+  int num_frames_oap = 0;        // Frames per OAP phase
+  int num_frames_fdp = 0;        // Frames per FDP phase
   int num_frames_fdp_extra = 100;  // Frames for the extra FDP phase
   
   // Whether to evolve the field.
@@ -433,7 +442,7 @@ create_ctx(void)
   poa_phases[num_phases-1].fdot_mult_type = fdot_mult_type_fdp;
   poa_phases[num_phases-1].is_positivity_enabled = is_positivity_enabled_fdp;
 
-  double write_phase_freq = 1.0; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
+  double write_phase_freq = 1; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
   double int_diag_calc_freq = 100; // Frequency of calculating integrated diagnostics (as a factor of num_frames).
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
   int num_failures_max = 20; // Maximum allowable number of consecutive small time-steps.
@@ -709,11 +718,11 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
   long step = 1;
   while ((t_curr < t_end) && (step <= num_steps))
   {
-    if (step%100 == 1 || step==1)
+    if (step%1000 == 1 || step==1)
       gkyl_gyrokinetic_app_cout(app, stdout, "Taking time-step %ld at t = %g ...", step, t_curr);
     dt = t_end - t_curr; // Ensure we don't step beyond t_end.
     struct gkyl_update_status status = gkyl_gyrokinetic_update(app, dt);
-    if (step%100 == 1 || step==1) {
+    if (step%1000 == 1 || step==1) {
       // Calculate elapsed wall time and estimated time remaining
       struct timespec current_time;
       clock_gettime(CLOCK_MONOTONIC, &current_time);
@@ -811,7 +820,7 @@ int main(int argc, char **argv)
     .upper = { 1.0, 1.0},
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
-    .skip_cell_threshold = 1e-20,
+    .skip_cell_threshold = 1e-16,
 
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
@@ -846,11 +855,8 @@ int main(int argc, char **argv)
 
     .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
-      .normNu = true,
-      .n_ref = ctx.n0,
-      .T_ref = ctx.Ti0,
-      .ctx = &ctx,
-      .self_nu = evalNuIon,
+      .den_ref = ctx.n0,
+      .temp_ref = ctx.Te0,
       .write_diagnostics = true,
     },
     .source = {
