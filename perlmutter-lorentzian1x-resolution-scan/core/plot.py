@@ -20,7 +20,7 @@ matplotlib.rcParams.update({
     'ytick.labelsize': 10
 })
 
-read_frame = 78
+read_frame = 20
 
 # Hardcode a few tricky to read values from the data
 nu_ii = 5.9034 # Read from the simulation at midplane
