@@ -401,7 +401,7 @@ create_ctx(void)
 
   // Whether to enable positivity.
   bool is_positivity_enabled_oap = false;
-  bool is_positivity_enabled_fdp = false;
+  bool is_positivity_enabled_fdp = true;
 
   // Type of df/dt multipler.
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_oap = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE;

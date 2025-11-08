@@ -385,15 +385,16 @@ create_ctx(void)
   // POA parameters  
   double alpha_oap = 5e-6;  // Factor multiplying collisionless terms.
   double alpha_fdp = 1.0;
-  double tau_oap = 2.0;  // Duration of each phase.
-  double tau_fdp = 20e-6;
-  double tau_fdp_extra = 0.0;
-  int num_cycles = 10; // Number of OAP+FDP cycles to run.
+  // Duration of each phase.
+  double tau_oap = 0;
+  double tau_fdp = 0;
+  double tau_fdp_extra = 3e-3;
+  int num_cycles = 0; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
-  int num_frames_oap = 5;        // Frames per OAP phase
-  int num_frames_fdp = 5;        // Frames per FDP phase
-  int num_frames_fdp_extra = 0;  // Frames for the extra FDP phase
+  int num_frames_oap = 0;        // Frames per OAP phase
+  int num_frames_fdp = 0;        // Frames per FDP phase
+  int num_frames_fdp_extra = 300;  // Frames for the extra FDP phase
   
   // Whether to evolve the field.
   bool is_static_field_oap = true;
@@ -820,17 +821,22 @@ int main(int argc, char **argv)
     .upper = { 1.0, 1.0},
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
-    // .skip_cell_threshold = 1e-20,
+    // .skip_cell_threshold = 1e-16,
 
-    .projection = {
-      .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
-      .density = eval_density_ion,
-      .ctx_density = &ctx,
-      .upar = eval_upar_ion,
-      .ctx_upar = &ctx,
-      .temp = eval_temp_ion,
-      .ctx_temp = &ctx,
+    .init_from_file = {
+      .type = GKYL_IC_IMPORT_F,
+      .file_name = "initial-condition/gk_lorentzian_mirror-ion_100.gkyl",
     },
+
+    // .projection = {
+    //   .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
+    //   .density = eval_density_ion,
+    //   .ctx_density = &ctx,
+    //   .upar = eval_upar_ion,
+    //   .ctx_upar = &ctx,
+    //   .temp = eval_temp_ion,
+    //   .ctx_temp = &ctx,
+    // },
 
     .mapc2p = {
       .mapping = mapc2p_vel_ion,
