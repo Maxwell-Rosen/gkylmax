@@ -364,7 +364,7 @@ create_ctx(void)
   // Grid parameters
   double vpar_max_ion = 16 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
-  int Nz = 800;
+  int Nz = 216;
   int Nvpar = 64; // 96 uniform
   int Nmu = 16;  // 192 uniform
   int poly_order = 1;
@@ -387,13 +387,13 @@ create_ctx(void)
   double alpha_fdp = 1.0;
   double tau_oap = 2.0;  // Duration of each phase.
   double tau_fdp = 20e-6;
-  double tau_fdp_extra = 0.0;
-  int num_cycles = 10; // Number of OAP+FDP cycles to run.
+  double tau_fdp_extra = 1e-3;
+  int num_cycles = 0; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
   int num_frames_oap = 5;        // Frames per OAP phase
   int num_frames_fdp = 5;        // Frames per FDP phase
-  int num_frames_fdp_extra = 0;  // Frames for the extra FDP phase
+  int num_frames_fdp_extra = 100;  // Frames for the extra FDP phase
   
   // Whether to evolve the field.
   bool is_static_field_oap = true;
@@ -402,7 +402,6 @@ create_ctx(void)
   // Whether to enable positivity.
   bool is_positivity_enabled_oap = false;
   bool is_positivity_enabled_fdp = false;
-
   // Type of df/dt multipler.
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_oap = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE;
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_fdp = GKYL_GK_FDOT_MULTIPLIER_NONE;
@@ -820,17 +819,22 @@ int main(int argc, char **argv)
     .upper = { 1.0, 1.0},
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
-    // .skip_cell_threshold = 1e-20,
+    // .skip_cell_threshold = 1e-16,
 
-    .projection = {
-      .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
-      .density = eval_density_ion,
-      .ctx_density = &ctx,
-      .upar = eval_upar_ion,
-      .ctx_upar = &ctx,
-      .temp = eval_temp_ion,
-      .ctx_temp = &ctx,
+    .init_from_file = {
+      .type = GKYL_IC_IMPORT_F,
+      .file_name = "initial-condition/gk_lorentzian_mirror-ion_100.gkyl",
     },
+
+    // .projection = {
+    //   .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
+    //   .density = eval_density_ion,
+    //   .ctx_density = &ctx,
+    //   .upar = eval_upar_ion,
+    //   .ctx_upar = &ctx,
+    //   .temp = eval_temp_ion,
+    //   .ctx_temp = &ctx,
+    // },
 
     .mapc2p = {
       .mapping = mapc2p_vel_ion,
@@ -915,12 +919,12 @@ int main(int argc, char **argv)
       .c2p_ctx = &ctx,
       .bfield_func = bfield_func, // magnetic field magnitude
       .bfield_ctx = &ctx,
-      // .position_map_info = {
-      //   .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
-      //   .map_strength = 0.5,
-      //   .maximum_slope_at_min_B = 2,
-      //   .moving_average_width = 0.5,
-      // },
+      .position_map_info = {
+        .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
+        .map_strength = 0.5,
+        .maximum_slope_at_min_B = 2,
+        .moving_average_width = 0.5,
+      },
     },
 
     .num_periodic_dir = 0,
