@@ -27,6 +27,7 @@ struct gk_poa_phase_params {
   bool is_static_field; // Whether to evolve the field.
   bool is_positivity_enabled; // Whether positivity is enabled.
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type; // Type of df/dt multipler.
+  double cfl_dt_min_value; // Minimum allowable time-step value.
 };
 
 // Define the context of the simulation. This is basically all the globals
@@ -383,17 +384,17 @@ create_ctx(void)
   double Z_m = 0.98;
 
   // POA parameters  
-  double alpha_oap = 5e-6;  // Factor multiplying collisionless terms.
+  double alpha_oap = 1.0;  // Factor multiplying collisionless terms.
   double alpha_fdp = 1.0;
-  double tau_oap = 2.0;  // Duration of each phase.
-  double tau_fdp = 20e-6;
-  double tau_fdp_extra = 0.0;
-  int num_cycles = 10; // Number of OAP+FDP cycles to run.
+  double tau_oap = 0;  // Duration of each phase.
+  double tau_fdp = 0;
+  double tau_fdp_extra = 1e-3;
+  int num_cycles = 0; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
-  int num_frames_oap = 5;        // Frames per OAP phase
-  int num_frames_fdp = 5;        // Frames per FDP phase
-  int num_frames_fdp_extra = 0;  // Frames for the extra FDP phase
+  int num_frames_oap = 0;        // Frames per OAP phase
+  int num_frames_fdp = 0;        // Frames per FDP phase
+  int num_frames_fdp_extra = 100;  // Frames for the extra FDP phase
   
   // Whether to evolve the field.
   bool is_static_field_oap = true;
@@ -422,6 +423,7 @@ create_ctx(void)
     poa_phases[2*i].is_static_field = is_static_field_oap;
     poa_phases[2*i].fdot_mult_type = fdot_mult_type_oap;
     poa_phases[2*i].is_positivity_enabled = is_positivity_enabled_oap;
+    poa_phases[2*i].cfl_dt_min_value = 0.0;
 
     // FDPs.
     poa_phases[2*i+1].phase = GK_POA_FDP;
@@ -431,6 +433,7 @@ create_ctx(void)
     poa_phases[2*i+1].is_static_field = is_static_field_fdp;
     poa_phases[2*i+1].fdot_mult_type = fdot_mult_type_fdp;
     poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_fdp;
+    poa_phases[2*i+1].cfl_dt_min_value = 0.0;
   }
   // The final stage is an extra, longer FDP.
   poa_phases[num_phases-1].phase = GK_POA_FDP;
@@ -440,6 +443,7 @@ create_ctx(void)
   poa_phases[num_phases-1].is_static_field = is_static_field_fdp;
   poa_phases[num_phases-1].fdot_mult_type = fdot_mult_type_fdp;
   poa_phases[num_phases-1].is_positivity_enabled = is_positivity_enabled_fdp;
+  poa_phases[num_phases-1].cfl_dt_min_value = 0.0;
 
   double write_phase_freq = 1; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
   double int_diag_calc_freq = 100; // Frequency of calculating integrated diagnostics (as a factor of num_frames).
@@ -668,6 +672,7 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
   gkyl_gyrokinetic_app_cout(app, stdout, "  df/dt multiplier = %s\n",
     (pparams->fdot_mult_type == GKYL_GK_FDOT_MULTIPLIER_NONE)?"None":
     (pparams->fdot_mult_type == GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE)?"Loss cone":"Unknown");
+  gkyl_gyrokinetic_app_cout(app, stdout, "  CFL dt_min = %g\n", pparams->cfl_dt_min_value);
   gkyl_gyrokinetic_app_cout(app, stdout, "----------------------------------------------\n");
 
   // Run an OAP or FDP.
@@ -681,7 +686,7 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
   struct gkyl_gyrokinetic_collisionless collisionless_inp = {
     .type = GKYL_GK_COLLISIONLESS_ES,
     .scale_factor = pparams->alpha,
-    .cfl_dt_min_value = 1e-9,
+    .cfl_dt_min_value = pparams->cfl_dt_min_value,
   };
   struct gkyl_gyrokinetic_fdot_multiplier fdot_mult_inp = {
     .type = pparams->fdot_mult_type,
@@ -826,15 +831,20 @@ int main(int argc, char **argv)
     .polarization_density = ctx.n0,
     // .skip_cell_threshold = 1e-16,
 
-    .projection = {
-      .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
-      .density = eval_density_ion,
-      .ctx_density = &ctx,
-      .upar = eval_upar_ion,
-      .ctx_upar = &ctx,
-      .temp = eval_temp_ion,
-      .ctx_temp = &ctx,
+    .init_from_file = {
+      .type = GKYL_IC_IMPORT_F,
+      .file_name = "initial-condition/gk_lorentzian_mirror-ion_100.gkyl",
     },
+
+    // .projection = {
+    //   .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
+    //   .density = eval_density_ion,
+    //   .ctx_density = &ctx,
+    //   .upar = eval_upar_ion,
+    //   .ctx_upar = &ctx,
+    //   .temp = eval_temp_ion,
+    //   .ctx_temp = &ctx,
+    // },
 
     .mapc2p = {
       .mapping = mapc2p_vel_ion,
@@ -844,7 +854,7 @@ int main(int argc, char **argv)
     .collisionless = {
       .type = GKYL_GK_COLLISIONLESS_ES,
       .scale_factor = 1.0, // Will be replaced below.
-      .cfl_dt_min_value = 1e-9,
+      .cfl_dt_min_value = 0.0,
       .write_diagnostics = true,
     },
     .time_rate_multiplier = {
