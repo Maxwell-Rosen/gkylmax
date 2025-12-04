@@ -20,10 +20,10 @@ matplotlib.rcParams.update({
     'ytick.labelsize': 14
 })
 
-read_frame = 70
+read_frame = 100
 
-directory_POA_simulation = '/home/mr1884/scratch/gkylmax/stellar-lorentzian1x-exploration/stellar-lorentzian1x-orbit-average-time-dilation-unif-Nz800-fmin'
-directory_hires_simulation = '/home/mr1884/scratch/gkylmax/stellar-lorentzian1x-exploration/stellar-lorentzian1x-orbit-average-time-dilation-unif-Nz800-fmin-compare'
+directory_POA_simulation = '/home/mr1884/scratch/gkylmax/stellar-lorentzian1x-orbit-average-exploration/stellar-lorentzian1x-orbit-average-time-dilation-unif-Nz800'
+directory_hires_simulation = '/home/mr1884/scratch/gkylmax/stellar-lorentzian1x-orbit-average-high-res-no-positivity'
 
 # Hardcode a few tricky to read values from the data
 nu_ii = 6.706930e+00 # Read from the simulation at midplane

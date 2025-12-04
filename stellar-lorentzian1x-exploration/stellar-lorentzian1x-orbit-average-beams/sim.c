@@ -82,6 +82,7 @@ struct gk_mirror_ctx
   double Z_max;   // Maximum Z coordinate
   double psi_in;  // Working variable for psi integration
   double z_in;    // Working variable for z integration
+  double Bmag_midp; // Magnetic field magnitude at midplane (Z=0)
 };
 
 
@@ -273,21 +274,35 @@ eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
 {
   struct gk_mirror_ctx *app = ctx;
   double z = xn[0];
+  if (fabs(z) > app->Z_m) {
+    fout[0] = 1e-20;
+    return;
+  }
   double vpar = xn[1];
   double mu = xn[2];
-  double vperp = sqrt(2.0 * mu * app->B_p / app->mi);
+  
+  double bvec[3];
+  double xc_in[3] = {app->psi_eval, 0.0, z};
+  bfield_func(t, xc_in, bvec, ctx);
+  double Bmag = sqrt(bvec[0]*bvec[0] + bvec[1]*bvec[1] + bvec[2]*bvec[2]);
+  
+  //Following energy conservation, re-map what vpar would be at the midplane
+  double vpar_midp = sqrt(pow(vpar,2.) + 2*mu*(Bmag-app->Bmag_midp)/app->mi); // Ignore potential for now
+  double vperp = sqrt(2.0 * mu * Bmag / app->mi);
 
   double gamma0 = 4174.226; // Set so total M0 flux is 2.3 × 10^15 s-1 cm-3 (Dorf 2025)
-  double Lb = 0.2;
   double T_beam = 200 * GKYL_ELEMENTARY_CHARGE;
   double E_beam = 25000 * GKYL_ELEMENTARY_CHARGE;
   double v_beam = sqrt(E_beam / app->mi);
   double sigma_beam = 2*T_beam/app->mi;
 
-  double zdep = exp(-1.0 * pow(z / Lb, 2.0));
-  double vdep = gamma0 * exp (-1.0 * (pow(fabs(vpar) - v_beam, 2) + pow(vperp - v_beam, 2)) / sigma_beam);
-                        
-  fout[0] = zdep * vdep;
+  double source = fmax(gamma0 * pow(Bmag,2) * vpar_midp / fabs(vpar) * exp (-1.0 * (pow(fabs(vpar_midp) - v_beam, 2) + pow(vperp - v_beam, 2)) / sigma_beam),1e-20);
+
+  // Debug print statements
+  // printf("z: %g, vpar: %g, mu: %g, Bmag: %g, Bmag_midp: %g, vpar_midp: %g, vperp: %g, source: %g\n",
+        //  z, vpar, mu, Bmag, Bmag_midp, vpar_midp, vperp, source);
+
+  fout[0] = source;
 }
 
 void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *ctx)
@@ -338,7 +353,7 @@ create_ctx(void)
   // Grid parameters
   double vpar_max_ion = 16 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
-  int Nz = 800;
+  int Nz = 100;
   int Nvpar = 64; // 96 uniform
   int Nmu = 32;  // 192 uniform
   int poly_order = 1;
@@ -356,13 +371,13 @@ create_ctx(void)
   double alpha_fdp = 1.0;
   double tau_oap = 0.0;  // Duration of each phase.
   double tau_fdp = 0.0;
-  double tau_fdp_extra = 10000e-6;
+  double tau_fdp_extra = 300e-6;
   int num_cycles = 0; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
   int num_frames_oap = 0;        // Frames per OAP phase
   int num_frames_fdp = 0;        // Frames per FDP phase
-  int num_frames_fdp_extra = 10000;  // Frames for the extra FDP phase
+  int num_frames_fdp_extra = 300;  // Frames for the extra FDP phase
   
   // Whether to evolve the field.
   bool is_static_field_oap = false;
@@ -401,7 +416,7 @@ create_ctx(void)
     poa_phases[2*i+1].is_static_field = is_static_field_fdp;
     poa_phases[2*i+1].fdot_mult_type = fdot_mult_type_fdp;
     poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_fdp;
-    poa_phases[2*i+1].time_dilation_f_threshold = 1e-16;
+    poa_phases[2*i+1].time_dilation_f_threshold = 0.0;
   }
   // The final stage is an extra, longer FDP.
   poa_phases[num_phases-1].phase = GK_POA_FDP;
@@ -411,7 +426,7 @@ create_ctx(void)
   poa_phases[num_phases-1].is_static_field = is_static_field_fdp;
   poa_phases[num_phases-1].fdot_mult_type = fdot_mult_type_fdp;
   poa_phases[num_phases-1].is_positivity_enabled = is_positivity_enabled_fdp;
-  poa_phases[num_phases-1].time_dilation_f_threshold = 1e-16;
+  poa_phases[num_phases-1].time_dilation_f_threshold = 0.0;
 
   double write_phase_freq = 1; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
   double int_diag_calc_freq = 100; // Frequency of calculating integrated diagnostics (as a factor of num_frames).
@@ -464,6 +479,12 @@ create_ctx(void)
   ctx.z_min    = z_psiZ(ctx.psi_eval, ctx.Z_min, &ctx);
   ctx.z_max    = z_psiZ(ctx.psi_eval, ctx.Z_max, &ctx);
 
+  // Calculate magnetic field magnitude at midplane (Z=0)
+  double bvec[3];
+  double xc_midp[3] = {ctx.psi_eval, 0.0, 0.0};
+  bfield_func(0.0, xc_midp, bvec, &ctx);
+  ctx.Bmag_midp = sqrt(bvec[0]*bvec[0] + bvec[1]*bvec[1] + bvec[2]*bvec[2]);
+
   return ctx;
 }
 
@@ -500,6 +521,7 @@ print_ctx(struct gk_mirror_ctx *ctx)
   printf("  Mirror throat Z location (Z_m) = %g m\n", ctx->Z_m);
   printf("  Magnetic field parameter (mcB) = %g\n", ctx->mcB);
   printf("  Lorentzian width parameter (gamma) = %g\n", ctx->gamma);
+  printf("  Magnetic field at midplane (Bmag_midp) = %g T\n", ctx->Bmag_midp);
   
   printf("\nGrid parameters:\n");
   printf("  Configuration space dimensions (cdim) = %d\n", ctx->cdim);
@@ -808,7 +830,7 @@ int main(int argc, char **argv)
       .type = GKYL_GK_COLLISIONLESS_ES,
       .scale_factor = 1.0, // Will be replaced below.
       // .cfl_dt_min_value = 1e-9,
-      .time_dilation_f_threshold = 1e-16,
+      .time_dilation_f_threshold = 0.0,
       .write_diagnostics = true,
     },
     .time_rate_multiplier = {

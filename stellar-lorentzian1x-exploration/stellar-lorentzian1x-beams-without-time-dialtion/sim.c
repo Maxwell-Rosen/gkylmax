@@ -356,13 +356,13 @@ create_ctx(void)
   double alpha_fdp = 1.0;
   double tau_oap = 0.0;  // Duration of each phase.
   double tau_fdp = 0.0;
-  double tau_fdp_extra = 10000e-6;
+  double tau_fdp_extra = 300e-6;
   int num_cycles = 0; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
   int num_frames_oap = 0;        // Frames per OAP phase
   int num_frames_fdp = 0;        // Frames per FDP phase
-  int num_frames_fdp_extra = 10000;  // Frames for the extra FDP phase
+  int num_frames_fdp_extra = 300;  // Frames for the extra FDP phase
   
   // Whether to evolve the field.
   bool is_static_field_oap = false;
@@ -401,7 +401,7 @@ create_ctx(void)
     poa_phases[2*i+1].is_static_field = is_static_field_fdp;
     poa_phases[2*i+1].fdot_mult_type = fdot_mult_type_fdp;
     poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_fdp;
-    poa_phases[2*i+1].time_dilation_f_threshold = 1e-16;
+    poa_phases[2*i+1].time_dilation_f_threshold = 0.0;
   }
   // The final stage is an extra, longer FDP.
   poa_phases[num_phases-1].phase = GK_POA_FDP;
@@ -411,7 +411,7 @@ create_ctx(void)
   poa_phases[num_phases-1].is_static_field = is_static_field_fdp;
   poa_phases[num_phases-1].fdot_mult_type = fdot_mult_type_fdp;
   poa_phases[num_phases-1].is_positivity_enabled = is_positivity_enabled_fdp;
-  poa_phases[num_phases-1].time_dilation_f_threshold = 1e-16;
+  poa_phases[num_phases-1].time_dilation_f_threshold = 0.0;
 
   double write_phase_freq = 1; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
   double int_diag_calc_freq = 100; // Frequency of calculating integrated diagnostics (as a factor of num_frames).
@@ -808,7 +808,7 @@ int main(int argc, char **argv)
       .type = GKYL_GK_COLLISIONLESS_ES,
       .scale_factor = 1.0, // Will be replaced below.
       // .cfl_dt_min_value = 1e-9,
-      .time_dilation_f_threshold = 1e-16,
+      .time_dilation_f_threshold = 0.0,
       .write_diagnostics = true,
     },
     .time_rate_multiplier = {
