@@ -1,10 +1,11 @@
 #!/bin/bash
 
-module load PrgEnv-gnu/8.5.0
-module load craype-accel-nvidia80
-module load cray-mpich/8.1.28
-module load cudatoolkit/12.4
-module load nccl/2.18.3-cu12
+# Perlmutter-specific modules (commented out for stellar-amd)
+# module load PrgEnv-gnu/8.5.0
+# module load craype-accel-nvidia80
+# module load cray-mpich/8.1.28
+# module load cudatoolkit/12.4
+# module load nccl/2.18.3-cu12
 
 # Define arrays for magnetic field parameters
 mcB_values=(2.130115 2.665626 3.691260 4.490901 5.168764)
@@ -13,7 +14,7 @@ R_values=(3 5 10 15 20)
 
 mkdir -p R-scan
 
-rm core/sim
+rm -f core/sim
 
 # Submit jobs for paired mcB and gamma scans
 for i in "${!mcB_values[@]}"; do
@@ -34,7 +35,7 @@ for i in "${!mcB_values[@]}"; do
 
   sed -i "381s/.*/  double mcB = $mcB;/" sim.c
   sed -i "382s/.*/  double gamma = $gamma;/" sim.c
-  sed -i "4s/.*/#SBATCH -J poa-R-${R}/" jobscript-gkyl-stellar-amd
+  sed -i "5s/.*/#SBATCH -J poa-R-${R}/" jobscript-gkyl-stellar-amd
   
   # Build the simulation
 	make clean
@@ -43,7 +44,9 @@ for i in "${!mcB_values[@]}"; do
   # ./sim -s1
 
   # Submit the job
-  sbatch jobscript-gkyl-stellar-amd
+  # sbatch jobscript-gkyl-stellar-amd
+	bash submit-restarts.sh
+	wait
 
   # Print confirmation
   echo "submitted job for R = $R (mcB = $mcB, gamma = $gamma)"

@@ -274,33 +274,37 @@ eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
 {
   struct gk_mirror_ctx *app = ctx;
   double z = xn[0];
-  if (fabs(z) > app->Z_m) {
+  if (fabs(z) > app->Z_m) { // For tandem mirrors, we just put this in the end cells
     fout[0] = 1e-20;
     return;
   }
   double vpar = xn[1];
   double mu = xn[2];
   
+  // Read the magnetic field at this location
+  // I don't like this implementation because it's only for mc2p geometries
+  // Should we specify B from the app or read from file? 
+  // If we do it from the app, then we can pass B,φ,B0,φ0.
+  // For demonstration, we don't need any of this and we can do it like this with just B
   double bvec[3];
   double xc_in[3] = {app->psi_eval, 0.0, z};
   bfield_func(t, xc_in, bvec, ctx);
   double Bmag = sqrt(bvec[0]*bvec[0] + bvec[1]*bvec[1] + bvec[2]*bvec[2]);
   
   //Following energy conservation, re-map what vpar would be at the midplane
-  double vpar_midp = sqrt(pow(vpar,2.) + 2*mu*(Bmag-app->Bmag_midp)/app->mi); // Ignore potential for now
-  double vperp = sqrt(2.0 * mu * Bmag / app->mi);
+  double vpar_midp = sqrt(pow(vpar,2.) + 2*mu*(Bmag - app->Bmag_midp)/app->mi); // Ignore potential for now
+  double vperp = sqrt(2.0 * mu * app->B_p / app->mi); // What magnetic field do we use here?
 
-  double gamma0 = 4174.226; // Set so total M0 flux is 2.3 × 10^15 s-1 cm-3 (Dorf 2025)
+  double gamma0 = 1109.5135852642; // Set so total M0 flux is 2.3 × 10^21 s-1 m-3 (Dorf 2025)
   double T_beam = 200 * GKYL_ELEMENTARY_CHARGE;
   double E_beam = 25000 * GKYL_ELEMENTARY_CHARGE;
   double v_beam = sqrt(E_beam / app->mi);
   double sigma_beam = 2*T_beam/app->mi;
 
-  double source = fmax(gamma0 * pow(Bmag,2) * vpar_midp / fabs(vpar) * exp (-1.0 * (pow(fabs(vpar_midp) - v_beam, 2) + pow(vperp - v_beam, 2)) / sigma_beam),1e-20);
-
-  // Debug print statements
-  // printf("z: %g, vpar: %g, mu: %g, Bmag: %g, Bmag_midp: %g, vpar_midp: %g, vperp: %g, source: %g\n",
-        //  z, vpar, mu, Bmag, Bmag_midp, vpar_midp, vperp, source);
+  // Further improvement: Some normalization factor dependent on vpar for the squish around an orbit
+  // The normalization is something propto vpar_midp/vpar. 2x as fast is 1/2 as dense. Singularity at zero though
+  double source = fmax(gamma0 * exp (-1.0 * (pow(fabs(vpar_midp) - v_beam, 2) + 
+                                             pow(vperp - v_beam, 2)) / sigma_beam),1e-20);
 
   fout[0] = source;
 }
@@ -353,7 +357,7 @@ create_ctx(void)
   // Grid parameters
   double vpar_max_ion = 16 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
-  int Nz = 100;
+  int Nz = 800;
   int Nvpar = 64; // 96 uniform
   int Nmu = 32;  // 192 uniform
   int poly_order = 1;
@@ -367,27 +371,27 @@ create_ctx(void)
   double Z_m = 0.98;
 
   // POA parameters  
-  double alpha_oap = 1.0;  // Factor multiplying collisionless terms.
+  double alpha_oap = 5e-6;  // Factor multiplying collisionless terms.
   double alpha_fdp = 1.0;
-  double tau_oap = 0.0;  // Duration of each phase.
-  double tau_fdp = 0.0;
-  double tau_fdp_extra = 300e-6;
-  int num_cycles = 0; // Number of OAP+FDP cycles to run.
+  double tau_oap = 2.0;  // Duration of each phase.
+  double tau_fdp = 20e-6;
+  double tau_fdp_extra = 0.0;
+  int num_cycles = 10; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
-  int num_frames_oap = 0;        // Frames per OAP phase
-  int num_frames_fdp = 0;        // Frames per FDP phase
-  int num_frames_fdp_extra = 300;  // Frames for the extra FDP phase
+  int num_frames_oap = 5;        // Frames per OAP phase
+  int num_frames_fdp = 5;        // Frames per FDP phase
+  int num_frames_fdp_extra = 0;  // Frames for the extra FDP phase
   
   // Whether to evolve the field.
-  bool is_static_field_oap = false;
+  bool is_static_field_oap = true;
   bool is_static_field_fdp = false;
 
   // Whether to enable positivity.
   bool is_positivity_enabled_oap = false;
   bool is_positivity_enabled_fdp = false;
   // Type of df/dt multipler.
-  enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_oap = GKYL_GK_FDOT_MULTIPLIER_NONE;
+  enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_oap = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE;
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_fdp = GKYL_GK_FDOT_MULTIPLIER_NONE;
 
   // Calculate phase structure
@@ -416,7 +420,7 @@ create_ctx(void)
     poa_phases[2*i+1].is_static_field = is_static_field_fdp;
     poa_phases[2*i+1].fdot_mult_type = fdot_mult_type_fdp;
     poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_fdp;
-    poa_phases[2*i+1].time_dilation_f_threshold = 0.0;
+    poa_phases[2*i+1].time_dilation_f_threshold = 1e-16;
   }
   // The final stage is an extra, longer FDP.
   poa_phases[num_phases-1].phase = GK_POA_FDP;
@@ -426,7 +430,7 @@ create_ctx(void)
   poa_phases[num_phases-1].is_static_field = is_static_field_fdp;
   poa_phases[num_phases-1].fdot_mult_type = fdot_mult_type_fdp;
   poa_phases[num_phases-1].is_positivity_enabled = is_positivity_enabled_fdp;
-  poa_phases[num_phases-1].time_dilation_f_threshold = 0.0;
+  poa_phases[num_phases-1].time_dilation_f_threshold = 1e-16;
 
   double write_phase_freq = 1; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
   double int_diag_calc_freq = 100; // Frequency of calculating integrated diagnostics (as a factor of num_frames).
@@ -830,7 +834,7 @@ int main(int argc, char **argv)
       .type = GKYL_GK_COLLISIONLESS_ES,
       .scale_factor = 1.0, // Will be replaced below.
       // .cfl_dt_min_value = 1e-9,
-      .time_dilation_f_threshold = 0.0,
+      .time_dilation_f_threshold = 1e-16,
       .write_diagnostics = true,
     },
     .time_rate_multiplier = {
