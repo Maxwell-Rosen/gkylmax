@@ -415,22 +415,22 @@ create_ctx(void)
   struct gk_poa_phase_params *poa_phases = gkyl_malloc(num_phases * sizeof(struct gk_poa_phase_params));
   for (int i=0; i<(num_phases-1)/2; i++) {
     // OAPs.
-    poa_phases[2*i+1].phase = GK_POA_OAP;
-    poa_phases[2*i+1].num_frames = num_frames_oap;
-    poa_phases[2*i+1].duration = tau_oap;
-    poa_phases[2*i+1].alpha = alpha_oap;
-    poa_phases[2*i+1].is_static_field = is_static_field_oap;
-    poa_phases[2*i+1].fdot_mult_type = fdot_mult_type_oap;
-    poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_oap;
+    poa_phases[2*i].phase = GK_POA_OAP;
+    poa_phases[2*i].num_frames = num_frames_oap;
+    poa_phases[2*i].duration = tau_oap;
+    poa_phases[2*i].alpha = alpha_oap;
+    poa_phases[2*i].is_static_field = is_static_field_oap;
+    poa_phases[2*i].fdot_mult_type = fdot_mult_type_oap;
+    poa_phases[2*i].is_positivity_enabled = is_positivity_enabled_oap;
 
     // FDPs.
-    poa_phases[2*i].phase = GK_POA_FDP;
-    poa_phases[2*i].num_frames = num_frames_fdp;
-    poa_phases[2*i].duration = tau_fdp;
-    poa_phases[2*i].alpha = alpha_fdp;
-    poa_phases[2*i].is_static_field = is_static_field_fdp;
-    poa_phases[2*i].fdot_mult_type = fdot_mult_type_fdp;
-    poa_phases[2*i].is_positivity_enabled = is_positivity_enabled_fdp;
+    poa_phases[2*i+1].phase = GK_POA_FDP;
+    poa_phases[2*i+1].num_frames = num_frames_fdp;
+    poa_phases[2*i+1].duration = tau_fdp;
+    poa_phases[2*i+1].alpha = alpha_fdp;
+    poa_phases[2*i+1].is_static_field = is_static_field_fdp;
+    poa_phases[2*i+1].fdot_mult_type = fdot_mult_type_fdp;
+    poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_fdp;
   }
   // The final stage is an extra, longer FDP.
   poa_phases[num_phases-1].phase = GK_POA_FDP;

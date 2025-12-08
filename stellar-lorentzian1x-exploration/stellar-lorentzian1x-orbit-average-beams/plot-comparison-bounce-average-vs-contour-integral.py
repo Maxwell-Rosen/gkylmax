@@ -664,9 +664,8 @@ class BeamSourceComparison:
     
     # Convert vpar to 10^6 m/s for plotting
     vpar_plot = VPAR / 1e6
-    # Convert mu to mu*B in keV for y-axis
-    B_at_z = self.bmag(z_cut)
-    mu_plot = MU * B_at_z / (1000 * self.eV)
+    # Use mu directly for y-axis (in units of J/T)
+    mu_plot = MU
     
     # Compute difference
     diff = orbit_avg - contour
@@ -682,14 +681,14 @@ class BeamSourceComparison:
     im1 = ax1.pcolormesh(vpar_plot, mu_plot, contour, shading='auto', cmap='inferno', vmin=vmin, vmax=vmax)
     plt.colorbar(im1, ax=ax1, label='Source')
     ax1.set_xlabel(r'$v_\parallel$ ($10^6$ m/s)')
-    ax1.set_ylabel(r'$\mu B$ (keV)')
+    ax1.set_ylabel(r'$\mu$ (J/T)')
     ax1.set_title(f'Contour Integral at z = {z_cut} m')
     
     # Middle panel: Orbit-averaged
     im2 = ax2.pcolormesh(vpar_plot, mu_plot, orbit_avg, shading='auto', cmap='inferno', vmin=vmin, vmax=vmax)
     plt.colorbar(im2, ax=ax2, label='Source')
     ax2.set_xlabel(r'$v_\parallel$ ($10^6$ m/s)')
-    ax2.set_ylabel(r'$\mu B$ (keV)')
+    ax2.set_ylabel(r'$\mu$ (J/T)')
     ax2.set_title(f'Orbit-Averaged at z = {z_cut} m')
     
     # Right panel: Difference (orbit_avg - contour)
@@ -698,7 +697,7 @@ class BeamSourceComparison:
                          vmin=-diff_max, vmax=diff_max)
     plt.colorbar(im3, ax=ax3, label='Difference')
     ax3.set_xlabel(r'$v_\parallel$ ($10^6$ m/s)')
-    ax3.set_ylabel(r'$\mu B$ (keV)')
+    ax3.set_ylabel(r'$\mu$ (J/T)')
     ax3.set_title(f'Orbit-Averaged − Contour at z = {z_cut} m')
     
     plt.tight_layout()
