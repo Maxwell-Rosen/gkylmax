@@ -352,7 +352,7 @@ create_ctx(void)
   // Grid parameters
   double vpar_max_ion = 16 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
-  int Nz = 800;
+  int Nz = 400;
   int Nvpar = 64; // 96 uniform
   int Nmu = 32;  // 192 uniform
   int poly_order = 1;
@@ -374,7 +374,7 @@ create_ctx(void)
   int num_cycles = 10; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
-  int num_frames_oap = 50;        // Frames per OAP phase
+  int num_frames_oap = 5;        // Frames per OAP phase
   int num_frames_fdp = 5;        // Frames per FDP phase
   int num_frames_fdp_extra = 0;  // Frames for the extra FDP phase
   
@@ -663,7 +663,7 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
   struct gkyl_gyrokinetic_collisionless collisionless_inp = {
     .type = GKYL_GK_COLLISIONLESS_ES,
     .scale_factor = pparams->alpha,
-    // .time_dilation_f_threshold = pparams->time_dilation_f_threshold,
+    .time_dilation_f_threshold = pparams->time_dilation_f_threshold,
   };
   struct gkyl_gyrokinetic_fdot_multiplier fdot_mult_inp = {
     .type = pparams->fdot_mult_type,
@@ -826,7 +826,7 @@ int main(int argc, char **argv)
       .type = GKYL_GK_COLLISIONLESS_ES,
       .scale_factor = 1.0, // Will be replaced below.
       // .cfl_dt_min_value = 1e-9,
-      // .time_dilation_f_threshold = 1e-16,
+      .time_dilation_f_threshold = 1e-16,
       .write_diagnostics = true,
     },
     .time_rate_multiplier = {
@@ -886,6 +886,7 @@ int main(int argc, char **argv)
     .is_static = false,
   };
 
+
   struct gkyl_mirror_geo_grid_inp grid_inp = {
     .filename_psi = "/home/mr1884/scratch/gkylmax/generate_efit/lorentzian_R32.geqdsk", // psi file to use
     .rclose = 0.2, // closest R to region of interest
@@ -908,12 +909,12 @@ int main(int argc, char **argv)
       .geometry_id = GKYL_MIRROR,
       .world = {ctx.psi_eval, 0.0},
       .mirror_grid_info = grid_inp,
-      // .position_map_info = {
-      //   .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
-      //   .map_strength = 0.5,
-      //   .maximum_slope_at_min_B = 2,
-      //   .moving_average_width = 0.5,
-      // },
+      .position_map_info = {
+        .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
+        .map_strength = 0.5,
+        .maximum_slope_at_min_B = 2,
+        .moving_average_width = 0.5,
+      },
     },
 
     .num_periodic_dir = 0,
