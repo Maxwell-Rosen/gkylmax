@@ -221,12 +221,12 @@ class BeamSourceComparison:
     ax1.tick_params(axis='y', labelcolor='b')
     ax1_twin = ax1.twinx()
     phi_vals = self.phi(z_coords)
-    ax1_twin.plot(z_coords, phi_vals / self.eV, 'r-', label=r'$\phi(z)$ [V]')
+    ax1_twin.plot(z_coords, phi_vals, 'r-', label=r'$\phi(z)$ [V]')
     ax1_twin.set_ylabel(r'$\phi$ (V)', color='r')
     ax1_twin.tick_params(axis='y', labelcolor='r')
     ax1.set_title('Magnetic field and electrostatic potential')
     ax1.axhline(self.bmag(0), color='b', linestyle='--', alpha=0.5, label=f'B(0)={self.bmag(0):.2f} T')
-    ax1_twin.axhline(self.phi(0) / self.eV, color='r', linestyle='--', alpha=0.5)
+    ax1_twin.axhline(self.phi(0), color='r', linestyle='--', alpha=0.5)
     ax1.legend(loc='upper left')
     
     # Panel 2: Energy terms vs z for a typical particle

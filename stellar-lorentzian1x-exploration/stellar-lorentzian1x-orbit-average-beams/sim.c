@@ -300,7 +300,7 @@ eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
   double E_beam = 25744.7 * GKYL_ELEMENTARY_CHARGE;
   double v_beam = sqrt(E_beam / app->mi);
   double sigma_beam = 2*T_beam/app->mi;
-  
+
   double source = fmax(gamma0 * exp (-1.0 * (pow(fabs(vpar_midp) - v_beam, 2) + 
                                              pow(vperp - v_beam, 2)) / sigma_beam),1e-20);
 
@@ -317,7 +317,7 @@ void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *
   double b = 1.4;
   vp[0] = vpar_max_ion*tan(cvpar*b)/tan(b);
   // Cubic map in mu.
-  vp[1] = mu_max_ion*pow(cmu,3);
+  vp[1] = mu_max_ion*pow(cmu,2);
 }
 
 struct gk_mirror_ctx
