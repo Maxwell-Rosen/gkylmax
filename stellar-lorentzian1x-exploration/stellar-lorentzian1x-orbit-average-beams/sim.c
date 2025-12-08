@@ -295,14 +295,12 @@ eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
   double vpar_midp = sqrt(pow(vpar,2.) + 2*mu*(Bmag - app->Bmag_midp)/app->mi); // Ignore potential for now
   double vperp = sqrt(2.0 * mu * app->B_p / app->mi); // What magnetic field do we use here?
 
-  double gamma0 = 1109.5135852642; // Set so total M0 flux is 2.3 × 10^21 s-1 m-3 (Dorf 2025)
-  double T_beam = 200 * GKYL_ELEMENTARY_CHARGE;
-  double E_beam = 25000 * GKYL_ELEMENTARY_CHARGE;
+  double gamma0 = 1.302e+03; // Set so total M0 flux is 2.3 × 10^21 s-1 m-3 (Dorf 2025)
+  double T_beam = 219.5 * GKYL_ELEMENTARY_CHARGE;
+  double E_beam = 25744.7 * GKYL_ELEMENTARY_CHARGE;
   double v_beam = sqrt(E_beam / app->mi);
   double sigma_beam = 2*T_beam/app->mi;
-
-  // Further improvement: Some normalization factor dependent on vpar for the squish around an orbit
-  // The normalization is something propto vpar_midp/vpar. 2x as fast is 1/2 as dense. Singularity at zero though
+  
   double source = fmax(gamma0 * exp (-1.0 * (pow(fabs(vpar_midp) - v_beam, 2) + 
                                              pow(vperp - v_beam, 2)) / sigma_beam),1e-20);
 

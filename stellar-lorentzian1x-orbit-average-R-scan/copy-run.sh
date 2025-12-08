@@ -8,9 +8,9 @@
 # module load nccl/2.18.3-cu12
 
 # Define arrays for magnetic field parameters
-mcB_values=(2.130115 2.665626 3.691260 4.490901 5.168764)
-gamma_values=(0.451454 0.331696 0.226381 0.182792 0.157441)
-R_values=(3 5 10 15 20)
+mcB_values=(2.130115 2.665626 3.691260 4.490901 5.416264)
+gamma_values=(0.451454 0.331696 0.226381 0.182792 0.149893)
+R_values=(3 5 10 15 22)
 
 mkdir -p R-scan
 

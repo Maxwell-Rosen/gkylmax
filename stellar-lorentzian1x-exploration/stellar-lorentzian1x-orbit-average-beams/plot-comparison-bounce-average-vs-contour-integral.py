@@ -9,6 +9,7 @@ from scipy.interpolate import CubicSpline
 from scipy.optimize import brentq, minimize
 from multiprocessing import Pool, cpu_count
 import matplotlib
+import postgkyl as pg
 
 matplotlib.rcParams.update({
     'text.usetex': True,
@@ -54,7 +55,8 @@ class BeamSourceComparison:
          T_beam_eV_oavg=200,
          E_beam_eV_spatial=25000,
          E_beam_eV_oavg=25000,
-         Lb=0.2):
+         Lb=0.2,
+         use_potential=True):
     """
     Initialize beam source comparison.
     
@@ -76,6 +78,7 @@ class BeamSourceComparison:
     self.gamma_geo = gamma_geo
     self.Z_m = Z_m
     self.B_p = B_p
+    self.qi = self.eV
     
     # Beam parameters
     self.gamma_spatial = gamma_spatial  # Same normalization for spatial source
@@ -94,7 +97,49 @@ class BeamSourceComparison:
     self._z_grid = np.linspace(-1.0, 1.0, 2001)
     self._bmag_grid = self._bmag_raw(self._z_grid)
     self._bmag_spline = CubicSpline(self._z_grid, self._bmag_grid)
+    
+    self._use_potential = use_potential
+    if use_potential:
+      data_phi = pg.GData('python-data/gk_lorentzian_mirror-field_332.gkyl')
+      interp_phi = pg.GInterpModal(data_phi, 1, 'ms')
+      x, phi_data = interp_phi.interpolate()
+      phi_data = np.squeeze(phi_data)
+
+      data_mc2p = pg.GData('python-data/gk_lorentzian_mirror-mapc2p.gkyl')
+      interp_mc2p = pg.GInterpModal(data_mc2p, 1, 'ms')
+      nodes_Z = interp_mc2p.interpolate(2)[1]
+      nodes_Z = np.squeeze(nodes_Z)
+      # Store raw data for pickling compatibility
+      self._phi_z_grid = nodes_Z
+      self._phi_grid = phi_data
+      self._phi_spline = CubicSpline(nodes_Z, phi_data)
+    else:
+      self._phi_z_grid = None
+      self._phi_grid = None
+      self._phi_spline = None
   
+  def __getstate__(self):
+    """Prepare state for pickling (needed for multiprocessing)."""
+    state = self.__dict__.copy()
+    # Remove spline objects - they will be recreated
+    state['_bmag_spline'] = None
+    state['_phi_spline'] = None
+    return state
+  
+  def __setstate__(self, state):
+    """Restore state after unpickling."""
+    self.__dict__.update(state)
+    # Recreate splines from stored data
+    self._bmag_spline = CubicSpline(self._z_grid, self._bmag_grid)
+    if self._use_potential and self._phi_z_grid is not None:
+      self._phi_spline = CubicSpline(self._phi_z_grid, self._phi_grid)
+  
+  def phi(self, z):
+    """Evaluate electrostatic potential at position z."""
+    if not self._use_potential:
+      return np.zeros_like(np.atleast_1d(z)) if hasattr(z, '__len__') else 0.0
+    return self._phi_spline(z)
+    
   def _bmag_raw(self, Z):
     """Raw magnetic field calculation (used for spline construction)."""
     Z = np.atleast_1d(Z)
@@ -136,35 +181,135 @@ class BeamSourceComparison:
     return zdep * vdep
   
   def orbit_avg_beam_source(self, z, vpar, mu):
-    """Orbit-averaged source: map vpar to midplane using energy conservation."""
-    # Set source to zero outside mirror throat region
+    """Orbit-averaged source: map vpar to midplane using energy conservation.
+    
+    Uses E = 0.5*m*vpar² + mu*B + q*phi = const along orbit.
+    Maps vpar(z) -> vpar(0) at midplane.
+    
+    Returns 0 for particles that cannot reach the midplane (trapped by potential).
+    """
     z = np.atleast_1d(z)
-    result = self.midplane_beam_source(np.sqrt(vpar**2 + 2 * mu * (self.bmag(z) - self.bmag(0)) / self.mi), mu, 
-                                      self.gamma_oavg, self.v_beam_oavg, self.sigma_beam_oavg)
-    result = np.where(np.abs(z) > self.Z_m, 0.0, result)
+    vpar = np.atleast_1d(vpar)
+    mu = np.atleast_1d(mu)
+    
+    # vpar_midplane² = vpar² + 2*mu*(B(z)-B(0))/m + 2*q*(phi(z)-phi(0))/m
+    vpar_sq_midplane = (vpar**2 
+                        + 2 * mu * (self.bmag(z) - self.bmag(0)) / self.mi 
+                        + 2 * self.qi / self.mi * (self.phi(z) - self.phi(0)))
+    
+    # If vpar_sq_midplane < 0, particle cannot reach midplane - set source to 0
+    valid = vpar_sq_midplane >= 0
+    vpar_midplane = np.where(valid, np.sqrt(np.maximum(vpar_sq_midplane, 0)), 0.0)
+    
+    result = self.midplane_beam_source(vpar_midplane, mu, 
+                                       self.gamma_oavg, self.v_beam_oavg, self.sigma_beam_oavg)
+    # Zero out invalid regions and outside mirror throat
+    result = np.where(valid & (np.abs(z) <= self.Z_m), result, 0.0)
     return result.item() if result.size == 1 else result
   
+  def plot_energy_diagnostics(self, z_cut=0.0):
+    """Plot diagnostic information about the energy terms."""
+    z_coords = np.linspace(-0.95, 0.95, 200)
+    
+    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+    
+    # Panel 1: B(z) and phi(z)
+    ax1 = axes[0, 0]
+    ax1.plot(z_coords, self.bmag(z_coords), 'b-', label=r'$B(z)$ [T]')
+    ax1.set_xlabel('z (m)')
+    ax1.set_ylabel('B (T)', color='b')
+    ax1.tick_params(axis='y', labelcolor='b')
+    ax1_twin = ax1.twinx()
+    phi_vals = self.phi(z_coords)
+    ax1_twin.plot(z_coords, phi_vals / self.eV, 'r-', label=r'$\phi(z)$ [V]')
+    ax1_twin.set_ylabel(r'$\phi$ (V)', color='r')
+    ax1_twin.tick_params(axis='y', labelcolor='r')
+    ax1.set_title('Magnetic field and electrostatic potential')
+    ax1.axhline(self.bmag(0), color='b', linestyle='--', alpha=0.5, label=f'B(0)={self.bmag(0):.2f} T')
+    ax1_twin.axhline(self.phi(0) / self.eV, color='r', linestyle='--', alpha=0.5)
+    ax1.legend(loc='upper left')
+    
+    # Panel 2: Energy terms vs z for a typical particle
+    ax2 = axes[0, 1]
+    mu_typical = 0.5 * self.mi * self.v_beam_spatial**2 / self.B_p
+    vpar_typical = self.v_beam_spatial
+    
+    mu_B = mu_typical * self.bmag(z_coords)
+    q_phi = self.qi * self.phi(z_coords)
+    kinetic_par = 0.5 * self.mi * vpar_typical**2 * np.ones_like(z_coords)
+    total_E = kinetic_par + mu_B + q_phi
+    
+    ax2.plot(z_coords, mu_B / (1000 * self.eV), 'g-', label=r'$\mu B$')
+    ax2.plot(z_coords, q_phi / (1000 * self.eV), 'r-', label=r'$q\phi$')
+    ax2.plot(z_coords, kinetic_par / (1000 * self.eV), 'b--', label=r'$\frac{1}{2}m v_\parallel^2$ (at z)')
+    ax2.plot(z_coords, total_E / (1000 * self.eV), 'k-', linewidth=2, label='Total E')
+    ax2.set_xlabel('z (m)')
+    ax2.set_ylabel('Energy (keV)')
+    ax2.set_title(f'Energy components\n(mu={mu_typical:.2e}, vpar={vpar_typical/1e6:.2f} Mm/s)')
+    ax2.legend()
+    ax2.grid(True, alpha=0.3)
+    
+    # Panel 3: vpar_midplane² for different starting z
+    ax3 = axes[1, 0]
+    for vpar_frac in [0.5, 1.0, 1.5]:
+      vpar_test = vpar_frac * self.v_beam_spatial
+      vpar_sq_mid = (vpar_test**2 
+                     + 2 * mu_typical * (self.bmag(z_coords) - self.bmag(0)) / self.mi 
+                     + 2 * self.qi / self.mi * (self.phi(z_coords) - self.phi(0)))
+      ax3.plot(z_coords, vpar_sq_mid / 1e12, label=f'vpar = {vpar_frac:.1f} v_beam')
+    ax3.axhline(0, color='k', linestyle='--', alpha=0.5)
+    ax3.set_xlabel('z (m)')
+    ax3.set_ylabel(r'$v_{\parallel,midplane}^2$ ($10^{12}$ m²/s²)')
+    ax3.set_title(r'Midplane mapping: $v_{\parallel,0}^2 = v_\parallel^2 + \frac{2\mu}{m}(B-B_0) + \frac{2q}{m}(\phi-\phi_0)$')
+    ax3.legend()
+    ax3.grid(True, alpha=0.3)
+    ax3.set_ylim(bottom=-0.5)
+    
+    # Panel 4: phi(z) - phi(0) contribution
+    ax4 = axes[1, 1]
+    delta_phi = self.phi(z_coords) - self.phi(0)
+    delta_B = self.bmag(z_coords) - self.bmag(0)
+    
+    # Convert to equivalent vpar² change
+    delta_vpar_sq_from_B = 2 * mu_typical * delta_B / self.mi
+    delta_vpar_sq_from_phi = 2 * self.qi * delta_phi / self.mi
+    
+    ax4.plot(z_coords, delta_vpar_sq_from_B / 1e12, 'g-', label=r'From $\Delta B$: $\frac{2\mu}{m}(B-B_0)$')
+    ax4.plot(z_coords, delta_vpar_sq_from_phi / 1e12, 'r-', label=r'From $\Delta\phi$: $\frac{2q}{m}(\phi-\phi_0)$')
+    ax4.plot(z_coords, (delta_vpar_sq_from_B + delta_vpar_sq_from_phi) / 1e12, 'k-', 
+             linewidth=2, label='Total')
+    ax4.axhline(0, color='k', linestyle='--', alpha=0.5)
+    ax4.set_xlabel('z (m)')
+    ax4.set_ylabel(r'$\Delta v_\parallel^2$ ($10^{12}$ m²/s²)')
+    ax4.set_title(r'Contributions to midplane velocity mapping')
+    ax4.legend()
+    ax4.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    return fig
+
   def find_bounce_points(self, E, mu, z_min=-0.98, z_max=0.98):
+    """Find bounce points where E = mu * B(z) + q * phi(z).
+    
+    At bounce points, vpar = 0, so all kinetic energy is in perpendicular motion.
+    """
     if mu <= 0:
       return z_min, z_max
     
-    B_bounce = E / mu
-    
-    # Function whose roots give bounce points
+    # Function whose roots give bounce points: E - mu*B(z) - q*phi(z) = 0
     def f(zp):
-      return self.bmag(zp) - B_bounce
+      return E - mu * self.bmag(zp) - self.qi * self.phi(zp)
     
-    # Check if particle can access any region
-    B_min = self.bmag(0)  # B is minimum at midplane
-    if B_bounce < B_min:
-      return None  # Particle cannot exist here
+    # Check if particle can access any region (check at midplane)
+    f_mid = f(0)
+    if f_mid < 0:
+      return None  # Particle cannot exist at midplane - energy too low
     
     # Find left bounce point (between z_min and 0)
     f_left = f(z_min)
-    f_mid = f(0)
     if f_left * f_mid < 0:
       z_left = brentq(f, z_min, 0, xtol=1e-12)
-    elif f_left <= 0:
+    elif f_left >= 0:
       z_left = z_min  # Accessible all the way to z_min
     else:
       return None  # No accessible region on left
@@ -173,7 +318,7 @@ class BeamSourceComparison:
     f_right = f(z_max)
     if f_mid * f_right < 0:
       z_right = brentq(f, 0, z_max, xtol=1e-12)
-    elif f_right <= 0:
+    elif f_right >= 0:
       z_right = z_max  # Accessible all the way to z_max
     else:
       return None  # No accessible region on right
@@ -188,7 +333,7 @@ class BeamSourceComparison:
     Args:
       use_fast: If True, use fixed-order Gaussian quadrature with spline bmag (much faster)
     """
-    E = 0.5 * self.mi * vpar**2 + mu * self.bmag(z)
+    E = 0.5 * self.mi * vpar**2 + mu * self.bmag(z) + self.qi * self.phi(z)
     
     # Find bounce points
     bounce_pts = self.find_bounce_points(E, mu, z_min, z_max)
@@ -227,7 +372,8 @@ class BeamSourceComparison:
       
       # Use spline for fast bmag evaluation
       B = self._bmag_spline(z)
-      kinetic = E - mu * B
+      phi = self.phi(z)
+      kinetic = E - mu * B - self.qi * phi
       vpar_sq = two_over_mi * np.maximum(kinetic, 1e-30)
       vpar = np.sqrt(vpar_sq)
       jacobian = z_half * cos_th  # dz/dtheta
@@ -253,7 +399,7 @@ class BeamSourceComparison:
   def _contour_integral_adaptive(self, E, mu, z_left, z_right):
     """Original adaptive quadrature method (slower but more accurate)."""
     def vpar_at_z(zp):
-      return np.sqrt(max((2.0 / self.mi) * (E - mu * self.bmag(zp)), 1e-30))
+      return np.sqrt(max((2.0 / self.mi) * (E - mu * self.bmag(zp) - self.qi * self.phi(zp)), 1e-30))
     
     def integrand_num(zp):
       vp = vpar_at_z(zp)
@@ -326,7 +472,7 @@ class BeamSourceComparison:
     Power = ∫∫∫ S(z, vpar, mu) * E(vpar, mu, z) * jacobian dz dvpar dmu
     where E = 0.5 * m * vpar^2 + mu * B(z) is the particle kinetic energy.
     """
-    energy = 0.5 * self.mi * VPAR_grid**2 + MU_grid * self.bmag(Z_grid)
+    energy = 0.5 * self.mi * VPAR_grid**2 + MU_grid * self.bmag(Z_grid) + self.qi * self.phi(Z_grid)
     jacobian = 2 * np.pi / self.mi
     vals = source_3d * energy * jacobian
     # Integrate over vpar, then z, then mu
@@ -525,7 +671,8 @@ class BeamSourceComparison:
         mcB=self.mcB, gamma_geo=self.gamma_geo, Z_m=self.Z_m, B_p=self.B_p,
         gamma_oavg=gamma_oavg_test,
         T_beam_eV_oavg=T_beam_test_eV,
-        E_beam_eV_oavg=E_beam_test_eV
+        E_beam_eV_oavg=E_beam_test_eV,
+        use_potential=self._use_potential,
       )
       
       # Compute orbit_avg on 3D grid (this is fast - no contour integration needed)
@@ -591,7 +738,8 @@ class BeamSourceComparison:
       T_beam_eV_oavg=T_beam_opt_eV,
       E_beam_eV_spatial=self.E_beam_spatial / self.eV,
       E_beam_eV_oavg=E_beam_opt_eV,
-      Lb=self.Lb
+      Lb=self.Lb,
+      use_potential=self._use_potential
     )
     
     return optimized
@@ -617,7 +765,9 @@ class BeamSourceComparison:
     
     # Convert vpar to energy in keV: E = 0.5 * m * vpar^2
     # Use signed energy to preserve direction information
-    energy_keV = np.sign(vpar_coords) * 0.5 * self.mi * vpar_coords**2 / (1000 * self.eV) + mu * self.bmag(z_cut) / (1000 * self.eV)
+    energy_keV = np.sign(vpar_coords) * 0.5 * self.mi * vpar_coords**2 / (1000 * self.eV) \
+                                      + mu * self.bmag(z_cut) / (1000 * self.eV) \
+                                      + self.qi * self.phi(z_cut) / (1000 * self.eV)
     
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.plot(energy_keV, contour, label='Contour Integral', linestyle='-')
@@ -708,7 +858,7 @@ class BeamSourceComparison:
 # ============================================================================
 
 if __name__ == "__main__":
-  bsc = BeamSourceComparison()
+  bsc = BeamSourceComparison(use_potential=True)
   
   # z_coords = np.linspace(-0.6, 0.6, 100)
   # vpar_coords = np.linspace(-1.5e6, 1.5e6, 100)
@@ -716,6 +866,9 @@ if __name__ == "__main__":
   vpar_coords = np.linspace(-2e6, 2e6, 50)
   mu_val = 0.5 * bsc.mi * bsc.v_beam_spatial**2 / bsc.B_p
   mu_coords = np.linspace(0.0, 2.0 * mu_val, 50)
+  
+  # Plot energy diagnostics to understand the potential effects
+  fig_diag = bsc.plot_energy_diagnostics()
   
   # results = bsc.compute_all_sources_on_grid(z_coords, vpar_coords, mu_coords)
   # power = bsc.compute_power(z_coords, vpar_coords, mu_coords, results)
@@ -741,4 +894,6 @@ if __name__ == "__main__":
   bsc_optimized.compute_power(z_coords, vpar_coords, mu_coords)
   fig3 = bsc_optimized.plot_z_slice(z_cut=0.0, n_vpar=100, n_mu=100)
   fig3.suptitle('After optimization')
+
+  bsc_optimized.plot_comparison_2d(z_coords, vpar_coords, mu_val)
   plt.show()
