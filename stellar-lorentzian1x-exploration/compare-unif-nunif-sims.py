@@ -7,16 +7,22 @@ from scipy.integrate import cumulative_trapezoid as cumtrapz
 import imageio.v2 as imageio
 from scipy.optimize import curve_fit
 
-frame = 45
+frame = 20
 
-uniformBiMax_name = './stellar-lorentzian1x-orbit-average-no-positivity-1e-20-unif-864/gk_lorentzian_mirror-ion_BiMaxwellianMoments_'+str(frame)+'.gkyl'
-nonunifBiMax_name = './stellar-lorentzian1x-orbit-average-nonuniformz-positivity/gk_lorentzian_mirror-ion_BiMaxwellianMoments_'+str(frame)+'.gkyl'
+# sim_uniform = 'stellar-lorentzian1x-orbit-average-time-dilation-unif-Nz800-fmin'
+# sim_nonuniform = 'stellar-lorentzian1x-orbit-average-time-dilation-nunif-Nz800-fmin-compare'
+# sim_nonuniform = 'stellar-lorentzian1x-orbit-average-time-dilation-nunif-Nz200-fmin-compare'
+sim_uniform = 'stellar-lorentzian1x-orbit-average-beams'
+# sim_nonuniform = 'stellar-lorentzian1x-orbit-average-beams-nunif-hires'
+sim_nonuniform = 'stellar-lorentzian1x-orbit-average-beams-nunif-hires-less-intense'
 
-uniformField_name = './stellar-lorentzian1x-orbit-average-no-positivity-1e-20-unif-864/gk_lorentzian_mirror-field_'+str(frame)+'.gkyl'
-nonunifField_name = './stellar-lorentzian1x-orbit-average-nonuniformz-positivity/gk_lorentzian_mirror-field_'+str(frame)+'.gkyl'
+uniformBiMax_name = sim_uniform+'/gk_lorentzian_mirror-ion_BiMaxwellianMoments_'+str(frame)+'.gkyl'
+nonunifBiMax_name = sim_nonuniform+'/gk_lorentzian_mirror-ion_BiMaxwellianMoments_'+str(frame)+'.gkyl'
 
-uniformPosMap_name = './stellar-lorentzian1x-orbit-average-no-positivity-1e-20-unif-864/gk_lorentzian_mirror-mc2nu_pos.gkyl'
-nonunifPosMap_name = './stellar-lorentzian1x-orbit-average-nonuniformz-positivity/gk_lorentzian_mirror-mc2nu_pos.gkyl'
+uniformField_name = sim_uniform+'/gk_lorentzian_mirror-field_'+str(frame)+'.gkyl'
+nonunifField_name = sim_nonuniform+'/gk_lorentzian_mirror-field_'+str(frame)+'.gkyl'
+uniformPosMap_name = sim_uniform+'/gk_lorentzian_mirror-mc2nu_pos.gkyl'
+nonunifPosMap_name = sim_nonuniform+'/gk_lorentzian_mirror-mc2nu_pos.gkyl'
 
 uniformBiMax_pgdata = pg.GData(uniformBiMax_name)
 nonunifBiMax_pgdata = pg.GData(nonunifBiMax_name)
@@ -76,7 +82,7 @@ ax = axes[0, 0]
 ax.plot(uniformPosMap[:,0], uniformDens[:,0], label='Uniform', linewidth=2)
 ax.plot(nonunifPosMap[:,0], nonunifDens[:,0], label='Nonuniform', linestyle='--', linewidth=2)
 ax.set_ylabel(r"Density ($m^{-3}$)", fontsize=11)
-ax.set_yscale('log')
+# ax.set_yscale('log')
 ax.legend(loc='best', fontsize=9)
 ax.grid(True, alpha=0.3)
 
@@ -119,8 +125,8 @@ plt.show()
 
 
 # Follow this up by plotting /gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl from each of the simulations on top of each other
-uniformPosDeflated_pgdata = pg.GData('./uniform/gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl')
-nonunifPosDeflated_pgdata = pg.GData('./nonuniform/gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl')
+uniformPosDeflated_pgdata = pg.GData(sim_uniform+'/gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl')
+nonunifPosDeflated_pgdata = pg.GData(sim_nonuniform+'/gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl')
 
 uniformPosDeflated_pginterp = pg.GInterpModal(uniformPosDeflated_pgdata, 1, 'ms')
 nonunifPosDeflated_pginterp = pg.GInterpModal(nonunifPosDeflated_pgdata, 1, 'ms')
@@ -129,8 +135,8 @@ coords, uniformPosDeflated = uniformPosDeflated_pginterp.interpolate()
 coords, nonunifPosDeflated = nonunifPosDeflated_pginterp.interpolate()
 
 # Plot gk_lorentzian_mirror-bmag.gkyl on top of each other using the posmap for the x-axis
-uniformBmag_pgdata = pg.GData('./uniform/gk_lorentzian_mirror-bmag.gkyl')
-nonunifBmag_pgdata = pg.GData('./nonuniform/gk_lorentzian_mirror-bmag.gkyl')
+uniformBmag_pgdata = pg.GData(sim_uniform+'/gk_lorentzian_mirror-bmag.gkyl')
+nonunifBmag_pgdata = pg.GData(sim_nonuniform+'/gk_lorentzian_mirror-bmag.gkyl')
 
 uniformBmag_pginterp = pg.GInterpModal(uniformBmag_pgdata, 1, 'ms')
 nonunifBmag_pginterp = pg.GInterpModal(nonunifBmag_pgdata, 1, 'ms')
@@ -139,8 +145,8 @@ coords, uniformBmag = uniformBmag_pginterp.interpolate()
 coords, nonunifBmag = nonunifBmag_pginterp.interpolate()
 
 # Plot gk_lorentzian_mirror-B3.gkyl on top of each other using the posmap for the x-axis
-uniformB3_pgdata = pg.GData('./uniform/gk_lorentzian_mirror-B3.gkyl')
-nonunifB3_pgdata = pg.GData('./nonuniform/gk_lorentzian_mirror-B3.gkyl')
+uniformB3_pgdata = pg.GData(sim_uniform+'/gk_lorentzian_mirror-B3.gkyl')
+nonunifB3_pgdata = pg.GData(sim_nonuniform+'/gk_lorentzian_mirror-B3.gkyl')
 
 uniformB3_pginterp = pg.GInterpModal(uniformB3_pgdata, 1, 'ms')
 nonunifB3_pginterp = pg.GInterpModal(nonunifB3_pgdata, 1, 'ms')
@@ -148,9 +154,9 @@ nonunifB3_pginterp = pg.GInterpModal(nonunifB3_pgdata, 1, 'ms')
 coords, uniformB3 = uniformB3_pginterp.interpolate()
 coords, nonunifB3 = nonunifB3_pginterp.interpolate()
 
-# Plot gk_lorentzian_mirror-jacobgeo_inv.gkyl on top of each other using the posmap for the x-axis
-uniformJacob_pgdata = pg.GData('./uniform/gk_lorentzian_mirror-jacobgeo_inv.gkyl')
-nonunifJacob_pgdata = pg.GData('./nonuniform/gk_lorentzian_mirror-jacobgeo_inv.gkyl')
+# Plot gk_lorentzian_mirror-jacobgeo.gkyl on top of each other using the posmap for the x-axis
+uniformJacob_pgdata = pg.GData(sim_uniform+'/gk_lorentzian_mirror-jacobgeo.gkyl')
+nonunifJacob_pgdata = pg.GData(sim_nonuniform+'/gk_lorentzian_mirror-jacobgeo.gkyl')
 
 uniformJacob_pginterp = pg.GInterpModal(uniformJacob_pgdata, 1, 'ms')
 nonunifJacob_pginterp = pg.GInterpModal(nonunifJacob_pgdata, 1, 'ms')
@@ -263,7 +269,7 @@ ax_left = axes2[3, 0]
 ax_left.plot(u_x_left, u_y_left, linewidth=2)
 ax_left.plot(n_x_left, n_y_left, linestyle='--', linewidth=2)
 ax_left.set_xlabel("Normalized field line length", fontsize=11)
-ax_left.set_ylabel(r"$J_{\mathrm{geo}}^{-1}$", fontsize=11)
+ax_left.set_ylabel(r"$J_{\mathrm{geo}}$", fontsize=11)
 ax_left.grid(True, alpha=0.3)
 ax_left.set_xlim(x_min, 0)
 
@@ -271,7 +277,7 @@ ax_right = axes2[3, 1]
 ax_right.plot(u_x_right, u_y_right, linewidth=2)
 ax_right.plot(n_x_right, n_y_right, linestyle='--', linewidth=2)
 ax_right.set_xlabel("Normalized field line length", fontsize=11)
-ax_right.set_ylabel(r"$J_{\mathrm{geo}}^{-1}$", fontsize=11)
+ax_right.set_ylabel(r"$J_{\mathrm{geo}}$", fontsize=11)
 ax_right.yaxis.tick_right()
 ax_right.yaxis.set_label_position("right")
 ax_right.set_yscale('log')

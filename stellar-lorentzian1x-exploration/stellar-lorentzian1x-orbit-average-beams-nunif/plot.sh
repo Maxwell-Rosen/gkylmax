@@ -46,4 +46,6 @@ pgkyl gk_lorentzian_mirror-ion_nu_sum_${frame}.gkyl interp ev '1 f /' pl --title
 
 pgkyl gk_lorentzian_mirror-ion_BiMaxwellianMoments_${frame}.gkyl ../stellar-lorentzian1x-orbit-average/gk_lorentzian_mirror-ion_BiMaxwellianMoments_${frame}.gkyl interp ev 'f 2,3 1.67e-27 2.014 * 1.6e-19 / scale_comp' pl -f0 --legend "nunif,unif" --logy --title "Bi-Maxwellian Moments — comparison (frame ${frame})" --xlabel 'Axial Position z (m)' --subplot-ylabels 'Density $m^{-3}$, $U_\parallel$ (m/s), $T_\parallel$ (eV), $T_\perp$ (eV)' --saveas python-plots/ion_BiMaxwellianMoments_compare_${frame}.png &
 
+pgkyl gk_lorentzian_mirror-field_${frame}.gkyl interp ev "f 940 /"  pl --xlabel "Z" --ylabel "$ e \phi / T_e $" --saveas python-plots/field_potential_normalized_frame${frame}.png --no-show &
+
 wait

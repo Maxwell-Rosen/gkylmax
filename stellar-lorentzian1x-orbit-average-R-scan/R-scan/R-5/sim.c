@@ -905,6 +905,16 @@ int main(int argc, char **argv)
     .is_static = false,
   };
 
+
+  struct gkyl_mirror_geo_grid_inp grid_inp = {
+    .filename_psi = "/home/mr1884/scratch/gkylmax/generate_efit/lorentzian_R5.geqdsk_psi.gkyl", // psi file to use
+    .rclose = 0.2, // closest R to region of interest
+    .zmin = -2.5,  // Z of lower boundary
+    .zmax =  2.5,  // Z of upper boundary
+    .include_axis = false, // Include R=0 axis in grid
+    .fl_coord = GKYL_MIRROR_GRID_GEN_PSI_CART_Z, // coordinate system for psi grid
+  };
+
   struct gkyl_gk app_inp = {  // GK app
     .name = "gk_lorentzian_mirror",
     .cdim = ctx.cdim,
@@ -915,18 +925,9 @@ int main(int argc, char **argv)
     .basis_type = app_args.basis_type,
 
     .geometry = {
-      .geometry_id = GKYL_MAPC2P,
+      .geometry_id = GKYL_MIRROR,
       .world = {ctx.psi_eval, 0.0},
-      .mapc2p = mapc2p, // mapping of computational to physical space
-      .c2p_ctx = &ctx,
-      .bfield_func = bfield_func, // magnetic field magnitude
-      .bfield_ctx = &ctx,
-      // .position_map_info = {
-      //   .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
-      //   .map_strength = 0.5,
-      //   .maximum_slope_at_min_B = 2,
-      //   .moving_average_width = 0.5,
-      // },
+      .mirror_grid_info = grid_inp,
     },
 
     .num_periodic_dir = 0,

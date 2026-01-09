@@ -22,10 +22,10 @@ matplotlib.rcParams.update({
     'ytick.labelsize': 10
 })
 
-def _contour_worker(args):
+def _bounce_avg_worker(args):
   """Worker function for parallel contour integration."""
   z, vpar, mu, obj = args
-  return obj.contour_integral_beam_source(z, vpar, mu)
+  return obj.bounce_average_beam_source(z, vpar, mu)
 
 class BeamSourceComparison:
   """
@@ -49,12 +49,12 @@ class BeamSourceComparison:
          Z_m=0.98,
          B_p=0.53,
          # Beam parameters
-         gamma_spatial=5476,
-         gamma_oavg=1448,
+         gamma_spatial=4198.25,
+         gamma_midmap=1110.13,
          T_beam_eV_spatial=200,
-         T_beam_eV_oavg=200,
+         T_beam_eV_midmap=200,
          E_beam_eV_spatial=25000,
-         E_beam_eV_oavg=25000,
+         E_beam_eV_midmap=25000,
          Lb=0.2,
          use_potential=True):
     """
@@ -66,31 +66,31 @@ class BeamSourceComparison:
       Z_m : float - Mirror throat location (m)
       B_p : float - Reference magnetic field (T)
       gamma_spatial : float - Spatial source normalization
-      gamma_oavg : float - Orbit-averaged source normalization
+      gamma_midmap : float - Midplane source normalization
       T_beam_eV_spatial : float - Beam temperature for spatial source (eV)
-      T_beam_eV_oavg : float - Beam temperature for orbit-averaged source (eV)
+      T_beam_eV_midmap : float - Beam temperature for midplane source (eV)
       E_beam_eV_spatial : float - Beam energy for spatial source (eV)
-      E_beam_eV_oavg : float - Beam energy for orbit-averaged source (eV)
+      E_beam_eV_midmap : float - Beam energy for midplane source (eV)
       Lb : float - Spatial source width (m)
     """
     # Geometry
     self.mcB = mcB
-    self.gamma_geo = gamma_geo
+    self.gamma_geo = gamma_geo # Gamma used in Bmag calculation
     self.Z_m = Z_m
     self.B_p = B_p
     self.qi = self.eV
     
     # Beam parameters
     self.gamma_spatial = gamma_spatial  # Same normalization for spatial source
-    self.gamma_oavg = gamma_oavg
+    self.gamma_midmap = gamma_midmap
     self.T_beam_spatial = T_beam_eV_spatial * self.eV
-    self.T_beam_oavg = T_beam_eV_oavg * self.eV
+    self.T_beam_midmap = T_beam_eV_midmap * self.eV
     self.E_beam_spatial = E_beam_eV_spatial * self.eV
-    self.E_beam_oavg = E_beam_eV_oavg * self.eV
+    self.E_beam_midmap = E_beam_eV_midmap * self.eV
     self.v_beam_spatial = np.sqrt(self.E_beam_spatial / self.mi)
-    self.v_beam_oavg = np.sqrt(self.E_beam_oavg / self.mi)
+    self.v_beam_midmap = np.sqrt(self.E_beam_midmap / self.mi)
     self.sigma_beam_spatial = 2 * self.T_beam_spatial / self.mi
-    self.sigma_beam_oavg = 2 * self.T_beam_oavg / self.mi
+    self.sigma_beam_midmap = 2 * self.T_beam_midmap / self.mi
     self.Lb = Lb
     
     # Precompute bmag spline for fast evaluation in contour integrals
@@ -180,7 +180,7 @@ class BeamSourceComparison:
     vdep = self.midplane_beam_source(vpar, mu, self.gamma_spatial, self.v_beam_spatial, self.sigma_beam_spatial)
     return zdep * vdep
   
-  def orbit_avg_beam_source(self, z, vpar, mu):
+  def midplane_mapped_beam_source(self, z, vpar, mu):
     """Orbit-averaged source: map vpar to midplane using energy conservation.
     
     Uses E = 0.5*m*vpar² + mu*B + q*phi = const along orbit.
@@ -202,7 +202,7 @@ class BeamSourceComparison:
     vpar_midplane = np.where(valid, np.sqrt(np.maximum(vpar_sq_midplane, 0)), 0.0)
     
     result = self.midplane_beam_source(vpar_midplane, mu, 
-                                       self.gamma_oavg, self.v_beam_oavg, self.sigma_beam_oavg)
+                                       self.gamma_midmap, self.v_beam_midmap, self.sigma_beam_midmap)
     # Zero out invalid regions and outside mirror throat
     result = np.where(valid & (np.abs(z) <= self.Z_m), result, 0.0)
     return result.item() if result.size == 1 else result
@@ -325,7 +325,7 @@ class BeamSourceComparison:
     
     return z_left, z_right
   
-  def contour_integral_beam_source(self, z, vpar, mu, z_min=-0.98, z_max=0.98, use_fast=True):
+  def bounce_average_beam_source(self, z, vpar, mu, z_min=-0.98, z_max=0.98, use_fast=True):
     """
     Compute orbit-averaged source by integrating along energy contours.
     Uses time weighting: <S> = (∫ S dt) / (∫ dt) = (∫ S dz/|v_par|) / (∫ dz/|v_par|)
@@ -342,14 +342,14 @@ class BeamSourceComparison:
     z_left, z_right = bounce_pts
     
     if use_fast:
-      result = self._contour_integral_fast(E, mu, z_left, z_right)
+      result = self._bounce_average_integral_fast(E, mu, z_left, z_right)
     else:
-      result = self._contour_integral_adaptive(E, mu, z_left, z_right)
+      result = self._bounce_average_integral_adaptive(E, mu, z_left, z_right)
 
     result = np.where(np.abs(z) > self.Z_m, 0.0, result)
     return result
   
-  def _contour_integral_fast(self, E, mu, z_left, z_right, n_quad=32):
+  def _bounce_average_integral_fast(self, E, mu, z_left, z_right, n_quad=32):
     """
     Fast contour integral using fixed-order Gaussian quadrature.
     
@@ -396,7 +396,7 @@ class BeamSourceComparison:
     result = numerator / denominator if denominator > 1e-30 else 0.0
     return result
   
-  def _contour_integral_adaptive(self, E, mu, z_left, z_right):
+  def _bounce_average_integral_adaptive(self, E, mu, z_left, z_right):
     """Original adaptive quadrature method (slower but more accurate)."""
     def vpar_at_z(zp):
       return np.sqrt(max((2.0 / self.mi) * (E - mu * self.bmag(zp) - self.qi * self.phi(zp)), 1e-30))
@@ -416,7 +416,7 @@ class BeamSourceComparison:
     
     return numerator / denominator if denominator > 1e-30 else 0.0
   
-  def _compute_contour_parallel(self, Z, VPAR, MU, n_workers=None):
+  def _compute_bounce_average_parallel(self, Z, VPAR, MU, n_workers=None):
     """Compute contour integral in parallel using multiprocessing."""
     shape = Z.shape
     args_list = [(z, vpar, mu, self) for z, vpar, mu in 
@@ -426,7 +426,7 @@ class BeamSourceComparison:
       n_workers = cpu_count()
     print(f"Using multiprocessing with {n_workers} workers for {len(args_list)} integrals...")
     with Pool(n_workers) as pool:
-      results = pool.map(_contour_worker, args_list)
+      results = pool.map(_bounce_avg_worker, args_list)
     print("Done.")
     
     return np.array(results).reshape(shape)
@@ -436,21 +436,21 @@ class BeamSourceComparison:
     Compute all three source models on a grid.
     
     Returns:
-      dict with keys 'spatial', 'orbit_avg', 'contour' containing 3D arrays
+      dict with keys 'spatial', 'midplane_mapped', 'bounce_average' containing 3D arrays
     """
     Z, VPAR, MU = np.meshgrid(z_coords, vpar_coords, mu_coords, indexing='ij')
     
     spatial = self.spatial_beam_source(Z, VPAR, MU)
-    orbit_avg = self.orbit_avg_beam_source(Z, VPAR, MU)
+    midmap = self.midplane_mapped_beam_source(Z, VPAR, MU)
     
     # Parallel computation for contour integral
-    contour = self._compute_contour_parallel(Z, VPAR, MU, n_workers)
+    bounce_avg = self._compute_bounce_average_parallel(Z, VPAR, MU, n_workers)
     
     return {
       'Z': Z, 'VPAR': VPAR, 'MU': MU,
       'spatial': spatial,
-      'orbit_avg': orbit_avg,
-      'contour': contour
+      'midplane_mapped': midmap,
+      'bounce_average': bounce_avg
     }
 
   def _integrate_M0_from_3d(self, source_3d, z_coords, vpar_coords, mu_coords):
@@ -480,7 +480,7 @@ class BeamSourceComparison:
     vals = np.trapz(vals, z_coords, axis=0)
     return np.trapz(vals, mu_coords, axis=0)
 
-  def compute_M0_orbit_avg(self, z_coords, vpar_coords, mu_coords):
+  def compute_M0_midplane_mapped(self, z_coords, vpar_coords, mu_coords):
     """Compute integrated M0 flux for orbit-averaged source only (3D integral).
     
     M0 = ∫∫∫ S(z, vpar, mu) * jacobian dz dvpar dmu
@@ -489,10 +489,10 @@ class BeamSourceComparison:
     useful for optimization loops where we don't need all three sources.
     """
     Z, VPAR, MU = np.meshgrid(z_coords, vpar_coords, mu_coords, indexing='ij')
-    orbit_avg = self.orbit_avg_beam_source(Z, VPAR, MU)
-    return self._integrate_M0_from_3d(orbit_avg, z_coords, vpar_coords, mu_coords)
+    midmap = self.midplane_mapped_beam_source(Z, VPAR, MU)
+    return self._integrate_M0_from_3d(midmap, z_coords, vpar_coords, mu_coords)
   
-  def compute_power_orbit_avg(self, z_coords, vpar_coords, mu_coords):
+  def compute_power_midplane_mapped(self, z_coords, vpar_coords, mu_coords):
     """Compute total power for orbit-averaged source only (3D integral).
     
     Power = ∫∫∫ S(z, vpar, mu) * E(vpar, mu, z) * jacobian dz dvpar dmu
@@ -502,8 +502,8 @@ class BeamSourceComparison:
     useful for optimization loops where we don't need all three sources.
     """
     Z, VPAR, MU = np.meshgrid(z_coords, vpar_coords, mu_coords, indexing='ij')
-    orbit_avg = self.orbit_avg_beam_source(Z, VPAR, MU)
-    return self._integrate_power_from_3d(orbit_avg, Z, VPAR, MU, z_coords, vpar_coords, mu_coords)
+    midmap = self.midplane_mapped_beam_source(Z, VPAR, MU)
+    return self._integrate_power_from_3d(midmap, Z, VPAR, MU, z_coords, vpar_coords, mu_coords)
 
   def compute_M0_fluxes(self, z_coords, vpar_coords, mu_coords, results=None, n_workers=None):
     """Compute integrated M0 fluxes for each source model (3D integral over z, vpar, mu).
@@ -514,13 +514,13 @@ class BeamSourceComparison:
       results = self.compute_all_sources_on_grid(z_coords, vpar_coords, mu_coords, n_workers)
     
     fluxes = {}
-    for key in ['spatial', 'orbit_avg', 'contour']:
+    for key in ['spatial', 'midplane_mapped', 'bounce_average']:
       fluxes[key] = self._integrate_M0_from_3d(results[key], z_coords, vpar_coords, mu_coords)
     
     print("\nTotal M0 fluxes (particles per second per m^3):")
     print(f"  Spatial source:    {fluxes['spatial']:.3e} s^-1 m^-3")
-    print(f"  Contour integral:  {fluxes['contour']:.3e} s^-1 m^-3")
-    print(f"  Orbit-averaged:    {fluxes['orbit_avg']:.3e} s^-1 m^-3")
+    print(f"  Contour integral:  {fluxes['bounce_average']:.3e} s^-1 m^-3")
+    print(f"  Orbit-averaged:    {fluxes['midplane_mapped']:.3e} s^-1 m^-3")
 
     # pgkyl gk_lorentzian_mirror-ion_source_M0_0.gkyl gk_lorentzian_mirror-jacobgeo.gkyl interp ev "f[0] f[1] *" integ 0 info
     # pgkyl gk_lorentzian_mirror-ion_source_integrated_moms.gkyl sel -c0 info
@@ -534,7 +534,7 @@ class BeamSourceComparison:
     where E = 0.5 * m * vpar^2 + mu * B(z) is the particle kinetic energy.
     
     Returns:
-      dict with keys 'spatial', 'orbit_avg', 'contour' containing power in Watts/m^3
+      dict with keys 'spatial', 'midplane_mapped', 'bounce_average' containing power in Watts/m^3
     """
     if results is None:
       results = self.compute_all_sources_on_grid(z_coords, vpar_coords, mu_coords, n_workers)
@@ -544,21 +544,21 @@ class BeamSourceComparison:
     MU = results['MU']
     
     power = {}
-    for key in ['spatial', 'orbit_avg', 'contour']:
+    for key in ['spatial', 'midplane_mapped', 'bounce_average']:
       power[key] = self._integrate_power_from_3d(results[key], Z, VPAR, MU, 
                                                   z_coords, vpar_coords, mu_coords)
     
     print("\nTotal power deposited (energy per second per m^3):")
     print(f"  Spatial source:    {power['spatial']:.3e} W/m^3 = {power['spatial']/self.eV:.3e} eV/s/m^3")
-    print(f"  Contour integral:  {power['contour']:.3e} W/m^3 = {power['contour']/self.eV:.3e} eV/s/m^3")
-    print(f"  Orbit-averaged:    {power['orbit_avg']:.3e} W/m^3 = {power['orbit_avg']/self.eV:.3e} eV/s/m^3")
+    print(f"  Bounce-averaged:  {power['bounce_average']:.3e} W/m^3 = {power['bounce_average']/self.eV:.3e} eV/s/m^3")
+    print(f"  Midplane-mapped:    {power['midplane_mapped']:.3e} W/m^3 = {power['midplane_mapped']/self.eV:.3e} eV/s/m^3")
     
     # Also compute average energy per particle
     fluxes = self.compute_M0_fluxes(z_coords, vpar_coords, mu_coords, results, n_workers)
     print("\nAverage energy per injected particle:")
     print(f"  Spatial source:    {power['spatial']/fluxes['spatial']:.3e} J = {(power['spatial']/fluxes['spatial'])/self.eV:.3e} eV")
-    print(f"  Contour integral:  {power['contour']/fluxes['contour']:.3e} J = {(power['contour']/fluxes['contour'])/self.eV:.3e} eV")
-    print(f"  Orbit-averaged:    {power['orbit_avg']/fluxes['orbit_avg']:.3e} J = {(power['orbit_avg']/fluxes['orbit_avg'])/self.eV:.3e} eV")
+    print(f"  Bounce-averaged:  {power['bounce_average']/fluxes['bounce_average']:.3e} J = {(power['bounce_average']/fluxes['bounce_average'])/self.eV:.3e} eV")
+    print(f"  Midplane-mapped:    {power['midplane_mapped']/fluxes['midplane_mapped']:.3e} J = {(power['midplane_mapped']/fluxes['midplane_mapped'])/self.eV:.3e} eV")
     
     return power
   
@@ -580,33 +580,33 @@ class BeamSourceComparison:
     plt.colorbar(im1, ax=ax1)
     ax1.set_xlabel('z (m)')
     ax1.set_ylabel(r'$v_\parallel$ ($10^6$ m/s)')
-    ax1.set_title('Spatial Beam Source')
+    ax1.set_title('Spatial beam source')
     
-    im2 = ax2.pcolormesh(Z, VPAR, results['contour'][:,:,mu_idx], 
+    im2 = ax2.pcolormesh(Z, VPAR, results['bounce_average'][:,:,mu_idx], 
                shading='auto', cmap='inferno')
     plt.colorbar(im2, ax=ax2)
     ax2.set_xlabel('z (m)')
     ax2.set_ylabel(r'$v_\parallel$ ($10^6$ m/s)')
-    ax2.set_title('Contour-Integrated Source')
+    ax2.set_title('Bounce-averaged spatial source')
     
-    im3 = ax3.pcolormesh(Z, VPAR, results['orbit_avg'][:,:,mu_idx], 
+    im3 = ax3.pcolormesh(Z, VPAR, results['midplane_mapped'][:,:,mu_idx], 
                shading='auto', cmap='inferno')
     plt.colorbar(im3, ax=ax3)
     ax3.set_xlabel('z (m)')
     ax3.set_ylabel(r'$v_\parallel$ ($10^6$ m/s)')
-    ax3.set_title('Midplane-Mapped Source')
+    ax3.set_title('Midplane-mapped source')
     
     plt.tight_layout()
     return fig
   
-  def optimize_orbit_avg_to_match_contour(self, z_coords, vpar_coords, mu_coords,
+  def optimize_midplane_map_to_match_bounce_avg(self, z_coords, vpar_coords, mu_coords,
                                           n_workers=None, verbose=True):
     """
-    Optimize orbit_avg_beam_source parameters to match contour_integral_beam_source.
+    Optimize orbit_avg_beam_source parameters to match bounce_average_beam_source.
     
     Creates a NEW BeamSourceComparison object with optimized parameters (E_beam, 
-    gamma_oavg, T_beam) such that orbit_avg_beam_source best matches the 
-    contour integral of the ORIGINAL (self) spatial source.
+    gamma_midmap, T_beam) such that midplane_mapped_beam_source best matches the 
+    bounce_average_beam_source of the ORIGINAL (self) spatial source.
     
     This optimizes for the FULL 3D integrals over z, vpar, and mu, matching
     the total M0 flux and power computed by compute_M0_fluxes() and compute_power().
@@ -617,7 +617,7 @@ class BeamSourceComparison:
       z_coords: Array of z coordinates for the 3D grid
       vpar_coords: Array of vpar coordinates for the 3D grid
       mu_coords: Array of mu coordinates for the 3D grid
-      n_workers: Number of parallel workers for contour integral
+      n_workers: Number of parallel workers for bounce average
       verbose: Print optimization progress
     
     Returns:
@@ -628,13 +628,13 @@ class BeamSourceComparison:
     n_mu = len(mu_coords)
     
     if verbose:
-      print(f"Computing contour integral on 3D grid ({n_z} x {n_vpar} x {n_mu} = {n_z*n_vpar*n_mu} points)...")
+      print(f"Computing bounce average on 3D grid ({n_z} x {n_vpar} x {n_mu} = {n_z*n_vpar*n_mu} points)...")
     
     # Create 3D grids
     Z_grid, VPAR_grid, MU_grid = np.meshgrid(z_coords, vpar_coords, mu_coords, indexing='ij')
     
-    # Compute contour integral for all points (this is expensive but only done once)
-    contour_target_3d = self._compute_contour_parallel(
+    # Compute bounce average for all points (this is expensive but only done once)
+    bnc_avg_target_3d = self._compute_bounce_average_parallel(
       Z_grid.reshape(-1, 1, 1), 
       VPAR_grid.reshape(-1, 1, 1), 
       MU_grid.reshape(-1, 1, 1), 
@@ -642,55 +642,55 @@ class BeamSourceComparison:
     ).reshape(n_z, n_vpar, n_mu)
     
     # Precompute target M0 and power using class helper methods (consistent with compute_M0_fluxes/compute_power)
-    M0_contour_total = self._integrate_M0_from_3d(contour_target_3d, z_coords, vpar_coords, mu_coords)
-    power_contour_total = self._integrate_power_from_3d(contour_target_3d, Z_grid, VPAR_grid, MU_grid,
+    M0_bnc_avg_total = self._integrate_M0_from_3d(bnc_avg_target_3d, z_coords, vpar_coords, mu_coords)
+    power_bnc_avg_total = self._integrate_power_from_3d(bnc_avg_target_3d, Z_grid, VPAR_grid, MU_grid,
                                                         z_coords, vpar_coords, mu_coords)
     
     if verbose:
-      print(f"  Target M0 flux (3D integral): {M0_contour_total:.3e}")
-      print(f"  Target power (3D integral):   {power_contour_total:.3e} W = {power_contour_total/self.eV:.3e} eV/s")
+      print(f"  Target M0 flux (3D integral): {M0_bnc_avg_total:.3e}")
+      print(f"  Target power (3D integral):   {power_bnc_avg_total:.3e} W = {power_bnc_avg_total/self.eV:.3e} eV/s")
     
     # Initial parameter guesses in physical units (eV)
-    E_beam_init_eV = self.E_beam_oavg / self.eV
-    T_beam_init_eV = self.T_beam_oavg / self.eV
-    x0 = np.array([E_beam_init_eV, self.gamma_oavg, T_beam_init_eV])
+    E_beam_init_eV = self.E_beam_midmap / self.eV
+    T_beam_init_eV = self.T_beam_midmap / self.eV
+    x0 = np.array([E_beam_init_eV, self.gamma_midmap, T_beam_init_eV])
     
     # Parameter bounds
     bounds = [
       (0.5 * E_beam_init_eV, 2.0 * E_beam_init_eV),
-      (0.1 * self.gamma_oavg, 10.0 * self.gamma_oavg),
+      (0.1 * self.gamma_midmap, 10.0 * self.gamma_midmap),
       (0.1 * T_beam_init_eV, 10.0 * T_beam_init_eV),
     ]
     
     def objective(params):
       """Objective function: combined residual of shape, M0 flux, and power (3D integrals)."""
-      E_beam_test_eV, gamma_oavg_test, T_beam_test_eV = params
+      E_beam_test_eV, gamma_midmap_test, T_beam_test_eV = params
       
       # Create temporary object with test parameters
       temp_obj = BeamSourceComparison(
         mcB=self.mcB, gamma_geo=self.gamma_geo, Z_m=self.Z_m, B_p=self.B_p,
-        gamma_oavg=gamma_oavg_test,
-        T_beam_eV_oavg=T_beam_test_eV,
-        E_beam_eV_oavg=E_beam_test_eV,
+        gamma_midmap=gamma_midmap_test,
+        T_beam_eV_midmap=T_beam_test_eV,
+        E_beam_eV_midmap=E_beam_test_eV,
         use_potential=self._use_potential,
       )
       
       # Compute orbit_avg on 3D grid (this is fast - no contour integration needed)
-      orbit_avg_3d = temp_obj.orbit_avg_beam_source(Z_grid, VPAR_grid, MU_grid)
+      midmap_3d = temp_obj.midplane_mapped_beam_source(Z_grid, VPAR_grid, MU_grid)
       
       # 1. Shape residual (normalized by max value)
-      max_val = max(np.max(np.abs(contour_target_3d)), 1e-30)
-      shape_residual = np.sum(((orbit_avg_3d - contour_target_3d) / max_val)**2) / (n_z * n_vpar * n_mu)
+      max_val = max(np.max(np.abs(bnc_avg_target_3d)), 1e-30)
+      shape_residual = np.sum(((midmap_3d - bnc_avg_target_3d) / max_val)**2) / (n_z * n_vpar * n_mu)
       
       # 2. M0 flux residual using compute_M0_orbit_avg (consistent with compute_M0_fluxes)
-      M0_orbit_avg_total = temp_obj.compute_M0_orbit_avg(z_coords, vpar_coords, mu_coords)
-      M0_ref = max(abs(M0_contour_total), 1e-30)
-      M0_residual = ((M0_orbit_avg_total - M0_contour_total) / M0_ref)**2
+      M0_midmap_total = temp_obj.compute_M0_midplane_mapped(z_coords, vpar_coords, mu_coords)
+      M0_ref = max(abs(M0_bnc_avg_total), 1e-30)
+      M0_residual = ((M0_midmap_total - M0_bnc_avg_total) / M0_ref)**2
       
       # 3. Power residual using compute_power_orbit_avg (consistent with compute_power)
-      power_orbit_avg_total = temp_obj.compute_power_orbit_avg(z_coords, vpar_coords, mu_coords)
-      power_ref = max(abs(power_contour_total), 1e-30)
-      power_residual = ((power_orbit_avg_total - power_contour_total) / power_ref)**2
+      power_midmap_total = temp_obj.compute_power_midplane_mapped(z_coords, vpar_coords, mu_coords)
+      power_ref = max(abs(power_bnc_avg_total), 1e-30)
+      power_residual = ((power_midmap_total - power_bnc_avg_total) / power_ref)**2
       
       total_residual = shape_residual + M0_residual + power_residual
       
@@ -701,26 +701,26 @@ class BeamSourceComparison:
     
     if verbose:
       print("Optimizing orbit-averaged parameters...")
-      print(f"  Initial: E_beam_oavg={x0[0]:.1f} eV, gamma_oavg={x0[1]:.3e}, T_beam_oavg={x0[2]:.1f} eV")
+      print(f"  Initial: E_beam_midmap={x0[0]:.1f} eV, gamma_midmap={x0[1]:.3e}, T_beam_midmap={x0[2]:.1f} eV")
       init_total, init_shape, init_M0, init_power = objective(x0)
       print(f"  Initial residuals: shape={init_shape:.3e}, M0={init_M0:.3e}, power={init_power:.3e}, total={init_total:.3e}")
     
     result = minimize(objective_scalar, x0, method='L-BFGS-B', bounds=bounds,
                       options={'maxiter': 1000, 'ftol': 1e-16, 'gtol': 1e-16})
     
-    E_beam_opt_eV, gamma_oavg_opt, T_beam_opt_eV = result.x
+    E_beam_opt_eV, gamma_midmap_opt, T_beam_opt_eV = result.x
     
     if verbose:
-      print(f"  Optimized: E_beam_oavg={E_beam_opt_eV:.1f} eV, gamma_oavg={gamma_oavg_opt:.3e}, T_beam_oavg={T_beam_opt_eV:.1f} eV")
+      print(f"  Optimized: E_beam_midmap={E_beam_opt_eV:.1f} eV, gamma_midmap={gamma_midmap_opt:.3e}, T_beam_midmap={T_beam_opt_eV:.1f} eV")
       print(f"  Optimization converged: {result.success}, iterations: {result.nit}, message: {result.message}")
       final_total, final_shape, final_M0, final_power = objective(result.x)
       print(f"  Final residuals: shape={final_shape:.3e}, M0={final_M0:.3e}, power={final_power:.3e}, total={final_total:.3e}")
     
     if verbose:
       print(f"\nOptimized orbit-averaged beam parameters:")
-      print(f"  E_beam_oavg: {self.E_beam_oavg/self.eV:.1f} eV -> {E_beam_opt_eV:.1f} eV")
-      print(f"  T_beam_oavg: {self.T_beam_oavg/self.eV:.1f} eV -> {T_beam_opt_eV:.1f} eV")
-      print(f"  gamma_oavg: {self.gamma_oavg:.3e} -> {gamma_oavg_opt:.3e}")
+      print(f"  E_beam_midmap: {self.E_beam_midmap/self.eV:.1f} eV -> {E_beam_opt_eV:.1f} eV")
+      print(f"  T_beam_midmap: {self.T_beam_midmap/self.eV:.1f} eV -> {T_beam_opt_eV:.1f} eV")
+      print(f"  gamma_midmap: {self.gamma_midmap:.3e} -> {gamma_midmap_opt:.3e}")
       print(f"\nSpatial source parameters (unchanged):")
       print(f"  E_beam_spatial: {self.E_beam_spatial/self.eV:.1f} eV")
       print(f"  T_beam_spatial: {self.T_beam_spatial/self.eV:.1f} eV")
@@ -733,11 +733,11 @@ class BeamSourceComparison:
       Z_m=self.Z_m,
       B_p=self.B_p,
       gamma_spatial=self.gamma_spatial,
-      gamma_oavg=gamma_oavg_opt,
+      gamma_midmap=gamma_midmap_opt,
       T_beam_eV_spatial=self.T_beam_spatial / self.eV,
-      T_beam_eV_oavg=T_beam_opt_eV,
+      T_beam_eV_midmap=T_beam_opt_eV,
       E_beam_eV_spatial=self.E_beam_spatial / self.eV,
-      E_beam_eV_oavg=E_beam_opt_eV,
+      E_beam_eV_midmap=E_beam_opt_eV,
       Lb=self.Lb,
       use_potential=self._use_potential
     )
@@ -747,21 +747,21 @@ class BeamSourceComparison:
   def plot_vpar_cut(self, mu, z_cut=0.0, n_workers=None):
     """Plot 1D comparison at fixed z, with x-axis in energy (keV)."""
     vpar_coords = np.linspace(0, 2e6, 500)
-    orbit_avg = self.orbit_avg_beam_source(z_cut, vpar_coords, mu)
+    midmap = self.midplane_mapped_beam_source(z_cut, vpar_coords, mu)
     
     # Use parallel computation for contour integral
     Z = np.full_like(vpar_coords, z_cut)
     MU = np.full_like(vpar_coords, mu)
-    contour = self._compute_contour_parallel(
+    bnc_avg = self._compute_bounce_average_parallel(
       Z.reshape(-1, 1, 1), vpar_coords.reshape(-1, 1, 1), 
       MU.reshape(-1, 1, 1), n_workers).flatten()
 
     # Compute the integral for both sources
-    contour_integral = np.trapz(contour, vpar_coords)
-    orbit_avg_integral = np.trapz(orbit_avg, vpar_coords)
+    bnc_avg_integral = np.trapz(bnc_avg, vpar_coords)
+    midmap_integral = np.trapz(midmap, vpar_coords)
     print(f"At z={z_cut} m, mu={mu:.3e}:")
-    print(f"  Contour integral M0 flux: {contour_integral:.3e}")
-    print(f"  Orbit-averaged M0 flux:   {orbit_avg_integral:.3e}")
+    print(f"  Bounce averaged M0 flux: {bnc_avg_integral:.3e}")
+    print(f"  Midplane-mapped M0 flux:   {midmap_integral:.3e}")
     
     # Convert vpar to energy in keV: E = 0.5 * m * vpar^2
     # Use signed energy to preserve direction information
@@ -770,18 +770,18 @@ class BeamSourceComparison:
                                       + self.qi * self.phi(z_cut) / (1000 * self.eV)
     
     fig, ax = plt.subplots(figsize=(10, 6))
-    ax.plot(energy_keV, contour, label='Contour Integral', linestyle='-')
-    ax.plot(energy_keV, orbit_avg, label='Midplane Mapped', linestyle='--')
+    ax.plot(energy_keV, bnc_avg, label='Bounce Averaged', linestyle='-')
+    ax.plot(energy_keV, midmap, label='Midplane Mapped', linestyle='--')
     ax.set_xlabel(r'$E =\frac{1}{2} m v_\parallel^2 + \mu B $ (keV)')
     ax.set_ylabel('Source')
-    ax.set_title(f'Source comparison at z = {z_cut} m')
+    ax.set_title(f'Source comparison at z = {z_cut} m, mu = {mu:.3e} J/T')
     ax.legend()
     ax.grid(True, alpha=0.3)
     
     return fig
 
   def plot_z_slice(self, z_cut=0.0, n_vpar=100, n_mu=100, n_workers=None):
-    """Plot 2D comparison at fixed z: contour integral, orbit-averaged, and difference.
+    """Plot 2D comparison at fixed z: bounce averaged,midplane-mapped, and difference.
     
     Args:
       z_cut: z position for the slice
@@ -801,11 +801,10 @@ class BeamSourceComparison:
     Z = np.full_like(VPAR, z_cut)
     
     # Compute orbit-averaged source (fast, vectorized)
-    orbit_avg = self.orbit_avg_beam_source(Z, VPAR, MU)
+    midmap = self.midplane_mapped_beam_source(Z, VPAR, MU)
     
     # Compute contour integral (parallel)
-    print(f"Computing contour integral at z={z_cut} m...")
-    contour = self._compute_contour_parallel(
+    orbt_avg = self._compute_bounce_average_parallel(
       Z.reshape(-1, 1, 1), 
       VPAR.reshape(-1, 1, 1), 
       MU.reshape(-1, 1, 1), 
@@ -818,37 +817,37 @@ class BeamSourceComparison:
     mu_plot = MU
     
     # Compute difference
-    diff = orbit_avg - contour
+    diff = midmap - orbt_avg
     
     # Create figure with 3 panels
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(14, 4))
     
     # Common color scale for contour and orbit_avg
-    vmax = max(np.max(contour), np.max(orbit_avg))
+    vmax = max(np.max(orbt_avg), np.max(midmap))
     vmin = 0
     
     # Left panel: Contour integral
-    im1 = ax1.pcolormesh(vpar_plot, mu_plot, contour, shading='auto', cmap='inferno', vmin=vmin, vmax=vmax)
+    im1 = ax1.pcolormesh(vpar_plot, mu_plot, orbt_avg, shading='auto', cmap='inferno', vmin=vmin, vmax=vmax)
     plt.colorbar(im1, ax=ax1, label='Source')
     ax1.set_xlabel(r'$v_\parallel$ ($10^6$ m/s)')
     ax1.set_ylabel(r'$\mu$ (J/T)')
-    ax1.set_title(f'Contour Integral at z = {z_cut} m')
+    ax1.set_title(f'Bounce Averaged at z = {z_cut} m')
     
     # Middle panel: Orbit-averaged
-    im2 = ax2.pcolormesh(vpar_plot, mu_plot, orbit_avg, shading='auto', cmap='inferno', vmin=vmin, vmax=vmax)
+    im2 = ax2.pcolormesh(vpar_plot, mu_plot, midmap, shading='auto', cmap='inferno', vmin=vmin, vmax=vmax)
     plt.colorbar(im2, ax=ax2, label='Source')
     ax2.set_xlabel(r'$v_\parallel$ ($10^6$ m/s)')
     ax2.set_ylabel(r'$\mu$ (J/T)')
-    ax2.set_title(f'Orbit-Averaged at z = {z_cut} m')
+    ax2.set_title(f'Midplane Mapped at z = {z_cut} m')
     
-    # Right panel: Difference (orbit_avg - contour)
+    # Right panel: Difference (midmap - orbt_avg)
     diff_max = max(abs(np.min(diff)), abs(np.max(diff)))
     im3 = ax3.pcolormesh(vpar_plot, mu_plot, diff, shading='auto', cmap='RdBu_r', 
                          vmin=-diff_max, vmax=diff_max)
     plt.colorbar(im3, ax=ax3, label='Difference')
     ax3.set_xlabel(r'$v_\parallel$ ($10^6$ m/s)')
     ax3.set_ylabel(r'$\mu$ (J/T)')
-    ax3.set_title(f'Orbit-Averaged − Contour at z = {z_cut} m')
+    ax3.set_title(f'Midplane map - Bounce Averaged at z = {z_cut} m')
     
     plt.tight_layout()
     return fig
@@ -868,7 +867,7 @@ if __name__ == "__main__":
   mu_coords = np.linspace(0.0, 2.0 * mu_val, 50)
   
   # Plot energy diagnostics to understand the potential effects
-  fig_diag = bsc.plot_energy_diagnostics()
+  # fig_diag = bsc.plot_energy_diagnostics()
   
   # results = bsc.compute_all_sources_on_grid(z_coords, vpar_coords, mu_coords)
   # power = bsc.compute_power(z_coords, vpar_coords, mu_coords, results)
@@ -878,22 +877,23 @@ if __name__ == "__main__":
   # fig1 = bsc.plot_comparison_2d(z_coords, vpar_coords, mu_val)
   # plt.show()
   
-  # Plot 1D vpar cut at z=0 (original)
+  # # Plot 1D vpar cut at z=0 (original)
   # fig2 = bsc.plot_vpar_cut(mu_val, z_cut=0.0)
   # fig2.suptitle('Before optimization')
   
-  # Plot 2D slice at z=0 (before optimization)
-  fig_slice = bsc.plot_z_slice(z_cut=0.0, n_vpar=100, n_mu=100)
-  fig_slice.suptitle('Before optimization')
+  # # Plot 2D slice at z=0 (before optimization)
+  # fig_slice = bsc.plot_z_slice(z_cut=0.0, n_vpar=100, n_mu=100)
+  # fig_slice.suptitle('Before optimization')
   
   # Optimize using full 3D integrals
-  bsc_optimized = bsc.optimize_orbit_avg_to_match_contour(z_coords, vpar_coords, mu_coords)
+  bsc_optimized = bsc.optimize_midplane_map_to_match_bounce_avg(z_coords, vpar_coords, mu_coords)
   
+  # mu_val = 4e-15
   # fig3 = bsc_optimized.plot_vpar_cut(mu_val, z_cut=0.0)
 
   bsc_optimized.compute_power(z_coords, vpar_coords, mu_coords)
-  fig3 = bsc_optimized.plot_z_slice(z_cut=0.0, n_vpar=100, n_mu=100)
-  fig3.suptitle('After optimization')
+  # fig3 = bsc_optimized.plot_z_slice(z_cut=0.0, n_vpar=100, n_mu=100)
+  # fig3.suptitle('After optimization')
 
-  bsc_optimized.plot_comparison_2d(z_coords, vpar_coords, mu_val)
+  # bsc_optimized.plot_comparison_2d(z_coords, vpar_coords, mu_val)
   plt.show()

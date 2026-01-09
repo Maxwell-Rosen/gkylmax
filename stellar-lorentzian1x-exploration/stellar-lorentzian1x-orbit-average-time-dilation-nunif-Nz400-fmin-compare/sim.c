@@ -27,6 +27,8 @@ struct gk_poa_phase_params {
   bool is_static_field; // Whether to evolve the field.
   bool is_positivity_enabled; // Whether positivity is enabled.
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type; // Type of df/dt multipler.
+  // double cfl_dt_min_value; // Minimum allowable time-step value.
+  double time_dilation_f_threshold; // Threshold for time dilation factor.
 };
 
 // Define the context of the simulation. This is basically all the globals
@@ -364,9 +366,9 @@ create_ctx(void)
   // Grid parameters
   double vpar_max_ion = 16 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
-  int Nz = 800;
+  int Nz = 400;
   int Nvpar = 64; // 96 uniform
-  int Nmu = 16;  // 192 uniform
+  int Nmu = 32;  // 192 uniform
   int poly_order = 1;
 
   // Source parameters
@@ -378,8 +380,8 @@ create_ctx(void)
   double RatZeq0 = 0.10; // Radius of the field line at Z=0.
   double Z_min = -2.5;
   double Z_max =  2.5;
-  double mcB = 5.416264;
-  double gamma = 0.149893;
+  double mcB = 6.51292;
+  double gamma = 0.124904;
   double Z_m = 0.98;
 
   // POA parameters  
@@ -422,6 +424,7 @@ create_ctx(void)
     poa_phases[2*i].is_static_field = is_static_field_oap;
     poa_phases[2*i].fdot_mult_type = fdot_mult_type_oap;
     poa_phases[2*i].is_positivity_enabled = is_positivity_enabled_oap;
+    poa_phases[2*i].time_dilation_f_threshold = 0.0;
 
     // FDPs.
     poa_phases[2*i+1].phase = GK_POA_FDP;
@@ -431,6 +434,7 @@ create_ctx(void)
     poa_phases[2*i+1].is_static_field = is_static_field_fdp;
     poa_phases[2*i+1].fdot_mult_type = fdot_mult_type_fdp;
     poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_fdp;
+    poa_phases[2*i+1].time_dilation_f_threshold = 1e-16;
   }
   // The final stage is an extra, longer FDP.
   poa_phases[num_phases-1].phase = GK_POA_FDP;
@@ -440,6 +444,7 @@ create_ctx(void)
   poa_phases[num_phases-1].is_static_field = is_static_field_fdp;
   poa_phases[num_phases-1].fdot_mult_type = fdot_mult_type_fdp;
   poa_phases[num_phases-1].is_positivity_enabled = is_positivity_enabled_fdp;
+  poa_phases[num_phases-1].time_dilation_f_threshold = 1e-16;
 
   double write_phase_freq = 1; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
   double int_diag_calc_freq = 100; // Frequency of calculating integrated diagnostics (as a factor of num_frames).
@@ -668,6 +673,7 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
   gkyl_gyrokinetic_app_cout(app, stdout, "  df/dt multiplier = %s\n",
     (pparams->fdot_mult_type == GKYL_GK_FDOT_MULTIPLIER_NONE)?"None":
     (pparams->fdot_mult_type == GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE)?"Loss cone":"Unknown");
+  gkyl_gyrokinetic_app_cout(app, stdout, "  Time dilation factor threshold = %g\n", pparams->time_dilation_f_threshold);
   gkyl_gyrokinetic_app_cout(app, stdout, "----------------------------------------------\n");
 
   // Run an OAP or FDP.
@@ -681,6 +687,7 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
   struct gkyl_gyrokinetic_collisionless collisionless_inp = {
     .type = GKYL_GK_COLLISIONLESS_ES,
     .scale_factor = pparams->alpha,
+    .time_dilation_f_threshold = pparams->time_dilation_f_threshold,
   };
   struct gkyl_gyrokinetic_fdot_multiplier fdot_mult_inp = {
     .type = pparams->fdot_mult_type,
@@ -842,6 +849,8 @@ int main(int argc, char **argv)
     .collisionless = {
       .type = GKYL_GK_COLLISIONLESS_ES,
       .scale_factor = 1.0, // Will be replaced below.
+      // .cfl_dt_min_value = 1e-9,
+      .time_dilation_f_threshold = 1e-16,
       .write_diagnostics = true,
     },
     .time_rate_multiplier = {
@@ -905,6 +914,15 @@ int main(int argc, char **argv)
     .is_static = false,
   };
 
+  struct gkyl_mirror_geo_grid_inp grid_inp = {
+    .filename_psi = "/home/mr1884/scratch/gkylmax/generate_efit/lorentzian_R32.geqdsk_psi.gkyl", // psi file to use
+    .rclose = 0.2, // closest R to region of interest
+    .zmin = -2.5,  // Z of lower boundary
+    .zmax =  2.5,  // Z of upper boundary
+    .include_axis = false, // Include R=0 axis in grid
+    .fl_coord = GKYL_MIRROR_GRID_GEN_PSI_CART_Z, // coordinate system for psi grid
+  };
+
   struct gkyl_gk app_inp = {  // GK app
     .name = "gk_lorentzian_mirror",
     .cdim = ctx.cdim,
@@ -915,18 +933,16 @@ int main(int argc, char **argv)
     .basis_type = app_args.basis_type,
 
     .geometry = {
-      .geometry_id = GKYL_MAPC2P,
+      .geometry_id = GKYL_MIRROR,
       .world = {ctx.psi_eval, 0.0},
-      .mapc2p = mapc2p, // mapping of computational to physical space
-      .c2p_ctx = &ctx,
-      .bfield_func = bfield_func, // magnetic field magnitude
-      .bfield_ctx = &ctx,
-      // .position_map_info = {
-      //   .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
-      //   .map_strength = 0.5,
-      //   .maximum_slope_at_min_B = 2,
-      //   .moving_average_width = 0.5,
-      // },
+      .mirror_grid_info = grid_inp,
+      .position_map_info = {
+        .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
+        .map_strength = 0.5,
+        .maximum_slope_at_min_B = 2,
+        .gaussian_std = 0.25,
+        .gaussian_max_integration_width = 0.5,
+      },
     },
 
     .num_periodic_dir = 0,

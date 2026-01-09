@@ -36,8 +36,8 @@ pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-io
 echo "collision frequency"
 pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_lbo_nu_sum_100.gkyl interp sel --z0 0.0 info
 cd ../..
-cd R-scan/R-20
-echo "Processing R=20 data..."
+cd R-scan/R-22
+echo "Processing R=22 data..."
 echo "Particle M0"
 pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_M0_100.gkyl interp sel --z0 -0.98:0.98 integ 0 info
 echo "Source M0"

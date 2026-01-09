@@ -292,9 +292,9 @@ eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
   double vpar_midp = sqrt(pow(vpar,2.) + 2*mu*(Bmag - app->Bmag_midp)/app->mi); // Ignore potential for now
   double vperp = sqrt(2.0 * mu * app->B_p / app->mi); // What magnetic field do we use here?
 
-  double gamma0 = 1.302e+03; // Set so total M0 flux is 2.3 × 10^21 s-1 m-3 (Dorf 2025)
-  double T_beam = 219.5 * GKYL_ELEMENTARY_CHARGE;
-  double E_beam = 25744.7 * GKYL_ELEMENTARY_CHARGE;
+  double gamma0 = 9.876e+02; // Set so total M0 flux is 2.3 × 10^21 s-1 m-3 (Dorf 2025)
+  double T_beam = 221.2* GKYL_ELEMENTARY_CHARGE;
+  double E_beam = 25757.9 * GKYL_ELEMENTARY_CHARGE;
   double v_beam = sqrt(E_beam / app->mi);
   double sigma_beam = 2*T_beam/app->mi;
 
@@ -374,8 +374,8 @@ create_ctx(void)
   int num_cycles = 10; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
-  int num_frames_oap = 5;        // Frames per OAP phase
-  int num_frames_fdp = 5;        // Frames per FDP phase
+  int num_frames_oap = 10;        // Frames per OAP phase
+  int num_frames_fdp = 10;        // Frames per FDP phase
   int num_frames_fdp_extra = 0;  // Frames for the extra FDP phase
   
   // Whether to evolve the field.
@@ -663,7 +663,7 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
   struct gkyl_gyrokinetic_collisionless collisionless_inp = {
     .type = GKYL_GK_COLLISIONLESS_ES,
     .scale_factor = pparams->alpha,
-    .time_dilation_f_threshold = pparams->time_dilation_f_threshold,
+    // .time_dilation_f_threshold = pparams->time_dilation_f_threshold,
   };
   struct gkyl_gyrokinetic_fdot_multiplier fdot_mult_inp = {
     .type = pparams->fdot_mult_type,
@@ -826,7 +826,7 @@ int main(int argc, char **argv)
       .type = GKYL_GK_COLLISIONLESS_ES,
       .scale_factor = 1.0, // Will be replaced below.
       // .cfl_dt_min_value = 1e-9,
-      .time_dilation_f_threshold = 1e-16,
+      // .time_dilation_f_threshold = 1e-16,
       .write_diagnostics = true,
     },
     .time_rate_multiplier = {
@@ -886,9 +886,8 @@ int main(int argc, char **argv)
     .is_static = false,
   };
 
-
   struct gkyl_mirror_geo_grid_inp grid_inp = {
-    .filename_psi = "/home/mr1884/scratch/gkylmax/generate_efit/lorentzian_R32.geqdsk", // psi file to use
+    .filename_psi = "/home/mr1884/scratch/gkylmax/generate_efit/lorentzian_R32.geqdsk_psi.gkyl", // psi file to use
     .rclose = 0.2, // closest R to region of interest
     .zmin = -2.5,  // Z of lower boundary
     .zmax =  2.5,  // Z of upper boundary
@@ -913,7 +912,8 @@ int main(int argc, char **argv)
         .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
         .map_strength = 0.5,
         .maximum_slope_at_min_B = 2,
-        .moving_average_width = 0.5,
+        .gaussian_std = 0.25,
+        .gaussian_max_integration_width = 0.5,
       },
     },
 

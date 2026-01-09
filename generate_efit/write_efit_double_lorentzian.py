@@ -9,6 +9,8 @@ import fortranformat as ff
 from datetime import date
 from typing import Any, Generator, Iterable, List, TextIO, Union
 
+# Remember to delete the top line and that Gkeyll takes the _psi file which is made from the efit file reader
+
 # Parameters for different mirror ratios R
 mcB_values   = [2.130115, 2.665626, 3.691260, 4.490901, 5.416264, 6.51292]
 gamma_values = [0.451454, 0.331696, 0.226381, 0.182792, 0.149893, 0.124904]
