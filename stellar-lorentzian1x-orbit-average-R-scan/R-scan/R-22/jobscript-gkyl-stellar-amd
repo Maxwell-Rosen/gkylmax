@@ -1,8 +1,8 @@
 #!/bin/bash -l
 ### This job script is for the 2 GPU node part of stellar-amd
 
-#SBATCH -J poa-R-20
-#SBATCH -J lorenzPOA-input
+#.Declare a name for this job, preferably with 16 or fewer characters.
+#SBATCH -J poa-R-22
 
 #.Request the queue (enter the possible names, if omitted, default is the default)
 #.this job is going to use the default

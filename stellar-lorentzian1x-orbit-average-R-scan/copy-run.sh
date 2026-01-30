@@ -35,6 +35,8 @@ for i in "${!mcB_values[@]}"; do
 
   sed -i "381s/.*/  double mcB = $mcB;/" sim.c
   sed -i "382s/.*/  double gamma = $gamma;/" sim.c
+  sed -i "908s|.*|    .filename_psi = \"/home/mr1884/scratch/gkylmax/generate_efit/lorentzian_R${R}.geqdsk_psi.gkyl\",|" sim.c
+	
   sed -i "5s/.*/#SBATCH -J poa-R-${R}/" jobscript-gkyl-stellar-amd
   
   # Build the simulation

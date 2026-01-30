@@ -366,7 +366,7 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   int Nz = 400;
   int Nvpar = 64; // 96 uniform
-  int Nmu = 16;  // 192 uniform
+  int Nmu = 32;  // 192 uniform
   int poly_order = 1;
 
   // Source parameters

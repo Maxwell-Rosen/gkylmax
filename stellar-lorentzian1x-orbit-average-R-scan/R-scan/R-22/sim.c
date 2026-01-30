@@ -364,9 +364,9 @@ create_ctx(void)
   // Grid parameters
   double vpar_max_ion = 16 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
-  int Nz = 800;
+  int Nz = 400;
   int Nvpar = 64; // 96 uniform
-  int Nmu = 16;  // 192 uniform
+  int Nmu = 32;  // 192 uniform
   int poly_order = 1;
 
   // Source parameters
@@ -842,7 +842,7 @@ int main(int argc, char **argv)
     .collisionless = {
       .type = GKYL_GK_COLLISIONLESS_ES,
       .scale_factor = 1.0, // Will be replaced below.
-      // .write_diagnostics = true,
+      .write_diagnostics = true,
     },
     .time_rate_multiplier = {
       .type = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE,
@@ -874,7 +874,6 @@ int main(int argc, char **argv)
         .num_integrated_diag_moments = 1,
         .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
       },
-
     },
     .positivity = {
       .type = GKYL_GK_POSITIVITY_SHIFT,
@@ -905,28 +904,35 @@ int main(int argc, char **argv)
     .is_static = false,
   };
 
+  struct gkyl_mirror_geo_grid_inp grid_inp = {
+    .filename_psi = "/home/mr1884/scratch/gkylmax/generate_efit/lorentzian_R22.geqdsk_psi.gkyl",
+    .rclose = 0.2, // closest R to region of interest
+    .zmin = -2.5,  // Z of lower boundary
+    .zmax =  2.5,  // Z of upper boundary
+    .include_axis = false, // Include R=0 axis in grid
+    .fl_coord = GKYL_MIRROR_GRID_GEN_PSI_CART_Z, // coordinate system for psi grid
+  };
+
   struct gkyl_gk app_inp = {  // GK app
     .name = "gk_lorentzian_mirror",
     .cdim = ctx.cdim,
-    .lower = {ctx.z_min},
-    .upper = {ctx.z_max},
+    .lower = {ctx.Z_min},
+    .upper = {ctx.Z_max},
     .cells = { cells_x[0] },
     .poly_order = ctx.poly_order,
     .basis_type = app_args.basis_type,
 
     .geometry = {
-      .geometry_id = GKYL_MAPC2P,
+      .geometry_id = GKYL_MIRROR,
       .world = {ctx.psi_eval, 0.0},
-      .mapc2p = mapc2p, // mapping of computational to physical space
-      .c2p_ctx = &ctx,
-      .bfield_func = bfield_func, // magnetic field magnitude
-      .bfield_ctx = &ctx,
-      // .position_map_info = {
-      //   .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
-      //   .map_strength = 0.5,
-      //   .maximum_slope_at_min_B = 2,
-      //   .moving_average_width = 0.5,
-      // },
+      .mirror_grid_info = grid_inp,
+      .position_map_info = {
+        .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
+        .map_strength = 0.5,
+        .maximum_slope_at_min_B = 2,
+        .gaussian_std = 0.25,
+        .gaussian_max_integration_width = 0.5,
+      },
     },
 
     .num_periodic_dir = 0,

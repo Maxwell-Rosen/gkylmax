@@ -7,7 +7,7 @@ from scipy.integrate import cumulative_trapezoid as cumtrapz
 import imageio.v2 as imageio
 from scipy.optimize import curve_fit
 
-frame = 20
+frame = 70
 
 # sim_uniform = 'stellar-lorentzian1x-orbit-average-time-dilation-unif-Nz800-fmin'
 # sim_nonuniform = 'stellar-lorentzian1x-orbit-average-time-dilation-nunif-Nz800-fmin-compare'
