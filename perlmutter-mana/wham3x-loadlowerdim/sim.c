@@ -451,7 +451,7 @@ int main(int argc, char **argv)
     .poly_order = ctx.poly_order,
     .basis_type = app_args.basis_type,
     .geometry = {
-      .geometry_id = GKYL_MIRROR,
+      .geometry_id = GKYL_GEOMETRY_MIRROR,
       .efit_info = inp,
       .mirror_grid_info = ginp,
     },

@@ -841,7 +841,7 @@ int main(int argc, char **argv)
     .basis_type = app_args.basis_type,
     .geometry = {
       // .geometry_id = GKYL_GEOMETRY_FROMFILE
-      .geometry_id = GKYL_MIRROR,
+      .geometry_id = GKYL_GEOMETRY_MIRROR,
       .mirror_efit_info = &inp,
       .mirror_grid_info = &ginp,
     },

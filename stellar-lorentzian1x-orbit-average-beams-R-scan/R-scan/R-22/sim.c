@@ -290,9 +290,9 @@ eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
   double vpar_midp = sqrt(pow(vpar,2.) + 2*mu*(Bmag - app->Bmag_midp)/app->mi); // Ignore potential for now
   double vperp = sqrt(2.0 * mu * app->B_p / app->mi); // What magnetic field do we use here?
 
-  double gamma0 = 9.876e+02; // Set so total M0 flux is 2.3 × 10^21 s-1 m-3 (Dorf 2025)
-  double T_beam = 221.2* GKYL_ELEMENTARY_CHARGE;
-  double E_beam = 25757.9 * GKYL_ELEMENTARY_CHARGE;
+  double gamma0 = 9.883e+02; 
+  double T_beam = 218.6 * GKYL_ELEMENTARY_CHARGE; 
+  double E_beam = 25727.8 * GKYL_ELEMENTARY_CHARGE; 
   double v_beam = sqrt(E_beam / app->mi);
   double sigma_beam = 2*T_beam/app->mi;
 
@@ -882,7 +882,7 @@ int main(int argc, char **argv)
     .zmin = -2.5,  // Z of lower boundary
     .zmax =  2.5,  // Z of upper boundary
     .include_axis = false, // Include R=0 axis in grid
-    .fl_coord = GKYL_MIRROR_GRID_GEN_PSI_CART_Z, // coordinate system for psi grid
+    .fl_coord = GKYL_GEOMETRY_MIRROR_GRID_GEN_PSI_CART_Z, // coordinate system for psi grid
   };
 
   struct gkyl_gk app_inp = {  // GK app
@@ -895,7 +895,7 @@ int main(int argc, char **argv)
     .basis_type = app_args.basis_type,
 
     .geometry = {
-      .geometry_id = GKYL_MIRROR,
+      .geometry_id = GKYL_GEOMETRY_MIRROR,
       .world = {ctx.psi_eval, 0.0},
       .mirror_grid_info = grid_inp,
       .position_map_info = {

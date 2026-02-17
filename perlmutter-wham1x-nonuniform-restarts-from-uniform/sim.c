@@ -635,7 +635,7 @@ int main(int argc, char **argv)
     .basis_type = app_args.basis_type,
     .enforce_positivity = true,
     .geometry = {
-      .geometry_id = GKYL_MIRROR,
+      .geometry_id = GKYL_GEOMETRY_MIRROR,
       .world = {ctx.psi_eval, 0.0},
       .efit_info = efit_inp,
       .mirror_grid_info = grid_inp,
