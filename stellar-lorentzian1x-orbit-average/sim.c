@@ -370,9 +370,9 @@ create_ctx(void)
   int poly_order = 1;
 
   // Source parameters
-  double ion_source_amplitude = 1.e20;
+  double ion_source_amplitude = 1.03e21;
   double ion_source_sigma = 0.5;
-  double ion_source_temp = 5000. * eV;
+  double ion_source_temp = 19250. * eV;
 
   // Geometry parameters.
   double RatZeq0 = 0.10; // Radius of the field line at Z=0.

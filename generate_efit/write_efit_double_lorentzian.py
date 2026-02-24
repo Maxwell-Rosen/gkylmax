@@ -27,7 +27,7 @@ def psi_f(R, Z, mcB, gamma):
 #RZ box
 NW = 257
 NH = 257
-RMIN,RMAX = 1e-3, .3
+RMIN,RMAX = 0.0, .3
 ZMIN,ZMAX = -2.5, 2.5
 RDIM = RMAX - RMIN
 ZDIM = ZMAX - ZMIN
@@ -73,7 +73,7 @@ def write_line(data: Iterable[Any], fh: TextIO, fmt: str) -> None:
 
 # Loop over all mirror ratios
 for idx, (mcB, gamma, R_mirror) in enumerate(zip(mcB_values, gamma_values, R_values)):
-    outFileName = f'lorentzian_R{R_mirror}.geqdsk'
+    outFileName = f'lorentzian_R{R_mirror}_zero.geqdsk'
     
     print(f"\n--- Processing R = {R_mirror} ---")
     print(f"mcB = {mcB}, gamma = {gamma}")

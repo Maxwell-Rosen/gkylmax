@@ -366,13 +366,13 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   int Nz = 400;
   int Nvpar = 64; // 96 uniform
-  int Nmu = 16;  // 192 uniform
+  int Nmu = 32;  // 192 uniform
   int poly_order = 1;
 
   // Source parameters
-  double ion_source_amplitude = 1.e20;
+  double ion_source_amplitude = 1.03e21;
   double ion_source_sigma = 0.5;
-  double ion_source_temp = 5000. * eV;
+  double ion_source_temp = 19250. * eV;
 
   // Geometry parameters.
   double RatZeq0 = 0.10; // Radius of the field line at Z=0.
@@ -385,15 +385,16 @@ create_ctx(void)
   // POA parameters  
   double alpha_oap = 5e-6;  // Factor multiplying collisionless terms.
   double alpha_fdp = 1.0;
-  double tau_oap = 2.0;  // Duration of each phase.
-  double tau_fdp = 20e-6;
-  double tau_fdp_extra = 0.0;
-  int num_cycles = 10; // Number of OAP+FDP cycles to run.
+  // Duration of each phase.
+  double tau_oap = 0;
+  double tau_fdp = 0;
+  double tau_fdp_extra = 1e-3;
+  int num_cycles = 0; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
-  int num_frames_oap = 5;        // Frames per OAP phase
-  int num_frames_fdp = 5;        // Frames per FDP phase
-  int num_frames_fdp_extra = 0;  // Frames for the extra FDP phase
+  int num_frames_oap = 0;        // Frames per OAP phase
+  int num_frames_fdp = 0;        // Frames per FDP phase
+  int num_frames_fdp_extra = 100;  // Frames for the extra FDP phase
   
   // Whether to evolve the field.
   bool is_static_field_oap = true;
@@ -824,15 +825,20 @@ int main(int argc, char **argv)
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
 
-    .projection = {
-      .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
-      .density = eval_density_ion,
-      .ctx_density = &ctx,
-      .upar = eval_upar_ion,
-      .ctx_upar = &ctx,
-      .temp = eval_temp_ion,
-      .ctx_temp = &ctx,
+    .init_from_file = {
+      .type = GKYL_IC_IMPORT_F,
+      .file_name = "initial-condition/gk_lorentzian_mirror-ion_100.gkyl",
     },
+
+    // .projection = {
+    //   .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
+    //   .density = eval_density_ion,
+    //   .ctx_density = &ctx,
+    //   .upar = eval_upar_ion,
+    //   .ctx_upar = &ctx,
+    //   .temp = eval_temp_ion,
+    //   .ctx_temp = &ctx,
+    // },
 
     .mapc2p = {
       .mapping = mapc2p_vel_ion,
@@ -916,8 +922,8 @@ int main(int argc, char **argv)
   struct gkyl_gk app_inp = {  // GK app
     .name = "gk_lorentzian_mirror",
     .cdim = ctx.cdim,
-    .lower = {ctx.z_min},
-    .upper = {ctx.z_max},
+    .lower = {ctx.Z_min},
+    .upper = {ctx.Z_max},
     .cells = { cells_x[0] },
     .poly_order = ctx.poly_order,
     .basis_type = app_args.basis_type,

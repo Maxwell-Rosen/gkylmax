@@ -1,331 +1,419 @@
-import postgkyl as pg
+#!/usr/bin/env python3
+"""
+Generate EFIT/geqdsk files for a magnetic mirror configuration.
+
+The magnetic field is produced by circular coils on a cylinder of radius
+``COIL_RADIUS``:
+
+  * Two **high-field** (mirror-throat) coils at  z = +/- COIL_DIST/2,
+    each carrying current ``I_high``.
+  * ``N_MIDDLE_COILS`` **low-field** coils uniformly distributed between
+    the mirror throats, each carrying current ``I_low``.  These flatten
+    the field profile near the device centre (z = 0).
+
+The script optimises the two currents so that, on the flux surface
+psi = PSI_EVAL:
+
+    |B|_max   (at the mirror throats, z ~ +/- COIL_DIST/2)  =  TARGET_BMAX
+    |B|_min   (at the device centre,  z = 0)                 =  TARGET_BMIN
+
+giving mirror ratio  R_m  =  Bmax / Bmin.
+
+The poloidal flux psi = R * A_phi is computed from the exact vector
+potential of each circular current loop (Jackson, sec 5.5):
+
+    A_phi = -(mu0 * I / pi) * sqrt(a/R) *
+            [ (k^2 - 2)/(2k) * K(k^2)  +  E(k^2)/k ]
+
+    k^2 = 4 a R / [ (a + R)^2 + (Z - Z_coil)^2 ]
+
+where K and E are the complete elliptic integrals of the first and
+second kind.
+"""
+
+import os
 import numpy as np
+import matplotlib
+matplotlib.use("Agg")                       # non-interactive backend
 import matplotlib.pyplot as plt
-import sys
-import scipy.integrate as integrate
-from scipy.interpolate import pchip_interpolate, interp1d
-from scipy.special import ellipk, ellipe
 import scipy.constants
+import scipy.integrate as integrate
 import scipy.optimize as sco
+from scipy.interpolate import interp1d
+from scipy.special import ellipk, ellipe
 import fortranformat as ff
 from datetime import date
-from typing import Any, Generator, Iterable, List, TextIO, Union
-
-#Remove all files with the name conditioned_coil_R*.geqdsk
-import os
-import multiprocessing as mp
-
-for file in os.listdir():
-    if file.endswith(".geqdsk") and file.startswith("conditioned_coil_R"):
-        os.remove(file)
-
-## TODO: Control for minimum B = constant, then set Bmax = R * Bmin
-
-def psi_f(R, Z, I_high_field_coils, I_low_field_coils, coil_dist):
-    if R < 1e-17:
-        R = 1e-17
-    a = 0.45 #Radius of all the coils. Must be > R_max
-    mu0 = scipy.constants.mu_0
-
-    Zl = Z - coil_dist/2
-    k2 = 4*a*R/((a+R)**2 + Zl**2)
-    k = np.sqrt(k2)
-    Aphi = -mu0*I_high_field_coils/np.pi * np.sqrt(a/R) * ((k2 - 2)/2/k*ellipk(k2) + ellipe(k2)/k)
-    Zu = Z + coil_dist/2
-    k2 = 4*a*R/((a+R)**2 + Zu**2)
-    k = np.sqrt(k2)
-    Aphi += -mu0*I_high_field_coils/np.pi * np.sqrt(a/R) * ((k2 - 2)/2/k*ellipk(k2) + ellipe(k2)/k)
-    Z_middle = np.linspace(Zl,Zu,50)
-    Z_middle = Z_middle[1:-1]
-    k2 = 4*a*R/((a+R)**2 + Z_middle**2)
-    k = np.sqrt(k2)
-    Aphi += np.sum(-mu0*I_low_field_coils/np.pi * np.sqrt(a/R) * ((k2 - 2)/2/k*ellipk(k2) + ellipe(k2)/k))
-    return Aphi * R
+from typing import Any, Iterable, TextIO
 
 
-B0 = 0.0 #Domain center
-R0 = .02
+# ======================================================================
+#  Configuration
+# ======================================================================
 
-mirror_ratio_vector = np.array([20])#, 15, 10, 5, 2, 1.5])
+# --- Mirror field targets -------------------------------------------------
+MIRROR_RATIO = 5.0                          # desired Bmax / Bmin
+TARGET_BMIN     = 0.5                          # [T]  target |B| at z = 0
+TARGET_BMAX     = MIRROR_RATIO * TARGET_BMIN      # [T]  target |B| at throats
 
-I_high_field = 812998 # High field current. Optimized such that Bmax on psi_eval = aim_Bmax
-I_middle_low_field = 0 # Low field current. Optimized such that Bmin on psi_eval = aim_Bmin
-h = 2 
+# --- Coil geometry --------------------------------------------------------
+COIL_RADIUS    = 0.45       # [m]  radius of every coil  (must be > RMAX)
+N_MIDDLE_COILS = 48         # number of low-field coils between the mirrors
+COIL_DIST      = 2.0        # [m]  axial separation of mirror coils (= h)
 
-#optimizer parameters
-aim_Bmax = 10.0
-aim_Bmin = 0.5
-I_previous_step = 0
-Bmax_previous_step = 0
-psi_eval = 1e-3
+# --- Flux surface for B evaluation ----------------------------------------
+PSI_EVAL = 1e-3             # value of psi on which to measure Bmax / Bmin
 
+# --- Background / toroidal field (zero for a pure mirror) -----------------
+B0 = 0.0
+R0 = 0.02
 
-    #RZ box
-NW = 257
-NH = 257
-RMIN,RMAX = .001, 0.4
-ZMIN,ZMAX = -2, 2
-RDIM = RMAX - RMIN
-ZDIM = ZMAX - ZMIN
-RLEFT = RMIN
-ZMID = (ZMAX+ZMIN)/2.0
-RMAXIS = 0.0
-ZMAXIS = 0.0
-NPSI = NW #don't write
-RCENTR = 0.0
-BCENTR = B0
-CURRENT = 0
+# --- RZ computational grid ------------------------------------------------
+NW = 257                    # number of R grid points
+NH = 257                    # number of Z grid points
+RMIN, RMAX = 0.001, 0.4
+ZMIN, ZMAX = -2.0,  2.0
 
+Rgrid = np.linspace(RMIN, RMAX, NW)
+Zgrid = np.linspace(ZMIN, ZMAX, NH)
 
-#Solve GS in RZ coords
-Rgrid = np.linspace(RMIN,RMAX,NW)
-Zgrid = np.linspace(ZMIN,ZMAX,NH)
-dR = Rgrid[1] - Rgrid[0]
-dZ = Zgrid[1] - Zgrid[0]
-#rthetagrid = np.zeros((len(Rgrid),len(Zgrid),2))
-psiRZ = np.zeros((len(Rgrid),len(Zgrid)))
-BzRZ = np.zeros((len(Rgrid),len(Zgrid)))
-BrRZ = np.zeros((len(Rgrid),len(Zgrid)))
-BRZ = np.zeros((len(Rgrid),len(Zgrid)))
+# Derived quantities used in the geqdsk header
+RDIM    = RMAX - RMIN
+ZDIM    = ZMAX - ZMIN
+RLEFT   = RMIN
+ZMID    = 0.5 * (ZMAX + ZMIN)
+RMAXIS  = 0.0
+ZMAXIS  = 0.0
+RCENTR  = 0.0
+BCENTR  = B0
+CURRENT = 0.0
 
-B_psi = np.zeros((len(mirror_ratio_vector),len(Zgrid)))
-
-def minimize_function(I_high_field, I_middle, coil_distance):
+# Physical constant
+MU0 = scipy.constants.mu_0
 
 
+# ======================================================================
+#  Flux and field functions
+# ======================================================================
 
-    while True:
-        # # From Jackson. There seems to be a typo in the k**2 in the eliptic functions. They should be k**2, not k
-        print("I = %g"%I_high_field)
-        def compute_psi_B(i, Ri, Zgrid, dR, dZ, I):
-            psiRZ_row = np.zeros(len(Zgrid))
-            BzRZ_row = np.zeros(len(Zgrid))
-            BrRZ_row = np.zeros(len(Zgrid))
-            BRZ_row = np.zeros(len(Zgrid))
-            for j, Zj in enumerate(Zgrid):
-                psiRZ_row[j] = psi_f(Ri, Zj, I)
-                if Ri < 1e-17:
-                    Ri = Rgrid[1]
-                BzRZ_row[j] = 1/Ri**2 * (psi_f(Ri+dR, Zj, I) - psi_f(Ri-dR, Zj, I))/(2*dR)
-                BrRZ_row[j] = -1/Ri * (psi_f(Ri, Zj+dZ, I) - psi_f(Ri, Zj-dZ, I))/(2*dZ)
-                BRZ_row[j] = np.sqrt(BrRZ_row[j]**2 + BzRZ_row[j]**2)
-            return i, psiRZ_row, BzRZ_row, BrRZ_row, BRZ_row
+def _aphi_single_coil(R, Z_rel, I, a=COIL_RADIUS):
+    """Toroidal component of the vector potential from one circular coil.
 
-        with mp.Pool(mp.cpu_count()) as pool:
-            results = pool.starmap(compute_psi_B, [(i, Ri, Zgrid, dR, dZ, I_high_field) for i, Ri in enumerate(Rgrid)])
+    Parameters
+    ----------
+    R     : array_like -- cylindrical radius of the field point(s)
+    Z_rel : array_like -- Z_field - Z_coil  (signed axial distance)
+    I     : float      -- coil current  [A]
+    a     : float      -- coil radius   [m]
 
-        for i, psiRZ_row, BzRZ_row, BrRZ_row, BRZ_row in results:
-            psiRZ[i, :] = psiRZ_row
-            BzRZ[i, :] = BzRZ_row
-            BrRZ[i, :] = BrRZ_row
-            BRZ[i, :] = BRZ_row
-        
-        for j, Zj in enumerate(Zgrid):
-            # For this position of Z, find which R gives psi = psi_eval
-            psiR = interp1d(Rgrid, psiRZ[:,j], kind='cubic')
-            R_psi = sco.brentq(lambda R: psiR(R) - psi_eval, RMIN, RMAX)
-            psi_interp = psi_f(R_psi, Zj, I_high_field)
-            #Interpolate the magnetic field at this point
-            B_psi_interp_model = interp1d(Rgrid, BRZ[:,j], kind='cubic')
-            B_psi[i_current,j] = B_psi_interp_model(R_psi)
-            
+    Returns
+    -------
+    Aphi : ndarray -- same shape as broadcast(R, Z_rel)
+    """
+    R     = np.asarray(R, dtype=float)
+    Z_rel = np.asarray(Z_rel, dtype=float)
+    R_safe = np.maximum(R, 1e-17)                   # avoid 1/0 on axis
+
+    k2 = 4.0 * a * R_safe / ((a + R_safe)**2 + Z_rel**2)
+    k  = np.sqrt(k2)
+
+    Aphi = (-MU0 * I / np.pi) * np.sqrt(a / R_safe) * (
+        (k2 - 2.0) / (2.0 * k) * ellipk(k2) + ellipe(k2) / k
+    )
+    return Aphi
 
 
-        Bmax = np.max(B_psi[i_current,:])
-        Bmin = B_psi[i_current,int(NH/2)]
-        print("Bmax = %g at (R = %g, Z = %g)"%(Bmax, R_psi, Zgrid[np.argmax(B_psi[i_current,:])]))
-        print("Bmin = %g at (R = %g, Z = %g)"%(Bmin, Rgrid[int(NW/2)], Zgrid[int(NH/2)]))
-        print("Mirror ratio = %g"%(Bmax/Bmin))
+def compute_psi(R, Z, I_high, I_low):
+    """Poloidal flux  psi = R * A_phi  from all coils.
 
-        if np.isclose(Bmax, aim_Bmax, rtol=1e-2):
-            a_fit = (Bmin - Bmin_previous_step)/(I_middle_low_field - I_middle_low_field_previous_step)
-            b_fit = Bmin - a_fit*I_middle_low_field
-            I_middle_low_field_previous_step = I_middle_low_field
-            Bmin_previous_step = Bmin
-            I_middle_low_field = (aim_Bmax - b_fit)/a_fit
+    Parameters
+    ----------
+    R, Z   : array_like -- field-point coordinates (broadcastable)
+    I_high : float      -- current in each mirror-throat coil
+    I_low  : float      -- current in each central coil
+    """
+    R = np.asarray(R, dtype=float)
+    Z = np.asarray(Z, dtype=float)
 
-            break
+    # Mirror-throat coils at z = +/- COIL_DIST/2
+    Aphi  = _aphi_single_coil(R, Z - COIL_DIST / 2, I_high)
+    Aphi += _aphi_single_coil(R, Z + COIL_DIST / 2, I_high)
 
-        a_fit = (Bmax - Bmax_previous_step)/(I_high_field - I_previous_step)
-        b_fit = Bmax - a_fit*I_high_field
-        I_previous_step = I_high_field
-        Bmax_previous_step = Bmax
-        I_high_field = (aim_Bmax - b_fit)/a_fit
+    # Low-field coils uniformly spaced between the throats (excl. endpoints)
+    z_coils = np.linspace(-COIL_DIST / 2, COIL_DIST / 2,
+                          N_MIDDLE_COILS + 2)[1:-1]
+    for zc in z_coils:
+        Aphi += _aphi_single_coil(R, Z - zc, I_low)
 
-    mirrorRatio = Bmax/Bmin
-    outFileName = 'conditioned_coil_R'+str(int(Bmax/Bmin))+'.geqdsk'
-    print("Making EFIT file with Bmax = %g, Bmin = %g, mirror ratio = %g"%(Bmax, Bmin, mirrorRatio))
-    print("Filename: %s"%outFileName)
-
-    Bmin = BRZ[0,int(NH/2)]
-
-    SIMAG = psi_f(2.0,0, I_high_field) 
-    SIBRY = psi_f(4.0,0, I_high_field)
-
-    # plt.figure()
-    # plt.plot(Zgrid, B_psi)
-    # plt.xlabel('Z')
-    # plt.ylabel('B')
-    # plt.title("B calculated in RZ coords at psi = "+str(psi_eval))
+    return np.maximum(R, 1e-17) * Aphi
 
 
-    # plt.figure()
-    # contour = plt.contour(Rgrid,Zgrid, psiRZ.T, levels = np.linspace(0, 1e-4, 50))
-    # plt.xlabel('R')
-    # plt.ylabel('Z')
-    # plt.colorbar()
-    # plt.title("Psi calculated in RZ coords")
-    # # plt.show()
+def compute_fields_on_grid(I_high, I_low):
+    """Evaluate psi, Bz, Br, |B| on the full (Rgrid x Zgrid) mesh.
 
-    # plt.figure()
-    # plt.pcolormesh(Rgrid,Zgrid, np.log(BRZ.T))
-    # plt.xlabel('R')
-    # plt.ylabel('Z')
-    # plt.colorbar()
-    # plt.title("log(B) calculated in RZ coords")
-    # # plt.show()
+    Uses  Bz = (1/R) dpsi/dR  and  Br = -(1/R) dpsi/dZ.
 
-    # plt.figure()
-    # plt.plot(Zgrid, BRZ[int(NW/2),:])
-    # plt.xlabel('Z')
-    # plt.ylabel('B')
-    # plt.title("B calculated in RZ coords at R = "+str(Rgrid[int(NW/2)]))
-    # # plt.show()
+    Returns
+    -------
+    psiRZ, BzRZ, BrRZ, BRZ : ndarray of shape (NW, NH)
+    """
+    RR, ZZ = np.meshgrid(Rgrid, Zgrid, indexing="ij")   # shape (NW, NH)
 
-    # plt.figure()
-    # plt.plot(Zgrid, BRZ[0,:])
-    # plt.xlabel('Z')
-    # plt.ylabel('B')
-    # plt.title("B calculated in RZ coords at R = "+str(Rgrid[0]))
+    psiRZ = compute_psi(RR, ZZ, I_high, I_low)
 
-    # plt.figure()
-    # plt.plot(Rgrid, BRZ[:,int(NH/4)], label='Z = '+str(Zgrid[int(NH/4)]))
-    # plt.plot(Rgrid, BRZ[:,int(NH/4)-1], label='Z = '+str(Zgrid[int(NH/4)-1]))
-    # plt.plot(Rgrid, BRZ[:,int(NH/4)+1], label='Z = '+str(Zgrid[int(NH/4)+1]))
-    # plt.xlabel('R')
-    # plt.ylabel('B')
-    # plt.legend()
-    # plt.title("B calculated in RZ coords around Z = "+str(Zgrid[int(NH/4)]))
+    # Central finite differences via np.gradient
+    dpsi_dR = np.gradient(psiRZ, Rgrid, axis=0)
+    dpsi_dZ = np.gradient(psiRZ, Zgrid, axis=1)
 
-    # plt.figure()
-    # plt.plot(Rgrid, BRZ[:,int(NH/2)], label='Z = '+str(Zgrid[int(NH/2)]))
-    # plt.xlabel('R')
-    # plt.ylabel('B')
-    # plt.legend()
-    # plt.title("B calculated in RZ coords around Z = "+str(Zgrid[int(NH/2)]))
+    R_safe = np.maximum(RR, Rgrid[1])        # avoid 1/0 at smallest R
+    BzRZ =  dpsi_dR / R_safe
+    BrRZ = -dpsi_dZ / R_safe
+    BRZ  = np.sqrt(BrRZ**2 + BzRZ**2)
 
-    #PSI quantities
-    PSIGRID = np.linspace(SIMAG, SIBRY,NPSI)
-    FPOL = (B0*R0/Rgrid)*Rgrid # F = RBphi
-    FFPRIM = np.repeat(0.0, NPSI)
-    PPRIME = np.repeat(-1e-6,NPSI)
-    PRES = integrate.cumulative_trapezoid(PPRIME,PSIGRID,initial=0)
-    PSIZR = psiRZ.T
+    return psiRZ, BzRZ, BrRZ, BRZ
 
 
-    QPSI = np.zeros(NPSI)
-    for i in range(NPSI):
-        QPSI[i] = 0
+def B_along_flux_surface(psiRZ, BRZ, psi_target=PSI_EVAL):
+    """Extract |B| along the flux surface psi = psi_target.
+
+    For each Z slice, root-find in R to locate the flux surface, then
+    interpolate |B| at that radius.
+
+    Returns
+    -------
+    B_fs : ndarray of shape (NH,)
+        |B| on the surface (NaN where the surface does not exist).
+    """
+    B_fs = np.full(NH, np.nan)
+    for j in range(NH):
+        psi_col = psiRZ[:, j]
+
+        # Check that psi_target is bracketed by the R profile
+        if psi_col.min() > psi_target or psi_col.max() < psi_target:
+            continue
+
+        psi_interp = interp1d(Rgrid, psi_col, kind="cubic")
+        try:
+            R_target = sco.brentq(lambda r: psi_interp(r) - psi_target,
+                                  RMIN, RMAX)
+        except ValueError:
+            continue
+
+        B_interp = interp1d(Rgrid, BRZ[:, j], kind="cubic")
+        B_fs[j] = B_interp(R_target)
+
+    return B_fs
 
 
+# ======================================================================
+#  Optimisation
+# ======================================================================
 
-    writeList = [NW, NH,                                        #3i4
-                RDIM, ZDIM, RCENTR, RLEFT, ZMID,               #5E16.9
-                RMAXIS, ZMAXIS, SIMAG, SIBRY, BCENTR,          #5e16.9
-                CURRENT, SIMAG, 0, RMAXIS, 0,                  #5E16.9
-                ZMAXIS, 0, SIBRY, 0, 0,                        #5E16.9
-                FPOL, PRES, FFPRIM, PPRIME,                    #5E16.9
-                PSIZR, QPSI]                                   #5E16.9
+def _residual(params):
+    """Return [Bmax - AIM_BMAX, Bmin - AIM_BMIN] for given (I_high, I_low)."""
+    I_high, I_low = params
 
-    #Header stuff
-    header_fmt = "(3i4)"
-    label = 'FREEGS'
-    creation_date = date.today().strftime("%d/%m/%Y")
-    shot = int(0)
-    time = int(0)
-    shot_str = f"# {shot:d}"
-    time_str = f"  {time:d}ms"
-    comment = f"{label:11}{creation_date:10s}   {shot_str:>8s}{time_str:16s}"
-    def write_line(data: Iterable[Any], fh: TextIO, fmt: str) -> None:
-        r"""
-        Writes to a Fortran formatted ASCII data file. The file handle will be left on a
-        newline.
+    psiRZ, _, _, BRZ = compute_fields_on_grid(I_high, I_low)
+    B_fs = B_along_flux_surface(psiRZ, BRZ)
 
-        Parameters
-        ---------
-        data:
-            The data to write.
-        fh:
-            File handle. Should be in a text write mode, i.e. ``open(filename, "w")``.
-        fmt:
-            A Fortran IO format string, such as ``'(6a8,3i3)'``.
-        """
-        fh.write(ff.FortranRecordWriter(fmt).write(data))
+    Bmax = np.nanmax(B_fs)
+    Bmin = B_fs[NH // 2]                     # z = 0  (device centre)
+
+    print(f"  I_high = {I_high:12.1f}   I_low = {I_low:12.1f}   "
+          f"Bmax = {Bmax:.4f}   Bmin = {Bmin:.4f}   ratio = {Bmax / Bmin:.2f}")
+
+    return [Bmax - TARGET_BMAX, Bmin - TARGET_BMIN]
+
+
+def optimise_currents(I_high0=812_998.0, I_low0=0.0):
+    """Find (I_high, I_low) that realise the target Bmax and Bmin.
+
+    Uses scipy.optimize.fsolve (Powell hybrid method) to solve the 2x2
+    nonlinear system.
+    """
+    print(f"Target:  Bmax = {TARGET_BMAX:.2f} T,  Bmin = {TARGET_BMIN:.2f} T  "
+          f"(mirror ratio = {MIRROR_RATIO})\n")
+
+    sol, info, ier, msg = sco.fsolve(_residual, [I_high0, I_low0],
+                                     full_output=True)
+    if ier != 1:
+        print(f"WARNING: fsolve did not converge -- {msg}")
+
+    I_high, I_low = sol
+    print(f"\nOptimised currents:  I_high = {I_high:.1f} A,  "
+          f"I_low = {I_low:.1f} A\n")
+    return I_high, I_low
+
+
+# ======================================================================
+#  geqdsk (EFIT) file writer
+# ======================================================================
+
+def _write_fortran_line(data: Iterable[Any], fh: TextIO, fmt: str):
+    """Write one Fortran-formatted record followed by a newline."""
+    fh.write(ff.FortranRecordWriter(fmt).write(data))
+    fh.write("\n")
+
+
+def _write_1d(arr, fh, per_line=5):
+    """Write a 1-D float array, ``per_line`` values per line."""
+    for i, v in enumerate(arr):
+        fh.write(f"{v:16.9E}")
+        if (i + 1) % per_line == 0:
+            fh.write("\n")
+    if len(arr) % per_line != 0:
         fh.write("\n")
-    #write_line((comment, 3, NW, NH), fh, header_fmt) #3 is idum
 
 
-    #Now write the EFIT FILE
-    with open(outFileName,'w',newline='') as f:
-        ##NW,NH
-        ##for i in range(2):
-        ##    f.write('%d '%writeList[i])
-        #f.write('FREEGS     19/06/2023        # 0  0ms              3  80  90')
-        #f.write('\n')
-        write_line((NW, NH), f, header_fmt) #3 is idum
-        # rdim,zdim,rcentr,rleft,zmid
-        for i in range(2,7):
-            f.write('%16.9E'%writeList[i])
-        f.write('\n')
-        # rmaxis,zmaxis,simag,sibry,bcentr
-        for i in range(7,12):
-            f.write('%16.9E'%writeList[i])
-        f.write('\n')
-        # current, simag, xdum, rmaxis, xdum
-        for i in range(12,17):
-            f.write('%16.9E'%writeList[i])
-        f.write('\n')
-        #zmaxis,xdum,sibry,xdum,xdum
-        for i in range(17,22):
-            f.write('%16.9E'%writeList[i])
-        f.write('\n')
-        #FPOL,PRES,FFPRIM,PPRIME
-        for i in range(22,26):
-            count=0
-            for j in range(0,NW):
-                f.write('%16.9E'%writeList[i][j])
-                count = count+1
-                if count==5:
-                    f.write('\n')
-                    count=0
-        #PSIZR
-        for i in range(26,27):
-            count = 0
-            for j in range(0,NH):
-                for k in range(0,NW):
-                    f.write('%16.9E'%writeList[i][j][k])
-                    count = count+1
-                    if count==5:
-                        f.write('\n')
-                        count=0
-        #QPSI
-        for i in range(27,28):
-            count=0
-            for j in range(0,NW):
-                f.write('%16.9E'%writeList[i][j])
-                count = count+1
-                if count==5:
-                    f.write('\n')
-                    count=0
+def write_geqdsk(filename, psiRZ, I_high, I_low):
+    """Write the geqdsk (EFIT) file.
+
+    Parameters
+    ----------
+    filename : str
+    psiRZ    : ndarray (NW, NH)  -- poloidal flux on the RZ grid
+    I_high, I_low : float        -- optimised coil currents
+    """
+    NPSI = NW
+
+    # Boundary flux values (evaluated analytically outside the grid)
+    SIMAG = float(compute_psi(2.0, 0.0, I_high, I_low))
+    SIBRY = float(compute_psi(4.0, 0.0, I_high, I_low))
+
+    # 1-D profile arrays on the psi grid
+    PSIGRID = np.linspace(SIMAG, SIBRY, NPSI)
+    FPOL    = np.full(NPSI, B0 * R0)                # F = R*Bphi  (zero)
+    FFPRIM  = np.zeros(NPSI)
+    PPRIME  = np.full(NPSI, -1e-6)
+    PRES    = integrate.cumulative_trapezoid(PPRIME, PSIGRID, initial=0)
+    QPSI    = np.zeros(NPSI)
+
+    PSIZR = psiRZ.T                                  # geqdsk: (NH, NW)
+
+    # 48-character header comment
+    label = "GKYLMAX"
+    creation_date = date.today().strftime("%d/%m/%Y")
+    comment = f"{label:11s}{creation_date:10s}   {'# 0':>8s}{'  0ms':16s}"
+
+    with open(filename, "w", newline="") as f:
+        # Line 1:  header comment + idum + NW + NH
+        _write_fortran_line((comment, 3, NW, NH), f, "(a48,3i4)")
+
+        # Helper: write exactly 5 floats on one line
+        def w5(*vals):
+            for v in vals:
+                f.write(f"{float(v):16.9E}")
+            f.write("\n")
+
+        w5(RDIM,    ZDIM,   RCENTR, RLEFT, ZMID)
+        w5(RMAXIS,  ZMAXIS, SIMAG,  SIBRY, BCENTR)
+        w5(CURRENT, SIMAG,  0.0,    RMAXIS, 0.0)
+        w5(ZMAXIS,  0.0,    SIBRY,  0.0,    0.0)
+
+        # 1-D profiles
+        for arr in (FPOL, PRES, FFPRIM, PPRIME):
+            _write_1d(arr, f)
+
+        # 2-D flux  PSIZR[j, k]  (NH rows x NW columns)
+        count = 0
+        for j in range(NH):
+            for k in range(NW):
+                f.write(f"{PSIZR[j, k]:16.9E}")
+                count += 1
+                if count % 5 == 0:
+                    f.write("\n")
+        if count % 5 != 0:
+            f.write("\n")
+
+        # Safety factor
+        _write_1d(QPSI, f)
+
+    print(f"Wrote  {filename}")
 
 
+# ======================================================================
+#  Diagnostic plots
+# ======================================================================
 
-for i in range(len(Imiddle_vec)):
-    plt.plot(Zgrid, B_psi[i, :], label=f'I = {Imiddle_vec[i]}')
-plt.xlabel('Z')
-plt.ylabel('B')
-plt.title("B calculated in RZ coords at psi = "+str(psi_eval))
-plt.legend()
-plt.tight_layout()
-plt.show()
-    # plt.show()
+def make_plots(psiRZ, BRZ, B_fs, out_prefix="mirror_field"):
+    """Generate and save a 2x2 panel of diagnostic plots."""
+    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+
+    # (a) |B| on the target flux surface
+    ax = axes[0, 0]
+    ax.plot(Zgrid, B_fs)
+    ax.axhline(TARGET_BMAX, ls="--", color="r", lw=0.8,
+               label=f"Bmax target = {TARGET_BMAX:.1f} T")
+    ax.axhline(TARGET_BMIN, ls="--", color="b", lw=0.8,
+               label=f"Bmin target = {TARGET_BMIN:.1f} T")
+    ax.set_xlabel("Z  [m]")
+    ax.set_ylabel("|B|  [T]")
+    ax.set_title(f"|B| on flux surface  psi = {PSI_EVAL}")
+    ax.legend(fontsize=8)
+
+    # (b) Psi contours
+    ax = axes[0, 1]
+    cs = ax.contour(Rgrid, Zgrid, psiRZ.T, levels=50)
+    ax.set_xlabel("R  [m]")
+    ax.set_ylabel("Z  [m]")
+    ax.set_title("psi(R, Z)")
+    plt.colorbar(cs, ax=ax)
+
+    # (c) log10 |B| heat-map
+    ax = axes[1, 0]
+    with np.errstate(divide="ignore"):
+        logB = np.log10(BRZ.T)
+    pcm = ax.pcolormesh(Rgrid, Zgrid, logB, shading="auto")
+    ax.set_xlabel("R  [m]")
+    ax.set_ylabel("Z  [m]")
+    ax.set_title("log10 |B|")
+    plt.colorbar(pcm, ax=ax)
+
+    # (d) |B| vs Z at two radii
+    ax = axes[1, 1]
+    ax.plot(Zgrid, BRZ[0, :],       label=f"R = {Rgrid[0]:.4f} m")
+    ax.plot(Zgrid, BRZ[NW // 2, :], label=f"R = {Rgrid[NW // 2]:.3f} m")
+    ax.set_xlabel("Z  [m]")
+    ax.set_ylabel("|B|  [T]")
+    ax.set_title("|B|(Z) at fixed R")
+    ax.legend(fontsize=8)
+
+    plt.tight_layout()
+    figname = f"{out_prefix}_diagnostics.png"
+    plt.savefig(figname, dpi=150)
+    print(f"Saved  {figname}")
+
+
+# ======================================================================
+#  Main
+# ======================================================================
+
+def main():
+    # Clean up old output files
+    for fname in os.listdir("."):
+        if fname.endswith(".geqdsk") and fname.startswith("conditioned_coil_R"):
+            os.remove(fname)
+
+    # Step 1 -- optimise coil currents for target mirror ratio
+    I_high, I_low = optimise_currents()
+
+    # Step 2 -- compute final fields on the RZ grid
+    psiRZ, BzRZ, BrRZ, BRZ = compute_fields_on_grid(I_high, I_low)
+    B_fs = B_along_flux_surface(psiRZ, BRZ)
+
+    Bmax  = np.nanmax(B_fs)
+    Bmin  = B_fs[NH // 2]
+    ratio = Bmax / Bmin
+
+    print(f"Final:  Bmax = {Bmax:.4f} T,  Bmin = {Bmin:.4f} T,  "
+          f"mirror ratio = {ratio:.2f}")
+
+    # Step 3 -- write geqdsk file
+    out_name = f"conditioned_coil_R{int(round(ratio))}.geqdsk"
+    write_geqdsk(out_name, psiRZ, I_high, I_low)
+
+    # Step 4 -- save diagnostic plots
+    make_plots(psiRZ, BRZ, B_fs)
+
+
+if __name__ == "__main__":
+    main()

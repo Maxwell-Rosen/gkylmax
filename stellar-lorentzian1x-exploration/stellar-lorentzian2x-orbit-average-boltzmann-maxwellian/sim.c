@@ -384,8 +384,8 @@ create_ctx(void)
   // POA parameters  
   double alpha_oap = 5e-6;  // Factor multiplying collisionless terms.
   double alpha_fdp = 1.0;
-  double tau_oap = 2.0;  // Duration of each phase.
-  double tau_fdp = 20e-6;
+  double tau_oap = 2.0 * 1e-2;  // Duration of each phase.
+  double tau_fdp = 20e-6 * 1e-2;
   double tau_fdp_extra = 0.0;
   int num_cycles = 10; // Number of OAP+FDP cycles to run.
   
@@ -463,7 +463,7 @@ create_ctx(void)
     .Nz = Nz,
     .Nvpar = Nvpar,
     .Nmu = Nmu,
-    .cells = {Nz, Nvpar, Nmu},
+    .cells = {Npsi, Nz, Nvpar, Nmu},
     .poly_order = poly_order,
     .t_end = t_end,
     .num_frames = num_frames,
@@ -487,7 +487,7 @@ create_ctx(void)
   
   // Populate a couple more values in the context.
   ctx.psi_max = psi_RZ(ctx.RatZeq0, 0., &ctx);
-  ctx.psi_min  = psi_RZ(ctx.RatZeq0/2, 0., &ctx);
+  ctx.psi_min  = psi_RZ(ctx.RatZeq0/10, 0., &ctx);
   ctx.z_min    = z_psiZ(ctx.psi_max, ctx.Z_min, &ctx);
   ctx.z_max    = z_psiZ(ctx.psi_max, ctx.Z_max, &ctx);
 
@@ -823,63 +823,65 @@ int main(int argc, char **argv)
       .ctx_temp = &ctx,
     },
 
-    // .mapc2p = {
-    //   .mapping = mapc2p_vel_ion,
-    //   .ctx = &ctx,
-    // },
+    .mapc2p = {
+      .mapping = mapc2p_vel_ion,
+      .ctx = &ctx,
+    },
 
-    // .collisionless = {
-    //   .type = GKYL_GK_COLLISIONLESS_ES,
-    //   .scale_factor = 1.0, // Will be replaced below.
-    //   .write_diagnostics = true,
-    // },
-    // .time_rate_multiplier = {
-    //   .type = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE,
-    //   .cellwise_const = true,
-    //   .write_diagnostics = true,
-    // },
+    .collisionless = {
+      .type = GKYL_GK_COLLISIONLESS_ES,
+      .scale_factor = 1.0, // Will be replaced below.
+      .write_diagnostics = true,
+    },
+    .time_rate_multiplier = {
+      .type = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE,
+      .cellwise_const = true,
+      .write_diagnostics = true,
+    },
 
-    // .collisions = {
-    //   .collision_id = GKYL_LBO_COLLISIONS,
-    //   .den_ref = ctx.n0,
-    //   .temp_ref = ctx.Te0,
-    //   .write_diagnostics = true,
-    // },
-    // .source = {
-    //   .source_id = GKYL_PROJ_SOURCE,
-    //   .num_sources = 1,
-    //   .projection[0] = {
-    //     .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM, 
-    //     .ctx_density = &ctx,
-    //     .density = eval_density_ion_source,
-    //     .ctx_upar = &ctx,
-    //     .upar= eval_upar_ion_source,
-    //     .ctx_temp = &ctx,
-    //     .temp = eval_temp_ion_source,      
-    //   },
-    //   .diagnostics = {
-    //     .num_diag_moments = 6,
-    //     .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_HAMILTONIAN},
-    //     .num_integrated_diag_moments = 1,
-    //     .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
-    //   },
-    // },
+    .collisions = {
+      .collision_id = GKYL_LBO_COLLISIONS,
+      .den_ref = ctx.n0,
+      .temp_ref = ctx.Te0,
+      .write_diagnostics = true,
+    },
+    .source = {
+      .source_id = GKYL_PROJ_SOURCE,
+      .num_sources = 1,
+      .projection[0] = {
+        .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM, 
+        .ctx_density = &ctx,
+        .density = eval_density_ion_source,
+        .ctx_upar = &ctx,
+        .upar= eval_upar_ion_source,
+        .ctx_temp = &ctx,
+        .temp = eval_temp_ion_source,      
+      },
+      .diagnostics = {
+        .num_diag_moments = 6,
+        .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_BIMAXWELLIAN},
+        .num_integrated_diag_moments = 1,
+        .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
+      },
+    },
 
     .bcs = {
-      { .dir = 0, .edge = GKYL_LOWER_EDGE, .type = GKYL_BC_GK_SPECIES_SHEATH },
-      { .dir = 0, .edge = GKYL_UPPER_EDGE, .type = GKYL_BC_GK_SPECIES_SHEATH },
+      { .dir = 0, .edge = GKYL_LOWER_EDGE, .type = GKYL_BC_GK_SPECIES_ZERO_FLUX },
+      { .dir = 0, .edge = GKYL_UPPER_EDGE, .type = GKYL_BC_GK_SPECIES_ABSORB },
+      { .dir = 1, .edge = GKYL_LOWER_EDGE, .type = GKYL_BC_GK_SPECIES_SHEATH },
+      { .dir = 1, .edge = GKYL_UPPER_EDGE, .type = GKYL_BC_GK_SPECIES_SHEATH },
     },
-    // .write_omega_cfl = true,
-    // .num_diag_moments = 8,
-    // .diag_moments = {GKYL_F_MOMENT_BIMAXWELLIAN, GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_M3PAR, GKYL_F_MOMENT_M3PERP },
-    // .num_integrated_diag_moments = 1,
-    // .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
-    // .time_rate_diagnostics = true,
+    .write_omega_cfl = true,
+    .num_diag_moments = 8,
+    .diag_moments = {GKYL_F_MOMENT_BIMAXWELLIAN, GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_M3PAR, GKYL_F_MOMENT_M3PERP },
+    .num_integrated_diag_moments = 1,
+    .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
+    .time_rate_diagnostics = true,
 
-    // .boundary_flux_diagnostics = {
-    //   .num_integrated_diag_moments = 1,
-    //   .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP},
-    // },
+    .boundary_flux_diagnostics = {
+      .num_integrated_diag_moments = 1,
+      .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP},
+    },
   };
   struct gkyl_gyrokinetic_field field = {
     .gkfield_id = GKYL_GK_FIELD_BOLTZMANN,
@@ -890,12 +892,12 @@ int main(int argc, char **argv)
   };
 
   struct gkyl_mirror_geo_grid_inp grid_inp = {
-    .filename_psi = "/home/mr1884/scratch/gkylmax/generate_efit/lorentzian_R10.geqdsk_psi.gkyl", // psi file to use
+    .filename_psi = "/home/mr1884/scratch/gkylmax/generate_efit/lorentzian_R5.geqdsk_psi.gkyl", // psi file to use
     .rclose = 0.2, // closest R to region of interest
     .zmin = -2.5,  // Z of lower boundary
     .zmax =  2.5,  // Z of upper boundary
     .include_axis = false, // Include R=0 axis in grid
-    .fl_coord = GKYL_GEOMETRY_MIRROR_GRID_GEN_PSI_CART_Z, // coordinate system for psi grid
+    .fl_coord = GKYL_GEOMETRY_MIRROR_GRID_GEN_SQRT_PSI_CART_Z, // coordinate system for psi grid
   };
 
   struct gkyl_gk app_inp = {  // GK app
@@ -911,13 +913,13 @@ int main(int argc, char **argv)
       .geometry_id = GKYL_GEOMETRY_MIRROR,
       .world = {0.0},
       .mirror_grid_info = grid_inp,
-      // .position_map_info = {
-      //   .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
-      //   .map_strength = 0.5,
-      //   .maximum_slope_at_min_B = 2,
-      //   .gaussian_std = 0.25,
-      //   .gaussian_max_integration_width = 0.5,
-      // },
+      .position_map_info = {
+        .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
+        .map_strength = 0.5,
+        .maximum_slope_at_min_B = 2,
+        .gaussian_std = 0.25,
+        .gaussian_max_integration_width = 0.5,
+      },
     },
 
     .num_periodic_dir = 0,

@@ -370,9 +370,9 @@ create_ctx(void)
   int poly_order = 1;
 
   // Source parameters
-  double ion_source_amplitude = 1.e20;
+  double ion_source_amplitude = 1.03e21;
   double ion_source_sigma = 0.5;
-  double ion_source_temp = 5000. * eV;
+  double ion_source_temp = 19250. * eV;
 
   // Geometry parameters.
   double RatZeq0 = 0.10; // Radius of the field line at Z=0.
@@ -388,7 +388,7 @@ create_ctx(void)
   // Duration of each phase.
   double tau_oap = 0;
   double tau_fdp = 0;
-  double tau_fdp_extra = 1e-3;
+  double tau_fdp_extra = 300e-6;
   int num_cycles = 0; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
