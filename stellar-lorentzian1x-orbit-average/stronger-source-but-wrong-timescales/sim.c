@@ -347,7 +347,7 @@ create_ctx(void)
   double mi = 2.014 * mp;
   double Te0 = 940 * eV;
   double n0 = 3e19;
-  double B_p = 0.53; // Bmag at z=0
+  double B_p = 0.53;
   double beta = 0.4;
   double tau = pow(B_p, 2.) * beta / (2.0 * mu0 * n0 * Te0) - 1.;
   double Ti0 = tau * Te0;
@@ -853,7 +853,7 @@ int main(int argc, char **argv)
     .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
       .den_ref = ctx.n0,
-      .temp_ref = ctx.Ti0,
+      .temp_ref = ctx.Te0,
       .write_diagnostics = true,
     },
     .source = {

@@ -27,6 +27,7 @@ struct gk_poa_phase_params {
   bool is_static_field; // Whether to evolve the field.
   bool is_positivity_enabled; // Whether positivity is enabled.
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type; // Type of df/dt multipler.
+  double f_threshold; // Threshold for df/dt multiplier.
 };
 
 // Define the context of the simulation. This is basically all the globals
@@ -40,14 +41,9 @@ struct gk_mirror_ctx
   double qe;
   double Te0;
   double n0;
-  double B_p;
-  double beta;
-  double tau;
   double Ti0;
-  double nuFrac;
+  double B_p;
   // Ion-ion collision freq.
-  double logLambdaIon;
-  double nuIon;
   double vti;
   double RatZeq0; // Radius of the field line at Z=0.
   // Axial coordinate Z extents. Endure that Z=0 is not on
@@ -232,14 +228,7 @@ bfield_func(double t, const double *xc, double *GKYL_RESTRICT fout, void *ctx)
   fout[2] = BZ;
 }
 
-// Evaluate collision frequencies
-void
-evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  fout[0] = app->nuIon;
-}
-
+// Evaluate initial conditions
 void
 eval_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
@@ -346,23 +335,15 @@ create_ctx(void)
   // Plasma parameters.
   double mi = 2.014 * mp;
   double Te0 = 940 * eV;
-  double n0 = 3e19;
-  double B_p = 0.53; // Bmag at z=0
-  double beta = 0.4;
-  double tau = pow(B_p, 2.) * beta / (2.0 * mu0 * n0 * Te0) - 1.;
-  double Ti0 = tau * Te0;
-
-  // Ion-ion collision freq.
-  double nuFrac = 1.0;
-  double logLambdaIon = 6.6 - 0.5 * log(n0 / 1e20) + 1.5 * log(Ti0 / eV);
-  double nuIon = nuFrac * logLambdaIon * pow(eV, 4.) * n0 /
-                 (12 * pow(M_PI, 3. / 2.) * pow(eps0, 2.) * sqrt(mi) * pow(Ti0, 3. / 2.));
+  double n0 = 9e19;
+  double B_p = 0.53;
+  double Ti0 = 30000 * eV;
 
   // Thermal speeds.
   double vti = sqrt(Ti0 / mi);
 
   // Grid parameters
-  double vpar_max_ion = 16 * vti;
+  double vpar_max_ion = 8 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   int Nz = 400;
   int Nvpar = 64; // 96 uniform
@@ -383,10 +364,10 @@ create_ctx(void)
   double Z_m = 0.98;
 
   // POA parameters  
-  double alpha_oap = 5e-6;  // Factor multiplying collisionless terms.
+  double alpha_oap = 5e-6;  // Factor multiplying collisionless terms. 1.41439e-11 / 2.45951e-06
   double alpha_fdp = 1.0;
-  double tau_oap = 2.0;  // Duration of each phase.
-  double tau_fdp = 20e-6;
+  double tau_oap = 0.5;  // Duration of each phase.
+  double tau_fdp = 15e-6;
   double tau_fdp_extra = 0.0;
   int num_cycles = 10; // Number of OAP+FDP cycles to run.
   
@@ -404,7 +385,10 @@ create_ctx(void)
   bool is_positivity_enabled_fdp = false;
   // Type of df/dt multipler.
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_oap = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE;
-  enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_fdp = GKYL_GK_FDOT_MULTIPLIER_NONE;
+  enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_fdp = GKYL_GK_FDOT_MULTIPLIER_MASK_F_FRAC_LOCAL;
+
+  double f_threshold_oap = 1e-4; // Threshold for OAP multiplier.
+  double f_threshold_fdp = 1e-4; // Threshold for FDP multiplier.
 
   // Calculate phase structure
   double t_end = (tau_oap + tau_fdp)*num_cycles + tau_fdp_extra;
@@ -421,6 +405,7 @@ create_ctx(void)
     poa_phases[2*i].alpha = alpha_oap;
     poa_phases[2*i].is_static_field = is_static_field_oap;
     poa_phases[2*i].fdot_mult_type = fdot_mult_type_oap;
+    poa_phases[2*i].f_threshold = f_threshold_oap;
     poa_phases[2*i].is_positivity_enabled = is_positivity_enabled_oap;
 
     // FDPs.
@@ -430,6 +415,7 @@ create_ctx(void)
     poa_phases[2*i+1].alpha = alpha_fdp;
     poa_phases[2*i+1].is_static_field = is_static_field_fdp;
     poa_phases[2*i+1].fdot_mult_type = fdot_mult_type_fdp;
+    poa_phases[2*i+1].f_threshold = f_threshold_fdp;
     poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_fdp;
   }
   // The final stage is an extra, longer FDP.
@@ -439,6 +425,7 @@ create_ctx(void)
   poa_phases[num_phases-1].alpha = alpha_fdp;
   poa_phases[num_phases-1].is_static_field = is_static_field_fdp;
   poa_phases[num_phases-1].fdot_mult_type = fdot_mult_type_fdp;
+  poa_phases[num_phases-1].f_threshold = f_threshold_fdp;
   poa_phases[num_phases-1].is_positivity_enabled = is_positivity_enabled_fdp;
 
   double write_phase_freq = 1; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
@@ -455,13 +442,8 @@ create_ctx(void)
     .qe = qe,
     .Te0 = Te0,
     .n0 = n0,
-    .B_p = B_p,
-    .beta = beta,
-    .tau = tau,
     .Ti0 = Ti0,
-    .nuFrac = nuFrac,
-    .logLambdaIon = logLambdaIon,
-    .nuIon = nuIon,
+    .B_p = B_p,
     .vti = vti,
     .RatZeq0 = RatZeq0,
     .vpar_max_ion = vpar_max_ion,
@@ -516,12 +498,6 @@ print_ctx(struct gk_mirror_ctx *ctx)
   printf("  Electron temperature (Te0) = %g eV\n", ctx->Te0/GKYL_ELEMENTARY_CHARGE);
   printf("  Ion temperature (Ti0) = %g eV\n", ctx->Ti0/GKYL_ELEMENTARY_CHARGE);
   printf("  Density (n0) = %g m^-3\n", ctx->n0);
-  printf("  Magnetic field (B_p) = %g T\n", ctx->B_p);
-  printf("  Beta = %g\n", ctx->beta);
-  printf("  Tau = Ti0/Te0 = %g\n", ctx->tau);
-  printf("  Ion-ion collision frequency factor (nuFrac) = %g\n", ctx->nuFrac);
-  printf("  Ion-ion Coulomb logarithm (logLambdaIon) = %g\n", ctx->logLambdaIon);
-  printf("  Ion-ion collision frequency (nuIon) = %g Hz\n", ctx->nuIon);
   printf("  Ion thermal speed (vti) = %g m/s\n", ctx->vti);
   
   printf("\nGeometry parameters:\n");
@@ -668,6 +644,7 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
   gkyl_gyrokinetic_app_cout(app, stdout, "  df/dt multiplier = %s\n",
     (pparams->fdot_mult_type == GKYL_GK_FDOT_MULTIPLIER_NONE)?"None":
     (pparams->fdot_mult_type == GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE)?"Loss cone":"Unknown");
+  gkyl_gyrokinetic_app_cout(app, stdout, "  df/dt threshold = %g\n", pparams->f_threshold);
   gkyl_gyrokinetic_app_cout(app, stdout, "----------------------------------------------\n");
 
   // Run an OAP or FDP.
@@ -684,6 +661,7 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
   };
   struct gkyl_gyrokinetic_fdot_multiplier fdot_mult_inp = {
     .type = pparams->fdot_mult_type,
+    .f_threshold = pparams->f_threshold,
     .cellwise_const = true,
     .write_diagnostics = true,
   };

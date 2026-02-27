@@ -41,16 +41,14 @@ struct gk_mirror_ctx
   double qe;
   double Te0;
   double n0;
-  double B_p;
-  double beta;
-  double tau;
   double Ti0;
-  double nuFrac;
+  double B_p;
   // Ion-ion collision freq.
-  double logLambdaIon;
-  double nuIon;
   double vti;
-  double RatZeq0;
+  double RatZeq0; // Radius of the field line at Z=0.
+  // Axial coordinate Z extents. Endure that Z=0 is not on
+  double z_min;
+  double z_max;
   double psi_eval;
   // Physics parameters at mirror throat
   double vpar_max_ion;
@@ -60,6 +58,11 @@ struct gk_mirror_ctx
   int Nmu;
   int cells[GKYL_MAX_DIM]; // Number of cells in all directions.
   int poly_order;
+
+  // Source parameters
+  double ion_source_amplitude;
+  double ion_source_sigma;
+  double ion_source_temp;
 
   double t_end; // End time.
   int num_frames; // Number of output frames.
@@ -78,7 +81,6 @@ struct gk_mirror_ctx
   double Z_max;   // Maximum Z coordinate
   double psi_in;  // Working variable for psi integration
   double z_in;    // Working variable for z integration
-  double Bmag_midp; // Magnetic field magnitude at midplane (Z=0)
 };
 
 
@@ -226,14 +228,7 @@ bfield_func(double t, const double *xc, double *GKYL_RESTRICT fout, void *ctx)
   fout[2] = BZ;
 }
 
-// Evaluate collision frequencies
-void
-evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  fout[0] = app->nuIon;
-}
-
+// Evaluate initial conditions
 void
 eval_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
@@ -264,43 +259,50 @@ eval_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fo
   fout[0] = app->Ti0;
 }
 
-
 void
-eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+eval_density_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
   double z = xn[0];
-  if (fabs(z) > app->Z_m) { // For tandem mirrors, we just put this in the end cells
-    fout[0] = 1e-20;
-    return;
+  double src_amp = app->ion_source_amplitude;
+  double z_src = 0.0;
+  double src_sigma = app->ion_source_sigma;
+  double src_amp_floor = src_amp*1e-2;
+  if (fabs(z) <= 0.98)
+  {
+    // fout[0] = fmax(src_amp_floor, (src_amp / sqrt(2.0 * M_PI * pow(src_sigma, 2))) *
+      // exp(-1 * pow((z - z_src), 2) / (2.0 * pow(src_sigma, 2))));
+    
+      // cubic polynomial drop of to the edge
+    fout[0] = src_amp * (1 - pow(fabs(z), 6)/0.98);
   }
-  double vpar = xn[1];
-  double mu = xn[2];
-  
-  // Read the magnetic field at this location
-  // I don't like this implementation because it's only for mc2p geometries
-  // Should we specify B from the app or read from file? 
-  // If we do it from the app, then we can pass B,φ,B0,φ0.
-  // For demonstration, we don't need any of this and we can do it like this with just B
-  double bvec[3];
-  double xc_in[3] = {app->psi_eval, 0.0, z};
-  bfield_func(t, xc_in, bvec, ctx);
-  double Bmag = sqrt(bvec[0]*bvec[0] + bvec[1]*bvec[1] + bvec[2]*bvec[2]);
-  
-  //Following energy conservation, re-map what vpar would be at the midplane
-  double vpar_midp = sqrt(pow(vpar,2.) + 2*mu*(Bmag - app->Bmag_midp)/app->mi); // Ignore potential for now
-  double vperp = sqrt(2.0 * mu * app->B_p / app->mi); // What magnetic field do we use here?
+  else
+  {
+    fout[0] = 1e-16;
+  }
+}
 
-  double gamma0 = 9.876e+02; // Set so total M0 flux is 2.3 × 10^21 s-1 m-3 (Dorf 2025)
-  double T_beam = 221.2* GKYL_ELEMENTARY_CHARGE;
-  double E_beam = 25757.9 * GKYL_ELEMENTARY_CHARGE;
-  double v_beam = sqrt(E_beam / app->mi);
-  double sigma_beam = 2*T_beam/app->mi;
+void
+eval_upar_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  fout[0] = 0.0;
+}
 
-  double source = fmax(gamma0 * exp (-1.0 * (pow(fabs(vpar_midp) - v_beam, 2) + 
-                                             pow(vperp - v_beam, 2)) / sigma_beam),1e-20);
-
-  fout[0] = source;
+void
+eval_temp_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  double z = xn[0];
+  double TSrc0 = app->ion_source_temp;
+  double Tfloor = TSrc0*1e-2;
+  if (fabs(z) <= 0.98)
+  {
+    fout[0] = TSrc0;
+  }
+  else
+  {
+    fout[0] = Tfloor;
+  }
 }
 
 void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *ctx)
@@ -313,7 +315,7 @@ void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *
   double b = 1.4;
   vp[0] = vpar_max_ion*tan(cvpar*b)/tan(b);
   // Cubic map in mu.
-  vp[1] = mu_max_ion*pow(cmu,2);
+  vp[1] = mu_max_ion*pow(cmu,3);
 }
 
 struct gk_mirror_ctx
@@ -333,17 +335,9 @@ create_ctx(void)
   // Plasma parameters.
   double mi = 2.014 * mp;
   double Te0 = 940 * eV;
-  double n0 = 3e19;
-  double B_p = 0.53;
-  double beta = 0.4;
-  double tau = pow(B_p, 2.) * beta / (2.0 * mu0 * n0 * Te0) - 1.;
-  double Ti0 = tau * Te0;
-
-  // Ion-ion collision freq.
-  double nuFrac = 1.0;
-  double logLambdaIon = 6.6 - 0.5 * log(n0 / 1e20) + 1.5 * log(Ti0 / eV);
-  double nuIon = nuFrac * logLambdaIon * pow(eV, 4.) * n0 /
-                 (12 * pow(M_PI, 3. / 2.) * pow(eps0, 2.) * sqrt(mi) * pow(Ti0, 3. / 2.));
+  double n0 = 9e19;
+  double B_p = 0.53; // Bmag at z=0
+  double Ti0 = 30000 * eV;
 
   // Thermal speeds.
   double vti = sqrt(Ti0 / mi);
@@ -356,6 +350,11 @@ create_ctx(void)
   int Nmu = 32;  // 192 uniform
   int poly_order = 1;
 
+  // Source parameters
+  double ion_source_amplitude = 1.03e21;
+  double ion_source_sigma = 0.5;
+  double ion_source_temp = 19250. * eV;
+
   // Geometry parameters.
   double RatZeq0 = 0.10; // Radius of the field line at Z=0.
   double Z_min = -2.5;
@@ -365,16 +364,16 @@ create_ctx(void)
   double Z_m = 0.98;
 
   // POA parameters  
-  double alpha_oap = 5e-6;  // Factor multiplying collisionless terms.
+  double alpha_oap = 5e-6;  // Factor multiplying collisionless terms. 1.41439e-11 / 2.45951e-06
   double alpha_fdp = 1.0;
-  double tau_oap = 2.0;  // Duration of each phase.
-  double tau_fdp = 20e-6;
+  double tau_oap = 0.5;  // Duration of each phase.
+  double tau_fdp = 15e-6;
   double tau_fdp_extra = 0.0;
   int num_cycles = 10; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
-  int num_frames_oap = 10;        // Frames per OAP phase
-  int num_frames_fdp = 10;        // Frames per FDP phase
+  int num_frames_oap = 5;        // Frames per OAP phase
+  int num_frames_fdp = 5;        // Frames per FDP phase
   int num_frames_fdp_extra = 0;  // Frames for the extra FDP phase
   
   // Whether to evolve the field.
@@ -388,8 +387,8 @@ create_ctx(void)
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_oap = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE;
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_fdp = GKYL_GK_FDOT_MULTIPLIER_MASK_F_FRAC_LOCAL;
 
-  double f_threshold_oap = 1e-4; // Threshold for OAP multiplier.
-  double f_threshold_fdp = 1e-4; // Threshold for FDP multiplier.
+  double f_threshold_oap = 1e-3; // Threshold for OAP multiplier.
+  double f_threshold_fdp = 1e-3; // Threshold for FDP multiplier.
 
   // Calculate phase structure
   double t_end = (tau_oap + tau_fdp)*num_cycles + tau_fdp_extra;
@@ -443,13 +442,8 @@ create_ctx(void)
     .qe = qe,
     .Te0 = Te0,
     .n0 = n0,
-    .B_p = B_p,
-    .beta = beta,
-    .tau = tau,
     .Ti0 = Ti0,
-    .nuFrac = nuFrac,
-    .logLambdaIon = logLambdaIon,
-    .nuIon = nuIon,
+    .B_p = B_p,
     .vti = vti,
     .RatZeq0 = RatZeq0,
     .vpar_max_ion = vpar_max_ion,
@@ -467,6 +461,10 @@ create_ctx(void)
     .int_diag_calc_freq = int_diag_calc_freq,
     .dt_failure_tol = dt_failure_tol,
     .num_failures_max = num_failures_max,
+    
+    .ion_source_amplitude = ion_source_amplitude,
+    .ion_source_sigma = ion_source_sigma,
+    .ion_source_temp = ion_source_temp,
 
     .mcB = mcB,
     .gamma = gamma,
@@ -476,13 +474,9 @@ create_ctx(void)
   };
   
   // Populate a couple more values in the context.
-  ctx.psi_eval = psi_RZ(ctx.RatZeq0, 0.0, &ctx);
-
-  // Calculate magnetic field magnitude at midplane (Z=0)
-  double bvec[3];
-  double xc_midp[3] = {ctx.psi_eval, 0.0, 0.0};
-  bfield_func(0.0, xc_midp, bvec, &ctx);
-  ctx.Bmag_midp = sqrt(bvec[0]*bvec[0] + bvec[1]*bvec[1] + bvec[2]*bvec[2]);
+  ctx.psi_eval = psi_RZ(ctx.RatZeq0, 0., &ctx);
+  ctx.z_min    = z_psiZ(ctx.psi_eval, ctx.Z_min, &ctx);
+  ctx.z_max    = z_psiZ(ctx.psi_eval, ctx.Z_max, &ctx);
 
   return ctx;
 }
@@ -504,22 +498,16 @@ print_ctx(struct gk_mirror_ctx *ctx)
   printf("  Electron temperature (Te0) = %g eV\n", ctx->Te0/GKYL_ELEMENTARY_CHARGE);
   printf("  Ion temperature (Ti0) = %g eV\n", ctx->Ti0/GKYL_ELEMENTARY_CHARGE);
   printf("  Density (n0) = %g m^-3\n", ctx->n0);
-  printf("  Magnetic field (B_p) = %g T\n", ctx->B_p);
-  printf("  Beta = %g\n", ctx->beta);
-  printf("  Tau = Ti0/Te0 = %g\n", ctx->tau);
-  printf("  Ion-ion collision frequency factor (nuFrac) = %g\n", ctx->nuFrac);
-  printf("  Ion-ion Coulomb logarithm (logLambdaIon) = %g\n", ctx->logLambdaIon);
-  printf("  Ion-ion collision frequency (nuIon) = %g Hz\n", ctx->nuIon);
   printf("  Ion thermal speed (vti) = %g m/s\n", ctx->vti);
   
   printf("\nGeometry parameters:\n");
   printf("  Mirror throat radius (RatZeq0) = %g m\n", ctx->RatZeq0);
   printf("  Psi evaluated (psi_eval) = %g Wb\n", ctx->psi_eval);
   printf("  Z extents: [%g, %g] m\n", ctx->Z_min, ctx->Z_max);
+  printf("  z extents: [%g, %g] m\n", ctx->z_min, ctx->z_max);
   printf("  Mirror throat Z location (Z_m) = %g m\n", ctx->Z_m);
   printf("  Magnetic field parameter (mcB) = %g\n", ctx->mcB);
   printf("  Lorentzian width parameter (gamma) = %g\n", ctx->gamma);
-  printf("  Magnetic field at midplane (Bmag_midp) = %g T\n", ctx->Bmag_midp);
   
   printf("\nGrid parameters:\n");
   printf("  Configuration space dimensions (cdim) = %d\n", ctx->cdim);
@@ -529,6 +517,11 @@ print_ctx(struct gk_mirror_ctx *ctx)
   printf("  Max ion parallel velocity (vpar_max_ion) = %g m/s (%.2f vti)\n", 
          ctx->vpar_max_ion, ctx->vpar_max_ion/ctx->vti);
   printf("  Max ion magnetic moment (mu_max_ion) = %g J/T\n", ctx->mu_max_ion);
+  
+  printf("\nSource parameters:\n");
+  printf("  Ion source amplitude = %g m^-3/s\n", ctx->ion_source_amplitude);
+  printf("  Ion source sigma = %g\n", ctx->ion_source_sigma);
+  printf("  Ion source temperature = %g eV\n", ctx->ion_source_temp/GKYL_ELEMENTARY_CHARGE);
   
   printf("\nSimulation parameters:\n");
   printf("  Total simulation time (t_end) = %g s\n", ctx->t_end);
@@ -838,16 +831,20 @@ int main(int argc, char **argv)
     .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
       .den_ref = ctx.n0,
-      .temp_ref = ctx.Te0,
+      .temp_ref = ctx.Ti0,
       .write_diagnostics = true,
     },
     .source = {
       .source_id = GKYL_PROJ_SOURCE,
       .num_sources = 1,
       .projection[0] = {
-        .proj_id = GKYL_PROJ_FUNC,
-        .func = eval_f_ion_source,
-        .ctx_func = &ctx,
+        .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM, 
+        .ctx_density = &ctx,
+        .density = eval_density_ion_source,
+        .ctx_upar = &ctx,
+        .upar= eval_upar_ion_source,
+        .ctx_temp = &ctx,
+        .temp = eval_temp_ion_source,      
       },
       .diagnostics = {
         .num_diag_moments = 6,
