@@ -49,7 +49,7 @@ class BeamSourceComparison:
          Z_m=0.98,
          B_p=0.53,
          # Beam parameters
-         gamma_spatial=4198.25,
+         gamma_spatial= 9374.7,
          gamma_midmap=1110.13,
          T_beam_eV_spatial=200,
          T_beam_eV_midmap=200,
@@ -427,7 +427,11 @@ class BeamSourceComparison:
     # Integrate over vpar, then z, then mu
     vals = np.trapz(vals, vpar_coords, axis=1)
     vals = np.trapz(vals, z_coords, axis=0)
-    return np.trapz(vals, mu_coords, axis=0)
+    src_integral = np.trapz(vals, mu_coords, axis=0)
+
+    jx = self.bmag(z_coords) # 1/B
+    int_jx = np.trapz(jx, z_coords)
+    return src_integral/int_jx
   
   def _integrate_power_from_3d(self, source_3d, Z_grid, VPAR_grid, MU_grid, 
                                z_coords, vpar_coords, mu_coords):
@@ -831,12 +835,12 @@ if __name__ == "__main__":
   mu_coords = np.linspace(0.0, 2.0 * mu_val, 50)
   
   # Plot energy diagnostics to understand the potential effects
-  fig_diag = bsc.plot_energy_diagnostics()
-  fig_diag.savefig('energy_diagnostics.pdf')
+  # fig_diag = bsc.plot_energy_diagnostics()
+  # fig_diag.savefig('energy_diagnostics.pdf')
   
-  # results = bsc.compute_all_sources_on_grid(z_coords, vpar_coords, mu_coords)
+  results = bsc.compute_all_sources_on_grid(z_coords, vpar_coords, mu_coords)
   # power = bsc.compute_power(z_coords, vpar_coords, mu_coords, results)
-  # fluxes = bsc.compute_M0_fluxes(z_coords, vpar_coords, mu_coords, results)
+  fluxes = bsc.compute_M0_fluxes(z_coords, vpar_coords, mu_coords, results)
   
   # # Plot 2D comparison
   # fig1 = bsc.plot_comparison_2d(z_coords, vpar_coords, mu_val)
@@ -850,7 +854,7 @@ if __name__ == "__main__":
   # fig_slice.suptitle('Before optimization')
   
   # Optimize using full 3D integrals
-  bsc_optimized = bsc.optimize_midplane_map_to_match_bounce_avg(z_coords, vpar_coords, mu_coords)
+  # bsc_optimized = bsc.optimize_midplane_map_to_match_bounce_avg(z_coords, vpar_coords, mu_coords)
   
   # mu_val = 4e-15
   # fig3 = bsc_optimized.plot_vpar_cut(mu_val, z_cut=0.0)

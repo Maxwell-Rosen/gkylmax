@@ -13,14 +13,23 @@ maxwellian_folder="/home/mr1884/scratch/gkylmax/stellar-lorentzian1x-orbit-avera
 # pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl "$maxwellian_folder/gk_lorentzian_mirror-ion_source_M0_0.gkyl" gk_lorentzian_mirror-ion_source_M0_0.gkyl interp sel --z0 -0.98:0.98 integ 0 info
 # pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl "$maxwellian_folder/gk_lorentzian_mirror-ion_source_M2_0.gkyl" gk_lorentzian_mirror-ion_source_M2_0.gkyl interp sel --z0 -0.98:0.98 integ 0 info
 
-max0=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl "$maxwellian_folder/gk_lorentzian_mirror-ion_source_M0_0.gkyl" interp sel --z0 -0.98:0.98 integ 0 info | grep -m1 'Maximum:' | awk '{print $3}')
-echo "Maxwellian integ M0: $max0"
+max0_max=$(pgkyl --c2p "$maxwellian_folder/gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl" "$maxwellian_folder/gk_lorentzian_mirror-ion_source_M0_0.gkyl" interp sel --z0 -0.98:0.98 integ 0 info | awk '/Maximum:/ {print $3}')
+echo "Maxwellian integ M0: $max0_max"
+max0_beam=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl "gk_lorentzian_mirror-ion_source_M0_0.gkyl" interp sel --z0 -0.98:0.98 integ 0 info | awk '/Maximum:/ {print $3}')
+echo "Beam integ M0: $max0_beam"
+if [[ $max0_max =~ ^[0-9.eE+-]+$ ]] && [[ $max0_beam =~ ^[0-9.eE+-]+$ ]]; then
+  echo "ratio M0: $(awk "BEGIN {print $max0_max / $max0_beam}")"
+else
+  echo "ratio M0: (could not compute, non-numeric value)"
+fi
 
-max0=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl "gk_lorentzian_mirror-ion_source_M0_0.gkyl" interp sel --z0 -0.98:0.98 integ 0 info | grep -m1 'Maximum:' | awk '{print $3}')
-echo "Beam integ M0: $max0"
+max2_max=$(pgkyl --c2p "$maxwellian_folder/gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl" "$maxwellian_folder/gk_lorentzian_mirror-ion_source_M2_0.gkyl" interp sel --z0 -0.98:0.98 integ 0 info | awk '/Maximum:/ {print $3}')
+echo "Maxwellian integ M2: $max2_max"
+max2_beam=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl "gk_lorentzian_mirror-ion_source_M2_0.gkyl" interp sel --z0 -0.98:0.98 integ 0 info | awk '/Maximum:/ {print $3}')
+echo "Beam integ M2: $max2_beam"
+if [[ $max2_max =~ ^[0-9.eE+-]+$ ]] && [[ $max2_beam =~ ^[0-9.eE+-]+$ ]]; then
+  echo "ratio M2: $(awk "BEGIN {print $max2_max / $max2_beam}")"
+else
+  echo "ratio M2: (could not compute, non-numeric value)"
+fi
 
-max2=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl "$maxwellian_folder/gk_lorentzian_mirror-ion_source_M2_0.gkyl" interp sel --z0 -0.98:0.98 integ 0 info | grep -m1 'Maximum:' | awk '{print $3}')
-echo "Maxwellian integ M2: $max2"
-
-max2=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl "gk_lorentzian_mirror-ion_source_M2_0.gkyl" interp sel --z0 -0.98:0.98 integ 0 info | grep -m1 'Maximum:' | awk '{print $3}')
-echo "Beam integ M2: $max2"

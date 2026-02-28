@@ -34,7 +34,6 @@ initial_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT
   fout[0] = app->Ti0;
 }
 
-
 void
 eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
@@ -61,9 +60,9 @@ eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
   double vpar_midp = sqrt(pow(vpar,2.) + 2*mu*(Bmag - app->Bmag_midp)/app->mi); // Ignore potential for now
   double vperp = sqrt(2.0 * mu * app->B_p / app->mi); // What magnetic field do we use here?
 
-  double gamma0 = 96;
-  double T_beam = 200* GKYL_ELEMENTARY_CHARGE;
-  double E_beam = 20000 * GKYL_ELEMENTARY_CHARGE;
+  double gamma0 = 27.68*7.31372;
+  double T_beam = 200 * GKYL_ELEMENTARY_CHARGE;
+  double E_beam = 7000 * GKYL_ELEMENTARY_CHARGE;
   double v_beam = sqrt(E_beam / app->mi);
   double sigma_beam = 2*T_beam/app->mi;
 
@@ -120,9 +119,9 @@ create_ctx(void)
   // Grid parameters
   double vpar_max_ion = 16 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
-  int Nz = 200;
+  int Nz = 400;
   int Nvpar = 64;
-  int Nmu = 16;  // 32
+  int Nmu = 32;
   int poly_order = 1;
 
   // Geometry parameters.
@@ -318,23 +317,23 @@ int main(int argc, char **argv)
       .ctx = &ctx,
     },
 
-    // .collisionless = {
-    //   .type = GKYL_GK_COLLISIONLESS_ES,
-    //   .scale_factor = 1.0, // Will be replaced below.
-    //   .write_diagnostics = true,
-    // },
-    // .time_rate_multiplier = {
-    //   .type = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE,
-    //   .cellwise_const = true,
-    //   .write_diagnostics = true,
-    // },
+    .collisionless = {
+      .type = GKYL_GK_COLLISIONLESS_ES,
+      .scale_factor = 1.0, // Will be replaced below.
+      .write_diagnostics = true,
+    },
+    .time_rate_multiplier = {
+      .type = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE,
+      .cellwise_const = true,
+      .write_diagnostics = true,
+    },
 
-    // .collisions = {
-    //   .collision_id = GKYL_LBO_COLLISIONS,
-    //   .den_ref = ctx.n0,
-    //   .temp_ref = ctx.Te0,
-    //   .write_diagnostics = true,
-    // },
+    .collisions = {
+      .collision_id = GKYL_LBO_COLLISIONS,
+      .den_ref = ctx.n0,
+      .temp_ref = ctx.Te0,
+      .write_diagnostics = true,
+    },
     .source = {
       .source_id = GKYL_PROJ_SOURCE,
       .num_sources = 1,
@@ -350,10 +349,10 @@ int main(int argc, char **argv)
         .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
       },
     },
-    // .positivity = {
-    //   .type = GKYL_GK_POSITIVITY_SHIFT,
-    //   .write_diagnostics = true,
-    // },
+    .positivity = {
+      .type = GKYL_GK_POSITIVITY_SHIFT,
+      .write_diagnostics = true,
+    },
 
     .bcs = {
       { .dir = 0, .edge = GKYL_LOWER_EDGE, .type = GKYL_BC_GK_SPECIES_SHEATH },
@@ -401,13 +400,13 @@ int main(int argc, char **argv)
       .geometry_id = GKYL_GEOMETRY_MIRROR,
       .world = {ctx.psi_eval, 0.0},
       .mirror_grid_info = grid_inp,
-      // .position_map_info = {
-      //   .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
-      //   .map_strength = 0.5,
-      //   .maximum_slope_at_min_B = 2,
-      //   .gaussian_std = 0.25,
-      //   .gaussian_max_integration_width = 0.5,
-      // },
+      .position_map_info = {
+        .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
+        .map_strength = 0.5,
+        .maximum_slope_at_min_B = 2,
+        .gaussian_std = 0.25,
+        .gaussian_max_integration_width = 0.5,
+      },
     },
 
     .num_periodic_dir = 0,

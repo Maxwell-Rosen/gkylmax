@@ -14,21 +14,21 @@
 
 // Evaluate initial conditions
 void
-eval_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+initial_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
   fout[0] = 1e17;
 }
 
 void
-eval_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+initial_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
   fout[0] = 0.0;
 }
 
 void
-eval_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+initial_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
   fout[0] = app->Ti0;
@@ -124,8 +124,8 @@ create_ctx(void)
   double vpar_max_ion = 16 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   int Nz = 400;
-  int Nvpar = 64; // 96 uniform
-  int Nmu = 32;  // 192 uniform
+  int Nvpar = 64;
+  int Nmu = 32;
   int poly_order = 1;
 
   // Source parameters
@@ -313,11 +313,11 @@ int main(int argc, char **argv)
 
     .projection = {
       .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
-      .density = eval_density_ion,
+      .density = initial_density_ion,
       .ctx_density = &ctx,
-      .upar = eval_upar_ion,
+      .upar = initial_upar_ion,
       .ctx_upar = &ctx,
-      .temp = eval_temp_ion,
+      .temp = initial_temp_ion,
       .ctx_temp = &ctx,
     },
 
