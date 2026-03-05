@@ -5,7 +5,7 @@ job_ids=()
 
 # Ask the user how many jobs to submit
 # read -p "Enter the number of jobs to submit: " num_jobs
-num_jobs=10
+num_jobs=5
 
 # Submit the first job and capture its job ID
 first_job_id=$(sbatch jobscript-gkyl-stellar-amd | awk '{print $4}')
