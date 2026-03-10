@@ -35,6 +35,13 @@ initial_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT
 }
 
 void
+initial_temp_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  fout[0] = app->Te0;
+}
+
+void
 eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
@@ -115,13 +122,18 @@ create_ctx(void)
 
   // Thermal speeds.
   double vti = sqrt(Ti0 / mi);
+  double vte = sqrt(Te0 / me);
 
   // Grid parameters
   double vpar_max_ion = 16 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
+  double vpar_max_elc = 5 * vte;
+  double mu_max_elc = me * pow(3. * vte, 2.) / (2. * B_p);
   int Nz = 400;
   int Nvpar = 64;
   int Nmu = 32;
+  int Nvpar_elc = 8;
+  int Nmu_elc = 8;
   int poly_order = 1;
 
   // Geometry parameters.
@@ -227,9 +239,13 @@ create_ctx(void)
     .RatZeq0 = RatZeq0,
     .vpar_max_ion = vpar_max_ion,
     .mu_max_ion = mu_max_ion,
+    .vpar_max_elc = vpar_max_elc,
+    .mu_max_elc = mu_max_elc,
     .Nz = Nz,
     .Nvpar = Nvpar,
     .Nmu = Nmu,
+    .Nvpar_elc = Nvpar_elc,
+    .Nmu_elc = Nmu_elc,
     .cells = {Nz, Nvpar, Nmu},
     .poly_order = poly_order,
     .t_end = t_end,
@@ -327,6 +343,7 @@ int main(int argc, char **argv)
       .scale_factor = 1.0, // Will be replaced below.
       .write_diagnostics = true,
     },
+
     .time_rate_multiplier = {
       .type = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE,
       .cellwise_const = true,
@@ -336,8 +353,10 @@ int main(int argc, char **argv)
     .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
       .den_ref = ctx.n0,
-      .temp_ref = ctx.Te0,
+      .temp_ref = ctx.Ti0,
       .write_diagnostics = true,
+      .num_cross_collisions = 1,
+      .collide_with = { "elc" },
     },
     .source = {
       .source_id = GKYL_PROJ_SOURCE,
@@ -375,6 +394,46 @@ int main(int argc, char **argv)
       .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP},
     },
   };
+
+
+  struct gkyl_gyrokinetic_species elc = {
+    .name = "elc",
+    .charge = ctx.qe,
+    .mass = ctx.me,
+    .vdim = ctx.vdim,
+    .lower = {-ctx.vpar_max_elc, 0.0},
+    .upper = { ctx.vpar_max_elc, ctx.mu_max_elc},
+    .cells = { ctx.Nvpar_elc, ctx.Nmu_elc },
+
+    .polarization_density = ctx.n0,
+
+    .projection = {
+      .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
+      .density = initial_density_ion,
+      .ctx_density = &ctx,
+      .upar = initial_upar_ion,
+      .ctx_upar = &ctx,
+      .temp = initial_temp_elc,
+      .ctx_temp = &ctx,
+    },
+
+    .collisions =  {
+      .collision_id = GKYL_LBO_COLLISIONS,
+      .num_cross_collisions = 1,
+      .collide_with = { "ion" },
+      .den_ref = ctx.n0,
+      .temp_ref = ctx.Te0,
+      .do_not_add_to_dfdt = true,
+    },
+
+    .scaling = {
+      .type = GKYL_GK_SPECIES_SCALING_BOLTZMANN,
+    },
+
+    .num_diag_moments = 1,
+    .diag_moments = {GKYL_F_MOMENT_MAXWELLIAN},
+  };
+  
   struct gkyl_gyrokinetic_field field = {
     .gkfield_id = GKYL_GK_FIELD_BOLTZMANN,
     .electron_mass = ctx.me,
@@ -417,8 +476,8 @@ int main(int argc, char **argv)
     .num_periodic_dir = 0,
     .periodic_dirs = {},
 
-    .num_species = 1,
-    .species = {ion},
+    .num_species = 2,
+    .species = {ion, elc},
 
     .field = field,
 
