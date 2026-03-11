@@ -47,8 +47,9 @@ restart_frame_offset=665    #[ Frame number to start from.
 restart_cycle_offset=0    #[ Which cycle to start from (0-based).
 restart_in_oap_phase=1    #[ If restarting mid-cycle: 1 if in OAP phase, 0 if in RDP phase.
 
-module load cudatoolkit/12.4
-module load openmpi/cuda-11.1/gcc/4.1.1
+module load nvhpc/25.5
+module load openmpi/nvhpc-25.5/4.1.8
+module load openblas/0.3.x
 
 #[ Alternate between a regular dynamics phase (RDP)
 #[ and an orbit averaging phase (OAP).

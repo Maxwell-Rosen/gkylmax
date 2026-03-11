@@ -25,7 +25,8 @@ num_gpu=2             #[ Number of GPUs to use (1 or 2).
 # If doing a restart indicate restart file path. Must also
 # add it as a command line argument after outdir below.
 
-module load cudatoolkit/12.4
-module load openmpi/cuda-11.1/gcc/4.1.1
+module load nvhpc/25.5
+module load openmpi/nvhpc-25.5/4.1.8
+module load openblas/0.3.x
 
 srun -u -n $num_gpu ./sim -g -M -c $num_gpu
