@@ -53,5 +53,6 @@ pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-io
 
 pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_BiMaxwellianMoments_100.gkyl ../../stellar-lorentzian1x-orbit-average-beams/gk_lorentzian_mirror-ion_BiMaxwellianMoments_100.gkyl interp ev 'f 2,3 1.67e-27 2.014 * 1.6e-19 / scale_comp' ev 'f[0] f[1] - f[1] /' pl --xlabel 'Axial Position z (m)' -f0 --legend "time dilation, without" --subplot-ylabels "Density, U_||, T_||, T_|" &
 
+pgkyl --c2p-vel gk_lorentzian_mirror-elc_mapc2p_vel.gkyl gk_lorentzian_mirror-elc_0.gkyl -t jf gk_lorentzian_mirror-elc_jacobvel.gkyl -t jac ev -t df 'jf jac /' activ -t df interp -b gkhyb -p1 sel --z0 2.5 pl
 
 wait

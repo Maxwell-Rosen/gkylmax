@@ -14,14 +14,14 @@
 
 // Evaluate initial conditions
 void
-initial_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+initial_density(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
   fout[0] = 1e17;
 }
 
 void
-initial_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+initial_upar(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
   fout[0] = 0.0;
@@ -313,9 +313,9 @@ int main(int argc, char **argv)
 
     .projection = {
       .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
-      .density = initial_density_ion,
+      .density = initial_density,
       .ctx_density = &ctx,
-      .upar = initial_upar_ion,
+      .upar = initial_upar,
       .ctx_upar = &ctx,
       .temp = initial_temp_ion,
       .ctx_temp = &ctx,
