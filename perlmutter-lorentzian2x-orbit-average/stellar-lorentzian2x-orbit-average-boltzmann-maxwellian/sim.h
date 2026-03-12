@@ -54,9 +54,16 @@ struct gk_mirror_ctx
   double z_min;
   double z_max;
   double psi_eval;
+  double psi_max;
+  double psi_min;
+  double theta_eval;
+  double theta_min;
+  double theta_max;
   // Physics parameters at mirror throat
   double vpar_max_ion;
   double mu_max_ion;
+  int Npsi;
+  int Ntheta;
   int Nz;
   int Nvpar;
   int Nmu;
@@ -110,8 +117,10 @@ print_ctx(struct gk_mirror_ctx *ctx)
   printf("\nGeometry parameters:\n");
   printf("  Mirror throat radius (RatZeq0) = %g m\n", ctx->RatZeq0);
   printf("  Psi evaluated (psi_eval) = %g Wb\n", ctx->psi_eval);
+  printf("  Psi extents: [%g, %g] Wb\n", ctx->psi_min, ctx->psi_max);
   printf("  Z extents: [%g, %g] m\n", ctx->Z_min, ctx->Z_max);
   printf("  z extents: [%g, %g] m\n", ctx->z_min, ctx->z_max);
+  printf("  Theta extents: [%g, %g] rad\n", ctx->theta_min, ctx->theta_max);
   printf("  Mirror throat Z location (Z_m) = %g m\n", ctx->Z_m);
   printf("  Magnetic field parameter (mcB) = %g\n", ctx->mcB);
   printf("  Lorentzian width parameter (gamma) = %g\n", ctx->gamma);
@@ -119,7 +128,7 @@ print_ctx(struct gk_mirror_ctx *ctx)
   printf("\nGrid parameters:\n");
   printf("  Configuration space dimensions (cdim) = %d\n", ctx->cdim);
   printf("  Velocity space dimensions (vdim) = %d\n", ctx->vdim);
-  printf("  Number of cells (Nz, Nvpar, Nmu) = (%d, %d, %d)\n", ctx->Nz, ctx->Nvpar, ctx->Nmu);
+  printf("  Number of cells (Npsi, Ntheta, Nz, Nvpar, Nmu) = (%d, %d, %d, %d, %d)\n", ctx->Npsi, ctx->Ntheta, ctx->Nz, ctx->Nvpar, ctx->Nmu);
   printf("  Polynomial order = %d\n", ctx->poly_order);
   printf("  Max ion parallel velocity (vpar_max_ion) = %g m/s (%.2f vti)\n", 
          ctx->vpar_max_ion, ctx->vpar_max_ion/ctx->vti);

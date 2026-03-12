@@ -23,7 +23,6 @@ initial_density(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT 
 void
 initial_upar(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
-  struct gk_mirror_ctx *app = ctx;
   fout[0] = 0.0;
 }
 
@@ -88,6 +87,7 @@ struct gk_mirror_ctx
 create_ctx(void)
 {
   int cdim = 1, vdim = 2; // Dimensionality.
+  int poly_order = 1;
 
   // Universal constant parameters.
   double eps0 = GKYL_EPSILON0;
@@ -122,7 +122,6 @@ create_ctx(void)
   int Nz = 400;
   int Nvpar = 64;
   int Nmu = 32;
-  int poly_order = 1;
 
   // Geometry parameters.
   double RatZeq0 = 0.10; // Radius of the field line at Z=0.
