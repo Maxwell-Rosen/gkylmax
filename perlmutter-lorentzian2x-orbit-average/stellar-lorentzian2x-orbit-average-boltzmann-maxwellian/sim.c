@@ -14,16 +14,15 @@
 
 // Evaluate initial conditions
 void
-initial_density(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+initial_density_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
   fout[0] = 1e17;
 }
 
 void
-initial_upar(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+initial_upar_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
-  struct gk_mirror_ctx *app = ctx;
   fout[0] = 0.0;
 }
 
@@ -38,13 +37,13 @@ void
 eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  double z = xn[0];
+  double z = xn[1];
   if (fabs(z) > app->Z_m) { // For tandem mirrors, we just put this in the end cells
     fout[0] = 1e-20;
     return;
   }
-  double vpar = xn[1];
-  double mu = xn[2];
+  double vpar = xn[2];
+  double mu = xn[3];
   
   // Read the magnetic field at this location
   // I don't like this implementation because it's only for mc2p geometries
@@ -60,7 +59,7 @@ eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
   double vpar_midp = sqrt(pow(vpar,2.) + 2*mu*(Bmag - app->Bmag_midp)/app->mi); // Ignore potential for now
   double vperp = sqrt(2.0 * mu * app->B_p / app->mi); // What magnetic field do we use here?
 
-  double gamma0 = 27.68*7.31372;
+  double gamma0 = 202.44;
   double T_beam = 200 * GKYL_ELEMENTARY_CHARGE;
   double E_beam = 7000 * GKYL_ELEMENTARY_CHARGE;
   double v_beam = sqrt(E_beam / app->mi);
@@ -68,7 +67,6 @@ eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
 
   double source = fmax(gamma0 * exp (-1.0 * (pow(fabs(vpar_midp) - v_beam, 2) + 
                                              pow(vperp - v_beam, 2)) / sigma_beam),1e-20);
-
   fout[0] = source;
 }
 
@@ -87,7 +85,8 @@ void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *
 struct gk_mirror_ctx
 create_ctx(void)
 {
-  int cdim = 1, vdim = 2; // Dimensionality.
+  int cdim = 2, vdim = 2; // Dimensionality.
+  int poly_order = 1;
 
   // Universal constant parameters.
   double eps0 = GKYL_EPSILON0;
@@ -119,26 +118,26 @@ create_ctx(void)
   // Grid parameters
   double vpar_max_ion = 16 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
-  int Nz = 400;
+  int Nz = 64;
+  int Npsi = 8;
   int Nvpar = 64;
   int Nmu = 32;
-  int poly_order = 1;
 
   // Geometry parameters.
   double RatZeq0 = 0.10; // Radius of the field line at Z=0.
   double Z_min = -2.5;
   double Z_max =  2.5;
-  double mcB = 6.51292;
-  double gamma = 0.124904;
+  double mcB = 3.691260;
+  double gamma = 0.226381;
   double Z_m = 0.98;
 
   // POA parameters  
   double alpha_oap = 5e-6;  // Factor multiplying collisionless terms.
   double alpha_fdp = 1.0;
-  double tau_oap = 2.0;  // Duration of each phase.
-  double tau_fdp = 20e-6;
+  double tau_oap = 0.3; // Should be 6 nu_ii. Approx 1s
+  double tau_fdp = 5e-6; // Should be 2/vthi*6. Approx 20 mus
   double tau_fdp_extra = 0.0;
-  int num_cycles = 10; // Number of OAP+FDP cycles to run.
+  int num_cycles = 4; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
   int num_frames_oap = 5;        // Frames per OAP phase
@@ -210,6 +209,8 @@ create_ctx(void)
   struct gk_mirror_ctx ctx = {
     .cdim = cdim,
     .vdim = vdim,
+    .poly_order = poly_order,
+
     .mi = mi,
     .qi = qi,
     .me = me,
@@ -220,6 +221,7 @@ create_ctx(void)
     .beta = beta,
     .tau = tau,
     .Ti0 = Ti0,
+
     .nuFrac = nuFrac,
     .logLambdaIon = logLambdaIon,
     .nuIon = nuIon,
@@ -227,11 +229,15 @@ create_ctx(void)
     .RatZeq0 = RatZeq0,
     .vpar_max_ion = vpar_max_ion,
     .mu_max_ion = mu_max_ion,
+
+    .Npsi = Npsi,
     .Nz = Nz,
     .Nvpar = Nvpar,
     .Nmu = Nmu,
-    .cells = {Nz, Nvpar, Nmu},
-    .poly_order = poly_order,
+    .cells = {Npsi, Nz, Nvpar, Nmu},
+    .Z_min = Z_min,
+    .Z_max = Z_max,
+
     .t_end = t_end,
     .num_frames = num_frames,
     .num_phases = num_phases,
@@ -244,12 +250,12 @@ create_ctx(void)
     .mcB = mcB,
     .gamma = gamma,
     .Z_m = Z_m,
-    .Z_min = Z_min,
-    .Z_max = Z_max,
   };
   
   // Populate a couple more values in the context.
-  ctx.psi_eval = psi_RZ(ctx.RatZeq0, 0.0, &ctx);
+  ctx.psi_max = psi_RZ(ctx.RatZeq0, 0.0, &ctx);
+  ctx.psi_min = psi_RZ(ctx.RatZeq0 * 0.1, 0.0, &ctx);
+  ctx.psi_eval = (ctx.psi_max + ctx.psi_min) / 2.0;
 
   // Calculate magnetic field magnitude at midplane (Z=0)
   double bvec[3];
@@ -309,9 +315,9 @@ int main(int argc, char **argv)
 
     .projection = {
       .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
-      .density = initial_density,
+      .density = initial_density_ion,
       .ctx_density = &ctx,
-      .upar = initial_upar,
+      .upar = initial_upar_ion,
       .ctx_upar = &ctx,
       .temp = initial_temp_ion,
       .ctx_temp = &ctx,
@@ -349,7 +355,7 @@ int main(int argc, char **argv)
       },
       .diagnostics = {
         .num_diag_moments = 6,
-        .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_HAMILTONIAN},
+        .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_BIMAXWELLIAN},
         .num_integrated_diag_moments = 1,
         .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
       },
@@ -360,8 +366,10 @@ int main(int argc, char **argv)
     },
 
     .bcs = {
-      { .dir = 0, .edge = GKYL_LOWER_EDGE, .type = GKYL_BC_GK_SPECIES_SHEATH },
-      { .dir = 0, .edge = GKYL_UPPER_EDGE, .type = GKYL_BC_GK_SPECIES_SHEATH },
+      { .dir = 0, .edge = GKYL_LOWER_EDGE, .type = GKYL_BC_GK_SPECIES_ZERO_FLUX },
+      { .dir = 0, .edge = GKYL_UPPER_EDGE, .type = GKYL_BC_GK_SPECIES_ABSORB },
+      { .dir = 1, .edge = GKYL_LOWER_EDGE, .type = GKYL_BC_GK_SPECIES_SHEATH },
+      { .dir = 1, .edge = GKYL_UPPER_EDGE, .type = GKYL_BC_GK_SPECIES_SHEATH },
     },
     .write_omega_cfl = true,
     .num_diag_moments = 8,
@@ -384,27 +392,26 @@ int main(int argc, char **argv)
   };
 
   struct gkyl_mirror_geo_grid_inp grid_inp = {
-    .filename_psi = "/global/homes/m/mhrosen/scratch/gkylmax/generate_efit/lorentzian_R32.geqdsk_psi.gkyl", // psi file to use
-    
+    .filename_psi = "/global/homes/m/mhrosen/scratch/gkylmax/generate_efit/lorentzian_R5.geqdsk_psi.gkyl", // psi file to use
     .rclose = 0.2, // closest R to region of interest
     .zmin = -2.5,  // Z of lower boundary
     .zmax =  2.5,  // Z of upper boundary
     .include_axis = false, // Include R=0 axis in grid
-    .fl_coord = GKYL_GEOMETRY_MIRROR_GRID_GEN_PSI_CART_Z, // coordinate system for psi grid
+    .fl_coord = GKYL_GEOMETRY_MIRROR_GRID_GEN_SQRT_PSI_CART_Z, // coordinate system for psi grid
   };
 
   struct gkyl_gk app_inp = {  // GK app
     .name = "gk_lorentzian_mirror",
     .cdim = ctx.cdim,
-    .lower = {ctx.Z_min},
-    .upper = {ctx.Z_max},
-    .cells = { cells_x[0] },
+    .upper = {ctx.psi_max, ctx.Z_max},
+    .lower = {ctx.psi_min, ctx.Z_min},
+    .cells = { cells_x[0], cells_x[1] },
     .poly_order = ctx.poly_order,
     .basis_type = app_args.basis_type,
 
     .geometry = {
       .geometry_id = GKYL_GEOMETRY_MIRROR,
-      .world = {ctx.psi_eval, 0.0},
+      .world = {0.0},
       .mirror_grid_info = grid_inp,
       .position_map_info = {
         .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
@@ -425,7 +432,7 @@ int main(int argc, char **argv)
 
     .parallelism = {
       .use_gpu = app_args.use_gpu,
-      .cuts = { app_args.cuts[0] },
+      .cuts = { app_args.cuts[0], app_args.cuts[1] },
       .comm = comm,
     },
   };
