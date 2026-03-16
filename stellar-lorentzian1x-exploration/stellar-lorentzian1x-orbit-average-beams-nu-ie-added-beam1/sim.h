@@ -48,7 +48,7 @@ struct gk_mirror_ctx
   // Ion-ion collision freq.
   double logLambdaIon;
   double nuIon;
-  double vti;
+  double vti, vte;
   double RatZeq0; // Radius of the field line at Z=0.
   // Axial coordinate Z extents. Endure that Z=0 is not on
   double z_min;
@@ -57,9 +57,13 @@ struct gk_mirror_ctx
   // Physics parameters at mirror throat
   double vpar_max_ion;
   double mu_max_ion;
+  double vpar_max_elc;
+  double mu_max_elc;
   int Nz;
   int Nvpar;
   int Nmu;
+  int Nvpar_elc;
+  int Nmu_elc;
   int cells[GKYL_MAX_DIM]; // Number of cells in all directions.
   int poly_order;
 
@@ -99,6 +103,7 @@ print_ctx(struct gk_mirror_ctx *ctx)
   printf("  Ion temperature (Ti0) = %g eV\n", ctx->Ti0/GKYL_ELEMENTARY_CHARGE);
   printf("  Density (n0) = %g m^-3\n", ctx->n0);
   printf("  Ion thermal speed (vti) = %g m/s\n", ctx->vti);
+  printf("  Electron thermal speed (vte) = %g m/s\n", ctx->vte);
   printf("  Magnetic field (B_p) = %g T\n", ctx->B_p);
   printf("  Beta = %g\n", ctx->beta);
   printf("  Tau = Ti0/Te0 = %g\n", ctx->tau);
@@ -120,10 +125,15 @@ print_ctx(struct gk_mirror_ctx *ctx)
   printf("  Configuration space dimensions (cdim) = %d\n", ctx->cdim);
   printf("  Velocity space dimensions (vdim) = %d\n", ctx->vdim);
   printf("  Number of cells (Nz, Nvpar, Nmu) = (%d, %d, %d)\n", ctx->Nz, ctx->Nvpar, ctx->Nmu);
+  printf("  Number of cells for electrons (Nvpar_elc, Nmu_elc) = (%d, %d)\n", ctx->Nvpar_elc, ctx->Nmu_elc);
   printf("  Polynomial order = %d\n", ctx->poly_order);
   printf("  Max ion parallel velocity (vpar_max_ion) = %g m/s (%.2f vti)\n", 
          ctx->vpar_max_ion, ctx->vpar_max_ion/ctx->vti);
   printf("  Max ion magnetic moment (mu_max_ion) = %g J/T\n", ctx->mu_max_ion);
+  printf("  Max electron parallel velocity (vpar_max_elc) = %g m/s (%.2f vte)\n", 
+         ctx->vpar_max_elc, ctx->vpar_max_elc/ctx->vte);
+  printf("  Max electron magnetic moment (mu_max_elc) = %g J/T\n", ctx->mu_max_elc);
+
   
   printf("\nSource parameters:\n");
   printf("  Ion source amplitude = %g m^-3/s\n", ctx->ion_source_amplitude);
