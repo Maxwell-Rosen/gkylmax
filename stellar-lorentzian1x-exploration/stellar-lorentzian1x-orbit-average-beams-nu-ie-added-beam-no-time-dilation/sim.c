@@ -13,6 +13,8 @@
 #include <rt_arg_parse.h>
 
 // Evaluate initial conditions
+// I think ICs should be constructed to match the expander rather than the center
+// as the center is quickly filled in the OAP
 void
 initial_density(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
@@ -24,14 +26,23 @@ void
 initial_upar(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  fout[0] = 0.0;
+  double z = xn[0];
+  double c_s = 7 * sqrt(app->Te0/app->mi);
+  if (fabs(z) <= app->Z_m)
+  {
+    fout[0] = 0.0;
+  }
+  else
+  {
+    fout[0] = fabs(z) / z * c_s * tanh(4 * (app->Z_max - app->Z_m) * fabs(fabs(z) - app->Z_m));
+  }
 }
 
 void
 initial_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  fout[0] = app->Ti0;
+  fout[0] = app->Ti0/10.0;
 }
 
 void
@@ -158,7 +169,7 @@ create_ctx(void)
   double alpha_oap = 5e-6;  // Factor multiplying collisionless terms.
   double alpha_fdp = 1.0;
   double tau_oap = 0.1;  // Duration of each phase.
-  double tau_fdp = 5e-6;
+  double tau_fdp = 15e-6;
   double tau_fdp_extra = 40e-6;
   int num_cycles = 10; // Number of OAP+FDP cycles to run.
   
@@ -176,7 +187,7 @@ create_ctx(void)
   bool is_positivity_enabled_fdp = false;
   // Type of df/dt multipler.
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_oap = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE;
-  enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_fdp = GKYL_GK_FDOT_MULTIPLIER_MASK_F_FRAC_LOCAL;
+  enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_fdp = GKYL_GK_FDOT_MULTIPLIER_NONE;
 
   double f_threshold_oap = 1e-4; // Threshold for OAP multiplier.
   double f_threshold_fdp = 1e-4; // Threshold for FDP multiplier.
@@ -209,7 +220,7 @@ create_ctx(void)
       poa_phases[2*i+1].fdot_mult_type = GKYL_GK_FDOT_MULTIPLIER_NONE;
     }
     else {
-      poa_phases[2*i+1].fdot_mult_type = fdot_mult_type_fdp;
+      poa_phases[2*i+1].fdot_mult_type = GKYL_GK_FDOT_MULTIPLIER_NONE;
     }
     poa_phases[2*i+1].f_threshold = f_threshold_fdp;
     poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_fdp;

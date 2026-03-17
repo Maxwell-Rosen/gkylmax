@@ -19,7 +19,7 @@ void
 initial_density(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  fout[0] = 1e13;
+  fout[0] = 1e17;
 }
 
 void
@@ -169,7 +169,7 @@ create_ctx(void)
   double alpha_oap = 5e-6;  // Factor multiplying collisionless terms.
   double alpha_fdp = 1.0;
   double tau_oap = 0.1;  // Duration of each phase.
-  double tau_fdp = 10e-6;
+  double tau_fdp = 15e-6;
   double tau_fdp_extra = 40e-6;
   int num_cycles = 10; // Number of OAP+FDP cycles to run.
   
