@@ -1,9 +1,9 @@
 mkdir -p python-plots
 
 # Frame settings
-last_oap_start_frame=90
-end_oap_frame=95
-end_fdp_frame=140
+last_oap_start_frame=60
+end_oap_frame=64
+end_fdp_frame=75
 
 # For some reason, simulations with very weak initial conditions (small density, small f) seem to crash rapidly
 

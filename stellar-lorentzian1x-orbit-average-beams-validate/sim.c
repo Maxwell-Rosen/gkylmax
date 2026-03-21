@@ -13,6 +13,8 @@
 #include <rt_arg_parse.h>
 
 // Evaluate initial conditions
+// I think ICs should be constructed to match the expander rather than the center
+// as the center is quickly filled in the OAP
 void
 initial_density(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
@@ -24,14 +26,30 @@ void
 initial_upar(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  fout[0] = 0.0;
+  double z = xn[0];
+  double c_s = 7 * sqrt(app->Te0/app->mi);
+  if (fabs(z) <= app->Z_m)
+  {
+    fout[0] = 0.0;
+  }
+  else
+  {
+    fout[0] = fabs(z) / z * c_s * tanh(4 * (app->Z_max - app->Z_m) * fabs(fabs(z) - app->Z_m));
+  }
 }
 
 void
 initial_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  fout[0] = app->Ti0;
+  fout[0] = app->Ti0/10.0;
+}
+
+void
+initial_temp_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  fout[0] = app->Te0;
 }
 
 void
@@ -60,9 +78,9 @@ eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
   double vpar_midp = sqrt(pow(vpar,2.) + 2*mu*(Bmag - app->Bmag_midp)/app->mi); // Ignore potential for now
   double vperp = sqrt(2.0 * mu * app->B_p / app->mi); // What magnetic field do we use here?
 
-  double gamma0 = 27.68*7.31372;
+  double gamma0 = 200;
   double T_beam = 200 * GKYL_ELEMENTARY_CHARGE;
-  double E_beam = 7000 * GKYL_ELEMENTARY_CHARGE;
+  double E_beam = 25000 * GKYL_ELEMENTARY_CHARGE;
   double v_beam = sqrt(E_beam / app->mi);
   double sigma_beam = 2*T_beam/app->mi;
 
@@ -82,6 +100,16 @@ void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *
   double b = 1.4;
   vp[0] = vpar_max_ion*tan(cvpar*b)/tan(b);
   vp[1] = mu_max_ion*pow(cmu,3);  // Cubic map in mu.
+}
+
+void mapc2p_vel_elc(double t, const double *vc, double* GKYL_RESTRICT vp, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  double mu_max_elc = app->mu_max_elc;
+  double vpar_max_elc = app->vpar_max_elc;
+  double cvpar = vc[0], cmu = vc[1];
+  vp[0] = vpar_max_elc*cvpar;
+  vp[1] = mu_max_elc*pow(cmu,4);  // Cubic map in mu.
 }
 
 struct gk_mirror_ctx
@@ -115,13 +143,18 @@ create_ctx(void)
 
   // Thermal speeds.
   double vti = sqrt(Ti0 / mi);
+  double vte = sqrt(Te0 / me);
 
   // Grid parameters
   double vpar_max_ion = 16 * vti;
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
+  double vpar_max_elc = 4 * vte;
+  double mu_max_elc = me * pow(4. * vte, 2.) / (2. * B_p);
   int Nz = 400;
   int Nvpar = 64;
   int Nmu = 32;
+  int Nvpar_elc = 8;
+  int Nmu_elc = 8;
   int poly_order = 1;
 
   // Geometry parameters.
@@ -133,20 +166,20 @@ create_ctx(void)
   double Z_m = 0.98;
 
   // POA parameters  
-  double alpha_oap = 5e-6;  // Factor multiplying collisionless terms.
+  double alpha_oap = 2e-5;  // Factor multiplying collisionless terms.
   double alpha_fdp = 1.0;
-  double tau_oap = 2.0;  // Duration of each phase.
-  double tau_fdp = 20e-6;
-  double tau_fdp_extra = 0.0;
-  int num_cycles = 10; // Number of OAP+FDP cycles to run.
+  double tau_oap = 0;  // Duration of each phase.
+  double tau_fdp = 0;
+  double tau_fdp_extra = 300e-6;
+  int num_cycles = 0; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
-  int num_frames_oap = 5;        // Frames per OAP phase
-  int num_frames_fdp = 5;        // Frames per FDP phase
-  int num_frames_fdp_extra = 0;  // Frames for the extra FDP phase
+  int num_frames_oap = 0;        // Frames per OAP phase
+  int num_frames_fdp = 0;        // Frames per FDP phase
+  int num_frames_fdp_extra = 100;  // Frames for the extra FDP phase
   
   // Whether to evolve the field.
-  bool is_static_field_oap = true;
+  bool is_static_field_oap = false;
   bool is_static_field_fdp = false;
 
   // Whether to enable positivity.
@@ -156,8 +189,7 @@ create_ctx(void)
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_oap = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE;
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_fdp = GKYL_GK_FDOT_MULTIPLIER_NONE;
 
-  double f_threshold_oap = 1e-4; // Threshold for OAP multiplier.
-  double f_threshold_fdp = 1e-4; // Threshold for FDP multiplier.
+  double cfl_factor_times_omega_max = 1/10.0; // CFL factor for fixed factor times omega max multiplier.
 
   // Calculate phase structure
   double t_end = (tau_oap + tau_fdp)*num_cycles + tau_fdp_extra;
@@ -174,7 +206,7 @@ create_ctx(void)
     poa_phases[2*i].alpha = alpha_oap;
     poa_phases[2*i].is_static_field = is_static_field_oap;
     poa_phases[2*i].fdot_mult_type = fdot_mult_type_oap;
-    poa_phases[2*i].f_threshold = f_threshold_oap;
+    poa_phases[2*i].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
     poa_phases[2*i].is_positivity_enabled = is_positivity_enabled_oap;
 
     // FDPs.
@@ -183,13 +215,8 @@ create_ctx(void)
     poa_phases[2*i+1].duration = tau_fdp;
     poa_phases[2*i+1].alpha = alpha_fdp;
     poa_phases[2*i+1].is_static_field = is_static_field_fdp;
-    if (i == 0) {
-      poa_phases[2*i+1].fdot_mult_type = GKYL_GK_FDOT_MULTIPLIER_NONE;
-    }
-    else {
-      poa_phases[2*i+1].fdot_mult_type = fdot_mult_type_fdp;
-    }
-    poa_phases[2*i+1].f_threshold = f_threshold_fdp;
+    poa_phases[2*i+1].fdot_mult_type = fdot_mult_type_fdp;
+    poa_phases[2*i+1].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
     poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_fdp;
   }
   // The final stage is an extra, longer FDP.
@@ -199,7 +226,7 @@ create_ctx(void)
   poa_phases[num_phases-1].alpha = alpha_fdp;
   poa_phases[num_phases-1].is_static_field = is_static_field_fdp;
   poa_phases[num_phases-1].fdot_mult_type = fdot_mult_type_fdp;
-  poa_phases[num_phases-1].f_threshold = f_threshold_fdp;
+  poa_phases[num_phases-1].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
   poa_phases[num_phases-1].is_positivity_enabled = is_positivity_enabled_fdp;
 
   double write_phase_freq = 1; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
@@ -224,12 +251,17 @@ create_ctx(void)
     .logLambdaIon = logLambdaIon,
     .nuIon = nuIon,
     .vti = vti,
+    .vte = vte,
     .RatZeq0 = RatZeq0,
     .vpar_max_ion = vpar_max_ion,
     .mu_max_ion = mu_max_ion,
+    .vpar_max_elc = vpar_max_elc,
+    .mu_max_elc = mu_max_elc,
     .Nz = Nz,
     .Nvpar = Nvpar,
     .Nmu = Nmu,
+    .Nvpar_elc = Nvpar_elc,
+    .Nmu_elc = Nmu_elc,
     .cells = {Nz, Nvpar, Nmu},
     .poly_order = poly_order,
     .t_end = t_end,
@@ -256,6 +288,9 @@ create_ctx(void)
   double xc_midp[3] = {ctx.psi_eval, 0.0, 0.0};
   bfield_func(0.0, xc_midp, bvec, &ctx);
   ctx.Bmag_midp = sqrt(bvec[0]*bvec[0] + bvec[1]*bvec[1] + bvec[2]*bvec[2]);
+
+  ctx.z_min    = z_psiZ(ctx.psi_eval, ctx.Z_min, &ctx);
+  ctx.z_max    = z_psiZ(ctx.psi_eval, ctx.Z_max, &ctx);
 
   return ctx;
 }
@@ -307,15 +342,11 @@ int main(int argc, char **argv)
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
 
-    .projection = {
-      .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
-      .density = initial_density,
-      .ctx_density = &ctx,
-      .upar = initial_upar,
-      .ctx_upar = &ctx,
-      .temp = initial_temp_ion,
-      .ctx_temp = &ctx,
+    .init_from_file = {
+      .type = GKYL_IC_IMPORT_F,
+      .file_name = "/scratch/gpfs/mr1884/scratch/gkylmax/stellar-lorentzian1x-orbit-average-beams/gk_lorentzian_mirror-ion_65.gkyl",
     },
+    
 
     .mapc2p = {
       .mapping = mapc2p_vel_ion,
@@ -327,6 +358,7 @@ int main(int argc, char **argv)
       .scale_factor = 1.0, // Will be replaced below.
       .write_diagnostics = true,
     },
+
     .time_rate_multiplier = {
       .type = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE,
       .cellwise_const = true,
@@ -336,8 +368,10 @@ int main(int argc, char **argv)
     .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
       .den_ref = ctx.n0,
-      .temp_ref = ctx.Te0,
+      .temp_ref = ctx.Ti0,
       .write_diagnostics = true,
+      .num_cross_collisions = 1,
+      .collide_with = { "elc" },
     },
     .source = {
       .source_id = GKYL_PROJ_SOURCE,
@@ -375,6 +409,53 @@ int main(int argc, char **argv)
       .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP},
     },
   };
+
+
+  struct gkyl_gyrokinetic_species elc = {
+    .name = "elc",
+    .charge = ctx.qe,
+    .mass = ctx.me,
+    .vdim = ctx.vdim,
+    .lower = {-1.0, 0.0},
+    .upper = { 1.0, 1.0},
+    .cells = { ctx.Nvpar_elc, ctx.Nmu_elc },
+
+    .polarization_density = ctx.n0,
+
+    .mapc2p = {
+      .mapping = mapc2p_vel_elc,
+      .ctx = &ctx,
+    },
+
+    .projection = {
+      .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
+      .density = initial_density,
+      .ctx_density = &ctx,
+      .upar = initial_upar,
+      .ctx_upar = &ctx,
+      .temp = initial_temp_elc,
+      .ctx_temp = &ctx,
+      .correct_all_moms = true,
+    },
+
+    .collisions =  {
+      .collision_id = GKYL_LBO_COLLISIONS,
+      .num_cross_collisions = 1,
+      .collide_with = { "ion" },
+      .den_ref = ctx.n0,
+      .temp_ref = ctx.Te0,
+      .do_not_add_to_dfdt = true,
+      .write_diagnostics = true,
+    },
+
+    .scaling = {
+      .type = GKYL_GK_SPECIES_SCALING_BOLTZMANN,
+    },
+
+    .num_diag_moments = 1,
+    .diag_moments = {GKYL_F_MOMENT_MAXWELLIAN},
+  };
+
   struct gkyl_gyrokinetic_field field = {
     .gkfield_id = GKYL_GK_FIELD_BOLTZMANN,
     .electron_mass = ctx.me,
@@ -417,8 +498,8 @@ int main(int argc, char **argv)
     .num_periodic_dir = 0,
     .periodic_dirs = {},
 
-    .num_species = 1,
-    .species = {ion},
+    .num_species = 2,
+    .species = {ion, elc},
 
     .field = field,
 
