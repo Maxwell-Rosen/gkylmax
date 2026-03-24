@@ -78,14 +78,13 @@ eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
   double vpar_midp = sqrt(pow(vpar,2.) + 2*mu*(Bmag - app->Bmag_midp)/app->mi); // Ignore potential for now
   double vperp = sqrt(2.0 * mu * app->B_p / app->mi); // What magnetic field do we use here?
 
-  double gamma0 = 200;
-  double T_beam = 200 * GKYL_ELEMENTARY_CHARGE;
-  double E_beam = 25000 * GKYL_ELEMENTARY_CHARGE;
-  double v_beam = sqrt(E_beam / app->mi);
+  double gamma0 = app->ion_source_amplitude;
+  double T_beam = app->ion_source_temp;
   double sigma_beam = 2*T_beam/app->mi;
 
-  double source = fmax(gamma0 * exp (-1.0 * (pow(fabs(vpar_midp) - v_beam, 2) + 
-                                             pow(vperp - v_beam, 2)) / sigma_beam),1e-20);
+  double vtot2 = pow(vpar_midp,2.) + pow(vperp,2.);
+
+  double source = fmax(gamma0 * sqrt(1/(M_PI*sigma_beam)) * exp (-1.0 * vtot2 / sigma_beam),1e-20);
 
   fout[0] = source;
 }
@@ -157,26 +156,30 @@ create_ctx(void)
   int Nmu_elc = 8;
   int poly_order = 1;
 
+  // Source parameters
+double ion_source_amplitude = 30975590.4361; // Beam intM0 = 3.172138e+20
+double ion_source_temp = 18282.7074073 * eV ; // Beam intM2 = 7.682495e+32
+
   // Geometry parameters.
   double RatZeq0 = 0.10; // Radius of the field line at Z=0.
   double Z_min = -2.5;
   double Z_max =  2.5;
-  double mcB = 6.51292;
-  double gamma = 0.124904;
+  double mcB = 3.691260;
+  double gamma = 0.226381;
   double Z_m = 0.98;
 
   // POA parameters  
-  double alpha_oap = 2e-5;  // Factor multiplying collisionless terms.
+  double alpha_oap = 1e-5;  // Factor multiplying collisionless terms.
   double alpha_fdp = 1.0;
   double tau_oap = 0.1;  // Duration of each phase.
   double tau_fdp = 15e-6;
-  double tau_fdp_extra = 3*15e-6;
-  int num_cycles = 5; // Number of OAP+FDP cycles to run.
+  double tau_fdp_extra = 45e-6;
+  int num_cycles = 10; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
   int num_frames_oap = 5;        // Frames per OAP phase
   int num_frames_fdp = 5;        // Frames per FDP phase
-  int num_frames_fdp_extra = 3*5;  // Frames for the extra FDP phase
+  int num_frames_fdp_extra = 15;  // Frames for the extra FDP phase
   
   // Whether to evolve the field.
   bool is_static_field_oap = false;
@@ -187,9 +190,10 @@ create_ctx(void)
   bool is_positivity_enabled_fdp = false;
   // Type of df/dt multipler.
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_oap = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE;
-  enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_fdp = GKYL_GK_FDOT_MULTIPLIER_FIXED_FACTOR_TIMES_OMEGA_MAX;
+  enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_fdp = GKYL_GK_FDOT_MULTIPLIER_NONE;
 
-  double cfl_factor_times_omega_max = 1/10.0; // CFL factor for fixed factor times omega max multiplier.
+  double f_threshold_oap = 1e-4; // Threshold for OAP multiplier.
+  double f_threshold_fdp = 1e-4; // Threshold for FDP multiplier.
 
   // Calculate phase structure
   double t_end = (tau_oap + tau_fdp)*num_cycles + tau_fdp_extra;
@@ -206,8 +210,13 @@ create_ctx(void)
     poa_phases[2*i].alpha = alpha_oap;
     poa_phases[2*i].is_static_field = is_static_field_oap;
     poa_phases[2*i].fdot_mult_type = fdot_mult_type_oap;
-    poa_phases[2*i].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
-    poa_phases[2*i].is_positivity_enabled = is_positivity_enabled_oap;
+    poa_phases[2*i].f_threshold = f_threshold_oap;
+    if (i < 2) {
+      poa_phases[2*i].is_positivity_enabled = true;
+    }
+    else {
+      poa_phases[2*i].is_positivity_enabled = is_positivity_enabled_oap;
+    }
 
     // FDPs.
     poa_phases[2*i+1].phase = GK_POA_FDP;
@@ -216,8 +225,14 @@ create_ctx(void)
     poa_phases[2*i+1].alpha = alpha_fdp;
     poa_phases[2*i+1].is_static_field = is_static_field_fdp;
     poa_phases[2*i+1].fdot_mult_type = fdot_mult_type_fdp;
-    poa_phases[2*i+1].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
+    poa_phases[2*i+1].f_threshold = f_threshold_fdp;
     poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_fdp;
+    if ( i < 2) {
+      poa_phases[2*i+1].is_positivity_enabled = true;
+    }
+    else {
+      poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_fdp;
+    }
   }
   // The final stage is an extra, longer FDP.
   poa_phases[num_phases-1].phase = GK_POA_FDP;
@@ -226,7 +241,7 @@ create_ctx(void)
   poa_phases[num_phases-1].alpha = alpha_fdp;
   poa_phases[num_phases-1].is_static_field = is_static_field_fdp;
   poa_phases[num_phases-1].fdot_mult_type = fdot_mult_type_fdp;
-  poa_phases[num_phases-1].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
+  poa_phases[num_phases-1].f_threshold = f_threshold_fdp;
   poa_phases[num_phases-1].is_positivity_enabled = is_positivity_enabled_fdp;
 
   double write_phase_freq = 1; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
@@ -272,6 +287,9 @@ create_ctx(void)
     .int_diag_calc_freq = int_diag_calc_freq,
     .dt_failure_tol = dt_failure_tol,
     .num_failures_max = num_failures_max,
+    
+    .ion_source_amplitude = ion_source_amplitude,
+    .ion_source_temp = ion_source_temp,
 
     .mcB = mcB,
     .gamma = gamma,
@@ -469,7 +487,7 @@ int main(int argc, char **argv)
   };
 
   struct gkyl_mirror_geo_grid_inp grid_inp = {
-    .filename_psi = "/home/mr1884/scratch/gkylmax/generate_efit/lorentzian_R32.geqdsk_psi.gkyl", // psi file to use
+    .filename_psi = "/home/mr1884/scratch/gkylmax/generate_efit/lorentzian_R10.geqdsk_psi.gkyl",
     .rclose = 0.2, // closest R to region of interest
     .zmin = -2.5,  // Z of lower boundary
     .zmax =  2.5,  // Z of upper boundary

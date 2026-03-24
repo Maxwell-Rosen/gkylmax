@@ -25,23 +25,23 @@ for i in "${!mcB_values[@]}"; do
   # Create the folder structure
   folder_name="R-scan/R-${R}"
 
-  mkdir -p "$folder_name"
+  # mkdir -p "$folder_name"
 
   # Copy core files into the folder
-  cp core/* "$folder_name/"
+  # cp core/* "$folder_name/"
 
   # Change into the folder
   cd "$folder_name" || exit
 
 	if [ "$R" -eq 3 ]; then
-		sed -i "122s/.*/  int Nz = 200;/" sim.c
+		sed -i "153s/.*/  int Nz = 192;/" sim.c
 	elif [ "$R" -eq 5 ]; then
-		sed -i "122s/.*/  int Nz = 300;/" sim.c
+		sed -i "153s/.*/  int Nz = 256;/" sim.c
 	fi
 
-  sed -i "131s/.*/  double mcB = $mcB;/" sim.c
-  sed -i "132s/.*/  double gamma = $gamma;/" sim.c
-  sed -i "387s|.*|    .filename_psi = \"/home/mr1884/scratch/gkylmax/generate_efit/lorentzian_R${R}.geqdsk_psi.gkyl\",|" sim.c
+  sed -i "164s/.*/  double mcB = $mcB;/" sim.c
+  sed -i "165s/.*/  double gamma = $gamma;/" sim.c
+  sed -i "472s|.*|    .filename_psi = \"/home/mr1884/scratch/gkylmax/generate_efit/lorentzian_R${R}.geqdsk_psi.gkyl\",|" sim.c
 
   sed -i "5s/.*/#SBATCH -J poa-bem-R-${R}/" jobscript-gkyl-stellar-amd
 
@@ -51,9 +51,11 @@ for i in "${!mcB_values[@]}"; do
 
 
   # Submit the job
+  # bash optimize_source_params.sh
   # ./sim -s1
-  # sbatch jobscript-gkyl-stellar-amd
-	bash submit-restarts.sh
+  sbatch jobscript-gkyl-stellar-amd
+	# bash submit-restarts.sh
+
 	wait
 
   # Print confirmation
