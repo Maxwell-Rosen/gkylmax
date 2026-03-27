@@ -39,6 +39,13 @@ initial_upar(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fou
 }
 
 void
+eval_zero(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  fout[0] = 0.0;
+}
+
+
+void
 initial_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
@@ -78,9 +85,9 @@ eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
   double vpar_midp = sqrt(pow(vpar,2.) + 2*mu*(Bmag - app->Bmag_midp)/app->mi); // Ignore potential for now
   double vperp = sqrt(2.0 * mu * app->B_p / app->mi); // What magnetic field do we use here?
 
-double gamma0 = 133.489434322; // Beam intM0 = 3.172138e+20
+  double gamma0 = 133.489434322; // Beam intM0 = 3.172138e+20
   double T_beam = 200 * GKYL_ELEMENTARY_CHARGE;
-double E_beam = 25141.1582175 * GKYL_ELEMENTARY_CHARGE; // Beam intM2 = 7.682495e+32
+  double E_beam = 25141.1582175 * GKYL_ELEMENTARY_CHARGE; // Beam intM2 = 7.682495e+32
   double v_beam = sqrt(E_beam / app->mi);
   double sigma_beam = 2*T_beam/app->mi;
 
@@ -435,7 +442,7 @@ int main(int argc, char **argv)
       .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
       .density = initial_density,
       .ctx_density = &ctx,
-      .upar = initial_upar,
+      .upar = eval_zero,
       .ctx_upar = &ctx,
       .temp = initial_temp_elc,
       .ctx_temp = &ctx,

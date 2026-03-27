@@ -157,8 +157,8 @@ create_ctx(void)
   int poly_order = 1;
 
   // Source parameters
-double ion_source_amplitude = 31019560.5328; // Beam intM0 = 3.172138e+20
-double ion_source_temp = 18149.4757841 * eV ; // Beam intM2 = 7.682495e+32
+  double ion_source_amplitude = 31019560.5328;
+  double ion_source_temp = 18149.4757841 * eV;
 
   // Geometry parameters.
   double RatZeq0 = 0.10; // Radius of the field line at Z=0.
@@ -169,17 +169,17 @@ double ion_source_temp = 18149.4757841 * eV ; // Beam intM2 = 7.682495e+32
   double Z_m = 0.98;
 
   // POA parameters  
-  double alpha_oap = 1e-5;  // Factor multiplying collisionless terms.
+  double alpha_oap = 2e-5;  // Factor multiplying collisionless terms.
   double alpha_fdp = 1.0;
   double tau_oap = 0.1;  // Duration of each phase.
   double tau_fdp = 15e-6;
-  double tau_fdp_extra = 45e-6;
-  int num_cycles = 10; // Number of OAP+FDP cycles to run.
+  double tau_fdp_extra = 3*15e-6;
+  int num_cycles = 5; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
   int num_frames_oap = 5;        // Frames per OAP phase
   int num_frames_fdp = 5;        // Frames per FDP phase
-  int num_frames_fdp_extra = 15;  // Frames for the extra FDP phase
+  int num_frames_fdp_extra = 3*5;  // Frames for the extra FDP phase
   
   // Whether to evolve the field.
   bool is_static_field_oap = false;
@@ -190,10 +190,9 @@ double ion_source_temp = 18149.4757841 * eV ; // Beam intM2 = 7.682495e+32
   bool is_positivity_enabled_fdp = false;
   // Type of df/dt multipler.
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_oap = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE;
-  enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_fdp = GKYL_GK_FDOT_MULTIPLIER_NONE;
+  enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_fdp = GKYL_GK_FDOT_MULTIPLIER_FIXED_FACTOR_TIMES_OMEGA_MAX;
 
-  double f_threshold_oap = 1e-4; // Threshold for OAP multiplier.
-  double f_threshold_fdp = 1e-4; // Threshold for FDP multiplier.
+  double cfl_factor_times_omega_max = 1/10.0; // CFL factor for fixed factor times omega max multiplier.
 
   // Calculate phase structure
   double t_end = (tau_oap + tau_fdp)*num_cycles + tau_fdp_extra;
@@ -210,13 +209,8 @@ double ion_source_temp = 18149.4757841 * eV ; // Beam intM2 = 7.682495e+32
     poa_phases[2*i].alpha = alpha_oap;
     poa_phases[2*i].is_static_field = is_static_field_oap;
     poa_phases[2*i].fdot_mult_type = fdot_mult_type_oap;
-    poa_phases[2*i].f_threshold = f_threshold_oap;
-    if (i < 2) {
-      poa_phases[2*i].is_positivity_enabled = true;
-    }
-    else {
-      poa_phases[2*i].is_positivity_enabled = is_positivity_enabled_oap;
-    }
+    poa_phases[2*i].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
+    poa_phases[2*i].is_positivity_enabled = is_positivity_enabled_oap;
 
     // FDPs.
     poa_phases[2*i+1].phase = GK_POA_FDP;
@@ -225,14 +219,8 @@ double ion_source_temp = 18149.4757841 * eV ; // Beam intM2 = 7.682495e+32
     poa_phases[2*i+1].alpha = alpha_fdp;
     poa_phases[2*i+1].is_static_field = is_static_field_fdp;
     poa_phases[2*i+1].fdot_mult_type = fdot_mult_type_fdp;
-    poa_phases[2*i+1].f_threshold = f_threshold_fdp;
+    poa_phases[2*i+1].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
     poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_fdp;
-    if ( i < 2) {
-      poa_phases[2*i+1].is_positivity_enabled = true;
-    }
-    else {
-      poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_fdp;
-    }
   }
   // The final stage is an extra, longer FDP.
   poa_phases[num_phases-1].phase = GK_POA_FDP;
@@ -241,7 +229,7 @@ double ion_source_temp = 18149.4757841 * eV ; // Beam intM2 = 7.682495e+32
   poa_phases[num_phases-1].alpha = alpha_fdp;
   poa_phases[num_phases-1].is_static_field = is_static_field_fdp;
   poa_phases[num_phases-1].fdot_mult_type = fdot_mult_type_fdp;
-  poa_phases[num_phases-1].f_threshold = f_threshold_fdp;
+  poa_phases[num_phases-1].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
   poa_phases[num_phases-1].is_positivity_enabled = is_positivity_enabled_fdp;
 
   double write_phase_freq = 1; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).

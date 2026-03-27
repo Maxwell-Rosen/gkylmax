@@ -11,6 +11,8 @@
 mcB_values=(2.130115 2.665626 3.691260 4.490901 5.416264)
 gamma_values=(0.451454 0.331696 0.226381 0.182792 0.149893)
 R_values=(3 5 10 15 22)
+src_amp=(133.489434322 167.08296763 187.529468419 193.893947813 197.854501103)
+src_temp=(25141.1582175 25127.2323251 25120.9096778 25117.3014755 25114.8563657)
 
 mkdir -p R-scan
 
@@ -39,6 +41,8 @@ for i in "${!mcB_values[@]}"; do
 		sed -i "153s/.*/  int Nz = 256;/" sim.c
 	fi
 
+  sed -i "81s/.*/  double gamma0 = ${src_amp[$i]};/" sim.c
+  sed -i "83s/.*/  double E_beam = ${src_temp[$i]} * GKYL_ELEMENTARY_CHARGE;/" sim.c
   sed -i "164s/.*/  double mcB = $mcB;/" sim.c
   sed -i "165s/.*/  double gamma = $gamma;/" sim.c
   sed -i "472s|.*|    .filename_psi = \"/home/mr1884/scratch/gkylmax/generate_efit/lorentzian_R${R}.geqdsk_psi.gkyl\",|" sim.c

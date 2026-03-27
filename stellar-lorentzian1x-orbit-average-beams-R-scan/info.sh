@@ -8,43 +8,43 @@ extract_max() {
 
 # R=3
 cd R-scan/R-3
-M0_R3=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_M0_100.gkyl interp sel --z0 -0.98:0.98 integ 0 info 2>&1 | extract_max)
+M0_R3=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_M0_65.gkyl interp sel --z0 -0.98:0.98 integ 0 info 2>&1 | extract_max)
 M0S_R3=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_source_M0_0.gkyl interp sel --z0 -0.98:0.98 integ 0 info 2>&1 | extract_max)
-nu_R3=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_lbo_nu_sum_100.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
+nu_R3=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_lbo_nu_sum_65.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
 cd ../..
 
 # R=5
 cd R-scan/R-5
-M0_R5=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_M0_100.gkyl interp sel --z0 -0.98:0.98 integ 0 info 2>&1 | extract_max)
+M0_R5=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_M0_65.gkyl interp sel --z0 -0.98:0.98 integ 0 info 2>&1 | extract_max)
 M0S_R5=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_source_M0_0.gkyl interp sel --z0 -0.98:0.98 integ 0 info 2>&1 | extract_max)
-nu_R5=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_lbo_nu_sum_100.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
+nu_R5=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_lbo_nu_sum_65.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
 cd ../..
 
 # R=10
 cd R-scan/R-10
-M0_R10=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_M0_100.gkyl interp sel --z0 -0.98:0.98 integ 0 info 2>&1 | extract_max)
+M0_R10=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_M0_65.gkyl interp sel --z0 -0.98:0.98 integ 0 info 2>&1 | extract_max)
 M0S_R10=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_source_M0_0.gkyl interp sel --z0 -0.98:0.98 integ 0 info 2>&1 | extract_max)
-nu_R10=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_lbo_nu_sum_100.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
+nu_R10=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_lbo_nu_sum_65.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
 cd ../..
 
 # R=15
 cd R-scan/R-15
-M0_R15=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_M0_100.gkyl interp sel --z0 -0.98:0.98 integ 0 info 2>&1 | extract_max)
+M0_R15=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_M0_65.gkyl interp sel --z0 -0.98:0.98 integ 0 info 2>&1 | extract_max)
 M0S_R15=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_source_M0_0.gkyl interp sel --z0 -0.98:0.98 integ 0 info 2>&1 | extract_max)
-nu_R15=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_lbo_nu_sum_100.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
+nu_R15=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_lbo_nu_sum_65.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
 cd ../..
 
 # R=22
 cd R-scan/R-22
-M0_R22=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_M0_100.gkyl interp sel --z0 -0.98:0.98 integ 0 info 2>&1 | extract_max)
+M0_R22=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_M0_65.gkyl interp sel --z0 -0.98:0.98 integ 0 info 2>&1 | extract_max)
 M0S_R22=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_source_M0_0.gkyl interp sel --z0 -0.98:0.98 integ 0 info 2>&1 | extract_max)
-nu_R22=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_lbo_nu_sum_100.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
+nu_R22=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_lbo_nu_sum_65.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
 cd ../..
 
 cd ../stellar-lorentzian1x-orbit-average-beams
-M0_R32=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_M0_100.gkyl interp sel --z0 -0.98:0.98 integ 0 info 2>&1 | extract_max)
+M0_R32=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_M0_65.gkyl interp sel --z0 -0.98:0.98 integ 0 info 2>&1 | extract_max)
 M0S_R32=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_source_M0_0.gkyl interp sel --z0 -0.98:0.98 integ 0 info 2>&1 | extract_max)
-nu_R32=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_lbo_nu_sum_100.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
+nu_R32=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_lbo_nu_sum_65.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
 cd ../stellar-lorentzian1x-orbit-average-beams-R-scan
 
 # Print Python-ready output
