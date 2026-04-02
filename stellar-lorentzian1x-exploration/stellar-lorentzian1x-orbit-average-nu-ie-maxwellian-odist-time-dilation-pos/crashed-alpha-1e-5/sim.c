@@ -466,7 +466,7 @@ int main(int argc, char **argv)
       .collide_with = { "ion" },
       .den_ref = ctx.n0,
       .temp_ref = ctx.Te0,
-      .do_not_add_to_dfdt = true,
+      .not_in_dfdt = true,
       .write_diagnostics = true,
     },
 

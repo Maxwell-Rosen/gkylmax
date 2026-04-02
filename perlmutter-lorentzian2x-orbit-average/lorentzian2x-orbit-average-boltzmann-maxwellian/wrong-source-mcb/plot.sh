@@ -1,0 +1,3 @@
+#  pgkyl --c2p gk_lorentzian_mirror-mapc2p_deflated.gkyl gk_lorentzian_mirror-ion_BiMaxwellianMoments_5.gkyl interp ev 'f 2,3 1.67e-27 2.014 * 1.6e-19 / scale_comp' pl --xlabel 'Axial Position z (m)' --subplot-ylabels 'Density $m^{-3}$, $U_\parallel$ (m/s), $T_\parallel$ (eV), $T_\perp$ (eV)' 
+ 
+ pgkyl gk_lorentzian_mirror-ion_BiMaxwellianMoments_5.gkyl interp sel --z0 15 ev 'f 2,3 1.67e-27 2.014 * 1.6e-19 / scale_comp' pl --xlabel 'Axial Position z (m)' --subplot-ylabels 'Density $m^{-3}$, $U_\parallel$ (m/s), $T_\parallel$ (eV), $T_\perp$ (eV)'

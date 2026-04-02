@@ -57,11 +57,19 @@ struct gk_mirror_ctx
   double z_min;
   double z_max;
   double psi_eval;
+  double psi_max;
+  double psi_min;
+  double theta_eval;
+  double theta_min;
+  double theta_max;
   // Physics parameters at mirror throat
   double vpar_max_ion;
   double mu_max_ion;
   double vpar_max_elc;
   double mu_max_elc;
+
+  int Npsi;
+  int Ntheta;
   int Nz;
   int Nvpar;
   int Nmu;
@@ -150,8 +158,10 @@ print_ctx(struct gk_mirror_ctx *ctx)
   printf("\nGeometry parameters:\n");
   printf("  Mirror throat radius (RatZeq0) = %g m\n", ctx->RatZeq0);
   printf("  Psi evaluated (psi_eval) = %g Wb\n", ctx->psi_eval);
+  printf("  Psi extents: [%g, %g] Wb\n", ctx->psi_min, ctx->psi_max);
   printf("  Z extents: [%g, %g] m\n", ctx->Z_min, ctx->Z_max);
   printf("  z extents: [%g, %g] m\n", ctx->z_min, ctx->z_max);
+  printf("  Theta extents: [%g, %g] rad\n", ctx->theta_min, ctx->theta_max);
   printf("  Mirror throat Z location (Z_m) = %g m\n", ctx->Z_m);
   printf("  Magnetic field parameter (mcB) = %g\n", ctx->mcB);
   printf("  Lorentzian width parameter (gamma) = %g\n", ctx->gamma);
@@ -159,7 +169,7 @@ print_ctx(struct gk_mirror_ctx *ctx)
   printf("\nGrid parameters:\n");
   printf("  Configuration space dimensions (cdim) = %d\n", ctx->cdim);
   printf("  Velocity space dimensions (vdim) = %d\n", ctx->vdim);
-  printf("  Number of cells (Nz, Nvpar, Nmu) = (%d, %d, %d)\n", ctx->Nz, ctx->Nvpar, ctx->Nmu);
+  printf("  Number of cells (Npsi, Ntheta, Nz, Nvpar, Nmu) = (%d, %d, %d, %d, %d)\n", ctx->Npsi, ctx->Ntheta, ctx->Nz, ctx->Nvpar, ctx->Nmu);
   printf("  Number of cells for electrons (Nvpar_elc, Nmu_elc) = (%d, %d)\n", ctx->Nvpar_elc, ctx->Nmu_elc);
   printf("  Polynomial order = %d\n", ctx->poly_order);
   printf("  Max ion parallel velocity (vpar_max_ion) = %g m/s (%.2f vti)\n", 
@@ -313,6 +323,7 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
     .type = GKYL_GK_COLLISIONLESS_ES,
     .scale_factor = pparams->alpha,
   };
+
   struct gkyl_gyrokinetic_fdot_multipliers fdot_mult_inp = {
     .num_multipliers = 1,
     .multiplier[0] = {
@@ -601,7 +612,18 @@ void run_phase_kinetic_elc(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx,
 void
 run_poa_simulation(struct gkyl_gk app_inp, struct gk_mirror_ctx ctx, struct gkyl_app_args app_args, bool is_kinetic_elc){
   // Create app object.
+
+  struct timespec app_init_start;
+  clock_gettime(CLOCK_MONOTONIC, &app_init_start);
+
+  printf("App initialization started ...\n");
   gkyl_gyrokinetic_app *app = gkyl_gyrokinetic_app_new(&app_inp);
+
+  struct timespec app_init_end;
+  clock_gettime(CLOCK_MONOTONIC, &app_init_end);
+  double app_init_time = (app_init_end.tv_sec - app_init_start.tv_sec) + 
+                         (app_init_end.tv_nsec - app_init_start.tv_nsec) / 1e9;
+  gkyl_gyrokinetic_app_cout(app, stdout, "App initialization time: %.3f seconds\n\n", app_init_time);
 
   // Triggers for IO.
   struct gkyl_tm_trigger trig_write_conf, trig_write_phase, trig_calc_intdiag;
@@ -683,7 +705,13 @@ run_poa_simulation(struct gkyl_gk app_inp, struct gk_mirror_ctx ctx, struct gkyl
     gkyl_gyrokinetic_app_cout(app, stdout, "\n");
   }
   else {
+
+    clock_gettime(CLOCK_MONOTONIC, &app_init_start);
+    gkyl_gyrokinetic_app_cout(app, stdout, "Applying initial conditions ...\n");
     gkyl_gyrokinetic_app_apply_ic(app, tfs.t_curr);
+    clock_gettime(CLOCK_MONOTONIC, &app_init_end);
+    double ic_apply_time = (app_init_end.tv_sec - app_init_start.tv_sec) + (app_init_end.tv_nsec - app_init_start.tv_nsec) / 1e9;
+    gkyl_gyrokinetic_app_cout(app, stdout, "Initial condition application time: %.3f seconds\n\n", ic_apply_time);
 
     // Write out ICs.
     reset_io_triggers(&ctx, &tfs, &trig_write_conf, &trig_write_phase, &trig_calc_intdiag);

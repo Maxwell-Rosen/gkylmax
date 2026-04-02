@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #==============================================================================
-# submit-restarts-stellar-amd.sh
+# submit-restarts-perlmutter.sh
 # 
 # Submit a chain of dependent jobs to the SLURM scheduler. Each job depends
 # on the previous job completing, allowing for automatic restart chains.
@@ -12,14 +12,14 @@ set -o pipefail
 # Default values
 num_jobs=1
 restart_from=""
-jobscript="jobscript_gkyl-stellar-amd"
+jobscript="jobscript-gkyl-perlmutter"
 
 #==============================================================================
 # Help function
 #==============================================================================
 show_help() {
   cat <<EOF
-Usage: submit-restarts-stellar-amd.sh [OPTIONS]
+Usage: submit-restarts-perlmutter.sh [OPTIONS]
 
 Options:
   --jobs NUM, -j NUM              Number of jobs to submit in the chain
@@ -30,7 +30,7 @@ Options:
                                   The first new job will depend on JOB_ID.
   
   --jobscript FILE                Path to jobscript to submit
-                                  (default: jobscript_gkyl-stellar-amd)
+                                  (default: jobscript-gkyl-perlmutter)
   
   --help, -h                      Show this help message and exit
 EOF

@@ -39,6 +39,12 @@ initial_upar(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fou
 }
 
 void
+eval_zero(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  fout[0] = 0.0;
+}
+
+void
 initial_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
@@ -237,6 +243,8 @@ create_ctx(void)
   struct gk_mirror_ctx ctx = {
     .cdim = cdim,
     .vdim = vdim,
+    .poly_order = poly_order,
+
     .mi = mi,
     .qi = qi,
     .me = me,
@@ -247,6 +255,7 @@ create_ctx(void)
     .beta = beta,
     .tau = tau,
     .Ti0 = Ti0,
+
     .nuFrac = nuFrac,
     .logLambdaIon = logLambdaIon,
     .nuIon = nuIon,
@@ -257,13 +266,14 @@ create_ctx(void)
     .mu_max_ion = mu_max_ion,
     .vpar_max_elc = vpar_max_elc,
     .mu_max_elc = mu_max_elc,
+
     .Nz = Nz,
     .Nvpar = Nvpar,
     .Nmu = Nmu,
     .Nvpar_elc = Nvpar_elc,
     .Nmu_elc = Nmu_elc,
     .cells = {Nz, Nvpar, Nmu},
-    .poly_order = poly_order,
+
     .t_end = t_end,
     .num_frames = num_frames,
     .num_phases = num_phases,
@@ -363,10 +373,13 @@ int main(int argc, char **argv)
       .write_diagnostics = true,
     },
 
-    .time_rate_multiplier = {
-      .type = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE,
-      .cellwise_const = true,
-      .write_diagnostics = true,
+    .time_rate_multipliers = {
+      .num_multipliers = 1,
+      .multiplier[0] = {
+        .type = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE,
+        .cellwise_const = true,
+        .write_diagnostics = true,
+      },
     },
 
     .collisions = {
@@ -387,7 +400,7 @@ int main(int argc, char **argv)
       },
       .diagnostics = {
         .num_diag_moments = 6,
-        .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_HAMILTONIAN},
+        .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_BIMAXWELLIAN},
         .num_integrated_diag_moments = 1,
         .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
       },
@@ -469,7 +482,7 @@ int main(int argc, char **argv)
   };
 
   struct gkyl_mirror_geo_grid_inp grid_inp = {
-    .filename_psi = "/home/mr1884/scratch/gkylmax/generate_efit/lorentzian_R32.geqdsk_psi.gkyl", // psi file to use
+    .filename_psi = "/global/homes/m/mhrosen/scratch/gkylmax/generate_efit/lorentzian_R32.geqdsk_psi.gkyl", // psi file to use
     .rclose = 0.2, // closest R to region of interest
     .zmin = -2.5,  // Z of lower boundary
     .zmax =  2.5,  // Z of upper boundary
@@ -514,8 +527,7 @@ int main(int argc, char **argv)
     },
   };
 
-  bool is_kinetic_elc = false;
-  run_poa_simulation(app_inp, ctx, app_args, is_kinetic_elc);
+  run_poa_simulation(app_inp, ctx, app_args);
 
   gkyl_gyrokinetic_comms_release(comm);
   release_ctx(&ctx);
