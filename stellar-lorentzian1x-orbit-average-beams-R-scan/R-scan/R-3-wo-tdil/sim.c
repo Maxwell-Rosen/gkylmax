@@ -39,6 +39,13 @@ initial_upar(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fou
 }
 
 void
+eval_zero(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  fout[0] = 0.0;
+}
+
+
+void
 initial_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
@@ -78,13 +85,14 @@ eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
   double vpar_midp = sqrt(pow(vpar,2.) + 2*mu*(Bmag - app->Bmag_midp)/app->mi); // Ignore potential for now
   double vperp = sqrt(2.0 * mu * app->B_p / app->mi); // What magnetic field do we use here?
 
-  double gamma0 = app->ion_source_amplitude;
-  double T_beam = app->ion_source_temp;
+  double gamma0 = 133.489434322; // Beam intM0 = 3.172138e+20
+  double T_beam = 200 * GKYL_ELEMENTARY_CHARGE;
+  double E_beam = 25141.1582175 * GKYL_ELEMENTARY_CHARGE; // Beam intM2 = 7.682495e+32
+  double v_beam = sqrt(E_beam / app->mi);
   double sigma_beam = 2*T_beam/app->mi;
 
-  double vtot2 = pow(vpar_midp,2.) + pow(vperp,2.);
-
-  double source = fmax(gamma0 * sqrt(1/(M_PI*sigma_beam)) * exp (-1.0 * vtot2 / sigma_beam),1e-20);
+  double source = fmax(gamma0 * exp (-1.0 * (pow(fabs(vpar_midp) - v_beam, 2) + 
+                                             pow(vperp - v_beam, 2)) / sigma_beam),1e-20);
 
   fout[0] = source;
 }
@@ -149,23 +157,19 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   double vpar_max_elc = 4 * vte;
   double mu_max_elc = me * pow(4. * vte, 2.) / (2. * B_p);
-  int Nz = 400;
+  int Nz = 192;
   int Nvpar = 64;
   int Nmu = 32;
   int Nvpar_elc = 8;
   int Nmu_elc = 8;
   int poly_order = 1;
 
-  // Source parameters
-  double ion_source_amplitude = 30961810.1861; // Beam intM0 = 3.172138e+20
-  double ion_source_temp = 18050.8476708 * eV ; // Beam intM2 = 7.682495e+32
-
   // Geometry parameters.
   double RatZeq0 = 0.10; // Radius of the field line at Z=0.
   double Z_min = -2.5;
   double Z_max =  2.5;
-  double mcB = 6.51292;
-  double gamma = 0.124904;
+  double mcB = 2.130115;
+  double gamma = 0.451454;
   double Z_m = 0.98;
 
   // POA parameters  
@@ -190,7 +194,7 @@ create_ctx(void)
   bool is_positivity_enabled_fdp = false;
   // Type of df/dt multipler.
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_oap = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE;
-  enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_fdp = GKYL_GK_FDOT_MULTIPLIER_FIXED_FACTOR_TIMES_OMEGA_MAX;
+  enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_fdp = GKYL_GK_FDOT_MULTIPLIER_NONE;
 
   double cfl_factor_times_omega_max = 1/10.0; // CFL factor for fixed factor times omega max multiplier.
 
@@ -275,9 +279,6 @@ create_ctx(void)
     .int_diag_calc_freq = int_diag_calc_freq,
     .dt_failure_tol = dt_failure_tol,
     .num_failures_max = num_failures_max,
-    
-    .ion_source_amplitude = ion_source_amplitude,
-    .ion_source_temp = ion_source_temp,
 
     .mcB = mcB,
     .gamma = gamma,
@@ -441,7 +442,7 @@ int main(int argc, char **argv)
       .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
       .density = initial_density,
       .ctx_density = &ctx,
-      .upar = initial_upar,
+      .upar = eval_zero,
       .ctx_upar = &ctx,
       .temp = initial_temp_elc,
       .ctx_temp = &ctx,
@@ -475,7 +476,7 @@ int main(int argc, char **argv)
   };
 
   struct gkyl_mirror_geo_grid_inp grid_inp = {
-    .filename_psi = "/home/mr1884/scratch/gkylmax/generate_efit/lorentzian_R32.geqdsk_psi.gkyl", // psi file to use
+    .filename_psi = "/home/mr1884/scratch/gkylmax/generate_efit/lorentzian_R3.geqdsk_psi.gkyl",
     .rclose = 0.2, // closest R to region of interest
     .zmin = -2.5,  // Z of lower boundary
     .zmax =  2.5,  // Z of upper boundary

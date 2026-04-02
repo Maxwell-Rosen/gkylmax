@@ -21,12 +21,13 @@ struct gk_poa_phase_params {
   enum gk_poa_state phase; // Type of phase.
   int num_frames; // Number of frames.
   double duration; // Duration.
-  double alpha; // Factor multiplying collisionless terms.
+  double alpha, alpha_ion, alpha_elc; // Factor multiplying collisionless terms.
   bool is_static_field; // Whether to evolve the field.
-  bool is_positivity_enabled; // Whether positivity is enabled.
-  double cfl_factor_times_omega_max; // CFL factor for fixed factor times omega max multiplier.
-  enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type; // Type of df/dt multipler.
-  double f_threshold; // Threshold for df/dt multiplier.
+  bool is_positivity_enabled, is_positivity_enabled_ion, is_positivity_enabled_elc; // Whether positivity is enabled.
+  enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type, fdot_mult_type_ion, fdot_mult_type_elc; // Type of df/dt multipler.
+  double f_threshold, f_threshold_ion, f_threshold_elc; // Threshold for df/dt multiplier.
+  double cfl_factor_times_omega_max, cfl_factor_times_omega_max_ion, cfl_factor_times_omega_max_elc; // CFL factor for fixed factor times omega max multiplier.
+  double time_dilation_scale_const, time_dilation_scale_const_ion, time_dilation_scale_const_elc; // Constant time dilation scale factor (if fdot_mult_type is GKYL_GK_FDOT_MULTIPLIER_CONSTANT).
 };
 
 // Define the context of the simulation. This is basically all the globals
@@ -51,6 +52,7 @@ struct gk_mirror_ctx
   double nuIon;
   double vti, vte;
   double RatZeq0; // Radius of the field line at Z=0.
+  double kperp; // Perpendicular wavenumber for ES gyrokinetics.
   // Axial coordinate Z extents. Endure that Z=0 is not on
   double z_min;
   double z_max;
@@ -92,6 +94,37 @@ struct gk_mirror_ctx
   double z_in;    // Working variable for z integration
 };
 
+static inline const char*
+fdot_multiplier_type_to_str(enum gkyl_gyrokinetic_fdot_multiplier_type type)
+{
+  switch (type) {
+    case GKYL_GK_FDOT_MULTIPLIER_NONE:
+      return "None";
+    case GKYL_GK_FDOT_MULTIPLIER_USER_INPUT:
+      return "User input";
+    case GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE:
+      return "Loss cone";
+    case GKYL_GK_FDOT_MULTIPLIER_CONSTANT:
+      return "Constant";
+    case GKYL_GK_FDOT_MULTIPLIER_FIXED_DT:
+      return "Fixed dt";
+    case GKYL_GK_FDOT_MULTIPLIER_FIXED_FACTOR_TIMES_OMEGA_MAX:
+      return "Fixed factor times omega max";
+    case GKYL_GK_FDOT_MULTIPLIER_FIXED_DT_OMEGAH:
+      return "Fixed dt omega_H";
+    case GKYL_GK_FDOT_MULTIPLIER_DT_SET_BY_SPECIES:
+      return "dt set by species";
+    case GKYL_GK_FDOT_MULTIPLIER_MASK_F_THRESHOLD:
+      return "Mask f threshold";
+    case GKYL_GK_FDOT_MULTIPLIER_MASK_F_FRAC_LOCAL:
+      return "Mask f frac local";
+    case GKYL_GK_FDOT_MULTIPLIER_MASK_F_FRAC_GLOBAL:
+      return "Mask f frac global";
+    default:
+      return "Unknown";
+  }
+}
+
 void
 print_ctx(struct gk_mirror_ctx *ctx)
 {
@@ -112,6 +145,7 @@ print_ctx(struct gk_mirror_ctx *ctx)
   printf("  Ion-ion Coulomb logarithm (logLambdaIon) = %g\n", ctx->logLambdaIon);
   printf("  Ion-ion collision frequency (nuIon) = %g Hz\n", ctx->nuIon);
   printf("  Magnetic field magnitude at midplane (Bmag_midp) = %g T\n", ctx->Bmag_midp);
+  printf("  Perpendicular wavenumber (kperp) = %g 1/m\n", ctx->kperp);
   
   printf("\nGeometry parameters:\n");
   printf("  Mirror throat radius (RatZeq0) = %g m\n", ctx->RatZeq0);
@@ -242,6 +276,8 @@ void reset_io_triggers(struct gk_mirror_ctx *ctx, struct time_frame_state *tfs,
   trig_calc_intdiag->curr = frame_curr;
 }
 
+/////////// Boltzmann Electron POA phases
+
 void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_steps,
   struct gkyl_tm_trigger *trig_write_conf, struct gkyl_tm_trigger *trig_write_phase,
   struct gkyl_tm_trigger *trig_calc_intdiag, struct time_frame_state *tfs,
@@ -260,8 +296,7 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
   gkyl_gyrokinetic_app_cout(app, stdout, "  Evolve field = %s\n", pparams->is_static_field?"No":"Yes");
   gkyl_gyrokinetic_app_cout(app, stdout, "  Positivity = %s\n", pparams->is_positivity_enabled?"Yes":"No");
   gkyl_gyrokinetic_app_cout(app, stdout, "  df/dt multiplier = %s\n",
-    (pparams->fdot_mult_type == GKYL_GK_FDOT_MULTIPLIER_NONE)?"None":
-    (pparams->fdot_mult_type == GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE)?"Loss cone":"Unknown");
+    fdot_multiplier_type_to_str(pparams->fdot_mult_type));
   gkyl_gyrokinetic_app_cout(app, stdout, "  df/dt threshold = %g\n", pparams->f_threshold);
   gkyl_gyrokinetic_app_cout(app, stdout, "  CFL factor times omega max = %g\n", pparams->cfl_factor_times_omega_max);
   gkyl_gyrokinetic_app_cout(app, stdout, "----------------------------------------------\n");
@@ -278,12 +313,16 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
     .type = GKYL_GK_COLLISIONLESS_ES,
     .scale_factor = pparams->alpha,
   };
-  struct gkyl_gyrokinetic_fdot_multiplier fdot_mult_inp = {
-    .type = pparams->fdot_mult_type,
-    .f_threshold = pparams->f_threshold,
-    .cfl_factor_times_omega_max = pparams->cfl_factor_times_omega_max,
-    .cellwise_const = true,
-    .write_diagnostics = true,
+  struct gkyl_gyrokinetic_fdot_multipliers fdot_mult_inp = {
+    .num_multipliers = 1,
+    .multiplier[0] = {
+      .type = pparams->fdot_mult_type,
+      .f_threshold = pparams->f_threshold,
+      .cfl_factor_times_omega_max = pparams->cfl_factor_times_omega_max,
+      .time_dilation_scale_const = pparams->time_dilation_scale_const,
+      .cellwise_const = true,
+      .write_diagnostics = true,
+    },
   };
   struct gkyl_gyrokinetic_field field_inp = {
     .gkfield_id = GKYL_GK_FIELD_BOLTZMANN,
@@ -382,8 +421,185 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
 }
 
 
+//////////// Kinetic Electron POA ///////////////
+
+void run_phase_kinetic_elc(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_steps,
+  struct gkyl_tm_trigger *trig_write_conf, struct gkyl_tm_trigger *trig_write_phase,
+  struct gkyl_tm_trigger *trig_calc_intdiag, struct time_frame_state *tfs,
+  struct gk_poa_phase_params *pparams, int phase_idx)
+{
+  tfs->t_end = tfs->t_curr + pparams->duration;
+  tfs->num_frames = tfs->frame_curr + pparams->num_frames;
+
+  gkyl_gyrokinetic_app_cout(app, stdout, "----------------------------------------------\n");
+  gkyl_gyrokinetic_app_cout(app, stdout, "Starting phase %d of type %s with parameters:\n",
+    phase_idx + 1,
+    (pparams->phase == GK_POA_OAP)?"OAP":"FDP");
+  gkyl_gyrokinetic_app_cout(app, stdout, "  Duration = %g\n", pparams->duration);
+  gkyl_gyrokinetic_app_cout(app, stdout, "  Number of frames = %d\n", pparams->num_frames);
+  gkyl_gyrokinetic_app_cout(app, stdout, "  Alpha ion = %g\n", pparams->alpha_ion);
+  gkyl_gyrokinetic_app_cout(app, stdout, "  Alpha elc = %g\n", pparams->alpha_elc);
+  gkyl_gyrokinetic_app_cout(app, stdout, "  Evolve field = %s\n", pparams->is_static_field?"No":"Yes");
+  gkyl_gyrokinetic_app_cout(app, stdout, "  Positivity ion = %s\n", pparams->is_positivity_enabled_ion?"Yes":"No");
+  gkyl_gyrokinetic_app_cout(app, stdout, "  Positivity elc = %s\n", pparams->is_positivity_enabled_elc?"Yes":"No");
+  gkyl_gyrokinetic_app_cout(app, stdout, "  df/dt multiplier ion = %s\n",
+    fdot_multiplier_type_to_str(pparams->fdot_mult_type_ion));
+  gkyl_gyrokinetic_app_cout(app, stdout, "  df/dt multiplier elc = %s\n",
+    fdot_multiplier_type_to_str(pparams->fdot_mult_type_elc));
+  gkyl_gyrokinetic_app_cout(app, stdout, "  df/dt threshold ion = %g\n", pparams->f_threshold_ion);
+  gkyl_gyrokinetic_app_cout(app, stdout, "  df/dt threshold elc = %g\n", pparams->f_threshold_elc);
+  gkyl_gyrokinetic_app_cout(app, stdout, "  CFL factor times omega max ion = %g\n", pparams->cfl_factor_times_omega_max_ion);
+  gkyl_gyrokinetic_app_cout(app, stdout, "  CFL factor times omega max elc = %g\n", pparams->cfl_factor_times_omega_max_elc);
+  gkyl_gyrokinetic_app_cout(app, stdout, "  Time dilation scale const ion = %g\n", pparams->time_dilation_scale_const_ion);
+  gkyl_gyrokinetic_app_cout(app, stdout, "  Time dilation scale const elc = %g\n", pparams->time_dilation_scale_const_elc);
+  
+  gkyl_gyrokinetic_app_cout(app, stdout, "----------------------------------------------\n");
+
+  // Run an OAP or FDP.
+  double t_curr = tfs->t_curr;
+  double t_end = tfs->t_end;
+  
+  // Reset I/O triggers:
+  reset_io_triggers(ctx, tfs, trig_write_conf, trig_write_phase, trig_calc_intdiag);
+
+  // Reset simulation parameters and function pointers.
+  struct gkyl_gyrokinetic_collisionless ion_collisionless_inp = {
+    .type = GKYL_GK_COLLISIONLESS_ES,
+    .scale_factor = pparams->alpha_ion,
+  };
+  struct gkyl_gyrokinetic_collisionless elc_collisionless_inp = {
+    .type = GKYL_GK_COLLISIONLESS_ES,
+    .scale_factor = pparams->alpha_elc,
+  };
+  struct gkyl_gyrokinetic_fdot_multipliers ion_fdot_mult_inp = {
+    .num_multipliers = 1,
+    .multiplier[0] = {
+      .type = pparams->fdot_mult_type_ion,
+      .f_threshold = pparams->f_threshold_ion,
+      .cfl_factor_times_omega_max = pparams->cfl_factor_times_omega_max_ion,
+      .time_dilation_scale_const = pparams->time_dilation_scale_const_ion,
+      .dt_set_by_species = "elc",
+      .cellwise_const = true,
+      .write_diagnostics = true,
+    },
+  };
+  struct gkyl_gyrokinetic_fdot_multipliers elc_fdot_mult_inp = {
+    .num_multipliers = 1,
+    .multiplier[0] = {
+      .type = pparams->fdot_mult_type_elc,
+      .f_threshold = pparams->f_threshold_elc,
+      .cfl_factor_times_omega_max = pparams->cfl_factor_times_omega_max_elc,
+      .time_dilation_scale_const = pparams->time_dilation_scale_const_elc,
+      .dt_set_by_species = "ion",
+      .cellwise_const = true,
+      .write_diagnostics = true,
+    },
+  };
+  struct gkyl_gyrokinetic_positivity ion_positivity_inp = {
+    .type = pparams->is_positivity_enabled_ion? GKYL_GK_POSITIVITY_SHIFT : GKYL_GK_POSITIVITY_NONE,
+    .write_diagnostics = pparams->is_positivity_enabled_ion,
+  };
+  struct gkyl_gyrokinetic_positivity elc_positivity_inp = {
+    .type = pparams->is_positivity_enabled_elc? GKYL_GK_POSITIVITY_SHIFT : GKYL_GK_POSITIVITY_NONE,
+    .write_diagnostics = pparams->is_positivity_enabled_elc,
+  };
+  struct gkyl_gyrokinetic_field field_inp = {
+    .polarization_bmag = ctx->B_p,
+    .kperpSq = pow(ctx->kperp, 2.),
+    .is_static = pparams->is_static_field,
+  };
+
+  gkyl_gyrokinetic_app_reset_species_collisionless(app, t_curr, "ion", ion_collisionless_inp);
+  gkyl_gyrokinetic_app_reset_species_fdot_multiplier(app, t_curr, "ion", ion_fdot_mult_inp);
+  gkyl_gyrokinetic_app_reset_species_positivity(app, t_curr, "ion", ion_positivity_inp);
+
+  gkyl_gyrokinetic_app_reset_species_collisionless(app, t_curr, "elc", elc_collisionless_inp);
+  gkyl_gyrokinetic_app_reset_species_fdot_multiplier(app, t_curr, "elc", elc_fdot_mult_inp);
+  gkyl_gyrokinetic_app_reset_species_positivity(app, t_curr, "elc", elc_positivity_inp);
+
+  gkyl_gyrokinetic_app_reset_field(app, t_curr, field_inp);
+
+  // Compute initial guess of maximum stable time-step.
+  double dt = t_end - t_curr;
+
+  // Initialize small time-step check.
+  double dt_init = -1.0, dt_failure_tol = ctx->dt_failure_tol;
+  int num_failures = 0, num_failures_max = ctx->num_failures_max;
+
+  // Initialize wall-time tracking for phase completion estimate
+  struct timespec phase_start_time;
+  clock_gettime(CLOCK_MONOTONIC, &phase_start_time);
+  double t_start = tfs->t_curr;
+
+  long step = 1;
+  while ((t_curr < t_end) && (step <= num_steps))
+  {
+    if (step%1000 == 1 || step==1)
+      gkyl_gyrokinetic_app_cout(app, stdout, "Taking time-step %ld at t = %g ...", step, t_curr);
+    dt = t_end - t_curr; // Ensure we don't step beyond t_end.
+    struct gkyl_update_status status = gkyl_gyrokinetic_update(app, dt);
+    if (step%1000 == 1 || step==1) {
+      // Calculate elapsed wall time and estimated time remaining
+      struct timespec current_time;
+      clock_gettime(CLOCK_MONOTONIC, &current_time);
+      double wall_time_elapsed = (current_time.tv_sec - phase_start_time.tv_sec) + 
+                                  (current_time.tv_nsec - phase_start_time.tv_nsec) / 1e9;
+      double sim_time_elapsed = t_curr - t_start;
+      double sim_time_remaining = t_end - t_curr;
+      
+      double wall_time_per_sim_time = wall_time_elapsed / sim_time_elapsed;
+      double wall_time_remaining = wall_time_per_sim_time * sim_time_remaining;
+      int hours = (int)(wall_time_remaining / 3600);
+      int minutes = (int)((wall_time_remaining - hours*3600) / 60);
+      int seconds = (int)(wall_time_remaining - hours*3600 - minutes*60);
+      
+      double progress_pct = 100.0 * sim_time_elapsed / (sim_time_elapsed + sim_time_remaining);
+      gkyl_gyrokinetic_app_cout(app, stdout, " dt = %g (phase %.1f%% complete, est. %dh %dm %ds remaining)\n", 
+                                status.dt_actual, progress_pct, hours, minutes, seconds);
+    }
+
+    if (!status.success)
+    {
+      gkyl_gyrokinetic_app_cout(app, stdout, "** Update method failed! Aborting simulation ....\n");
+      break;
+    }
+    t_curr += status.dt_actual;
+    dt = status.dt_suggested;
+
+    calc_integrated_diagnostics(trig_calc_intdiag, app, t_curr, t_curr >= t_end, status.dt_actual);
+    write_data(trig_write_conf, trig_write_phase, app, t_curr, t_curr >= t_end);
+
+    if (dt_init < 0.0) {
+      dt_init = status.dt_actual;
+    }
+    else if (status.dt_actual < dt_failure_tol * dt_init) {
+      num_failures += 1;
+
+      gkyl_gyrokinetic_app_cout(app, stdout, "WARNING: Time-step dt = %g", status.dt_actual);
+      gkyl_gyrokinetic_app_cout(app, stdout, " is below %g*dt_init ...", dt_failure_tol);
+      gkyl_gyrokinetic_app_cout(app, stdout, " num_failures = %d\n", num_failures);
+      if (num_failures >= num_failures_max) {
+        gkyl_gyrokinetic_app_cout(app, stdout, "ERROR: Time-step was below %g*dt_init ", dt_failure_tol);
+        gkyl_gyrokinetic_app_cout(app, stdout, "%d consecutive times. Aborting simulation ....\n", num_failures_max);
+        calc_integrated_diagnostics(trig_calc_intdiag, app, t_curr, true, status.dt_actual);
+        write_data(trig_write_conf, trig_write_phase, app, t_curr, true);
+        break;
+      }
+    }
+    else {
+      num_failures = 0;
+    }
+
+    step += 1;
+  }
+
+  tfs->t_curr = t_curr;
+  tfs->frame_curr = tfs->frame_curr+pparams->num_frames;
+}
+
+
 void
-run_poa_simulation(struct gkyl_gk app_inp, struct gk_mirror_ctx ctx, struct gkyl_app_args app_args){
+run_poa_simulation(struct gkyl_gk app_inp, struct gk_mirror_ctx ctx, struct gkyl_app_args app_args, bool is_kinetic_elc){
   // Create app object.
   gkyl_gyrokinetic_app *app = gkyl_gyrokinetic_app_new(&app_inp);
 
@@ -482,7 +698,11 @@ run_poa_simulation(struct gkyl_gk app_inp, struct gk_mirror_ctx ctx, struct gkyl
   // Loop over number of number of phases;
   for (int pit=phase_idx_init; pit<phase_idx_end; pit++) {
     struct gk_poa_phase_params *phase_params = &ctx.poa_phases[pit];
-    run_phase(app, &ctx, app_args.num_steps, &trig_write_conf, &trig_write_phase, &trig_calc_intdiag, &tfs, phase_params, pit);
+    if (is_kinetic_elc) {
+      run_phase_kinetic_elc(app, &ctx, app_args.num_steps, &trig_write_conf, &trig_write_phase, &trig_calc_intdiag, &tfs, phase_params, pit);
+    } else {
+      run_phase(app, &ctx, app_args.num_steps, &trig_write_conf, &trig_write_phase, &trig_calc_intdiag, &tfs, phase_params, pit);
+    }
   }
 
   gkyl_gyrokinetic_app_stat_write(app);
@@ -505,6 +725,7 @@ run_poa_simulation(struct gkyl_gk app_inp, struct gk_mirror_ctx ctx, struct gkyl
   // simulation complete, free app
   gkyl_gyrokinetic_app_release(app);
 }
+
 
 
 //////////// MAPC2P functions ////////////////

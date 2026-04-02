@@ -66,6 +66,9 @@ struct gk_mirror_ctx
   double ion_source_amplitude;
   double ion_source_sigma;
   double ion_source_temp;
+  double elc_source_amplitude;
+  double elc_source_sigma;
+  double elc_source_temp;
 
   double t_end; // End time.
   int num_frames; // Number of output frames.

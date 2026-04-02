@@ -521,7 +521,8 @@ int main(int argc, char **argv)
     },
   };
 
-  run_poa_simulation(app_inp, ctx, app_args);
+  bool is_kinetic_elc = false;
+  run_poa_simulation(app_inp, ctx, app_args, is_kinetic_elc);
 
   gkyl_gyrokinetic_comms_release(comm);
   release_ctx(&ctx);

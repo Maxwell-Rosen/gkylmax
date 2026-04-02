@@ -70,3 +70,6 @@ echo "beams_nu_ii_R10 = $nu_R10"
 echo "beams_nu_ii_R15 = $nu_R15"
 echo "beams_nu_ii_R22 = $nu_R22"
 echo "beams_nu_ii_R32 = $nu_R32"
+
+# (1.653159e+19 - 1.801762e+19) / 1.801762e+19
+# (3.419164e+19 - 3.419167e+19) / 3.419167e+19
