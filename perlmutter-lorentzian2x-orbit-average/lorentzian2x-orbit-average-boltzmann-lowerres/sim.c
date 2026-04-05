@@ -135,7 +135,7 @@ create_ctx(void)
   double vpar_max_elc = 4 * vte;
   double mu_max_elc = me * pow(4. * vte, 2.) / (2. * B_p);
 
-  int Nz = 200;
+  int Nz = 300;
   int Npsi = 8;
   int Nvpar = 64;
   int Nmu = 32;
@@ -338,9 +338,9 @@ int main(int argc, char **argv)
 
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
-      .file_name = "initial-condition/gk_lorentzian_mirror-ion_75.gkyl",
-      .jacobtot_inv_file_name = "initial-condition/gk_lorentzian_mirror-jacobtot_inv.gkyl",
-      .jacobvel_file_name = "initial-condition/gk_lorentzian_mirror-ion_jacobvel.gkyl",
+      .file_name = "initial-condition-300-64-32/gk_lorentzian_mirror-ion_0.gkyl",
+      .jacobtot_inv_file_name = "initial-condition-300-64-32/gk_lorentzian_mirror-jacobtot_inv.gkyl",
+      .jacobvel_file_name = "initial-condition-300-64-32/gk_lorentzian_mirror-ion_jacobvel.gkyl",
     },
 
     .mapc2p = {
