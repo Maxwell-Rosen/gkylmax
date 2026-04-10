@@ -12,9 +12,9 @@ from typing import Any, Generator, Iterable, List, TextIO, Union
 # Remember to delete the top line and that Gkeyll takes the _psi file which is made from the efit file reader
 
 # Parameters for different mirror ratios R
-mcB_values   = [2.130115, 2.665626, 3.691260, 4.490901, 5.416264, 6.51292]
-gamma_values = [0.451454, 0.331696, 0.226381, 0.182792, 0.149893, 0.124904]
-R_values     = [3, 5, 10, 15, 22, 32]
+mcB_values   = [2.130115, 2.665626, 3.691260, 4.490901, 5.416264, 6.51292, 7.274615, 8.125522]
+gamma_values = [0.451454, 0.331696, 0.226381, 0.182792, 0.149893, 0.124904, 0.110435, 0.098619]
+R_values     = [3, 5, 10, 15, 22, 32, 40, 50]
 
 B0 = 0.0
 R0 = .02
@@ -27,7 +27,7 @@ def psi_f(R, Z, mcB, gamma):
 #RZ box
 NW = 257
 NH = 257
-RMIN,RMAX = 0.0, .3
+RMIN,RMAX = 1e-3, .3 # The _zero is for Rmin=0, but 1e-3 was used for 1x cases
 ZMIN,ZMAX = -2.5, 2.5
 RDIM = RMAX - RMIN
 ZDIM = ZMAX - ZMIN
@@ -73,7 +73,7 @@ def write_line(data: Iterable[Any], fh: TextIO, fmt: str) -> None:
 
 # Loop over all mirror ratios
 for idx, (mcB, gamma, R_mirror) in enumerate(zip(mcB_values, gamma_values, R_values)):
-    outFileName = f'lorentzian_R{R_mirror}_zero.geqdsk'
+    outFileName = f'lorentzian_R{R_mirror}.geqdsk'
     
     print(f"\n--- Processing R = {R_mirror} ---")
     print(f"mcB = {mcB}, gamma = {gamma}")

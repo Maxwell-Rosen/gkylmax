@@ -22,7 +22,7 @@ print("Initial B(0) =", B_mag(0.0, Bhat, gamma))
 
 # Optimize Bhat and gamma for a desired R, holding B_mag(0) fixed
 B0_target = B_mag(0.0, Bhat, gamma)  # Fix B(0) at current value
-desired_R_values = np.array([3, 5, 10, 15, 22, 31.86])  # Array of desired mirror ratios
+desired_R_values = np.array([3, 5, 10, 15, 22, 31.86, 40, 50])  # Array of desired mirror ratios
 
 def constraints(params, desired_R):
     """

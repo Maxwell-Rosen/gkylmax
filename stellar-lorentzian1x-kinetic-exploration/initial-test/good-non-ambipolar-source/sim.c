@@ -90,7 +90,7 @@ eval_f_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
   double vpar_midp = sqrt(pow(vpar,2.) + 2*mu*(Bmag - app->Bmag_midp)/app->mi); // Ignore potential for now
   double vperp = sqrt(2.0 * mu * app->B_p / app->mi); // What magnetic field do we use here?
 
-  double gamma0 = 1797394.0315002014; // Must adjust to match ion source rate for quasi-neutrality
+  double gamma0 = 30000000; // Must adjust to match ion source rate for quasi-neutrality
   double T_beam = 400 * GKYL_ELEMENTARY_CHARGE;
   double sigma_beam = 2*T_beam/app->mi;
 
@@ -212,7 +212,7 @@ create_ctx(void)
   double alpha_elc_oap = 2e-5;
   double alpha_fdp = 1.0;
   double time_dilation_scale_const_ion_oap = 1;
-  double time_dilation_scale_const_elc_oap = 0.002;
+  double time_dilation_scale_const_elc_oap = 0.0005;
   double time_dilation_scale_const_ion_fdp = 1;
   double time_dilation_scale_const_elc_fdp = 0.05;
 
@@ -236,7 +236,6 @@ create_ctx(void)
     poa_phases[2*i+1].time_dilation_scale_const_elc = time_dilation_scale_const_elc_oap;
     poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_oap;
     poa_phases[2*i+1].is_static_field = is_static_field_oap;
-    poa_phases[2*i+1].damping_type = GKYL_GK_DAMPING_NONE;
 
     // FDPs.
     poa_phases[2*i].phase = GK_POA_FDP;
@@ -250,8 +249,6 @@ create_ctx(void)
     poa_phases[2*i].time_dilation_scale_const_elc = time_dilation_scale_const_elc_fdp;
     poa_phases[2*i].is_positivity_enabled = is_positivity_enabled_fdp;
     poa_phases[2*i].is_static_field = is_static_field_fdp;
-    poa_phases[2*i+1].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
-    poa_phases[2*i+1].damping_rate_const = 1/5e-6;
   }
   // The final stage is an extra, longer FDP.
   poa_phases[num_phases-1].phase = GK_POA_FDP;
@@ -265,8 +262,6 @@ create_ctx(void)
   poa_phases[num_phases-1].time_dilation_scale_const_elc = time_dilation_scale_const_elc_fdp;
   poa_phases[num_phases-1].is_positivity_enabled = is_positivity_enabled_fdp;
   poa_phases[num_phases-1].is_static_field = is_static_field_fdp;
-  poa_phases[num_phases-1].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
-  poa_phases[num_phases-1].damping_rate_const = 1/5e-6;
 
   double write_phase_freq = 1; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
   double int_diag_calc_freq = 100; // Frequency of calculating integrated diagnostics (as a factor of num_frames).
@@ -390,7 +385,7 @@ int main(int argc, char **argv)
 
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
-      .file_name = "initial-condition/gk_lorentzian_mirror-ion_70.gkyl",
+      .file_name = "initial-condition/gk_lorentzian_mirror-ion_75.gkyl",
     },
 
     .collisionless = {
@@ -470,21 +465,17 @@ int main(int argc, char **argv)
       .ctx = &ctx,
     },
 
-    .init_from_file = {
-      .type = GKYL_IC_IMPORT_F,
-      .file_name = "initial-condition/gk_lorentzian_mirror-elc_70.gkyl",
+    .projection = {
+      .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
+      .density_from_file = {
+        .type = GKYL_IC_IMPORT_F,
+        .file_name = "initial-condition/gk_lorentzian_mirror-ion_M0_75.gkyl",
+      },
+      .upar = initial_upar_elc,
+      .ctx_upar = &ctx,
+      .temp = initial_temp_elc,
+      .ctx_temp = &ctx,
     },
-    // .projection = {
-    //   .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
-    //   .density_from_file = {
-    //     .type = GKYL_IC_IMPORT_F,
-    //     .file_name = "initial-condition/gk_lorentzian_mirror-ion_M0_75.gkyl",
-    //   },
-    //   .upar = initial_upar_elc,
-    //   .ctx_upar = &ctx,
-    //   .temp = initial_temp_elc,
-    //   .ctx_temp = &ctx,
-    // },
 
     .collisionless = {
       .type = GKYL_GK_COLLISIONLESS_ES,
@@ -553,10 +544,10 @@ int main(int argc, char **argv)
     .polarization_bmag = ctx.B_p,
     .kperpSq = pow(ctx.kperp, 2.),
     .is_static = false,
-    // .polarization_potential_init_from_file = {
-    //   .type = GKYL_IC_IMPORT_F,
-    //   .file_name = "initial-condition/gk_lorentzian_mirror-field_75.gkyl",
-    // }
+    .polarization_potential_init_from_file = {
+      .type = GKYL_IC_IMPORT_F,
+      .file_name = "initial-condition/gk_lorentzian_mirror-field_75.gkyl",
+    }
   };
 
   struct gkyl_mirror_geo_grid_inp grid_inp = {

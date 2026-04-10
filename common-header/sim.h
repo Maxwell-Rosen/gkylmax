@@ -28,6 +28,8 @@ struct gk_poa_phase_params {
   double f_threshold, f_threshold_ion, f_threshold_elc; // Threshold for df/dt multiplier.
   double cfl_factor_times_omega_max, cfl_factor_times_omega_max_ion, cfl_factor_times_omega_max_elc; // CFL factor for fixed factor times omega max multiplier.
   double time_dilation_scale_const, time_dilation_scale_const_ion, time_dilation_scale_const_elc; // Constant time dilation scale factor (if fdot_mult_type is GKYL_GK_FDOT_MULTIPLIER_CONSTANT).
+  enum gkyl_gyrokinetic_damping_type damping_type; // Type of damping to apply.
+  double damping_rate_const;
 };
 
 // Define the context of the simulation. This is basically all the globals
@@ -347,10 +349,18 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
     .type = pparams->is_positivity_enabled? GKYL_GK_POSITIVITY_SHIFT : GKYL_GK_POSITIVITY_NONE,
     .write_diagnostics = pparams->is_positivity_enabled,
   };
+  struct gkyl_gyrokinetic_damping damping_inp = {
+    .type = pparams->damping_type,
+    .rate_const = pparams->damping_rate_const,
+    .write_rate = false,
+    .write_fbar = true,
+    .cellwise_const = false,
+  };
 
   gkyl_gyrokinetic_app_reset_species_collisionless(app, t_curr, "ion", collisionless_inp);
   gkyl_gyrokinetic_app_reset_species_fdot_multiplier(app, t_curr, "ion", fdot_mult_inp);
   gkyl_gyrokinetic_app_reset_species_positivity(app, t_curr, "ion", positivity_inp);
+  gkyl_gyrokinetic_app_reset_species_damping(app, t_curr, "ion", damping_inp);
   gkyl_gyrokinetic_app_reset_field(app, t_curr, field_inp);
 
   // Compute initial guess of maximum stable time-step.
@@ -519,14 +529,23 @@ void run_phase_kinetic_elc(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx,
     .kperpSq = pow(ctx->kperp, 2.),
     .is_static = pparams->is_static_field,
   };
-
+  struct gkyl_gyrokinetic_damping damping_inp = {
+    .type = pparams->damping_type,
+    .rate_const = pparams->damping_rate_const,
+    .write_rate = false,
+    .write_fbar = true,
+    .cellwise_const = false,
+  };
+  
   gkyl_gyrokinetic_app_reset_species_collisionless(app, t_curr, "ion", ion_collisionless_inp);
   gkyl_gyrokinetic_app_reset_species_fdot_multiplier(app, t_curr, "ion", ion_fdot_mult_inp);
   gkyl_gyrokinetic_app_reset_species_positivity(app, t_curr, "ion", ion_positivity_inp);
-
+  gkyl_gyrokinetic_app_reset_species_damping(app, t_curr, "ion", damping_inp);
+  
   gkyl_gyrokinetic_app_reset_species_collisionless(app, t_curr, "elc", elc_collisionless_inp);
   gkyl_gyrokinetic_app_reset_species_fdot_multiplier(app, t_curr, "elc", elc_fdot_mult_inp);
   gkyl_gyrokinetic_app_reset_species_positivity(app, t_curr, "elc", elc_positivity_inp);
+  gkyl_gyrokinetic_app_reset_species_damping(app, t_curr, "elc", damping_inp);
 
   gkyl_gyrokinetic_app_reset_field(app, t_curr, field_inp);
 
