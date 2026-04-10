@@ -366,10 +366,13 @@ int main(int argc, char **argv)
       .write_diagnostics = true,
     },
 
-    .time_rate_multiplier = {
-      .type = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE,
-      .cellwise_const = true,
-      .write_diagnostics = true,
+    .time_rate_multipliers = {
+      .num_multipliers = 1,
+      .multiplier[0] = {
+        .type = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE,
+        .cellwise_const = true,
+        .write_diagnostics = true,
+      },
     },
 
     .collisions = {
