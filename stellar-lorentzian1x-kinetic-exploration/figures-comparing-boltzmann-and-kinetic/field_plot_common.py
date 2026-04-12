@@ -1,0 +1,269 @@
+"""Shared loaders/utilities for potential and electric-field plots."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+import matplotlib.pyplot as plt
+import numpy as np
+import postgkyl as pg
+
+
+plt.rcParams.update(
+    {
+        "text.usetex": True,
+        "font.family": "serif",
+        "font.size": 12,
+        "axes.titlesize": 14,
+        "axes.labelsize": 14,
+        "legend.fontsize": 11,
+        "xtick.labelsize": 12,
+        "ytick.labelsize": 12,
+    }
+)
+
+
+KINETIC_COLOR = "tab:blue"
+BOLTZMANN_COLOR = "tab:red"
+
+ELECTRON_MASS = 9.1093837015e-31
+ELEMENTARY_CHARGE = 1.602176634e-19
+
+Z_CENTER = 0.0
+Z_MIRROR_THROAT = 0.98
+Z_SHEATH = 2.5
+
+
+@dataclass(frozen=True)
+class RunSpec:
+    label: str
+    data_path: Path
+    last_frame: int
+    color: str
+
+
+def to_1d(arr: Any) -> np.ndarray:
+    out = np.asarray(arr)
+    out = np.squeeze(out)
+    if out.ndim == 0:
+        out = out.reshape(1)
+    return out
+
+
+def find_field_file(run: RunSpec) -> Path:
+    pattern = f"*-field_{run.last_frame}.gkyl"
+    candidates = sorted(run.data_path.glob(pattern))
+    if not candidates:
+        raise FileNotFoundError(
+            f"No field file found for {run.label} with pattern {pattern} in {run.data_path}"
+        )
+    return candidates[0]
+
+
+def sim_prefix_from_field(field_file: Path) -> str:
+    marker = "-field_"
+    stem = field_file.stem
+    if marker not in stem:
+        raise ValueError(f"Could not infer simulation prefix from {field_file.name}")
+    return stem.split(marker, 1)[0]
+
+
+def find_map_file(run: RunSpec, sim_prefix: str) -> Path | None:
+    candidates = [
+        run.data_path / f"{sim_prefix}-mc2nu_pos.gkyl",
+        run.data_path / f"{sim_prefix}-mc2nu_pos_deflated.gkyl",
+        run.data_path / f"{sim_prefix}-mapc2p.gkyl",
+    ]
+    for path in candidates:
+        if path.exists():
+            return path
+    return None
+
+
+def _candidate_map_components(map_path: Path) -> tuple[int, ...]:
+    name = map_path.name
+    if "mc2nu_pos_deflated" in name:
+        return (0,)
+    if "mc2nu_pos" in name:
+        return (2, 0, 1)
+    if "mapc2p" in name:
+        return (1, 0, 2)
+    return (0, 1, 2)
+
+
+def load_z_from_map(map_path: Path) -> np.ndarray | None:
+    map_data = pg.GData(str(map_path))
+    map_interp = pg.GInterpModal(map_data)
+
+    best: np.ndarray | None = None
+    best_span = -np.inf
+
+    for comp in _candidate_map_components(map_path):
+        try:
+            _, z_raw = map_interp.interpolate(comp=comp)
+        except Exception:
+            continue
+
+        z_try = to_1d(z_raw)
+        if z_try.size < 4:
+            continue
+
+        z_span = float(np.max(z_try) - np.min(z_try))
+        if z_span <= 1e-8:
+            continue
+
+        unique_count = np.unique(np.round(z_try, 12)).size
+        if unique_count < max(8, int(0.2 * z_try.size)):
+            continue
+
+        if z_span > best_span:
+            best = z_try
+            best_span = z_span
+
+    return best
+
+
+def _average_on_unique_z(z: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    sort_idx = np.argsort(z)
+    z_sorted = z[sort_idx]
+    y_sorted = y[sort_idx]
+
+    z_unique, inverse = np.unique(np.round(z_sorted, 12), return_inverse=True)
+    y_unique = np.zeros_like(z_unique, dtype=float)
+    counts = np.zeros_like(z_unique, dtype=float)
+    for i, idx in enumerate(inverse):
+        y_unique[idx] += float(y_sorted[i])
+        counts[idx] += 1.0
+    y_unique /= np.maximum(counts, 1.0)
+    return z_unique, y_unique
+
+
+def load_profile(run: RunSpec) -> tuple[np.ndarray, np.ndarray]:
+    field_file = find_field_file(run)
+    sim_prefix = sim_prefix_from_field(field_file)
+    map_file = find_map_file(run, sim_prefix)
+
+    field_data = pg.GData(str(field_file))
+    field_interp = pg.GInterpModal(field_data)
+    x_coords, phi_raw = field_interp.interpolate(comp=0)
+
+    phi = to_1d(phi_raw)
+
+    z_from_map: np.ndarray | None = None
+    if map_file is not None:
+        z_from_map = load_z_from_map(map_file)
+
+    if z_from_map is not None:
+        z = z_from_map
+    else:
+        z = to_1d(x_coords[0])
+
+    size = min(z.size, phi.size)
+    z = z[:size]
+    phi = phi[:size]
+
+    return _average_on_unique_z(z, phi)
+
+
+def load_kinetic_te0_ev(run: RunSpec, sim_prefix: str, map_file: Path | None) -> float:
+    moments_file = run.data_path / f"{sim_prefix}-elc_BiMaxwellianMoments_{run.last_frame}.gkyl"
+    if not moments_file.exists():
+        raise FileNotFoundError(
+            f"Missing kinetic moments file for Te(z=0): {moments_file}"
+        )
+
+    moments_data = pg.GData(str(moments_file))
+    interp = pg.GInterpModal(moments_data, 1, "ms")
+
+    x_coords, tpar_raw = interp.interpolate(2)
+    _, tperp_raw = interp.interpolate(3)
+
+    tpar = to_1d(tpar_raw)
+    tperp = to_1d(tperp_raw)
+
+    z_from_map: np.ndarray | None = None
+    if map_file is not None:
+        z_from_map = load_z_from_map(map_file)
+
+    if z_from_map is not None:
+        z = z_from_map
+    else:
+        z = to_1d(x_coords[0])
+
+    size = min(z.size, tpar.size, tperp.size)
+    z = z[:size]
+    tpar = tpar[:size]
+    tperp = tperp[:size]
+
+    z_unique, tpar_unique = _average_on_unique_z(z, tpar)
+    _, tperp_unique = _average_on_unique_z(z, tperp)
+
+    tpar_j = float(np.interp(Z_CENTER, z_unique, tpar_unique)) * ELECTRON_MASS
+    tperp_j = float(np.interp(Z_CENTER, z_unique, tperp_unique)) * ELECTRON_MASS
+    te0_j = (tpar_j + 2.0 * tperp_j) / 3.0
+    if te0_j <= 0.0:
+        raise ValueError(f"Non-positive kinetic Te(z=0): {te0_j}")
+
+    return te0_j / ELEMENTARY_CHARGE
+
+
+def delta_labels(z: np.ndarray, phi_norm: np.ndarray, prefix: str) -> tuple[str, float, float]:
+    phi_center = float(np.interp(Z_CENTER, z, phi_norm))
+    phi_throat = float(np.interp(Z_MIRROR_THROAT, z, phi_norm))
+    phi_sheath = float(np.interp(Z_SHEATH, z, phi_norm))
+
+    d_center_to_throat = phi_center - phi_throat
+    d_throat_to_sheath = phi_throat - phi_sheath
+
+    label = "\n".join(
+        [
+            f"{prefix}:",
+            f"$\\Delta (e\\phi/T_e)_{{0\\to0.98}} = {d_center_to_throat:.3f}$",
+            f"$\\Delta (e\\phi/T_e)_{{0.98\\to2.5}} = {d_throat_to_sheath:.3f}$",
+        ]
+    )
+    return label, d_center_to_throat, d_throat_to_sheath
+
+
+def prepare_profiles(context: dict[str, Any]) -> dict[str, Any]:
+    kinetic_cfg = context["kinetic"]
+    boltzmann_cfg = context["boltzmann"]
+
+    kinetic = RunSpec(
+        label=kinetic_cfg["label"],
+        data_path=Path(kinetic_cfg["data_path"]),
+        last_frame=int(kinetic_cfg["last_frame"]),
+        color=KINETIC_COLOR,
+    )
+    boltzmann = RunSpec(
+        label=boltzmann_cfg["label"],
+        data_path=Path(boltzmann_cfg["data_path"]),
+        last_frame=int(boltzmann_cfg["last_frame"]),
+        color=BOLTZMANN_COLOR,
+    )
+
+    z_kin, phi_kin = load_profile(kinetic)
+    z_boltz, phi_boltz = load_profile(boltzmann)
+
+    kin_field_file = find_field_file(kinetic)
+    kin_prefix = sim_prefix_from_field(kin_field_file)
+    kin_map_file = find_map_file(kinetic, kin_prefix)
+
+    kin_te0_ev = load_kinetic_te0_ev(kinetic, kin_prefix, kin_map_file)
+    boltz_te0_ev = float(context["constants"]["boltzmann_te0_ev"])
+
+    phi_kin_norm = phi_kin / kin_te0_ev
+    phi_boltz_norm = phi_boltz / boltz_te0_ev
+
+    return {
+        "z_kin": z_kin,
+        "phi_kin": phi_kin,
+        "phi_kin_norm": phi_kin_norm,
+        "z_boltz": z_boltz,
+        "phi_boltz": phi_boltz,
+        "phi_boltz_norm": phi_boltz_norm,
+        "kin_te0_ev": kin_te0_ev,
+        "boltz_te0_ev": boltz_te0_ev,
+    }

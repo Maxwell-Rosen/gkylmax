@@ -49,9 +49,9 @@ M0mid_R50=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzi
 cd ../..
 
 cd ../stellar-lorentzian1x-orbit-average
-M0_R32=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_M0_65.gkyl interp sel --z0 -0.98:0.98 integ 0 info 2>&1 | extract_max)
+M0_R32=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_M0_140.gkyl interp sel --z0 -0.98:0.98 integ 0 info 2>&1 | extract_max)
 M0S_R32=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_source_M0_0.gkyl interp sel --z0 -0.98:0.98 integ 0 info 2>&1 | extract_max)
-nu_R32=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_lbo_nu_sum_65.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
+nu_R32=$(pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_lbo_nu_sum_140.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
 cd ../stellar-lorentzian1x-orbit-average-R-scan
 
 # Print Python-ready output
