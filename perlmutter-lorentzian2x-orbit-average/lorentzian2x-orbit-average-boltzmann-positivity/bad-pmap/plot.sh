@@ -1,0 +1,7 @@
+# pgkyl --c2p gk_lorentzian_mirror-mapc2p_deflated.gkyl gk_lorentzian_mirror-ion_BiMaxwellianMoments_25.gkyl interp ev 'f 2,3 1.67e-27 2.014 * 1.6e-19 / scale_comp' pl --xlabel 'Axial Position z (m)' --subplot-ylabels 'Density $m^{-3}$, $U_\parallel$ (m/s), $T_\parallel$ (eV), $T_\perp$ (eV)' --xlim 0,0.1 --saveas "moms_bimax25.png" --no-show &
+
+pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_BiMaxwellianMoments_30.gkyl interp ev 'f 2,3 1.67e-27 2.014 * 1.6e-19 / scale_comp' sel --z0 31 pl --xlabel 'Axial Position z (m)' --subplot-ylabels 'Density $m^{-3}$, $U_\parallel$ (m/s), $T_\parallel$ (eV), $T_\perp$ (eV)' --saveas "moms_bimax30_outside.png" --no-show &
+
+pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_BiMaxwellianMoments_30.gkyl interp ev 'f 2,3 1.67e-27 2.014 * 1.6e-19 / scale_comp' sel --z0 0 pl --xlabel 'Axial Position z (m)' --subplot-ylabels 'Density $m^{-3}$, $U_\parallel$ (m/s), $T_\parallel$ (eV), $T_\perp$ (eV)' --saveas "moms_bimax30_inside.png" --no-show &
+
+pgkyl --c2p gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl gk_lorentzian_mirror-ion_BiMaxwellianMoments_30.gkyl interp ev 'f 2,3 1.67e-27 2.014 * 1.6e-19 / scale_comp' sel --z1 400 pl --xlabel 'Axial Position z (m)' --subplot-ylabels 'Density $m^{-3}$, $U_\parallel$ (m/s), $T_\parallel$ (eV), $T_\perp$ (eV)' --saveas "moms_bimax30_midplane.png" --no-show &
