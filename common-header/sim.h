@@ -96,8 +96,14 @@ struct gk_mirror_ctx
 
   // Geometry parameters for Lorentzian mirror
   double mcB;     // Magnetic field parameter
+  double mcB_inner; // Magnetic field parameter for inner mirror
+  double mcB_outer; // Magnetic field parameter for outer mirror
   double gamma;   // Width parameter for Lorentzian profile
+  double gamma_inner; // Width parameter for Lorentzian profile for inner mirror
+  double gamma_outer; // Width parameter for Lorentzian profile for outer mirror
   double Z_m;     // Mirror throat location
+  double L_center; // Length of central region
+  double L_plugs; // Length of plugs
   double Z_min;   // Minimum Z coordinate
   double Z_max;   // Maximum Z coordinate
   double psi_in;  // Working variable for psi integration
@@ -167,6 +173,12 @@ print_ctx(struct gk_mirror_ctx *ctx)
   printf("  Mirror throat Z location (Z_m) = %g m\n", ctx->Z_m);
   printf("  Magnetic field parameter (mcB) = %g\n", ctx->mcB);
   printf("  Lorentzian width parameter (gamma) = %g\n", ctx->gamma);
+  printf("  Tandem center length (L_center) = %g m\n", ctx->L_center);
+  printf("  Tandem plug length (L_plugs) = %g m\n", ctx->L_plugs);
+  printf("  Tandem inner mcB = %g\n", ctx->mcB_inner);
+  printf("  Tandem outer mcB = %g\n", ctx->mcB_outer);
+  printf("  Tandem inner gamma = %g\n", ctx->gamma_inner);
+  printf("  Tandem outer gamma = %g\n", ctx->gamma_outer);
   
   printf("\nGrid parameters:\n");
   printf("  Configuration space dimensions (cdim) = %d\n", ctx->cdim);
@@ -927,4 +939,196 @@ evalNuIon(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, 
 {
   struct gk_mirror_ctx *app = ctx;
   fout[0] = app->nuIon;
+}
+
+//////////// Tandem mirror geometry ///////////////
+
+
+double
+psi_RZ_tandem(double RIn, double ZIn, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+
+  const double mcB_inner   = app->mcB_inner;
+  const double mcB_outer   = app->mcB_outer;
+  const double gamma_inner = app->gamma_inner;
+  const double gamma_outer = app->gamma_outer;
+
+  const double z_inner = 0.5 * app->L_center;
+  const double z_outer = z_inner + app->L_plugs;
+
+  const double inner_profile =
+      1.0 / (M_PI * gamma_inner * (1.0 + pow((ZIn - z_inner) / gamma_inner, 2.0))) +
+      1.0 / (M_PI * gamma_inner * (1.0 + pow((ZIn + z_inner) / gamma_inner, 2.0)));
+
+  const double outer_profile =
+      1.0 / (M_PI * gamma_outer * (1.0 + pow((ZIn - z_outer) / gamma_outer, 2.0))) +
+      1.0 / (M_PI * gamma_outer * (1.0 + pow((ZIn + z_outer) / gamma_outer, 2.0)));
+
+  const double psi = 0.5 * pow(RIn, 2.0) *
+      (mcB_inner * inner_profile + mcB_outer * outer_profile);
+
+  return psi;
+}
+
+double
+R_psiZ_tandem(double psiIn, double ZIn, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+
+  const double mcB_inner   = app->mcB_inner;
+  const double mcB_outer   = app->mcB_outer;
+  const double gamma_inner = app->gamma_inner;
+  const double gamma_outer = app->gamma_outer;
+
+  const double z_inner = 0.5 * app->L_center;
+  const double z_outer = z_inner + app->L_plugs;
+
+  const double b_inner =
+      mcB_inner * (1.0 / (M_PI * gamma_inner * (1.0 + pow((ZIn - z_inner) / gamma_inner, 2.0))) +
+                   1.0 / (M_PI * gamma_inner * (1.0 + pow((ZIn + z_inner) / gamma_inner, 2.0))));
+
+  const double b_outer =
+      mcB_outer * (1.0 / (M_PI * gamma_outer * (1.0 + pow((ZIn - z_outer) / gamma_outer, 2.0))) +
+                   1.0 / (M_PI * gamma_outer * (1.0 + pow((ZIn + z_outer) / gamma_outer, 2.0))));
+
+  const double Baxis = b_inner + b_outer;
+  double Rout = sqrt(2.0 * psiIn / Baxis);
+  return Rout;
+}
+
+void
+Bfield_psiZ_tandem(double psiIn, double ZIn, void *ctx, double *BRad, double *BZ, double *Bmag)
+{
+  struct gk_mirror_ctx *app = ctx;
+  const double mcB_inner   = app->mcB_inner;
+  const double mcB_outer   = app->mcB_outer;
+  const double gamma_inner = app->gamma_inner;
+  const double gamma_outer = app->gamma_outer;
+
+  const double z_inner = 0.5 * app->L_center;
+  const double z_outer = z_inner + app->L_plugs;
+
+  double Rcoord = R_psiZ_tandem(psiIn, ZIn, ctx);
+
+  const double b_inner =
+      mcB_inner * (1.0 / (M_PI * gamma_inner * (1.0 + pow((ZIn - z_inner) / gamma_inner, 2.0))) +
+                   1.0 / (M_PI * gamma_inner * (1.0 + pow((ZIn + z_inner) / gamma_inner, 2.0))));
+  const double b_outer =
+      mcB_outer * (1.0 / (M_PI * gamma_outer * (1.0 + pow((ZIn - z_outer) / gamma_outer, 2.0))) +
+                   1.0 / (M_PI * gamma_outer * (1.0 + pow((ZIn + z_outer) / gamma_outer, 2.0))));
+
+  const double dBdz_inner =
+      mcB_inner * (-2.0 * (ZIn - z_inner) /
+                       (M_PI * pow(gamma_inner, 3.0) * pow(1.0 + pow((ZIn - z_inner) / gamma_inner, 2.0), 2.0))
+                   -2.0 * (ZIn + z_inner) /
+                       (M_PI * pow(gamma_inner, 3.0) * pow(1.0 + pow((ZIn + z_inner) / gamma_inner, 2.0), 2.0)));
+
+  const double dBdz_outer =
+      mcB_outer * (-2.0 * (ZIn - z_outer) /
+                       (M_PI * pow(gamma_outer, 3.0) * pow(1.0 + pow((ZIn - z_outer) / gamma_outer, 2.0), 2.0))
+                   -2.0 * (ZIn + z_outer) /
+                       (M_PI * pow(gamma_outer, 3.0) * pow(1.0 + pow((ZIn + z_outer) / gamma_outer, 2.0), 2.0)));
+
+  const double dBdz = dBdz_inner + dBdz_outer;
+
+  BRad[0] = -0.5 * Rcoord * dBdz;
+  BZ[0] = b_inner + b_outer;
+
+  Bmag[0] = sqrt(pow(BRad[0], 2) + pow(BZ[0], 2));
+}
+
+double
+integrand_z_psiZ_tandem(double ZIn, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  double psi = app->psi_in;
+  double BRad, BZ, Bmag;
+  Bfield_psiZ_tandem(psi, ZIn, ctx, &BRad, &BZ, &Bmag);
+  return Bmag / BZ;
+}
+
+double
+z_psiZ_tandem(double psiIn, double ZIn, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  double eps = 0.0;
+  app->psi_in = psiIn;
+  struct gkyl_qr_res integral;
+  if (eps <= ZIn)
+  {
+    integral = gkyl_dbl_exp(integrand_z_psiZ_tandem, ctx, eps, ZIn, 7, 1e-14);
+  }
+  else
+  {
+    integral = gkyl_dbl_exp(integrand_z_psiZ_tandem, ctx, ZIn, eps, 7, 1e-14);
+    integral.res = -integral.res;
+  }
+  return integral.res;
+}
+
+// Invert z(Z) via root-finding.
+double
+root_Z_psiz_tandem(double Z, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  return app->z_in - z_psiZ_tandem(app->psi_in, Z, ctx);
+}
+
+double
+Z_psiz_tandem(double psiIn, double zIn, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  double maxL = app->Z_max - app->Z_min;
+  double eps = maxL / app->Nz;   // Interestingly using a smaller eps yields larger errors in some geo quantities.
+  app->psi_in = psiIn;
+  app->z_in = zIn;
+  struct gkyl_qr_res Zout;
+  if (0.0 <= zIn)
+  {
+    double fl = root_Z_psiz_tandem(-eps, ctx);
+    double fr = root_Z_psiz_tandem(app->Z_max + eps, ctx);
+    Zout = gkyl_ridders(root_Z_psiz_tandem, ctx, -eps, app->Z_max + eps, fl, fr, 1000, 1e-14);
+  }
+  else
+  {
+    double fl = root_Z_psiz_tandem(app->Z_min - eps, ctx);
+    double fr = root_Z_psiz_tandem(eps, ctx);
+    Zout = gkyl_ridders(root_Z_psiz_tandem, ctx, app->Z_min - eps, eps, fl, fr, 1000, 1e-14);
+  }
+  return Zout.res;
+}
+
+// Geometry evaluation functions for the gk app
+void
+mapc2p_tandem(double t, const double *xc, double *GKYL_RESTRICT xp, void *ctx)
+{
+  double psi = xc[0], theta = xc[1], z = xc[2];
+
+  double Z = Z_psiz_tandem(psi, z, ctx);
+  double R = R_psiZ_tandem(psi, Z, ctx);
+
+  // Cartesian coordinates on plane perpendicular to Z axis.
+  double x = R * cos(theta);
+  double y = R * sin(theta);
+
+  xp[0] = x;  xp[1] = y;  xp[2] = Z;
+}
+
+void
+bfield_func_tandem(double t, const double *xc, double *GKYL_RESTRICT fout, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  double z = xc[2];
+  double psi = psi_RZ_tandem(app->RatZeq0, 0.0, ctx); // Magnetic flux function psi of field line.
+  double Z = Z_psiz_tandem(psi, z, ctx);
+  double BRad, BZ, Bmag;
+  Bfield_psiZ_tandem(psi, Z, ctx, &BRad, &BZ, &Bmag);
+
+  double phi = xc[1];
+  // zc are computational coords. 
+  // Set Cartesian components of magnetic field.
+  fout[0] = BRad*cos(phi);
+  fout[1] = BRad*sin(phi);
+  fout[2] = BZ;
 }

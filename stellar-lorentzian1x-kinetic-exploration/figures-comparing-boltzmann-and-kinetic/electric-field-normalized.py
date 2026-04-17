@@ -38,10 +38,42 @@ def run(context: dict[str, Any]) -> None:
     for marker_x in (Z_CENTER, Z_MIRROR_THROAT, Z_SHEATH):
         ax.axvline(marker_x, color="0.35", lw=1.0, ls="--")
 
+    for marker_x, marker_label in (
+        (Z_CENTER, "center"),
+        (Z_MIRROR_THROAT, "mirror throat"),
+    ):
+        ax.axvline(marker_x, color="0.35", lw=1.0, ls="--")
+        ax.text(
+            marker_x+0.1,
+            0.9,
+            marker_label,
+            transform=ax.get_xaxis_transform(),
+            ha="center",
+            va="top",
+            rotation=90,
+            fontsize=12,
+        )
+
+    for marker_x, marker_label in (
+    (Z_SHEATH, "sheath"),
+    ):
+        ax.axvline(marker_x, color="0.35", lw=1.0, ls="--")
+        ax.text(
+            marker_x-0.1,
+            0.9,
+            marker_label,
+            transform=ax.get_xaxis_transform(),
+            ha="center",
+            va="top",
+            rotation=90,
+            fontsize=12,
+        )
+
     ax.set_xlabel(r"$z$ [m]")
     ax.set_ylabel(r"$-\nabla (e\phi/T_e)$ [m$^{-1}$]")
-    ax.set_title("Electric field proxy from normalized potential")
-    ax.grid(alpha=0.3)
+    ax.set_xlim(-Z_SHEATH, Z_SHEATH)
+    # ax.set_title("Electric field proxy from normalized potential")
+    # ax.grid(alpha=0.3)
     ax.legend(loc="best")
 
     fig.tight_layout()

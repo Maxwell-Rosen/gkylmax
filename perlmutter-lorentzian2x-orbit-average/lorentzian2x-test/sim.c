@@ -159,7 +159,7 @@ create_ctx(void)
   double mu_max_elc = me * pow(4. * vte, 2.) / (2. * B_p);
 
   int Nz = 400;
-  int Npsi = 2;
+  int Npsi = 16;
   int Nvpar = 64;
   int Nmu = 32;
   int Nvpar_elc = 8;
@@ -359,21 +359,21 @@ int main(int argc, char **argv)
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
 
-    // .projection = {
-    //   .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
-    //   .density = initial_density,
-    //   .ctx_density = &ctx,
-    //   .upar = initial_upar,
-    //   .ctx_upar = &ctx,
-    //   .temp = initial_temp_ion,
-    //   .ctx_temp = &ctx,
-    // },
-    .init_from_file = {
-      .type = GKYL_IC_IMPORT_F,
-      .file_name = "initial-condition/gk_lorentzian_mirror-ion_75.gkyl",
-      .jacobtot_inv_file_name = "initial-condition/gk_lorentzian_mirror-jacobtot_inv.gkyl",
-      .jacobvel_file_name = "initial-condition/gk_lorentzian_mirror-ion_jacobvel.gkyl",
+    .projection = {
+      .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
+      .density = initial_density,
+      .ctx_density = &ctx,
+      .upar = initial_upar,
+      .ctx_upar = &ctx,
+      .temp = initial_temp_ion,
+      .ctx_temp = &ctx,
     },
+    // .init_from_file = {
+    //   .type = GKYL_IC_IMPORT_F,
+    //   .file_name = "initial-condition/gk_lorentzian_mirror-ion_75.gkyl",
+    //   .jacobtot_inv_file_name = "initial-condition/gk_lorentzian_mirror-jacobtot_inv.gkyl",
+    //   .jacobvel_file_name = "initial-condition/gk_lorentzian_mirror-ion_jacobvel.gkyl",
+    // },
 
     .mapc2p = {
       .mapping = mapc2p_vel_ion,
@@ -497,7 +497,7 @@ int main(int argc, char **argv)
   };
 
   struct gkyl_mirror_geo_grid_inp grid_inp = {
-    .filename_psi = "/global/homes/m/mhrosen/scratch/gkylmax/generate_efit/lorentzian_R32.geqdsk_psi.gkyl", // psi file to use
+    .filename_psi = "/scratch/gpfs/mr1884/scratch/gkylmax/generate_efit/lorentzian_R32.geqdsk_psi.gkyl", // psi file to use
     .rclose = 0.2, // closest R to region of interest
     .zmin = -2.5,  // Z of lower boundary
     .zmax =  2.5,  // Z of upper boundary
@@ -526,8 +526,8 @@ int main(int argc, char **argv)
         .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
         .map_strength = 0.5,
         .maximum_slope_at_min_B = 2,
-        .gaussian_std = 0.25,
-        .gaussian_max_integration_width = 0.5,
+        .gaussian_std = 0.5,
+        .gaussian_max_integration_width = 1,
       },
     },
 
@@ -546,7 +546,8 @@ int main(int argc, char **argv)
     },
   };
 
-  run_poa_simulation(app_inp, ctx, app_args);
+  bool is_kinetic = false;
+  run_poa_simulation(app_inp, ctx, app_args, is_kinetic);
 
   gkyl_gyrokinetic_comms_release(comm);
   release_ctx(&ctx);

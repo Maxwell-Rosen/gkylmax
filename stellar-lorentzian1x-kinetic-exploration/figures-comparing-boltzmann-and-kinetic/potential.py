@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 import matplotlib.pyplot as plt
+from rosen_dougherty_potential import compute_theoretical_potential
 
 from field_plot_common import (
     BOLTZMANN_COLOR,
@@ -30,6 +31,32 @@ def run(context: dict[str, Any]) -> None:
 
     kin_label, kin_d1, kin_d2 = delta_labels(z_kin, phi_kin_norm, "Kinetic")
     boltz_label, boltz_d1, boltz_d2 = delta_labels(z_boltz, phi_boltz_norm, "Boltzmann")
+
+    theory_label = ""
+    try:
+        boltz_cfg = context["boltzmann"]
+        boltz_run_path = Path(boltz_cfg["data_path"])
+        boltz_frame = int(boltz_cfg["last_frame"])
+        boltz_te0_ev = float(context["constants"]["boltzmann_te0_ev"])
+
+        field_files = sorted(boltz_run_path.glob(f"*-field_{boltz_frame}.gkyl"))
+        if not field_files:
+            raise FileNotFoundError(
+                f"No field file found for frame {boltz_frame} in {boltz_run_path}"
+            )
+        sim_prefix = field_files[0].stem.split("-field_", 1)[0]
+
+        ephi_theory, _, _ = compute_theoretical_potential(
+            boltz_run_path,
+            sim_prefix,
+            boltz_frame,
+            boltz_te0_ev,
+            zpfl=1.0,
+            coeff=1.117,
+        )
+        theory_label = f"$\\Delta (e\\phi/T_e)_{{\\rm Dougherty}}^{{\\rm Rosen}} = {ephi_theory:.3f}$"
+    except Exception as exc:
+        print(f"[potential] WARNING: Could not compute RD theory value: {exc}")
 
     fig, ax = plt.subplots(figsize=(7.0, 4.4))
     ax.plot(z_kin, phi_kin_norm, color=KINETIC_COLOR, lw=2.0, label="Kinetic electrons")
@@ -72,10 +99,10 @@ def run(context: dict[str, Any]) -> None:
     # ax.grid(alpha=0.3)
     ax.legend(loc="best")
 
-    annotation = kin_label + "\n\n" + boltz_label
+    annotation = kin_label + "\n\n" + boltz_label + "\n" + theory_label
     ax.text(
         0.02,
-        0.45,
+        0.40,
         annotation,
         transform=ax.transAxes,
         ha="left",
@@ -97,6 +124,7 @@ def run(context: dict[str, Any]) -> None:
     )
     print("[potential]", kin_label)
     print("[potential]", boltz_label)
+    print("[potential]", theory_label)
     print(
         "[potential] Delta summary "
         f"(center->throat, throat->sheath) [dimensionless]: "

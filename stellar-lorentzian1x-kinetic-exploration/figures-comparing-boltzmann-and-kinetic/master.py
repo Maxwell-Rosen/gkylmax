@@ -62,10 +62,12 @@ def build_master_config() -> MasterConfig:
 	)
 
 	tasks = (
-		PlotTask(script="potential.py", enabled=True),
-		PlotTask(script="electric-field.py", enabled=True),
-		PlotTask(script="electric-field-normalized.py", enabled=True),
-		PlotTask(script="assess-theoretical-potential-boltzmann.py", enabled=True),
+		PlotTask(script="potential.py", enabled=False),
+		PlotTask(script="electric-field.py", enabled=False),
+		PlotTask(script="electric-field-normalized.py", enabled=False),
+		PlotTask(script="bimax-moms.py", enabled=False),
+		PlotTask(script="distributions.py", enabled=True),
+		PlotTask(script="assess-theoretical-potential-boltzmann.py", enabled=False),
 	)
 
 	return MasterConfig(
