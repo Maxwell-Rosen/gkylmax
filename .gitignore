@@ -13,6 +13,7 @@ tags
 sim
 gkl
 h5py
+*.vts
 
 # Ignore compiled binaries and executables
 *.exe

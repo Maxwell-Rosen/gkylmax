@@ -60,7 +60,7 @@ eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
   double z = xn[0];
   double Z_inner = app->L_center/2;
   double Z_outer = Z_inner + app->L_plugs;
-  if (fabs(z) > Z_inner && fabs(z) < Z_outer) { // For tandem mirrors, we just put this in the end cells
+  if (fabs(z) < Z_inner || fabs(z) > Z_outer) { // For tandem mirrors, we just put this in the end cells
     fout[0] = 1e-20;
     return;
   }
@@ -82,9 +82,9 @@ eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
   double vpar_midp = sqrt(pow(vpar,2.) + 2*mu*(Bmag - app->Bmag_midp)/app->mi); // Ignore potential for now
   double vperp = sqrt(2.0 * mu * app->B_p / app->mi); // What magnetic field do we use here?
 
-  double gamma0 = 200;
+  double gamma0 = 193.893947813;
   double T_beam = 200 * GKYL_ELEMENTARY_CHARGE;
-  double E_beam = 25000 * GKYL_ELEMENTARY_CHARGE;
+  double E_beam = 25117.3014755 * GKYL_ELEMENTARY_CHARGE;
   double v_beam = sqrt(E_beam / app->mi);
   double sigma_beam = 2*T_beam/app->mi;
 
@@ -148,7 +148,7 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   double vpar_max_elc = 4 * vte;
   double mu_max_elc = me * pow(4. * vte, 2.) / (2. * B_p);
-  int Nz = 200;
+  int Nz = 1000;
   int Nvpar = 64;
   int Nmu = 32;
   int Nvpar_elc = 8;
@@ -220,6 +220,8 @@ create_ctx(void)
     poa_phases[2*i+1].fdot_mult_type = fdot_mult_type_fdp;
     poa_phases[2*i+1].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
     poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_fdp;
+    poa_phases[2*i+1].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
+    poa_phases[2*i+1].damping_rate_const = 1/5e-6;
   }
   // The final stage is an extra, longer FDP.
   poa_phases[num_phases-1].phase = GK_POA_FDP;
@@ -230,7 +232,9 @@ create_ctx(void)
   poa_phases[num_phases-1].fdot_mult_type = fdot_mult_type_fdp;
   poa_phases[num_phases-1].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
   poa_phases[num_phases-1].is_positivity_enabled = is_positivity_enabled_fdp;
-
+  poa_phases[num_phases-1].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
+  poa_phases[num_phases-1].damping_rate_const = 1/5e-6;
+  
   double write_phase_freq = 1; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
   double int_diag_calc_freq = 100; // Frequency of calculating integrated diagnostics (as a factor of num_frames).
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
