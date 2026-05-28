@@ -847,7 +847,7 @@ int main(int argc, char **argv)
       .scale_factor = 1.0, // Will be replaced below.
       .write_diagnostics = true,
     },
-    .time_rate_multipliers = {
+    .time_rate_multiplier = {
       .num_multipliers = 1,
       .multiplier[0] = {
         .type = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE,

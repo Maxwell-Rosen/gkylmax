@@ -339,7 +339,7 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
     .scale_factor = pparams->alpha,
   };
 
-  struct gkyl_gyrokinetic_fdot_multipliers fdot_mult_inp = {
+  struct gkyl_gyrokinetic_fdot_multiplier fdot_mult_inp = {
     .num_multipliers = 1,
     .multiplier[0] = {
       .type = pparams->fdot_mult_type,
@@ -505,7 +505,7 @@ void run_phase_kinetic_elc(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx,
     .type = GKYL_GK_COLLISIONLESS_ES,
     .scale_factor = pparams->alpha_elc,
   };
-  struct gkyl_gyrokinetic_fdot_multipliers ion_fdot_mult_inp = {
+  struct gkyl_gyrokinetic_fdot_multiplier ion_fdot_mult_inp = {
     .num_multipliers = 1,
     .multiplier[0] = {
       .type = pparams->fdot_mult_type_ion,
@@ -517,7 +517,7 @@ void run_phase_kinetic_elc(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx,
       .write_diagnostics = true,
     },
   };
-  struct gkyl_gyrokinetic_fdot_multipliers elc_fdot_mult_inp = {
+  struct gkyl_gyrokinetic_fdot_multiplier elc_fdot_mult_inp = {
     .num_multipliers = 1,
     .multiplier[0] = {
       .type = pparams->fdot_mult_type_elc,

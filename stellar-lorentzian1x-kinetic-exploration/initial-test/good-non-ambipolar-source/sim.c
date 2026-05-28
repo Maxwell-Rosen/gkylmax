@@ -403,7 +403,7 @@ int main(int argc, char **argv)
       .write_diagnostics = true,
     },
 
-    .time_rate_multipliers = {
+    .time_rate_multiplier = {
       .num_multipliers = 1,
       .multiplier[0] = {
         .type = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE,
@@ -492,7 +492,7 @@ int main(int argc, char **argv)
       .write_diagnostics = true,
     },
 
-    .time_rate_multipliers = {
+    .time_rate_multiplier = {
       .num_multipliers = 1,
       .multiplier[0] = {
         .type = GKYL_GK_FDOT_MULTIPLIER_FIXED_DT_OMEGAH,

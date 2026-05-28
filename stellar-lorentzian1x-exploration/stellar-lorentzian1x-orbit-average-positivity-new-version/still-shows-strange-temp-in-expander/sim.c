@@ -852,7 +852,7 @@ int main(int argc, char **argv)
       .cfl_dt_min_value = 0.0,
       .write_diagnostics = true,
     },
-    .time_rate_multipliers = {
+    .time_rate_multiplier = {
       .num_multipliers = 1,
       .multiplier[0] = {
         .type = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE,
