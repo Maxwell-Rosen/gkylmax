@@ -24,6 +24,7 @@ struct gk_poa_phase_params {
   double alpha, alpha_ion, alpha_elc; // Factor multiplying collisionless terms.
   bool is_static_field; // Whether to evolve the field.
   bool is_positivity_enabled, is_positivity_enabled_ion, is_positivity_enabled_elc; // Whether positivity is enabled.
+  enum gkyl_gyrokinetic_positivity_type positivity_type, positivity_type_ion, positivity_type_elc; // Type of positivity (defaults to GKYL_GK_POSITIVITY_NONE).
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type, fdot_mult_type_ion, fdot_mult_type_elc; // Type of df/dt multipler.
   double f_threshold, f_threshold_ion, f_threshold_elc; // Threshold for df/dt multiplier.
   double cfl_factor_times_omega_max, cfl_factor_times_omega_max_ion, cfl_factor_times_omega_max_elc; // CFL factor for fixed factor times omega max multiplier.
@@ -358,8 +359,8 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
     .is_static = pparams->is_static_field,
   };
   struct gkyl_gyrokinetic_positivity positivity_inp = {
-    .type = pparams->is_positivity_enabled? GKYL_GK_POSITIVITY_FDOT_RESTRICT_DIODE_AVG : GKYL_GK_POSITIVITY_NONE,
-    // .safety_factor = 0.1,
+    .type = pparams->positivity_type,
+    .safety_factor = 0.1,
     // .write_diagnostics = pparams->is_positivity_enabled,
   };
   struct gkyl_gyrokinetic_damping damping_inp = {
@@ -530,11 +531,11 @@ void run_phase_kinetic_elc(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx,
     },
   };
   struct gkyl_gyrokinetic_positivity ion_positivity_inp = {
-    .type = pparams->is_positivity_enabled_ion? GKYL_GK_POSITIVITY_SHIFT : GKYL_GK_POSITIVITY_NONE,
+    .type = pparams->positivity_type_ion,
     .write_diagnostics = pparams->is_positivity_enabled_ion,
   };
   struct gkyl_gyrokinetic_positivity elc_positivity_inp = {
-    .type = pparams->is_positivity_enabled_elc? GKYL_GK_POSITIVITY_SHIFT : GKYL_GK_POSITIVITY_NONE,
+    .type = pparams->positivity_type_elc,
     .write_diagnostics = pparams->is_positivity_enabled_elc,
   };
   struct gkyl_gyrokinetic_field field_inp = {

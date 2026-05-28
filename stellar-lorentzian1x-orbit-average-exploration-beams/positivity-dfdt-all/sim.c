@@ -99,7 +99,14 @@ void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *
   double cvpar = vc[0], cmu = vc[1];
   double b = 1.4;
   vp[0] = vpar_max_ion*tan(cvpar*b)/tan(b);
-  vp[1] = mu_max_ion*pow(cmu,3);  // Cubic map in mu.
+  double transition=0.2;
+  int power = 3;
+  if (cmu < transition) {
+    vp[1] = mu_max_ion * pow(transition,power-1) * cmu;
+  }
+  else {
+    vp[1] = mu_max_ion*pow(cmu,power);
+  }
 }
 
 void mapc2p_vel_elc(double t, const double *vc, double* GKYL_RESTRICT vp, void *ctx)
@@ -185,6 +192,10 @@ create_ctx(void)
   // Whether to enable positivity.
   bool is_positivity_enabled_oap = true;
   bool is_positivity_enabled_fdp = true;
+
+  enum gkyl_gyrokinetic_positivity_type positivity_type_oap = GKYL_GK_POSITIVITY_FDOT_RESTRICT_AVG_ALL_COMP;
+  enum gkyl_gyrokinetic_positivity_type positivity_type_fdp = GKYL_GK_POSITIVITY_FDOT_RESTRICT_AVG_ALL_COMP;
+
   // Type of df/dt multipler.
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_oap = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE;
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_fdp = GKYL_GK_FDOT_MULTIPLIER_FIXED_FACTOR_TIMES_OMEGA_MAX;
@@ -207,7 +218,7 @@ create_ctx(void)
     poa_phases[2*i].is_static_field = is_static_field_oap;
     poa_phases[2*i].fdot_mult_type = fdot_mult_type_oap;
     poa_phases[2*i].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
-    poa_phases[2*i].is_positivity_enabled = is_positivity_enabled_oap;
+    poa_phases[2*i].positivity_type = positivity_type_oap;
 
     // FDPs.
     poa_phases[2*i+1].phase = GK_POA_FDP;
@@ -217,7 +228,7 @@ create_ctx(void)
     poa_phases[2*i+1].is_static_field = is_static_field_fdp;
     poa_phases[2*i+1].fdot_mult_type = fdot_mult_type_fdp;
     poa_phases[2*i+1].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
-    poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_fdp;
+    poa_phases[2*i+1].positivity_type = positivity_type_fdp;
   }
   // The final stage is an extra, longer FDP.
   poa_phases[num_phases-1].phase = GK_POA_FDP;
@@ -227,7 +238,7 @@ create_ctx(void)
   poa_phases[num_phases-1].is_static_field = is_static_field_fdp;
   poa_phases[num_phases-1].fdot_mult_type = fdot_mult_type_fdp;
   poa_phases[num_phases-1].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
-  poa_phases[num_phases-1].is_positivity_enabled = is_positivity_enabled_fdp;
+  poa_phases[num_phases-1].positivity_type = positivity_type_fdp;
 
   double write_phase_freq = 1; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
   double int_diag_calc_freq = 100; // Frequency of calculating integrated diagnostics (as a factor of num_frames).
