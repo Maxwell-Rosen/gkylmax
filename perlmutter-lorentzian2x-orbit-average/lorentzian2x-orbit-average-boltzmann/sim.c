@@ -366,21 +366,22 @@ int main(int argc, char **argv)
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
 
-    .projection = {
-      .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
-      .density = initial_density,
-      .ctx_density = &ctx,
-      .upar = initial_upar,
-      .ctx_upar = &ctx,
-      .temp = initial_temp_ion,
-      .ctx_temp = &ctx,
-    },
-    // .init_from_file = {
-    //   .type = GKYL_IC_IMPORT_F,
-    //   .file_name = "initial-condition/gk_lorentzian_mirror-ion_75.gkyl",
-    //   .jacobtot_inv_file_name = "initial-condition/gk_lorentzian_mirror-jacobtot_inv.gkyl",
-    //   .jacobvel_file_name = "initial-condition/gk_lorentzian_mirror-ion_jacobvel.gkyl",
+    // .projection = {
+    //   .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
+    //   .density = initial_density,
+    //   .ctx_density = &ctx,
+    //   .upar = initial_upar,
+    //   .ctx_upar = &ctx,
+    //   .temp = initial_temp_ion,
+    //   .ctx_temp = &ctx,
     // },
+
+    .init_from_file = {
+      .type = GKYL_IC_IMPORT_F,
+      .file_name = "initial-condition/gk_lorentzian_mirror-ion_65.gkyl",
+      .jacobtot_inv_file_name = "initial-condition/gk_lorentzian_mirror-geo_int_jacobtot_inv.gkyl",
+      .jacobvel_file_name = "initial-condition/gk_lorentzian_mirror-ion_jacobvel.gkyl",
+    },
 
     .mapc2p = {
       .mapping = mapc2p_vel_ion,

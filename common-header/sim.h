@@ -665,7 +665,6 @@ run_poa_simulation(struct gkyl_gk app_inp, struct gk_mirror_ctx ctx, struct gkyl
 
   printf("App initialization started ...\n");
   gkyl_gyrokinetic_app *app = gkyl_gyrokinetic_app_new(&app_inp);
-
   struct timespec app_init_end;
   clock_gettime(CLOCK_MONOTONIC, &app_init_end);
   double app_init_time = (app_init_end.tv_sec - app_init_start.tv_sec) + 
