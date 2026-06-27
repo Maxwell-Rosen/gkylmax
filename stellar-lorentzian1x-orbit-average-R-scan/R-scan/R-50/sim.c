@@ -200,7 +200,7 @@ double ion_source_temp = 18046.7045563 * eV ; // Beam intM2 = 7.682495e+32
   int num_phases = 2*num_cycles + 1;
   int num_frames = num_cycles * (num_frames_oap + num_frames_fdp) + num_frames_fdp_extra;
 
-  struct gk_poa_phase_params *poa_phases_ptr = gkyl_calloc(num_phases, sizeof(struct gk_poa_phase_params));
+  struct gk_poa_phase_params *poa_phases = gkyl_calloc(num_phases, sizeof(struct gk_poa_phase_params));
   for (int i=0; i<(num_phases-1)/2; i++) {
     // OAPs.
     poa_phases[2*i].phase = GK_POA_OAP;
