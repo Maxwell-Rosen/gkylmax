@@ -164,9 +164,9 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   double vpar_max_elc = 4 * vte;
   double mu_max_elc = me * pow(4. * vte, 2.) / (2. * B_p);
-  int Nz = 400;
-  int Nvpar = 64;
-  int Nmu = 32;
+  int Nz = 64;
+  int Nvpar = 32;
+  int Nmu = 16;
   int Nvpar_elc = 8;
   int Nmu_elc = 8;
 
@@ -210,7 +210,7 @@ create_ctx(void)
   int num_phases = 2*num_cycles + 1;
   int num_frames = num_cycles * (num_frames_oap + num_frames_fdp) + num_frames_fdp_extra;
 
-  struct gk_poa_phase_params *poa_phases = gkyl_malloc(num_phases * sizeof(struct gk_poa_phase_params));
+  struct gk_poa_phase_params *poa_phases_ptr = gkyl_calloc(num_phases, sizeof(struct gk_poa_phase_params));
   for (int i=0; i<(num_phases-1)/2; i++) {
     // OAPs.
     poa_phases[2*i].phase = GK_POA_OAP;
@@ -380,14 +380,14 @@ int main(int argc, char **argv)
       .write_diagnostics = true,
     },
 
-    .time_rate_multiplier = {
-      .num_multipliers = 1,
-      .multiplier[0] = {
-        .type = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE,
-        .cellwise_const = true,
-        .write_diagnostics = true,
-      },
-    },
+    // .time_rate_multiplier = {
+    //   .num_multipliers = 1,
+    //   .multiplier[0] = {
+    //     .type = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE,
+    //     .cellwise_const = true,
+    //     .write_diagnostics = true,
+    //   },
+    // },
 
     .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,

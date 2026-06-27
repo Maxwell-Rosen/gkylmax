@@ -565,17 +565,17 @@ void run_phase_kinetic_elc(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx,
     .cellwise_const = false,
   };
   
-  // gkyl_gyrokinetic_app_reset_species_collisionless(app, t_curr, "ion", ion_collisionless_inp);
-  // gkyl_gyrokinetic_app_reset_species_fdot_multiplier(app, t_curr, "ion", ion_fdot_mult_inp);
-  // gkyl_gyrokinetic_app_reset_species_positivity(app, t_curr, "ion", ion_positivity_inp);
-  // gkyl_gyrokinetic_app_reset_species_damping(app, t_curr, "ion", damping_inp);
+  gkyl_gyrokinetic_app_reset_species_collisionless(app, t_curr, "ion", ion_collisionless_inp);
+  gkyl_gyrokinetic_app_reset_species_fdot_multiplier(app, t_curr, "ion", ion_fdot_mult_inp);
+  gkyl_gyrokinetic_app_reset_species_positivity(app, t_curr, "ion", ion_positivity_inp);
+  gkyl_gyrokinetic_app_reset_species_damping(app, t_curr, "ion", damping_inp);
   
-  // gkyl_gyrokinetic_app_reset_species_collisionless(app, t_curr, "elc", elc_collisionless_inp);
-  // gkyl_gyrokinetic_app_reset_species_fdot_multiplier(app, t_curr, "elc", elc_fdot_mult_inp);
-  // gkyl_gyrokinetic_app_reset_species_positivity(app, t_curr, "elc", elc_positivity_inp);
-  // gkyl_gyrokinetic_app_reset_species_damping(app, t_curr, "elc", damping_inp);
+  gkyl_gyrokinetic_app_reset_species_collisionless(app, t_curr, "elc", elc_collisionless_inp);
+  gkyl_gyrokinetic_app_reset_species_fdot_multiplier(app, t_curr, "elc", elc_fdot_mult_inp);
+  gkyl_gyrokinetic_app_reset_species_positivity(app, t_curr, "elc", elc_positivity_inp);
+  gkyl_gyrokinetic_app_reset_species_damping(app, t_curr, "elc", damping_inp);
 
-  // gkyl_gyrokinetic_app_reset_field(app, t_curr, field_inp);
+  gkyl_gyrokinetic_app_reset_field(app, t_curr, field_inp);
 
   // Compute initial guess of maximum stable time-step.
   double dt = t_end - t_curr;
