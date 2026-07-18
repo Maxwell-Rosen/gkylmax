@@ -193,12 +193,12 @@ create_ctx(void)
   double vpar_max_elc = 16 * vte;
   double mu_max_elc = me * pow(4. * vte, 2.) / (2. * B_p);
 
-  int Nz = 32;
+  int Nz = 400;
   int Npsi = 4;
-  int Nvpar = 16;
-  int Nmu = 8;
-  int Nvpar_elc = 16;
-  int Nmu_elc = 8;
+  int Nvpar = 64;
+  int Nmu = 32;
+  int Nvpar_elc = 64;
+  int Nmu_elc = 32;
 
   // ES GK field parameters
   double omega_ci = eV * B_p / mi;
@@ -223,7 +223,7 @@ create_ctx(void)
   // Frame counts for each phase type (specified independently)
   int num_frames_oap = 10;        // Frames per OAP phase
   int num_frames_fdp = 10;        // Frames per FDP phase
-  int num_frames_fdp_extra = 4*5;  // Frames for the extra FDP phase
+  int num_frames_fdp_extra = 4*10;  // Frames for the extra FDP phase
   
   // Whether to evolve the field.
   bool is_static_field_oap = false;
@@ -359,7 +359,7 @@ create_ctx(void)
   
   // Populate a couple more values in the context.
   ctx.psi_max = psi_RZ(ctx.RatZeq0, 0.0, &ctx);
-  ctx.psi_min = psi_RZ(ctx.RatZeq0 * 0.1, 0.0, &ctx);
+  ctx.psi_min = psi_RZ(ctx.RatZeq0 * 0.3, 0.0, &ctx);
   ctx.psi_eval = (ctx.psi_max + ctx.psi_min) / 2.0;
 
   // Calculate magnetic field magnitude at midplane (Z=0)
@@ -422,71 +422,71 @@ int main(int argc, char **argv)
     .polarization_density = ctx.n0,
     // .scale_with_polarization = true,
 
-    .projection = {
-      .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
-      .density = initial_density,
-      .ctx_density = &ctx,
-      .upar = initial_upar,
-      .ctx_upar = &ctx,
-      .temp = initial_temp_ion,
-      .ctx_temp = &ctx,
-    },
-    // .init_from_file = {
-    //   .type = GKYL_IC_IMPORT_F,
-    //   .file_name = "gk_lorentzian_mirror-ion_0.gkyl",
-    //   // .file_name = "initial-condition/gk_lorentzian_mirror-ion_75.gkyl",
-    //   // .jacobtot_inv_file_name = "initial-condition/gk_lorentzian_mirror-jacobtot_inv.gkyl",
-    //   // .jacobvel_file_name = "initial-condition/gk_lorentzian_mirror-ion_jacobvel.gkyl",
+    // .projection = {
+    //   .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
+    //   .density = initial_density,
+    //   .ctx_density = &ctx,
+    //   .upar = initial_upar,
+    //   .ctx_upar = &ctx,
+    //   .temp = initial_temp_ion,
+    //   .ctx_temp = &ctx,
     // },
+    .init_from_file = {
+      .type = GKYL_IC_IMPORT_F,
+      .file_name = "initial-condition-1xkinetic/gk_lorentzian_mirror-ion_140.gkyl",
+      .jacobtot_inv_file_name = "initial-condition-1xkinetic/gk_lorentzian_mirror-jacobtot_inv.gkyl",
+      .jacobvel_file_name = "initial-condition-1xkinetic/gk_lorentzian_mirror-ion_jacobvel.gkyl",
+    },
 
     .mapc2p = {
       .mapping = mapc2p_vel_ion,
       .ctx = &ctx,
     },
 
-    // .collisionless = {
-    //   .type = GKYL_GK_COLLISIONLESS_ES,
-    //   .scale_factor = 1.0, // Will be replaced below.
-    //   .write_diagnostics = true,
-    // },
+    .collisionless = {
+      .type = GKYL_GK_COLLISIONLESS_ES,
+      .scale_factor = 1.0, // Will be replaced below.
+      .write_diagnostics = true,
+    },
 
-    // .time_rate_multiplier = {
-    //   .num_multipliers = 1,
-    //   .multiplier[0] = {
-    //     .type = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE,
-    //     .cellwise_const = true,
-    //     .write_diagnostics = true,
-    //   },
-    // },
+    .time_rate_multiplier = {
+      .num_multipliers = 1,
+      .multiplier[0] = {
+        .type = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE,
+        .cellwise_const = true,
+        .write_diagnostics = true,
+      },
+    },
 
-    // .collisions = {
-    //   .collision_id = GKYL_LBO_COLLISIONS,
-    //   .den_ref = ctx.n0,
-    //   .temp_ref = ctx.Ti0,
-    //   .write_diagnostics = true,
-    //   // .num_cross_collisions = 1,
-    //   // .collide_with = { "elc" },
-    // },
+    .collisions = {
+      .collision_id = GKYL_LBO_COLLISIONS,
+      .den_ref = ctx.n0,
+      .temp_ref = ctx.Ti0,
+      .write_diagnostics = true,
+      .num_cross_collisions = 1,
+      .collide_with = { "elc" },
+    },
 
-    // .source = {
-    //   .source_id = GKYL_PROJ_SOURCE,
-    //   .num_sources = 1,
-    //   .projection[0] = {
-    //     .proj_id = GKYL_PROJ_FUNC,
-    //     .func = eval_f_ion_source,
-    //     .ctx_func = &ctx,
-    //   },
-    //   .diagnostics = {
-    //     .num_diag_moments = 6,
-    //     .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_BIMAXWELLIAN},
-    //     .num_integrated_diag_moments = 1,
-    //     .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
-    //   },
-    // },
-    // .positivity = {
-    //   .type = GKYL_GK_POSITIVITY_SHIFT,
-    //   .write_diagnostics = true,
-    // },
+    .source = {
+      .source_id = GKYL_PROJ_SOURCE,
+      .num_sources = 1,
+      .projection[0] = {
+        .proj_id = GKYL_PROJ_FUNC,
+        .func = eval_f_ion_source,
+        .ctx_func = &ctx,
+      },
+      .diagnostics = {
+        .num_diag_moments = 6,
+        .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_BIMAXWELLIAN},
+        .num_integrated_diag_moments = 1,
+        .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
+      },
+    },
+
+    .positivity = {
+      .type = GKYL_GK_POSITIVITY_SHIFT,
+      .write_diagnostics = true,
+    },
 
     .bcs = {
       { .dir = 0, .edge = GKYL_LOWER_EDGE, .type = GKYL_BC_GK_SPECIES_ZERO_FLUX },
@@ -494,19 +494,18 @@ int main(int argc, char **argv)
       { .dir = 1, .edge = GKYL_LOWER_EDGE, .type = GKYL_BC_GK_SPECIES_SHEATH },
       { .dir = 1, .edge = GKYL_UPPER_EDGE, .type = GKYL_BC_GK_SPECIES_SHEATH },
     },
+
     .write_omega_cfl = true,
-    .num_diag_moments = 7,
-    .diag_moments = {GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_M3PAR, GKYL_F_MOMENT_M3PERP },
+    .num_diag_moments = 8,
+    .diag_moments = {GKYL_F_MOMENT_BIMAXWELLIAN, GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_M3PAR, GKYL_F_MOMENT_M3PERP },
     .num_integrated_diag_moments = 1,
     .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
-    // .time_rate_diagnostics = true,
-
-    // .boundary_flux_diagnostics = {
-    //   .num_integrated_diag_moments = 1,
-    //   .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP},
-    // },
+    .time_rate_diagnostics = true,
+    .boundary_flux_diagnostics = {
+      .num_integrated_diag_moments = 1,
+      .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP},
+    },
   };
-
 
   struct gkyl_gyrokinetic_species elc = {
     .name = "elc",
@@ -516,7 +515,6 @@ int main(int argc, char **argv)
     .lower = {-1.0, 0.0},
     .upper = { 1.0, 1.0},
     .cells = { ctx.Nvpar_elc, ctx.Nmu_elc },
-
     .polarization_density = ctx.n0,
 
     .mapc2p = {
@@ -524,23 +522,22 @@ int main(int argc, char **argv)
       .ctx = &ctx,
     },
 
-    // .init_from_file = {
-    //   .type = GKYL_IC_IMPORT_F,
-    //   .file_name = "gk_lorentzian_mirror-elc_0.gkyl",
-    //   .file_name = "initial-condition/gk_lorentzian_mirror-elc_75.gkyl",
-    //   .jacobtot_inv_file_name = "initial-condition/gk_lorentzian_mirror-jacobtot_inv.gkyl",
-    //   .jacobvel_file_name = "initial-condition/gk_lorentzian_mirror-elc_jacobvel.gkyl",
-    // },
-
-    .projection = {
-      .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
-      .density = initial_density,
-      .ctx_density = &ctx,
-      .upar = initial_upar,
-      .ctx_upar = &ctx,
-      .temp = initial_temp_elc,
-      .ctx_temp = &ctx,
+    .init_from_file = {
+      .type = GKYL_IC_IMPORT_F,
+      .file_name = "initial-condition-1xkinetic/gk_lorentzian_mirror-elc_140.gkyl",
+      .jacobtot_inv_file_name = "initial-condition-1xkinetic/gk_lorentzian_mirror-jacobtot_inv.gkyl",
+      .jacobvel_file_name = "initial-condition-1xkinetic/gk_lorentzian_mirror-elc_jacobvel.gkyl",
     },
+
+    // .projection = {
+    //   .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
+    //   .density = initial_density,
+    //   .ctx_density = &ctx,
+    //   .upar = initial_upar,
+    //   .ctx_upar = &ctx,
+    //   .temp = initial_temp_elc,
+    //   .ctx_temp = &ctx,
+    // },
 
     .collisionless = {
       .type = GKYL_GK_COLLISIONLESS_ES,
@@ -550,43 +547,43 @@ int main(int argc, char **argv)
 
     .collisions =  {
       .collision_id = GKYL_LBO_COLLISIONS,
-      // .num_cross_collisions = 1,
-      // .collide_with = { "ion" },
       .den_ref = ctx.n0,
       .temp_ref = ctx.Te0,
+      .num_cross_collisions = 1,
+      .collide_with = { "ion" },
       .write_diagnostics = true,
     },
 
-    // .time_rate_multiplier = {
-    //   .num_multipliers = 1,
-    //   .multiplier[0] = {
-    //     .type = GKYL_GK_FDOT_MULTIPLIER_FIXED_DT_OMEGAH,
-    //     .cellwise_const = true,
-    //     .write_diagnostics = true,
-    //     .time_dilation_scale_const = 0.1,
-    //   },
-    // },
+    .time_rate_multiplier = {
+      .num_multipliers = 1,
+      .multiplier[0] = {
+        .type = GKYL_GK_FDOT_MULTIPLIER_FIXED_DT_OMEGAH,
+        .cellwise_const = true,
+        .write_diagnostics = true,
+        .time_dilation_scale_const = 0.1,
+      },
+    },
 
-    // .source = {
-    //   .source_id = GKYL_PROJ_SOURCE,
-    //   .num_sources = 1,
-    //   .projection[0] = {
-    //     .proj_id = GKYL_PROJ_FUNC,
-    //     .func = eval_f_elc_source,
-    //     .ctx_func = &ctx,
-    //   },
-    //   .diagnostics = {
-    //     .num_diag_moments = 6,
-    //     .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_HAMILTONIAN},
-    //     .num_integrated_diag_moments = 1,
-    //     .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
-    //   },
-    // },
+    .source = {
+      .source_id = GKYL_PROJ_SOURCE,
+      .num_sources = 1,
+      .projection[0] = {
+        .proj_id = GKYL_PROJ_FUNC,
+        .func = eval_f_elc_source,
+        .ctx_func = &ctx,
+      },
+      .diagnostics = {
+        .num_diag_moments = 6,
+        .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_HAMILTONIAN},
+        .num_integrated_diag_moments = 1,
+        .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
+      },
+    },
 
-    // .positivity = {
-    //   .type = GKYL_GK_POSITIVITY_SHIFT,
-    //   .write_diagnostics = true,
-    // },
+    .positivity = {
+      .type = GKYL_GK_POSITIVITY_SHIFT,
+      .write_diagnostics = true,
+    },
 
     .bcs = {
       { .dir = 0, .edge = GKYL_LOWER_EDGE, .type = GKYL_BC_GK_SPECIES_ZERO_FLUX },
@@ -596,21 +593,25 @@ int main(int argc, char **argv)
     },
 
     .write_omega_cfl = true,
-    .num_diag_moments = 7,
-    .diag_moments = {GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_M3PAR, GKYL_F_MOMENT_M3PERP },
+    .num_diag_moments = 8,
+    .diag_moments = {GKYL_F_MOMENT_BIMAXWELLIAN, GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_M3PAR, GKYL_F_MOMENT_M3PERP },
     .num_integrated_diag_moments = 1,
     .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
-    // .time_rate_diagnostics = true,
-    // .boundary_flux_diagnostics = {
-    //   .num_integrated_diag_moments = 1,
-    //   .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP},
-    // },
+    .time_rate_diagnostics = true,
+    .boundary_flux_diagnostics = {
+      .num_integrated_diag_moments = 1,
+      .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP},
+    },
   };
 
   struct gkyl_gyrokinetic_field field = {
     .polarization_bmag = ctx.B_p,
     .kperpSq = pow(ctx.kperp, 2.),
     .is_static = false,
+    .poisson_bcs = {
+      { .dir = 0, .edge = GKYL_LOWER_EDGE, .type = GKYL_BC_GK_FIELD_NEUMANN, .value = {0.0} },
+      { .dir = 0, .edge = GKYL_UPPER_EDGE, .type = GKYL_BC_GK_FIELD_DIRICHLET, .value = {0.0} },
+    },
     // .polarization_potential_init_from_file = {
     //   .type = GKYL_IC_IMPORT_F,
     //   .file_name = "initial-condition/gk_lorentzian_mirror-field_75.gkyl",
@@ -639,13 +640,13 @@ int main(int argc, char **argv)
       .geometry_id = GKYL_GEOMETRY_MIRROR,
       .world = {0.0},
       .mirror_grid_info = grid_inp,
-      // .position_map_info = {
-      //   .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
-      //   .map_strength = 0.5,
-      //   .maximum_slope_at_min_B = 2,
-      //   .gaussian_std = 0.25,
-      //   .gaussian_max_integration_width = 0.5,
-      // },
+      .position_map_info = {
+        .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
+        .map_strength = 0.5,
+        .maximum_slope_at_min_B = 2,
+        .gaussian_std = 0.25,
+        .gaussian_max_integration_width = 0.5,
+      },
     },
 
     .num_periodic_dir = 0,

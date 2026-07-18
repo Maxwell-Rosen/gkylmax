@@ -556,6 +556,10 @@ void run_phase_kinetic_elc(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx,
     .polarization_bmag = ctx->B_p,
     .kperpSq = pow(ctx->kperp, 2.),
     .is_static = pparams->is_static_field,
+    .poisson_bcs = {
+      { .dir = 0, .edge = GKYL_LOWER_EDGE, .type = GKYL_BC_GK_FIELD_NEUMANN, .value = {0.0} },
+      { .dir = 0, .edge = GKYL_UPPER_EDGE, .type = GKYL_BC_GK_FIELD_DIRICHLET, .value = {0.0} },
+    },
   };
   struct gkyl_gyrokinetic_damping damping_inp = {
     .type = pparams->damping_type,
