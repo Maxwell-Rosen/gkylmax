@@ -596,11 +596,11 @@ void run_phase_kinetic_elc(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx,
   long step = 1;
   while ((t_curr < t_end) && (step <= num_steps))
   {
-    if (step%1000 == 1 || step==1)
+    if (step % 1000 == 1 || step==1)
       gkyl_gyrokinetic_app_cout(app, stdout, "Taking time-step %ld at t = %g ...", step, t_curr);
     dt = t_end - t_curr; // Ensure we don't step beyond t_end.
     struct gkyl_update_status status = gkyl_gyrokinetic_update(app, dt);
-    if (step%1000 == 1 || step==1) {
+    if (step % 1000 == 1 || step==1) {
       // Calculate elapsed wall time and estimated time remaining
       struct timespec current_time;
       clock_gettime(CLOCK_MONOTONIC, &current_time);

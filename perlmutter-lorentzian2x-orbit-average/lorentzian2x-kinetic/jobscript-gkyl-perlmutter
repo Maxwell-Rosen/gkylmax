@@ -23,7 +23,7 @@
 #.Mail is sent to you when the job starts and when it terminates or aborts.
 #SBATCH --mail-user=mhrosen@pppl.gov
 #SBATCH --mail-type=ALL
-num_gpu=4
+num_gpu=16
 
 #.Load modules (this must match those in the machines/configure script).
 module load PrgEnv-gnu/8.6.0

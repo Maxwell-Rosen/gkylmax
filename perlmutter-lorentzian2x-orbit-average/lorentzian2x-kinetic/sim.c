@@ -255,31 +255,31 @@ create_ctx(void)
   struct gk_poa_phase_params *poa_phases = gkyl_calloc(num_phases, sizeof(struct gk_poa_phase_params));
   for (int i=0; i<(num_phases-1)/2; i++) {
     // OAPs.
-    poa_phases[2*i+1].phase = GK_POA_OAP;
-    poa_phases[2*i+1].num_frames = num_frames_oap;
-    poa_phases[2*i+1].duration = tau_oap;
-    poa_phases[2*i+1].alpha_ion = alpha_ion_oap;
-    poa_phases[2*i+1].alpha_elc = alpha_elc_oap;
-    poa_phases[2*i+1].fdot_mult_type_ion = fdot_mult_type_ion_oap;
-    poa_phases[2*i+1].fdot_mult_type_elc = fdot_mult_type_elc_oap;
-    poa_phases[2*i+1].time_dilation_scale_const_ion = time_dilation_scale_const_ion_oap;
-    poa_phases[2*i+1].time_dilation_scale_const_elc = time_dilation_scale_const_elc_oap;
-    poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_oap;
-    poa_phases[2*i+1].is_static_field = is_static_field_oap;
-    poa_phases[2*i+1].damping_type = GKYL_GK_DAMPING_NONE;
+    poa_phases[2*i].phase = GK_POA_OAP;
+    poa_phases[2*i].num_frames = num_frames_oap;
+    poa_phases[2*i].duration = tau_oap;
+    poa_phases[2*i].alpha_ion = alpha_ion_oap;
+    poa_phases[2*i].alpha_elc = alpha_elc_oap;
+    poa_phases[2*i].fdot_mult_type_ion = fdot_mult_type_ion_oap;
+    poa_phases[2*i].fdot_mult_type_elc = fdot_mult_type_elc_oap;
+    poa_phases[2*i].time_dilation_scale_const_ion = time_dilation_scale_const_ion_oap;
+    poa_phases[2*i].time_dilation_scale_const_elc = time_dilation_scale_const_elc_oap;
+    poa_phases[2*i].is_positivity_enabled = is_positivity_enabled_oap;
+    poa_phases[2*i].is_static_field = is_static_field_oap;
+    poa_phases[2*i].damping_type = GKYL_GK_DAMPING_NONE;
 
     // FDPs.
-    poa_phases[2*i].phase = GK_POA_FDP;
-    poa_phases[2*i].num_frames = num_frames_fdp;
-    poa_phases[2*i].duration = tau_fdp;
-    poa_phases[2*i].alpha_ion = alpha_fdp;
-    poa_phases[2*i].alpha_elc = alpha_fdp;
-    poa_phases[2*i].fdot_mult_type_ion = fdot_mult_type_ion_fdp;
-    poa_phases[2*i].fdot_mult_type_elc = fdot_mult_type_elc_fdp;
-    poa_phases[2*i].time_dilation_scale_const_ion = time_dilation_scale_const_ion_fdp;
-    poa_phases[2*i].time_dilation_scale_const_elc = time_dilation_scale_const_elc_fdp;
-    poa_phases[2*i].is_positivity_enabled = is_positivity_enabled_fdp;
-    poa_phases[2*i].is_static_field = is_static_field_fdp;
+    poa_phases[2*i+1].phase = GK_POA_FDP;
+    poa_phases[2*i+1].num_frames = num_frames_fdp;
+    poa_phases[2*i+1].duration = tau_fdp;
+    poa_phases[2*i+1].alpha_ion = alpha_fdp;
+    poa_phases[2*i+1].alpha_elc = alpha_fdp;
+    poa_phases[2*i+1].fdot_mult_type_ion = fdot_mult_type_ion_fdp;
+    poa_phases[2*i+1].fdot_mult_type_elc = fdot_mult_type_elc_fdp;
+    poa_phases[2*i+1].time_dilation_scale_const_ion = time_dilation_scale_const_ion_fdp;
+    poa_phases[2*i+1].time_dilation_scale_const_elc = time_dilation_scale_const_elc_fdp;
+    poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_fdp;
+    poa_phases[2*i+1].is_static_field = is_static_field_fdp;
     poa_phases[2*i+1].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
     poa_phases[2*i+1].damping_rate_const = 1/5e-6;
   }
@@ -359,7 +359,7 @@ create_ctx(void)
   
   // Populate a couple more values in the context.
   ctx.psi_max = psi_RZ(ctx.RatZeq0, 0.0, &ctx);
-  ctx.psi_min = psi_RZ(ctx.RatZeq0 * 0.3, 0.0, &ctx);
+  ctx.psi_min = psi_RZ(ctx.RatZeq0 * 0.1, 0.0, &ctx);
   ctx.psi_eval = (ctx.psi_max + ctx.psi_min) / 2.0;
 
   // Calculate magnetic field magnitude at midplane (Z=0)
@@ -433,9 +433,7 @@ int main(int argc, char **argv)
     // },
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
-      .file_name = "initial-condition-1xkinetic/gk_lorentzian_mirror-ion_140.gkyl",
-      .jacobtot_inv_file_name = "initial-condition-1xkinetic/gk_lorentzian_mirror-jacobtot_inv.gkyl",
-      .jacobvel_file_name = "initial-condition-1xkinetic/gk_lorentzian_mirror-ion_jacobvel.gkyl",
+      .file_name = "ic-2x/gk_lorentzian_mirror-ion_0.gkyl",
     },
 
     .mapc2p = {
@@ -524,9 +522,7 @@ int main(int argc, char **argv)
 
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
-      .file_name = "initial-condition-1xkinetic/gk_lorentzian_mirror-elc_140.gkyl",
-      .jacobtot_inv_file_name = "initial-condition-1xkinetic/gk_lorentzian_mirror-jacobtot_inv.gkyl",
-      .jacobvel_file_name = "initial-condition-1xkinetic/gk_lorentzian_mirror-elc_jacobvel.gkyl",
+      .file_name = "ic-2x/gk_lorentzian_mirror-elc_0.gkyl",
     },
 
     // .projection = {
@@ -635,6 +631,7 @@ int main(int argc, char **argv)
     .cells = { cells_x[0], cells_x[1] },
     .poly_order = ctx.poly_order,
     .basis_type = app_args.basis_type,
+    .cfl_frac_omegaH = 1000.0,
 
     .geometry = {
       .geometry_id = GKYL_GEOMETRY_MIRROR,
