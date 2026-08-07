@@ -222,10 +222,10 @@ replace_source_line() {
 
   printf -v replacement "$fmt" "$coeff" "$target"
 
-  awk -v mode="$mode" -v line_num="$line_num" -v match="$match" -v replacement="$replacement" '
+  awk -v mode="$mode" -v line_num="$line_num" -v pattern="$match" -v replacement="$replacement" '
     BEGIN { updated=0 }
     {
-      if (!updated && ((mode=="line" && NR==line_num) || (mode=="regex" && $0 ~ match))) {
+      if (!updated && ((mode=="line" && NR==line_num) || (mode=="regex" && $0 ~ pattern))) {
         print replacement;
         updated=1;
         next;

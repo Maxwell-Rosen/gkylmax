@@ -78,13 +78,14 @@ eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
   double vpar_midp = sqrt(pow(vpar,2.) + 2*mu*(Bmag - app->Bmag_midp)/app->mi); // Ignore potential for now
   double vperp = sqrt(2.0 * mu * app->B_p / app->mi); // What magnetic field do we use here?
 
-  double gamma0 = app->ion_source_amplitude;
-  double T_beam = app->ion_source_temp;
+  double gamma0 = 200;
+  double T_beam = 200 * GKYL_ELEMENTARY_CHARGE;
+  double E_beam = 25000 * GKYL_ELEMENTARY_CHARGE;
+  double v_beam = sqrt(E_beam / app->mi);
   double sigma_beam = 2*T_beam/app->mi;
 
-  double vtot2 = pow(vpar_midp,2.) + pow(vperp,2.);
-
-  double source = fmax(gamma0 * sqrt(1/(M_PI*sigma_beam)) * exp (-1.0 * vtot2 / sigma_beam),1e-20);
+  double source = fmax(gamma0 * exp (-1.0 * (pow(fabs(vpar_midp) - v_beam, 2) + 
+                                             pow(vperp - v_beam, 2)) / sigma_beam),1e-20);
 
   fout[0] = source;
 }
@@ -155,10 +156,6 @@ create_ctx(void)
   int Nvpar_elc = 8;
   int Nmu_elc = 8;
   int poly_order = 1;
-
-  // Source parameters
-double ion_source_amplitude = 39176953.8393; // Beam intM0 = 3.1099679832479321e+20
-double ion_source_temp = 19732.71764 * eV ; // Beam intM2 = 1.2940166363523933e+06
 
   // Geometry parameters.
   double RatZeq0 = 0.10; // Radius of the field line at Z=0.
@@ -275,9 +272,6 @@ double ion_source_temp = 19732.71764 * eV ; // Beam intM2 = 1.2940166363523933e+
     .int_diag_calc_freq = int_diag_calc_freq,
     .dt_failure_tol = dt_failure_tol,
     .num_failures_max = num_failures_max,
-    
-    .ion_source_amplitude = ion_source_amplitude,
-    .ion_source_temp = ion_source_temp,
 
     .mcB = mcB,
     .gamma = gamma,
@@ -414,12 +408,12 @@ int main(int argc, char **argv)
     .num_diag_moments = 8,
     .diag_moments = {GKYL_F_MOMENT_BIMAXWELLIAN, GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_M3PAR, GKYL_F_MOMENT_M3PERP },
     .num_integrated_diag_moments = 1,
-    .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN },
+    .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
     .time_rate_diagnostics = true,
 
     .boundary_flux_diagnostics = {
       .num_integrated_diag_moments = 1,
-      .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN},
+      .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP},
     },
   };
 
@@ -475,7 +469,6 @@ int main(int argc, char **argv)
     .electron_charge = ctx.qe,
     .electron_temp = ctx.Te0,
     .is_static = false,
-    .time_rate_diagnostics = true,
   };
 
   struct gkyl_mirror_geo_grid_inp grid_inp = {
