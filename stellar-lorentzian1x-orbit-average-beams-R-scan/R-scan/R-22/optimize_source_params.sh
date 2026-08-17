@@ -17,18 +17,17 @@ PYTHON_CMD="python3"
 OPT_SCRIPT="optimize_source_params.py"
 HISTORY_FILE="source_optimization_history.csv"
 
-M0_TARGET="3.172138e+20"
-M2_TARGET="7.682495e+32"
+M0_TARGET="3.1099679832479321e+20"
+M2_TARGET="1.2940166363523933e+06"
 TOL_REL="0.000001"
 MAX_ITERS=10
 
 MIN_AMP="1e-30"
 MIN_TEMP_EV="1e-6"
 
-MC2P_FILE="gk_lorentzian_mirror-mc2nu_pos_deflated.gkyl"
-M0_FILE="gk_lorentzian_mirror-ion_source_M0_0.gkyl"
-M2_FILE="gk_lorentzian_mirror-ion_source_M2_0.gkyl"
-Z_RANGE="-0.98:0.98"
+MOMS_FILE="gk_lorentzian_mirror-ion_source_integrated_moms.gkyl"
+M0_COMP=0
+M2_COMP=2
 
 # Source line update controls.
 # Defaults below target:
@@ -60,13 +59,13 @@ File/command options:
   --python-cmd CMD
   --opt-script PATH
   --history-file PATH
-  --mc2p FILE
-  --z-range A:B
+  --moms-file FILE
   -h, --help
 
 Flow per iteration:
   1) run sim
-  2) read M0, M2 with pgkyl
+  2) read M0, energy from the source's integrated moments (Hamiltonian
+     diagnostic: M0, mass*M1, H) with pgkyl
   3) append (amp,temp,M0,M2) to history csv
   4) ask Python optimizer for next (amp,temp)
   5) rewrite the two source lines in sim.c
@@ -97,8 +96,7 @@ while [[ $# -gt 0 ]]; do
     --history-file) HISTORY_FILE="$2"; shift 2 ;;
     --sim-file) SIM_FILE="$2"; shift 2 ;;
     --sim-args) SIM_ARGS="$2"; shift 2 ;;
-    --z-range) Z_RANGE="$2"; shift 2 ;;
-    --mc2p) MC2P_FILE="$2"; shift 2 ;;
+    --moms-file) MOMS_FILE="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) die "Unknown option: $1" ;;
   esac
@@ -252,11 +250,11 @@ replace_source_line() {
   mv "$tmp_file" "$SIM_FILE"
 }
 
-get_moment_max() {
-  local moment_file="$1"
+get_integrated_moment() {
+  local moment_file="$1" comp="$2"
   local output value
 
-  output=$(pgkyl --c2p "$MC2P_FILE" "$moment_file" interp sel --z0 "$Z_RANGE" integ 0 info)
+  output=$(pgkyl "$moment_file" select --z0 -1 -c "$comp" info)
   value=$(echo "$output" | awk '
     /Maximum:/ {
       for (i=1; i<=NF; i++) {
@@ -265,7 +263,7 @@ get_moment_max() {
     }
   ')
 
-  [[ -n "$value" ]] || die "failed to parse Maximum from $moment_file"
+  [[ -n "$value" ]] || die "failed to parse Maximum from $moment_file (comp $comp)"
   is_numeric "$value" || die "parsed non-numeric Maximum from $moment_file: '$value'"
   echo "$value"
 }
@@ -294,8 +292,8 @@ while [ "$iter" -lt "$MAX_ITERS" ]; do
 
   run_sim
 
-  m0=$(get_moment_max "$M0_FILE")
-  m2=$(get_moment_max "$M2_FILE")
+  m0=$(get_integrated_moment "$MOMS_FILE" "$M0_COMP")
+  m2=$(get_integrated_moment "$MOMS_FILE" "$M2_COMP")
   err_m0=$(rel_err "$m0" "$M0_TARGET")
   err_m2=$(rel_err "$m2" "$M2_TARGET")
 
@@ -324,4 +322,4 @@ fi
 
 echo ""
 echo "Done. Final source lines in $SIM_FILE:"
-grep -E '^[[:space:]]*double[[:space:]]+ion_source_(amplitude|temp)[[:space:]]*=' "$SIM_FILE"
+grep -E '^[[:space:]]*double[[:space:]]+(gamma0|E_beam)[[:space:]]*=' "$SIM_FILE"

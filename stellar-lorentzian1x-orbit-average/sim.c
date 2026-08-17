@@ -98,7 +98,14 @@ void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *
   double cvpar = vc[0], cmu = vc[1];
   double b = 1.4;
   vp[0] = vpar_max_ion*tan(cvpar*b)/tan(b);
-  vp[1] = mu_max_ion*pow(cmu,3);  // Cubic map in mu.
+  double transition=0.2;
+  int power = 3;
+  if (cmu < transition) {
+    vp[1] = mu_max_ion * pow(transition,power-1) * cmu;
+  }
+  else {
+    vp[1] = mu_max_ion*pow(cmu,power);
+  }
 }
 
 void mapc2p_vel_elc(double t, const double *vc, double* GKYL_RESTRICT vp, void *ctx)
@@ -395,8 +402,8 @@ int main(int argc, char **argv)
         .ctx_func = &ctx,
       },
       .diagnostics = {
-        .num_diag_moments = 6,
-        .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_HAMILTONIAN},
+        .num_diag_moments = 7,
+        .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_HAMILTONIAN, GKYL_F_MOMENT_BIMAXWELLIAN},
         .num_integrated_diag_moments = 1,
         .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN },
       },

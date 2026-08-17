@@ -98,7 +98,14 @@ void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *
   double cvpar = vc[0], cmu = vc[1];
   double b = 1.4;
   vp[0] = vpar_max_ion*tan(cvpar*b)/tan(b);
-  vp[1] = mu_max_ion*pow(cmu,3);  // Cubic map in mu.
+  double transition=0.2;
+  int power = 3;
+  if (cmu < transition) {
+    vp[1] = mu_max_ion * pow(transition,power-1) * cmu;
+  }
+  else {
+    vp[1] = mu_max_ion*pow(cmu,power);
+  }
 }
 
 void mapc2p_vel_elc(double t, const double *vc, double* GKYL_RESTRICT vp, void *ctx)
@@ -157,8 +164,8 @@ create_ctx(void)
   int poly_order = 1;
 
   // Source parameters
-double ion_source_amplitude = 30980324.7857; // Beam intM0 = 3.172138e+20
-double ion_source_temp = 18046.7045563 * eV ; // Beam intM2 = 7.682495e+32
+double ion_source_amplitude = 39898342.6134; // Beam intM0 = 3.1099679832479321e+20
+double ion_source_temp = 19923.3393376 * eV ; // Beam intM2 = 1.2940166363523933e+06
 
   // Geometry parameters.
   double RatZeq0 = 0.10; // Radius of the field line at Z=0.
@@ -221,8 +228,6 @@ double ion_source_temp = 18046.7045563 * eV ; // Beam intM2 = 7.682495e+32
     poa_phases[2*i+1].fdot_mult_type = fdot_mult_type_fdp;
     poa_phases[2*i+1].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
     poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_fdp;
-    poa_phases[2*i+1].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
-    poa_phases[2*i+1].damping_rate_const = 1/5e-6;
   }
   // The final stage is an extra, longer FDP.
   poa_phases[num_phases-1].phase = GK_POA_FDP;
@@ -233,9 +238,7 @@ double ion_source_temp = 18046.7045563 * eV ; // Beam intM2 = 7.682495e+32
   poa_phases[num_phases-1].fdot_mult_type = fdot_mult_type_fdp;
   poa_phases[num_phases-1].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
   poa_phases[num_phases-1].is_positivity_enabled = is_positivity_enabled_fdp;
-  poa_phases[num_phases-1].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
-  poa_phases[num_phases-1].damping_rate_const = 1/5e-6;
-  
+
   double write_phase_freq = 1; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
   double int_diag_calc_freq = 100; // Frequency of calculating integrated diagnostics (as a factor of num_frames).
   double dt_failure_tol = 1.0e-4; // Minimum allowable fraction of initial time-step.
@@ -381,7 +384,7 @@ int main(int argc, char **argv)
         .write_diagnostics = true,
       },
     },
-    
+
     .collisions = {
       .collision_id = GKYL_LBO_COLLISIONS,
       .den_ref = ctx.n0,
@@ -399,10 +402,10 @@ int main(int argc, char **argv)
         .ctx_func = &ctx,
       },
       .diagnostics = {
-        .num_diag_moments = 6,
-        .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_HAMILTONIAN},
+        .num_diag_moments = 7,
+        .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_HAMILTONIAN, GKYL_F_MOMENT_BIMAXWELLIAN},
         .num_integrated_diag_moments = 1,
-        .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
+        .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN },
       },
     },
     .positivity = {
@@ -418,12 +421,12 @@ int main(int argc, char **argv)
     .num_diag_moments = 8,
     .diag_moments = {GKYL_F_MOMENT_BIMAXWELLIAN, GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_M3PAR, GKYL_F_MOMENT_M3PERP },
     .num_integrated_diag_moments = 1,
-    .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
+    .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN },
     .time_rate_diagnostics = true,
 
     .boundary_flux_diagnostics = {
       .num_integrated_diag_moments = 1,
-      .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP},
+      .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN},
     },
   };
 
@@ -479,6 +482,7 @@ int main(int argc, char **argv)
     .electron_charge = ctx.qe,
     .electron_temp = ctx.Te0,
     .is_static = false,
+    .time_rate_diagnostics = true,
   };
 
   struct gkyl_mirror_geo_grid_inp grid_inp = {

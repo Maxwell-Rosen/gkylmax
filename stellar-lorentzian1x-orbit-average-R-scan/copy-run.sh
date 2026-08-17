@@ -27,7 +27,7 @@ for i in "${!mcB_values[@]}"; do
   # Create the folder structure
   folder_name="R-scan/R-${R}"
 
-  # mkdir -p "$folder_name"
+  mkdir -p "$folder_name"
 
   # Copy core files into the folder
   cp core/* "$folder_name/"
@@ -36,16 +36,16 @@ for i in "${!mcB_values[@]}"; do
   cd "$folder_name" || exit
 
 	if [ "$R" -eq 3 ]; then
-		sed -i "152s/.*/  int Nz = 192;/" sim.c
+		sed -i "159s/.*/  int Nz = 192;/" sim.c
 	elif [ "$R" -eq 5 ]; then
-		sed -i "152s/.*/  int Nz = 256;/" sim.c
+		sed -i "159s/.*/  int Nz = 256;/" sim.c
 	fi
 
-  sed -i "160s/.*/  double ion_source_amplitude = ${src_amp[$i]};/" sim.c
-  sed -i "161s/.*/  double ion_source_temp = ${src_temp[$i]} * eV;/" sim.c
-  sed -i "167s/.*/  double mcB = $mcB;/" sim.c
-  sed -i "168s/.*/  double gamma = $gamma;/" sim.c
-  sed -i "478s|.*|    .filename_psi = \"/home/mr1884/scratch/gkylmax/generate_efit/lorentzian_R${R}.geqdsk_psi.gkyl\",|" sim.c
+  sed -i "167s/.*/  double ion_source_amplitude = ${src_amp[$i]};/" sim.c
+  sed -i "168s/.*/  double ion_source_temp = ${src_temp[$i]} * eV;/" sim.c
+  sed -i "174s/.*/  double mcB = $mcB;/" sim.c
+  sed -i "175s/.*/  double gamma = $gamma;/" sim.c
+  sed -i "489s|.*|    .filename_psi = \"/home/mr1884/scratch/gkylmax/generate_efit/lorentzian_R${R}.geqdsk_psi.gkyl\",|" sim.c
 	
   sed -i "5s/.*/#SBATCH -J poa-R-${R}/" jobscript-gkyl-stellar-amd
   
@@ -55,8 +55,11 @@ for i in "${!mcB_values[@]}"; do
 
   # ./sim -s1
 
+  # Fine-tune the source amplitude/temp against the Hamiltonian-moments
+  # integrated diagnostic before submitting.
+  bash optimize_source_params.sh
+
   # Submit the job
-  # bash optimize_source_params.sh
   sbatch jobscript-gkyl-stellar-amd
 	# bash submit-restarts.sh
 	wait

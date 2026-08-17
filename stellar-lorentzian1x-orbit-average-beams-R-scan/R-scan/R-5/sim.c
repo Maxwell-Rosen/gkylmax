@@ -78,9 +78,9 @@ eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
   double vpar_midp = sqrt(pow(vpar,2.) + 2*mu*(Bmag - app->Bmag_midp)/app->mi); // Ignore potential for now
   double vperp = sqrt(2.0 * mu * app->B_p / app->mi); // What magnetic field do we use here?
 
-double gamma0 = 167.08296763; // Beam intM0 = 3.172138e+20
+double gamma0 = 142.147997226; // Beam intM0 = 3.1099679832479321e+20
   double T_beam = 200 * GKYL_ELEMENTARY_CHARGE;
-double E_beam = 25127.2323251 * GKYL_ELEMENTARY_CHARGE; // Beam intM2 = 7.682495e+32
+double E_beam = 25123.7178265 * GKYL_ELEMENTARY_CHARGE; // Beam intM2 = 1.2940166363523933e+06
   double v_beam = sqrt(E_beam / app->mi);
   double sigma_beam = 2*T_beam/app->mi;
 
@@ -99,7 +99,14 @@ void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *
   double cvpar = vc[0], cmu = vc[1];
   double b = 1.4;
   vp[0] = vpar_max_ion*tan(cvpar*b)/tan(b);
-  vp[1] = mu_max_ion*pow(cmu,3);  // Cubic map in mu.
+  double transition=0.2;
+  int power = 3;
+  if (cmu < transition) {
+    vp[1] = mu_max_ion * pow(transition,power-1) * cmu;
+  }
+  else {
+    vp[1] = mu_max_ion*pow(cmu,power);
+  }
 }
 
 void mapc2p_vel_elc(double t, const double *vc, double* GKYL_RESTRICT vp, void *ctx)
@@ -389,10 +396,10 @@ int main(int argc, char **argv)
         .ctx_func = &ctx,
       },
       .diagnostics = {
-        .num_diag_moments = 6,
-        .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_HAMILTONIAN},
+        .num_diag_moments = 7,
+        .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_HAMILTONIAN, GKYL_F_MOMENT_BIMAXWELLIAN},
         .num_integrated_diag_moments = 1,
-        .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
+        .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN },
       },
     },
     .positivity = {
@@ -408,12 +415,12 @@ int main(int argc, char **argv)
     .num_diag_moments = 8,
     .diag_moments = {GKYL_F_MOMENT_BIMAXWELLIAN, GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_M3PAR, GKYL_F_MOMENT_M3PERP },
     .num_integrated_diag_moments = 1,
-    .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
+    .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN },
     .time_rate_diagnostics = true,
 
     .boundary_flux_diagnostics = {
       .num_integrated_diag_moments = 1,
-      .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP},
+      .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN},
     },
   };
 
@@ -469,6 +476,7 @@ int main(int argc, char **argv)
     .electron_charge = ctx.qe,
     .electron_temp = ctx.Te0,
     .is_static = false,
+    .time_rate_diagnostics = true,
   };
 
   struct gkyl_mirror_geo_grid_inp grid_inp = {
