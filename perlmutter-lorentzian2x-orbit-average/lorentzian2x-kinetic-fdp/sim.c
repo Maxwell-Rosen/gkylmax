@@ -262,37 +262,35 @@ create_ctx(void)
   struct gk_poa_phase_params *poa_phases = gkyl_calloc(num_phases, sizeof(struct gk_poa_phase_params));
   for (int i=0; i<(num_phases-1)/2; i++) {
     // OAPs.
-    poa_phases[2*i].phase = GK_POA_OAP;
-    poa_phases[2*i].num_frames = num_frames_oap;
-    poa_phases[2*i].duration = tau_oap;
-    poa_phases[2*i].alpha_ion = alpha_ion_oap;
-    poa_phases[2*i].alpha_elc = alpha_elc_oap;
-    poa_phases[2*i].fdot_mult_type_ion = fdot_mult_type_ion_oap;
-    poa_phases[2*i].fdot_mult_type_elc = fdot_mult_type_elc_oap;
-    poa_phases[2*i].time_dilation_scale_const_ion = time_dilation_scale_const_ion_oap;
-    poa_phases[2*i].time_dilation_scale_const_elc = time_dilation_scale_const_elc_oap;
-    poa_phases[2*i].is_positivity_enabled = is_positivity_enabled_oap;
-    poa_phases[2*i].is_static_field = is_static_field_oap;
-    poa_phases[2*i].damping_type = GKYL_GK_DAMPING_NONE;
-    poa_phases[2*i].cfl_frac_omegaH = 1000;
-
+    poa_phases[2*i+1].phase = GK_POA_OAP;
+    poa_phases[2*i+1].num_frames = num_frames_oap;
+    poa_phases[2*i+1].duration = tau_oap;
+    poa_phases[2*i+1].alpha_ion = alpha_ion_oap;
+    poa_phases[2*i+1].alpha_elc = alpha_elc_oap;
+    poa_phases[2*i+1].fdot_mult_type_ion = fdot_mult_type_ion_oap;
+    poa_phases[2*i+1].fdot_mult_type_elc = fdot_mult_type_elc_oap;
+    poa_phases[2*i+1].time_dilation_scale_const_ion = time_dilation_scale_const_ion_oap;
+    poa_phases[2*i+1].time_dilation_scale_const_elc = time_dilation_scale_const_elc_oap;
+    poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_oap;
+    poa_phases[2*i+1].is_static_field = is_static_field_oap;
+    poa_phases[2*i+1].damping_type = GKYL_GK_DAMPING_NONE;
+    poa_phases[2*i+1].cfl_frac_omegaH = 1000;
 
     // FDPs.
-    poa_phases[2*i+1].phase = GK_POA_FDP;
-    poa_phases[2*i+1].num_frames = num_frames_fdp;
-    poa_phases[2*i+1].duration = tau_fdp;
-    poa_phases[2*i+1].alpha_ion = alpha_fdp;
-    poa_phases[2*i+1].alpha_elc = alpha_fdp;
-    poa_phases[2*i+1].fdot_mult_type_ion = fdot_mult_type_ion_fdp;
-    poa_phases[2*i+1].fdot_mult_type_elc = fdot_mult_type_elc_fdp;
-    poa_phases[2*i+1].time_dilation_scale_const_ion = time_dilation_scale_const_ion_fdp;
-    poa_phases[2*i+1].time_dilation_scale_const_elc = time_dilation_scale_const_elc_fdp;
-    poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_fdp;
-    poa_phases[2*i+1].is_static_field = is_static_field_fdp;
-    poa_phases[2*i+1].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
-    poa_phases[2*i+1].damping_rate_const = 1/5e-6;
-
-    poa_phases[2*i+1].cfl_frac_omegaH = 1.7;
+    poa_phases[2*i].phase = GK_POA_FDP;
+    poa_phases[2*i].num_frames = num_frames_fdp;
+    poa_phases[2*i].duration = tau_fdp;
+    poa_phases[2*i].alpha_ion = alpha_fdp;
+    poa_phases[2*i].alpha_elc = alpha_fdp;
+    poa_phases[2*i].fdot_mult_type_ion = fdot_mult_type_ion_fdp;
+    poa_phases[2*i].fdot_mult_type_elc = fdot_mult_type_elc_fdp;
+    poa_phases[2*i].time_dilation_scale_const_ion = time_dilation_scale_const_ion_fdp;
+    poa_phases[2*i].time_dilation_scale_const_elc = time_dilation_scale_const_elc_fdp;
+    poa_phases[2*i].is_positivity_enabled = is_positivity_enabled_fdp;
+    poa_phases[2*i].is_static_field = is_static_field_fdp;
+    poa_phases[2*i].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
+    poa_phases[2*i].damping_rate_const = 1/5e-6;
+    poa_phases[2*i].cfl_frac_omegaH = 1.7;
   }
   // The final stage is an extra, longer FDP.
   poa_phases[num_phases-1].phase = GK_POA_FDP;
@@ -477,25 +475,20 @@ int main(int argc, char **argv)
       .collide_with = { "elc" },
     },
 
-    .source = {
-      .source_id = GKYL_PROJ_SOURCE,
-      .num_sources = 1,
-      .projection[0] = {
-        .proj_id = GKYL_PROJ_FUNC,
-        .func = eval_f_ion_source,
-        .ctx_func = &ctx,
-      },
-      // .source_import[0] = {
-      //   .type = GKYL_IC_IMPORT_F,
-      //   .file_name = "2x-ic/gk_lorentzian_mirror-ion_source_0.gkyl",
-      // },
-      .diagnostics = {
-        .num_diag_moments = 6,
-        .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_BIMAXWELLIAN},
-        .num_integrated_diag_moments = 1,
-        .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
-      },
-    },
+    // .source = {
+    //   .source_id = GKYL_SOURCE_FROMFILE,
+    //   .num_sources = 1,
+    //   .source_import[0] = {
+    //     .type = GKYL_IC_IMPORT_F,
+    //     .file_name = "2x-ic/gk_lorentzian_mirror-ion_source_0.gkyl",
+    //   },
+    //   .diagnostics = {
+    //     .num_diag_moments = 6,
+    //     .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_BIMAXWELLIAN},
+    //     .num_integrated_diag_moments = 1,
+    //     .integrated_diag_moments = { GKYL_F_MOMENT_M0M1M2PARM2PERP },
+    //   },
+    // },
 
     .positivity = {
       .type = GKYL_GK_POSITIVITY_SHIFT,

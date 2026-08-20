@@ -31,6 +31,7 @@ struct gk_poa_phase_params {
   double time_dilation_scale_const, time_dilation_scale_const_ion, time_dilation_scale_const_elc; // Constant time dilation scale factor (if fdot_mult_type is GKYL_GK_FDOT_MULTIPLIER_CONSTANT).
   enum gkyl_gyrokinetic_damping_type damping_type; // Type of damping to apply.
   double damping_rate_const;
+  double cfl_frac_omegaH;
 };
 
 // Define the context of the simulation. This is basically all the globals
@@ -491,6 +492,7 @@ void run_phase_kinetic_elc(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx,
   gkyl_gyrokinetic_app_cout(app, stdout, "  CFL factor times omega max elc = %g\n", pparams->cfl_factor_times_omega_max_elc);
   gkyl_gyrokinetic_app_cout(app, stdout, "  Time dilation scale const ion = %g\n", pparams->time_dilation_scale_const_ion);
   gkyl_gyrokinetic_app_cout(app, stdout, "  Time dilation scale const elc = %g\n", pparams->time_dilation_scale_const_elc);
+  gkyl_gyrokinetic_app_cout(app, stdout, "  CFL omega_H fraction = %g\n", pparams->cfl_frac_omegaH);
   
   gkyl_gyrokinetic_app_cout(app, stdout, "----------------------------------------------\n");
 
@@ -578,6 +580,7 @@ void run_phase_kinetic_elc(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx,
   gkyl_gyrokinetic_app_reset_species_fdot_multiplier(app, t_curr, "elc", elc_fdot_mult_inp);
   gkyl_gyrokinetic_app_reset_species_positivity(app, t_curr, "elc", elc_positivity_inp);
   gkyl_gyrokinetic_app_reset_species_damping(app, t_curr, "elc", damping_inp);
+  gkyl_gyrokinetic_app_reset_cfl_frac_omegaH(app, t_curr, pparams->cfl_frac_omegaH);
 
   gkyl_gyrokinetic_app_reset_field(app, t_curr, field_inp);
 
