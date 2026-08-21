@@ -10,15 +10,15 @@
 #SBATCH -C gpu 
 
 #.Number of nodes to request (Perlmutter has 64 cores and 4 GPUs per node)
-#SBATCH -N 4
-#SBATCH --ntasks 16
+#SBATCH -N 2
+#SBATCH --ntasks 8
 
 #.Specify GPU needs:
 #SBATCH --constraint gpu
-# SBATCH --gpus 16
+# SBATCH --gpus 8
 
 #.Request wall time
-#SBATCH -t 18:00:00
+#SBATCH -t 24:00:00
 
 #.Mail is sent to you when the job starts and when it terminates or aborts.
 #SBATCH --mail-user=mhrosen@pppl.gov
