@@ -157,7 +157,7 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   double vpar_max_elc = 4 * vte;
   double mu_max_elc = me * pow(4. * vte, 2.) / (2. * B_p);
-  int Nz = 400;
+  int Nz = 320;
   int Nvpar = 64;
   int Nmu = 32;
   int Nvpar_elc = 8;
