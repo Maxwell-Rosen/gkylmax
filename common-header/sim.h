@@ -362,11 +362,11 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
   struct gkyl_gyrokinetic_positivity positivity_inp = {
     .type = pparams->is_positivity_enabled? GKYL_GK_POSITIVITY_SHIFT : GKYL_GK_POSITIVITY_NONE,
     .write_diagnostics = pparams->is_positivity_enabled,
-    // .shift_regions = {
-    //   .num_regions = 2,
-    //   .lower = {-1.25, 0.95},
-    //   .upper = {-0.95, 1.25},
-    // },
+    .shift_regions = {
+      .num_regions = 2,
+      .lower = {-1.3, 1.2},
+      .upper = {-1.2, 1.3},
+    },
   };
   struct gkyl_gyrokinetic_damping damping_inp = {
     .type = pparams->damping_type,
