@@ -52,38 +52,41 @@ export FI_CXI_RDZV_GET_MIN=0
 export FI_CXI_RDZV_THRESHOLD=0
 export FI_CXI_RDZV_EAGER_SIZE=0
 
-max_number=0
+max_number=-1
 file_prefix="gk_lorentzian_mirror-ion_"
-file_extension="[0-9]*.gkyl"
-matching_files=$(ls $file_prefix$file_extension)
-for file in $matching_files; do
-  # # Extract the number between the prefix and suffix
-  number=$(echo "$file" | sed "s|$file_prefix||; s|\.gkyl||")
-  # If the number is greater than the current max_number, update max_number and max_file
-  if [ "$number" -gt "$max_number" ]; then
-    max_number="$number"
+shopt -s nullglob
+matching_files=("${file_prefix}"[0-9]*.gkyl)
+for file in "${matching_files[@]}"; do
+  number=${file#"$file_prefix"}
+  number=${number%.gkyl}
+  if [[ $number =~ ^[0-9]+$ ]] && (( 10#$number > max_number )); then
+    max_number=$((10#$number))
   fi
 done
 echo "Max number is $max_number"
 
-if [ "$max_number" -eq 0 ]; then
-  echo "No matching files found. Starting from the begining"
+if [ "$max_number" -lt 0 ]; then
+  echo "No matching files found. Starting from the beginning"
   if [ "$num_gpu" -eq 1 ]; then
     echo "./sim -g"
     ./sim -g
+    sim_status=$?
   else
     echo "srun -u -n $num_gpu ./sim -g -M -c $num_gpu"
     srun -u -n $num_gpu --gpus $num_gpu ./sim -g -M -c $num_gpu
+    sim_status=$?
   fi
 else
   echo "Resuming from file $max_number"
   if [ "$num_gpu" -eq 1 ]; then
     echo "./sim -g -r $max_number"
     ./sim -g -r $max_number
+    sim_status=$?
   else
     echo "srun -u -n $num_gpu ./sim -g -M -c $num_gpu -r $max_number"
     srun -u -n $num_gpu --gpus $num_gpu ./sim -g -M -c $num_gpu -r $max_number
+    sim_status=$?
   fi
 fi
 
-exit
+exit "$sim_status"
