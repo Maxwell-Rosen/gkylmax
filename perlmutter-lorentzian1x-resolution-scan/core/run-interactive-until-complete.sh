@@ -26,6 +26,8 @@ final_frame=${2:-65}
 file_prefix=${3:-gk_lorentzian_mirror-ion_}
 job_script_name=${JOB_SCRIPT_NAME:-jobscript-gkyl-perlmutter}
 max_no_progress=${MAX_NO_PROGRESS:-3}
+interactive_session_limit=${INTERACTIVE_SESSION_LIMIT:-2}
+session_poll_seconds=${SESSION_POLL_SECONDS:-600}
 
 if [[ ! $final_frame =~ ^[0-9]+$ ]]; then
   echo "FINAL_FRAME must be a non-negative integer, not '$final_frame'." >&2
@@ -33,6 +35,14 @@ if [[ ! $final_frame =~ ^[0-9]+$ ]]; then
 fi
 if [[ ! $max_no_progress =~ ^[0-9]+$ ]]; then
   echo "MAX_NO_PROGRESS must be a non-negative integer, not '$max_no_progress'." >&2
+  exit 2
+fi
+if [[ ! $interactive_session_limit =~ ^[1-9][0-9]*$ ]]; then
+  echo "INTERACTIVE_SESSION_LIMIT must be a positive integer, not '$interactive_session_limit'." >&2
+  exit 2
+fi
+if [[ ! $session_poll_seconds =~ ^[1-9][0-9]*$ ]]; then
+  echo "SESSION_POLL_SECONDS must be a positive integer, not '$session_poll_seconds'." >&2
   exit 2
 fi
 if [[ ! -d $run_dir_input ]]; then
@@ -101,6 +111,8 @@ if [[ $mode == start ]]; then
 
   printf -v worker_command '%q ' \
     env "MAX_NO_PROGRESS=$max_no_progress" "JOB_SCRIPT_NAME=$job_script_name" \
+    "INTERACTIVE_SESSION_LIMIT=$interactive_session_limit" \
+    "SESSION_POLL_SECONDS=$session_poll_seconds" \
     "$script_path" --worker "$run_dir" "$final_frame" "$file_prefix"
   if ! tmux new-session -d -s "$session_name" "$worker_command"; then
     echo "Could not create tmux session '$session_name'." >&2
@@ -117,6 +129,10 @@ if ! command -v salloc >/dev/null 2>&1; then
   echo "salloc is not available; run this script on a Perlmutter login node." >&2
   exit 1
 fi
+if ! command -v squeue >/dev/null 2>&1; then
+  echo "squeue is not available; cannot check for an interactive-session slot." >&2
+  exit 1
+fi
 if [[ ! -r $job_script ]]; then
   echo "Cannot read job script: $job_script" >&2
   exit 1
@@ -129,12 +145,54 @@ fi
 echo "[$(date --iso-8601=seconds)] Interactive runner started"
 echo "Run directory: $run_dir"
 echo "Completion checkpoint: ${file_prefix}${final_frame}.gkyl"
+echo "Interactive-session limit: $interactive_session_limit; poll interval: ${session_poll_seconds}s"
+
+interactive_session_count()
+{
+  local count
+
+  if ! count=$(squeue \
+    --me \
+    --qos=interactive \
+    --states=PENDING,RUNNING \
+    --noheader \
+    --format='%i' | awk 'NF { count++ } END { print count + 0 }'); then
+    echo "Could not query active interactive sessions with squeue." >&2
+    return 1
+  fi
+
+  printf '%d\n' "$count"
+}
+
+wait_for_interactive_session()
+{
+  local active_sessions
+
+  while true; do
+    if ! active_sessions=$(interactive_session_count); then
+      return 1
+    fi
+
+    if (( active_sessions < interactive_session_limit )); then
+      echo "[$(date --iso-8601=seconds)] Interactive slot available ($active_sessions/$interactive_session_limit in use)."
+      return 0
+    fi
+
+    echo "[$(date --iso-8601=seconds)] All $interactive_session_limit interactive slots are in use."
+    echo "Polling again in $session_poll_seconds seconds ..."
+    sleep "$session_poll_seconds"
+  done
+}
 
 attempt=0
 no_progress=0
 run_id="$(date +%Y%m%dT%H%M%S)-$$"
 
 while ! is_complete; do
+  if ! wait_for_interactive_session; then
+    exit 1
+  fi
+
   attempt=$((attempt + 1))
   before=$(latest_frame)
   attempt_log="$run_dir/.interactive-logs/${run_id}-attempt-${attempt}.log"

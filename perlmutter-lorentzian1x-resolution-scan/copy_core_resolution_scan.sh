@@ -1,6 +1,14 @@
 #!/bin/bash
 set -euo pipefail
 
+# Set to true to use interactive allocations, or false to submit jobs with sbatch.
+use_interactive_sessions=true
+
+if [[ $use_interactive_sessions != true && $use_interactive_sessions != false ]]; then
+  echo "use_interactive_sessions must be true or false, not '$use_interactive_sessions'." >&2
+  exit 1
+fi
+
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 cd "$script_dir"
 
@@ -36,9 +44,18 @@ cell_numbers=(144 192 216 250)
 vpar_cell_numbers=(32 48 64 96)
 mu_cell_numbers=(8 16 24 32)
 
+run_job()
+{
+  if [[ $use_interactive_sessions == true ]]; then
+    bash run-interactive-until-complete.sh
+  else
+    sbatch jobscript-gkyl-perlmutter
+  fi
+}
+
 rm -f core/sim core/sim.d
 
-# Start interactive runs for z scans
+# Start runs for z scans
 for cell_number in "${cell_numbers[@]}"; do
   # Create the folder structure
   folder_name="z-scan/${cell_number}"
@@ -57,17 +74,17 @@ for cell_number in "${cell_numbers[@]}"; do
   # Build the simulation
   make
 
-  # Run to completion across interactive allocations
-  bash run-interactive-until-complete.sh
+  # Start the run using the selected submission mode
+  run_job
 
   # Print confirmation
-  echo "started interactive run for cell_number = $cell_number"
+  echo "started run for cell_number = $cell_number"
 
   # Change back to the root directory
   cd - || exit
 done
 
-# Start interactive runs for vpar scans
+# Start runs for vpar scans
 for vcell_number in "${vpar_cell_numbers[@]}"; do
   # Create the folder structure
   folder_name="vpar-scan/${vcell_number}"
@@ -86,17 +103,17 @@ for vcell_number in "${vpar_cell_numbers[@]}"; do
   # Build the simulation
   make
 
-  # Run to completion across interactive allocations
-  bash run-interactive-until-complete.sh
+  # Start the run using the selected submission mode
+  run_job
 
   # Print confirmation
-  echo "started interactive run for vpar = $vcell_number"
+  echo "started run for vpar = $vcell_number"
 
   # Change back to the root directory
   cd - || exit
 done
 
-# Start interactive runs for mu scans
+# Start runs for mu scans
 for vcell_number in "${mu_cell_numbers[@]}"; do
   # Create the folder structure
   folder_name="mu-scan/${vcell_number}"
@@ -115,11 +132,11 @@ for vcell_number in "${mu_cell_numbers[@]}"; do
   # Build the simulation
   make
 
-  # Run to completion across interactive allocations
-  bash run-interactive-until-complete.sh
+  # Start the run using the selected submission mode
+  run_job
 
   # Print confirmation
-  echo "started interactive run for mu = $vcell_number"
+  echo "started run for mu = $vcell_number"
 
   # Change back to the root directory
   cd - || exit
