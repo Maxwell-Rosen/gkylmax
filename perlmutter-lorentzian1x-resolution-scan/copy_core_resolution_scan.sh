@@ -41,8 +41,8 @@ export FI_CXI_RDZV_EAGER_SIZE=0
 
 # Define arrays
 cell_numbers=(200 256 320)
-vpar_cell_numbers=(32 48 64)
-mu_cell_numbers=(8 16 24 32)
+vpar_cell_numbers=(32 48)
+mu_cell_numbers=(8 16 24)
 
 run_job()
 {
@@ -55,34 +55,34 @@ run_job()
 
 rm -f core/sim core/sim.d
 
-# Start runs for z scans
-for cell_number in "${cell_numbers[@]}"; do
-  # Create the folder structure
-  folder_name="z-scan/${cell_number}"
+# # Start runs for z scans
+# for cell_number in "${cell_numbers[@]}"; do
+#   # Create the folder structure
+#   folder_name="z-scan/${cell_number}"
 
-  mkdir -p "$folder_name"
+#   mkdir -p "$folder_name"
 
-  # Copy core files into the folder
-  cp core/* "$folder_name/"
+#   # Copy core files into the folder
+#   cp core/* "$folder_name/"
 
-  # Change into the folder
-  cd "$folder_name" || exit
+#   # Change into the folder
+#   cd "$folder_name" || exit
 
-  sed -i -E "s/^[[:space:]]*int Nz = [0-9]+;/  int Nz = $cell_number;/" sim.c
-  sed -i "4s/.*/#SBATCH -J poa-z-$cell_number/" jobscript-gkyl-perlmutter
+#   sed -i -E "s/^[[:space:]]*int Nz = [0-9]+;/  int Nz = $cell_number;/" sim.c
+#   sed -i "4s/.*/#SBATCH -J poa-z-$cell_number/" jobscript-gkyl-perlmutter
   
-  # Build the simulation
-  make
+#   # Build the simulation
+#   make
 
-  # Start the run using the selected submission mode
-  run_job
+#   # Start the run using the selected submission mode
+#   run_job
 
-  # Print confirmation
-  echo "started run for cell_number = $cell_number"
+#   # Print confirmation
+#   echo "started run for cell_number = $cell_number"
 
-  # Change back to the root directory
-  cd - || exit
-done
+#   # Change back to the root directory
+#   cd - || exit
+# done
 
 # Start runs for vpar scans
 for vcell_number in "${vpar_cell_numbers[@]}"; do
