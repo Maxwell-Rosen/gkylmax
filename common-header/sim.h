@@ -32,6 +32,9 @@ struct gk_poa_phase_params {
   enum gkyl_gyrokinetic_damping_type damping_type; // Type of damping to apply.
   double damping_rate_const;
   double cfl_frac_omegaH;
+#ifdef GK_POA_ENABLE_POSITIVITY_SHIFT_REGIONS
+  const struct gkyl_positivity_shift_gyrokinetic_regions *shift_regions; // Optional regions in which to apply the positivity shift (NULL applies it everywhere).
+#endif
 };
 
 // Define the context of the simulation. This is basically all the globals
@@ -362,12 +365,11 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
   struct gkyl_gyrokinetic_positivity positivity_inp = {
     .type = pparams->is_positivity_enabled? GKYL_GK_POSITIVITY_SHIFT : GKYL_GK_POSITIVITY_NONE,
     .write_diagnostics = pparams->is_positivity_enabled,
-    .shift_regions = {
-      .num_regions = 2,
-      .lower = {-1.3, 1.2},
-      .upper = {-1.2, 1.3},
-    },
   };
+#ifdef GK_POA_ENABLE_POSITIVITY_SHIFT_REGIONS
+  if (pparams->shift_regions)
+    positivity_inp.shift_regions = *pparams->shift_regions;
+#endif
   struct gkyl_gyrokinetic_damping damping_inp = {
     .type = pparams->damping_type,
     .rate_const = pparams->damping_rate_const,
