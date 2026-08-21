@@ -508,10 +508,11 @@ int main(int argc, char **argv)
       .mirror_grid_info = grid_inp,
       .position_map_info = {
         .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
-        .map_strength = 0.5,
+        .map_strength = 1.0,
         .maximum_slope_at_min_B = 2,
-        .gaussian_std = 0.25,
-        .gaussian_max_integration_width = 0.5,
+        .maximum_slope_at_max_B = 2,
+        .gaussian_std = 0.5,
+        .gaussian_max_integration_width = 1.0,
       },
     },
 
