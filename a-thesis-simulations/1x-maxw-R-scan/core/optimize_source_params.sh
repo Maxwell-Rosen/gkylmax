@@ -265,10 +265,22 @@ get_integrated_moment() {
 }
 
 run_sim() {
+  local status
+
   echo "[run] make && $SIM_BIN $SIM_ARGS"
-  make > /dev/null 2>&1
+  if ! make > source_optimization_build.log 2>&1; then
+    cat source_optimization_build.log >&2
+    die "build failed; full output is in source_optimization_build.log"
+  fi
+
   # shellcheck disable=SC2086
-  $SIM_BIN $SIM_ARGS > /dev/null 2>&1
+  if $SIM_BIN $SIM_ARGS > source_optimization_sim.log 2>&1; then
+    rm -f source_optimization_build.log source_optimization_sim.log
+  else
+    status=$?
+    cat source_optimization_sim.log >&2
+    die "simulation failed with status $status; full output is in source_optimization_sim.log"
+  fi
 }
 
 echo "Initial coefficients: amplitude = $amp_coeff, temp_eV = $temp_coeff_ev"

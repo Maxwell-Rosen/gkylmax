@@ -1,4 +1,12 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+project_dir=$(cd -- "$script_dir/../.." && pwd -P)
+psi_dir="${PSI_DIR:-$project_dir/generate_efit}"
+
+cd "$script_dir"
 
 # Perlmutter-specific modules (commented out for stellar-amd)
 # module load PrgEnv-gnu/8.5.0
@@ -13,6 +21,24 @@ gamma_values=(0.451454 0.331696 0.226381 0.182792 0.149893 0.098619)
 R_values=(3 5 10 15 22 50)
 src_amp=(133.489434322 167.08296763 187.529468419 193.893947813 197.854501103 202.174079918)
 src_temp=(25141.1582175 25127.2323251 25120.9096778 25117.3014755 25114.8563657 25126.3674234)
+
+num_cases=${#R_values[@]}
+for values_name in mcB_values gamma_values src_amp src_temp; do
+  declare -n values="$values_name"
+  if (( ${#values[@]} != num_cases )); then
+    echo "ERROR: $values_name has ${#values[@]} values; expected $num_cases" >&2
+    exit 1
+  fi
+done
+
+for R in "${R_values[@]}"; do
+  psi_file="$psi_dir/lorentzian_R${R}.geqdsk_psi.gkyl"
+  if [[ ! -f "$psi_file" ]]; then
+    echo "ERROR: geometry file not found: $psi_file" >&2
+    echo "Set PSI_DIR if the geometry files are stored elsewhere." >&2
+    exit 1
+  fi
+done
 
 mkdir -p R-scan
 
@@ -49,24 +75,24 @@ for i in "${!mcB_values[@]}"; do
   sed -i "s/^[[:space:]]*double E_beam = .*/  double E_beam = ${src_temp[$i]} * GKYL_ELEMENTARY_CHARGE; \/\/ Beam intM2 = 1.2940166363523933e+06/" sim.c
   sed -i "s/^[[:space:]]*double mcB = .*/  double mcB = $mcB;/" sim.c
   sed -i "s/^[[:space:]]*double gamma = .*/  double gamma = $gamma;/" sim.c
-  sed -i "s|^[[:space:]]*\.filename_psi = .*|    .filename_psi = \"/home/mr1884/scratch/gkylmax/generate_efit/lorentzian_R${R}.geqdsk_psi.gkyl\", // psi file to use|" sim.c
+  psi_file="$psi_dir/lorentzian_R${R}.geqdsk_psi.gkyl"
+  sed -i "s|^[[:space:]]*\.filename_psi = .*|    .filename_psi = \"$psi_file\", // psi file to use|" sim.c
 
   sed -i "s/^#SBATCH -J .*/#SBATCH -J poa-bem-R-${R}/" jobscript-gkyl-perlmutter
 
   # Build the simulation
-	make clean
+  make clean
   make
 
 
   # Fine-tune gamma0/E_beam against the Hamiltonian-moments integrated
   # diagnostic before submitting.
+  rm -f source_optimization_history.csv source_optimization_build.log source_optimization_sim.log
   bash optimize_source_params.sh
 
   # Submit the job
   sbatch jobscript-gkyl-perlmutter
 	# bash submit-restarts.sh
-
-	wait
 
   # Print confirmation
   echo "submitted job for R = $R (mcB = $mcB, gamma = $gamma)"
