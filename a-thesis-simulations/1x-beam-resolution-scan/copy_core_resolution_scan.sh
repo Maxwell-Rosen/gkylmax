@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Set to true to use interactive allocations, or false to submit jobs with sbatch.
-use_interactive_sessions=true
+use_interactive_sessions=false
 
 if [[ $use_interactive_sessions != true && $use_interactive_sessions != false ]]; then
   echo "use_interactive_sessions must be true or false, not '$use_interactive_sessions'." >&2

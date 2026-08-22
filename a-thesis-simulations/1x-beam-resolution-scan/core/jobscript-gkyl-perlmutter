@@ -18,7 +18,7 @@
 # SBATCH --gpus 8
 
 #.Request wall time
-#SBATCH -t 24:00:00
+#SBATCH -t 12:00:00
 
 #.Mail is sent to you when the job starts and when it terminates or aborts.
 #SBATCH --mail-user=mhrosen@pppl.gov

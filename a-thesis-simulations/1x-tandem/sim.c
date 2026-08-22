@@ -28,13 +28,14 @@ initial_upar(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fou
   struct gk_mirror_ctx *app = ctx;
   double z = xn[0];
   double c_s = 7 * sqrt(app->Te0/app->mi);
-  if (fabs(z) <= app->Z_m)
+  double L_last_coil = app->L_center/2 + app->L_plugs;
+  if (fabs(z) <= L_last_coil)
   {
     fout[0] = 0.0;
   }
   else
   {
-    fout[0] = fabs(z) / z * c_s * tanh(4 * (app->Z_max - app->Z_m) * fabs(fabs(z) - app->Z_m));
+    fout[0] = fabs(z) / z * c_s * tanh(4 * (app->Z_max - L_last_coil) * fabs(fabs(z) - L_last_coil));
   }
 }
 
@@ -57,10 +58,13 @@ eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
 {
   struct gk_mirror_ctx *app = ctx;
   double z = xn[0];
-  if (fabs(z) > app->Z_m) { // For tandem mirrors, we just put this in the end cells
+  double Z_inner = app->L_center/2;
+  double Z_outer = Z_inner + app->L_plugs;
+  if (fabs(z) < Z_inner || fabs(z) > Z_outer) { // For tandem mirrors, we just put this in the end cells
     fout[0] = 1e-20;
     return;
   }
+
   double vpar = xn[1];
   double mu = xn[2];
   
@@ -71,16 +75,16 @@ eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
   // For demonstration, we don't need any of this and we can do it like this with just B
   double bvec[3];
   double xc_in[3] = {app->psi_eval, 0.0, z};
-  bfield_func(t, xc_in, bvec, ctx);
+  bfield_func_tandem(t, xc_in, bvec, ctx);
   double Bmag = sqrt(bvec[0]*bvec[0] + bvec[1]*bvec[1] + bvec[2]*bvec[2]);
   
   //Following energy conservation, re-map what vpar would be at the midplane
   double vpar_midp = sqrt(pow(vpar,2.) + 2*mu*(Bmag - app->Bmag_midp)/app->mi); // Ignore potential for now
   double vperp = sqrt(2.0 * mu * app->B_p / app->mi); // What magnetic field do we use here?
 
-  double gamma0 = 200;
+  double gamma0 = 193.893947813;
   double T_beam = 200 * GKYL_ELEMENTARY_CHARGE;
-  double E_beam = 25000 * GKYL_ELEMENTARY_CHARGE;
+  double E_beam = 25117.3014755 * GKYL_ELEMENTARY_CHARGE;
   double v_beam = sqrt(E_beam / app->mi);
   double sigma_beam = 2*T_beam/app->mi;
 
@@ -157,7 +161,7 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   double vpar_max_elc = 4 * vte;
   double mu_max_elc = me * pow(4. * vte, 2.) / (2. * B_p);
-  int Nz = 400;
+  int Nz = 1000;
   int Nvpar = 64;
   int Nmu = 32;
   int Nvpar_elc = 8;
@@ -165,12 +169,16 @@ create_ctx(void)
   int poly_order = 1;
 
   // Geometry parameters.
-  double RatZeq0 = 0.10; // Radius of the field line at Z=0.
-  double Z_min = -2.5;
-  double Z_max =  2.5;
-  double mcB = 6.51292;
-  double gamma = 0.124904;
-  double Z_m = 0.98;
+  double RatZeq0 = 0.15; // Radius of the field line at Z=0.
+  double Z_min = -5.5;
+  double Z_max =  5.5;
+  double L_center = 4.0;
+  double L_plugs = 2.0;
+  // Tandem parameters for R = 15.
+  double mcB_inner = 4.258079;
+  double mcB_outer = 4.311313;
+  double gamma_inner = 0.182798;
+  double gamma_outer = 0.184758;
 
   // POA parameters  
   double alpha_oap = 2e-5;  // Factor multiplying collisionless terms.
@@ -181,9 +189,9 @@ create_ctx(void)
   int num_cycles = 5; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
-  int num_frames_oap = 5;        // Frames per OAP phase
-  int num_frames_fdp = 5;        // Frames per FDP phase
-  int num_frames_fdp_extra = 3*5;  // Frames for the extra FDP phase
+  int num_frames_oap = 10;        // Frames per OAP phase
+  int num_frames_fdp = 10;        // Frames per FDP phase
+  int num_frames_fdp_extra = 3*10;  // Frames for the extra FDP phase
   
   // Whether to evolve the field.
   bool is_static_field_oap = false;
@@ -285,24 +293,24 @@ create_ctx(void)
     .dt_failure_tol = dt_failure_tol,
     .num_failures_max = num_failures_max,
 
-    .mcB = mcB,
-    .gamma = gamma,
-    .Z_m = Z_m,
+    .mcB_inner = mcB_inner,
+    .mcB_outer = mcB_outer,
+    .gamma_inner = gamma_inner,
+    .gamma_outer = gamma_outer,
+    .L_center = L_center,
+    .L_plugs = L_plugs,
     .Z_min = Z_min,
     .Z_max = Z_max,
   };
   
   // Populate a couple more values in the context.
-  ctx.psi_eval = psi_RZ(ctx.RatZeq0, 0.0, &ctx);
+  ctx.psi_eval = psi_RZ_tandem(ctx.RatZeq0, 0.0, &ctx);
 
   // Calculate magnetic field magnitude at midplane (Z=0)
-  double bvec[3];
-  double xc_midp[3] = {ctx.psi_eval, 0.0, 0.0};
-  bfield_func(0.0, xc_midp, bvec, &ctx);
-  ctx.Bmag_midp = sqrt(bvec[0]*bvec[0] + bvec[1]*bvec[1] + bvec[2]*bvec[2]);
+  ctx.Bmag_midp = 0.5; // Tandem mirrors are optimized with B_p = 0.5 in the end plugs
 
-  ctx.z_min    = z_psiZ(ctx.psi_eval, ctx.Z_min, &ctx);
-  ctx.z_max    = z_psiZ(ctx.psi_eval, ctx.Z_max, &ctx);
+  ctx.z_min    = z_psiZ_tandem(ctx.psi_eval, ctx.Z_min, &ctx);
+  ctx.z_max    = z_psiZ_tandem(ctx.psi_eval, ctx.Z_max, &ctx);
 
   return ctx;
 }
@@ -485,16 +493,16 @@ int main(int argc, char **argv)
   };
 
   struct gkyl_mirror_geo_grid_inp grid_inp = {
-    .filename_psi = "/global/homes/m/mhrosen/scratch/gkylmax/generate_efit/lorentzian_R32.geqdsk_psi.gkyl", // psi file to use
+    .filename_psi = "/global/homes/m/mhrosen/scratch/gkylmax/generate_efit/tandem_R15.geqdsk_psi.gkyl", // psi file to use
     .rclose = 0.2, // closest R to region of interest
-    .zmin = -2.5,  // Z of lower boundary
-    .zmax =  2.5,  // Z of upper boundary
+    .zmin = -5.5,  // Z of lower boundary
+    .zmax =  5.5,  // Z of upper boundary
     .include_axis = false, // Include R=0 axis in grid
     .fl_coord = GKYL_GEOMETRY_MIRROR_GRID_GEN_PSI_CART_Z, // coordinate system for psi grid
   };
 
   struct gkyl_gk app_inp = {  // GK app
-    .name = "gk_lorentzian_mirror",
+    .name = "zzim",
     .cdim = ctx.cdim,
     .lower = {ctx.Z_min},
     .upper = {ctx.Z_max},
