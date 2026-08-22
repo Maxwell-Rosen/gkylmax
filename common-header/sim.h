@@ -31,6 +31,10 @@ struct gk_poa_phase_params {
   double time_dilation_scale_const, time_dilation_scale_const_ion, time_dilation_scale_const_elc; // Constant time dilation scale factor (if fdot_mult_type is GKYL_GK_FDOT_MULTIPLIER_CONSTANT).
   enum gkyl_gyrokinetic_damping_type damping_type; // Type of damping to apply.
   double damping_rate_const;
+  double cfl_frac_omegaH;
+#ifdef GK_POA_ENABLE_POSITIVITY_SHIFT_REGIONS
+  const struct gkyl_positivity_shift_gyrokinetic_regions *shift_regions; // Optional regions in which to apply the positivity shift (NULL applies it everywhere).
+#endif
 };
 
 // Define the context of the simulation. This is basically all the globals
@@ -361,12 +365,11 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
   struct gkyl_gyrokinetic_positivity positivity_inp = {
     .type = pparams->is_positivity_enabled? GKYL_GK_POSITIVITY_SHIFT : GKYL_GK_POSITIVITY_NONE,
     .write_diagnostics = pparams->is_positivity_enabled,
-    // .shift_regions = {
-    //   .num_regions = 2,
-    //   .lower = {-1.25, 0.95},
-    //   .upper = {-0.95, 1.25},
-    // },
   };
+#ifdef GK_POA_ENABLE_POSITIVITY_SHIFT_REGIONS
+  if (pparams->shift_regions)
+    positivity_inp.shift_regions = *pparams->shift_regions;
+#endif
   struct gkyl_gyrokinetic_damping damping_inp = {
     .type = pparams->damping_type,
     .rate_const = pparams->damping_rate_const,
@@ -491,6 +494,7 @@ void run_phase_kinetic_elc(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx,
   gkyl_gyrokinetic_app_cout(app, stdout, "  CFL factor times omega max elc = %g\n", pparams->cfl_factor_times_omega_max_elc);
   gkyl_gyrokinetic_app_cout(app, stdout, "  Time dilation scale const ion = %g\n", pparams->time_dilation_scale_const_ion);
   gkyl_gyrokinetic_app_cout(app, stdout, "  Time dilation scale const elc = %g\n", pparams->time_dilation_scale_const_elc);
+  gkyl_gyrokinetic_app_cout(app, stdout, "  CFL omega_H fraction = %g\n", pparams->cfl_frac_omegaH);
   
   gkyl_gyrokinetic_app_cout(app, stdout, "----------------------------------------------\n");
 
@@ -578,6 +582,7 @@ void run_phase_kinetic_elc(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx,
   gkyl_gyrokinetic_app_reset_species_fdot_multiplier(app, t_curr, "elc", elc_fdot_mult_inp);
   gkyl_gyrokinetic_app_reset_species_positivity(app, t_curr, "elc", elc_positivity_inp);
   gkyl_gyrokinetic_app_reset_species_damping(app, t_curr, "elc", damping_inp);
+  gkyl_gyrokinetic_app_reset_cfl_frac_omegaH(app, t_curr, pparams->cfl_frac_omegaH);
 
   gkyl_gyrokinetic_app_reset_field(app, t_curr, field_inp);
 

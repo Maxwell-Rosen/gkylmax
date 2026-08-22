@@ -8,6 +8,7 @@
 #include <gkyl_fem_poisson_bctype.h>
 #include <gkyl_gyrokinetic.h>
 #include <gkyl_math.h>
+#define GK_POA_ENABLE_POSITIVITY_SHIFT_REGIONS
 #include <sim.h>
 
 #include <rt_arg_parse.h>
@@ -157,7 +158,7 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   double vpar_max_elc = 4 * vte;
   double mu_max_elc = me * pow(4. * vte, 2.) / (2. * B_p);
-  int Nz = 320;
+  int Nz = 400;
   int Nvpar = 64;
   int Nmu = 32;
   int Nvpar_elc = 8;
@@ -191,12 +192,17 @@ create_ctx(void)
 
   // Whether to enable positivity.
   bool is_positivity_enabled_oap = false;
-  bool is_positivity_enabled_fdp = false;
+  bool is_positivity_enabled_fdp = true;
   // Type of df/dt multipler.
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_oap = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE;
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_fdp = GKYL_GK_FDOT_MULTIPLIER_FIXED_FACTOR_TIMES_OMEGA_MAX;
 
   double cfl_factor_times_omega_max = 1/10.0; // CFL factor for fixed factor times omega max multiplier.
+  static const struct gkyl_positivity_shift_gyrokinetic_regions shift_regions = {
+    .num_regions = 2,
+    .lower = {-1.3, 1.2},
+    .upper = {-1.2, 1.3},
+  };
 
   // Calculate phase structure
   double t_end = (tau_oap + tau_fdp)*num_cycles + tau_fdp_extra;
@@ -216,6 +222,7 @@ create_ctx(void)
     poa_phases[2*i].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
     poa_phases[2*i].is_positivity_enabled = is_positivity_enabled_oap;
     poa_phases[2*i].damping_type = GKYL_GK_DAMPING_NONE;
+    poa_phases[2*i].shift_regions = &shift_regions;
 
     // FDPs.
     poa_phases[2*i+1].phase = GK_POA_FDP;
@@ -228,6 +235,7 @@ create_ctx(void)
     poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_fdp;
     poa_phases[2*i+1].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
     poa_phases[2*i+1].damping_rate_const = 1/5e-6;
+    poa_phases[2*i+1].shift_regions = &shift_regions;
   }
   // The final stage is an extra, longer FDP.
   poa_phases[num_phases-1].phase = GK_POA_FDP;
@@ -240,6 +248,7 @@ create_ctx(void)
   poa_phases[num_phases-1].is_positivity_enabled = is_positivity_enabled_fdp;
   poa_phases[num_phases-1].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
   poa_phases[num_phases-1].damping_rate_const = 1/5e-6;
+  poa_phases[num_phases-1].shift_regions = &shift_regions;
 
   double write_phase_freq = 1; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
   double int_diag_calc_freq = 100; // Frequency of calculating integrated diagnostics (as a factor of num_frames).

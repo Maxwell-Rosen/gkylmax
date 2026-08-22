@@ -59,6 +59,13 @@ initial_temp_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT
 }
 
 void
+eval_temp_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  struct gk_mirror_ctx *app = ctx;
+  fout[0] = app->Te0/10.0;
+}
+
+void
 eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
@@ -267,6 +274,8 @@ create_ctx(void)
     poa_phases[2*i].is_positivity_enabled = is_positivity_enabled_oap;
     poa_phases[2*i].is_static_field = is_static_field_oap;
     poa_phases[2*i].damping_type = GKYL_GK_DAMPING_NONE;
+    poa_phases[2*i].cfl_frac_omegaH = 1000;
+
 
     // FDPs.
     poa_phases[2*i+1].phase = GK_POA_FDP;
@@ -282,6 +291,8 @@ create_ctx(void)
     poa_phases[2*i+1].is_static_field = is_static_field_fdp;
     poa_phases[2*i+1].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
     poa_phases[2*i+1].damping_rate_const = 1/5e-6;
+
+    poa_phases[2*i+1].cfl_frac_omegaH = 1.7;
   }
   // The final stage is an extra, longer FDP.
   poa_phases[num_phases-1].phase = GK_POA_FDP;
@@ -297,6 +308,7 @@ create_ctx(void)
   poa_phases[num_phases-1].is_static_field = is_static_field_fdp;
   poa_phases[num_phases-1].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
   poa_phases[num_phases-1].damping_rate_const = 1/5e-6;
+  poa_phases[num_phases-1].cfl_frac_omegaH = 1.7;
 
   double write_phase_freq = 1; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
   double int_diag_calc_freq = 100; // Frequency of calculating integrated diagnostics (as a factor of num_frames).
@@ -473,6 +485,10 @@ int main(int argc, char **argv)
         .func = eval_f_ion_source,
         .ctx_func = &ctx,
       },
+      // .source_import[0] = {
+      //   .type = GKYL_IC_IMPORT_F,
+      //   .file_name = "2x-ic/gk_lorentzian_mirror-ion_source_0.gkyl",
+      // },
       .diagnostics = {
         .num_diag_moments = 6,
         .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_BIMAXWELLIAN},
@@ -564,10 +580,17 @@ int main(int argc, char **argv)
       .source_id = GKYL_PROJ_SOURCE,
       .num_sources = 1,
       .projection[0] = {
-        .proj_id = GKYL_PROJ_FUNC,
-        .func = eval_f_elc_source,
-        .ctx_func = &ctx,
+        .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
+        .density_import = {
+          .type = GKYL_IC_IMPORT_F,
+          .file_name = "ic-2x/gk_lorentzian_mirror-ion_source_M0_0.gkyl",
+        },
+        .upar = eval_zero,
+        .ctx_upar = &ctx,
+        .temp = eval_temp_elc_source,
+        .ctx_temp = &ctx,
       },
+
       .diagnostics = {
         .num_diag_moments = 6,
         .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_HAMILTONIAN},
@@ -631,7 +654,6 @@ int main(int argc, char **argv)
     .cells = { cells_x[0], cells_x[1] },
     .poly_order = ctx.poly_order,
     .basis_type = app_args.basis_type,
-    .cfl_frac_omegaH = 1000.0,
 
     .geometry = {
       .geometry_id = GKYL_GEOMETRY_MIRROR,

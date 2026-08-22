@@ -157,7 +157,7 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   double vpar_max_elc = 4 * vte;
   double mu_max_elc = me * pow(4. * vte, 2.) / (2. * B_p);
-  int Nz = 320;
+  int Nz = 400;
   int Nvpar = 64;
   int Nmu = 32;
   int Nvpar_elc = 8;
@@ -508,11 +508,10 @@ int main(int argc, char **argv)
       .mirror_grid_info = grid_inp,
       .position_map_info = {
         .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
-        .map_strength = 1.0,
+        .map_strength = 0.5,
         .maximum_slope_at_min_B = 2,
-        .maximum_slope_at_max_B = 2,
-        .gaussian_std = 0.5,
-        .gaussian_max_integration_width = 1.0,
+        .gaussian_std = 0.25,
+        .gaussian_max_integration_width = 0.5,
       },
     },
 
