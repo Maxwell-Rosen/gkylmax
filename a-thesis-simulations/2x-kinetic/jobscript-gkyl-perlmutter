@@ -1,7 +1,7 @@
 #!/bin/bash -l
 
 #.Declare a name for this job, preferably with 16 or fewer characters.
-#SBATCH -J l2x-R32-POA
+#SBATCH -J 2x-kinetic
 #SBATCH -A m4487
 
 #.Request the queue (enter the possible names, if omitted, default is the default)
