@@ -39,6 +39,12 @@ initial_upar(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fou
 }
 
 void
+eval_zero(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  fout[0] = 0.0;
+}
+
+void
 initial_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
@@ -164,8 +170,8 @@ create_ctx(void)
   int poly_order = 1;
 
   // Source parameters
-double ion_source_amplitude = 39176953.8393; // Beam intM0 = 3.1099679832479321e+20
-double ion_source_temp = 19732.71764 * eV ; // Beam intM2 = 1.2940166363523933e+06
+double ion_source_amplitude = 42292977.1248; // Beam intM0 = 3.5134408153518073e+20
+double ion_source_temp = 19902.6040955 * eV ; // Beam intM2 = 1.4616335208453340e+06
 
   // Geometry parameters.
   double RatZeq0 = 0.10; // Radius of the field line at Z=0.
@@ -456,7 +462,7 @@ int main(int argc, char **argv)
       .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
       .density = initial_density,
       .ctx_density = &ctx,
-      .upar = initial_upar,
+      .upar = eval_zero,
       .ctx_upar = &ctx,
       .temp = initial_temp_elc,
       .ctx_temp = &ctx,

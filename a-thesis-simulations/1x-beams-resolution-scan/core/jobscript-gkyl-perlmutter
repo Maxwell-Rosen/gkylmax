@@ -15,10 +15,10 @@
 
 #.Specify GPU needs:
 #SBATCH --constraint gpu
-# SBATCH --gpus 8
+#SBATCH --gpus 8
 
 #.Request wall time
-#SBATCH -t 12:00:00
+#SBATCH -t 24:00:00
 
 #.Mail is sent to you when the job starts and when it terminates or aborts.
 #SBATCH --mail-user=mhrosen@pppl.gov
@@ -53,7 +53,7 @@ export FI_CXI_RDZV_THRESHOLD=0
 export FI_CXI_RDZV_EAGER_SIZE=0
 
 max_number=-1
-file_prefix="gk_lorentzian_mirror-ion_"
+file_prefix="zzim-ion_"
 shopt -s nullglob
 matching_files=("${file_prefix}"[0-9]*.gkyl)
 for file in "${matching_files[@]}"; do

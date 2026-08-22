@@ -39,6 +39,12 @@ initial_upar(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fou
 }
 
 void
+eval_zero(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  fout[0] = 0.0;
+}
+
+void
 initial_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
@@ -175,7 +181,7 @@ create_ctx(void)
   // POA parameters  
   double alpha_oap = 2e-5;  // Factor multiplying collisionless terms.
   double alpha_fdp = 1.0;
-  double tau_oap = 0;  // Duration of each phase.
+  double tau_oap = 0;
   double tau_fdp = 0;
   double tau_fdp_extra = 300e-6;
   int num_cycles = 0; // Number of OAP+FDP cycles to run.
@@ -226,8 +232,7 @@ create_ctx(void)
     poa_phases[2*i+1].fdot_mult_type = fdot_mult_type_fdp;
     poa_phases[2*i+1].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
     poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_fdp;
-    poa_phases[2*i+1].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
-    poa_phases[2*i+1].damping_rate_const = 1/5e-6;
+    poa_phases[2*i+1].damping_type = GKYL_GK_DAMPING_NONE;
   }
   // The final stage is an extra, longer FDP.
   poa_phases[num_phases-1].phase = GK_POA_FDP;
@@ -238,8 +243,7 @@ create_ctx(void)
   poa_phases[num_phases-1].fdot_mult_type = fdot_mult_type_fdp;
   poa_phases[num_phases-1].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
   poa_phases[num_phases-1].is_positivity_enabled = is_positivity_enabled_fdp;
-  poa_phases[num_phases-1].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
-  poa_phases[num_phases-1].damping_rate_const = 1/5e-6;
+  poa_phases[num_phases-1].damping_type = GKYL_GK_DAMPING_NONE;
 
   double write_phase_freq = 1; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
   double int_diag_calc_freq = 100; // Frequency of calculating integrated diagnostics (as a factor of num_frames).
@@ -445,7 +449,7 @@ int main(int argc, char **argv)
       .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
       .density = initial_density,
       .ctx_density = &ctx,
-      .upar = initial_upar,
+      .upar = eval_zero,
       .ctx_upar = &ctx,
       .temp = initial_temp_elc,
       .ctx_temp = &ctx,

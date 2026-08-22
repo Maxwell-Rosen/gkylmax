@@ -17,15 +17,15 @@ PYTHON_CMD="python3"
 OPT_SCRIPT="optimize_source_params.py"
 HISTORY_FILE="source_optimization_history.csv"
 
-M0_TARGET="3.1099679832479321e+20"
-M2_TARGET="1.2940166363523933e+06"
+M0_TARGET="3.5134408153518073e+20"
+M2_TARGET="1.4616335208453340e+06"
 TOL_REL="0.000001"
-MAX_ITERS=10
+MAX_ITERS=20
 
 MIN_AMP="1e-30"
 MIN_TEMP_EV="1e-6"
 
-MOMS_FILE="gk_lorentzian_mirror-ion_source_integrated_moms.gkyl"
+MOMS_FILE="zzim-ion_source_integrated_moms.gkyl"
 M0_COMP=0
 M2_COMP=2
 

@@ -494,7 +494,7 @@ int main(int argc, char **argv)
   };
 
   struct gkyl_gk app_inp = {  // GK app
-    .name = "gk_lorentzian_mirror",
+    .name = "zzim",
     .cdim = ctx.cdim,
     .lower = {ctx.Z_min},
     .upper = {ctx.Z_max},
