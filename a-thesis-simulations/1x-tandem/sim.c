@@ -40,6 +40,12 @@ initial_upar(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fou
 }
 
 void
+eval_zero(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
+{
+  fout[0] = 0.0;
+}
+
+void
 initial_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
@@ -82,9 +88,9 @@ eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
   double vpar_midp = sqrt(pow(vpar,2.) + 2*mu*(Bmag - app->Bmag_midp)/app->mi); // Ignore potential for now
   double vperp = sqrt(2.0 * mu * app->B_p / app->mi); // What magnetic field do we use here?
 
-  double gamma0 = 193.893947813;
+  double gamma0 = 191.497144191; // Beam intM0 = 3.5134408153518073e+20
   double T_beam = 200 * GKYL_ELEMENTARY_CHARGE;
-  double E_beam = 25117.3014755 * GKYL_ELEMENTARY_CHARGE;
+  double E_beam = 25117.145902 * GKYL_ELEMENTARY_CHARGE; // Beam intM2 = 1.4616335208453340e+06
   double v_beam = sqrt(E_beam / app->mi);
   double sigma_beam = 2*T_beam/app->mi;
 
@@ -307,7 +313,7 @@ create_ctx(void)
   ctx.psi_eval = psi_RZ_tandem(ctx.RatZeq0, 0.0, &ctx);
 
   // Calculate magnetic field magnitude at midplane (Z=0)
-  ctx.Bmag_midp = 0.5; // Tandem mirrors are optimized with B_p = 0.5 in the end plugs
+  ctx.Bmag_midp = 0.5; // Optimization target
 
   ctx.z_min    = z_psiZ_tandem(ctx.psi_eval, ctx.Z_min, &ctx);
   ctx.z_max    = z_psiZ_tandem(ctx.psi_eval, ctx.Z_max, &ctx);
@@ -458,7 +464,7 @@ int main(int argc, char **argv)
       .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
       .density = initial_density,
       .ctx_density = &ctx,
-      .upar = initial_upar,
+      .upar = eval_zero,
       .ctx_upar = &ctx,
       .temp = initial_temp_elc,
       .ctx_temp = &ctx,
