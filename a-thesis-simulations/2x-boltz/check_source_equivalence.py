@@ -71,6 +71,18 @@ def main() -> None:
     parser.add_argument("--two-x-prefix", default="zzim")
     parser.add_argument("--frame", type=int, default=0)
     parser.add_argument(
+        "--one-x-radial-coordinate",
+        choices=("psi", "sqrt-psi"),
+        default="psi",
+        help="radial coordinate used to construct the 1x geometry Jacobian",
+    )
+    parser.add_argument(
+        "--two-x-radial-coordinate",
+        choices=("psi", "sqrt-psi"),
+        default="psi",
+        help="radial coordinate used to construct the 2x geometry Jacobian",
+    )
+    parser.add_argument(
         "--psi-1x",
         type=float,
         default=None,
@@ -104,13 +116,31 @@ def main() -> None:
     scale_m0 = np.array([fit_multiplier(m0_ref, line) for line in m0_2x])
     scale_m2 = np.array([fit_multiplier(m2_ref, line) for line in m2_2x])
 
-    # Axisymmetric power per unit psi.  This includes J_c and therefore is not
-    # expected to be radially constant merely because S is radially constant.
-    dp_dpsi = np.pi * M_DEUTERIUM * TRAPEZOID(m2_2x * jac_2x, x=z_2x, axis=1)
-    dp_dpsi_1x = np.pi * M_DEUTERIUM * TRAPEZOID(m2_1x * jac_1x, x=z_1x)
-    total_power_2x = TRAPEZOID(dp_dpsi, x=psi)
-
     psi_1x = float(psi[-1] if args.psi_1x is None else args.psi_1x)
+
+    # J_c is the Jacobian for the radial coordinate selected by fl_coord.  For
+    # q=sqrt(psi), J_q = J_psi*dpsi/dq = 2*q*J_psi.  Therefore the raw line
+    # integral is dP/dq and must either be integrated over q or divided by 2*q
+    # before it is interpreted as dP/dpsi.
+    line_power_2x_raw = (
+        np.pi * M_DEUTERIUM * TRAPEZOID(m2_2x * jac_2x, x=z_2x, axis=1)
+    )
+    if args.two_x_radial_coordinate == "sqrt-psi":
+        radial_grid = np.sqrt(psi)
+        dp_dpsi = line_power_2x_raw / (2.0 * radial_grid)
+    else:
+        radial_grid = psi
+        dp_dpsi = line_power_2x_raw
+    total_power_2x = TRAPEZOID(line_power_2x_raw, x=radial_grid)
+
+    line_power_1x_raw = (
+        np.pi * M_DEUTERIUM * TRAPEZOID(m2_1x * jac_1x, x=z_1x)
+    )
+    if args.one_x_radial_coordinate == "sqrt-psi":
+        dp_dpsi_1x = line_power_1x_raw / (2.0 * np.sqrt(psi_1x))
+    else:
+        dp_dpsi_1x = line_power_1x_raw
+
     line_power_2x = float(np.interp(psi_1x, psi, dp_dpsi))
     kappa_1x_from_2x = line_power_2x / dp_dpsi_1x
 
@@ -125,6 +155,10 @@ def main() -> None:
     )
     print()
     print("Power bookkeeping (not a local source normalization):")
+    print(
+        "  radial coordinates             = "
+        f"1x:{args.one_x_radial_coordinate}, 2x:{args.two_x_radial_coordinate}"
+    )
     print(f"  P_2x                         = {total_power_2x:.8e} W")
     print(f"  (dP/dpsi)_1x                = {dp_dpsi_1x:.8e} W/psi")
     print(f"  (dP/dpsi)_2x at psi_1x      = {line_power_2x:.8e} W/psi")
