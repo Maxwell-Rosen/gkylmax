@@ -62,6 +62,8 @@ void
 eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
+  // Deliberately do not use xn[0] (psi): every 2x field line receives the
+  // same local source as the 1x simulation.
   double z = xn[1];
   if (fabs(z) > app->Z_m) { // For tandem mirrors, we just put this in the end cells
     fout[0] = 1e-20;
@@ -311,7 +313,10 @@ create_ctx(void)
   // Populate a couple more values in the context.
   ctx.psi_max = psi_RZ(ctx.RatZeq0, 0.0, &ctx);
   ctx.psi_min = psi_RZ(ctx.RatZeq0 * 0.1, 0.0, &ctx);
-  ctx.psi_eval = (ctx.psi_max + ctx.psi_min) / 2.0;
+  // Use the same reference field line as the 1x simulation. The source is
+  // psi independent, but this also keeps the reference geometry quantities
+  // used by the source/import bookkeeping consistent between 1x and 2x.
+  ctx.psi_eval = ctx.psi_max;
 
   // Calculate magnetic field magnitude at midplane (Z=0)
   double bvec[3];
