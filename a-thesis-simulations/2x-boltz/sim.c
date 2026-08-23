@@ -379,9 +379,9 @@ int main(int argc, char **argv)
 
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
-      .file_name = "/global/homes/m/mhrosen/scratch/gkylmax/a-thesis-simulations/1x-beams/gk_lorentzian_mirror-ion_65.gkyl",
-      .jacobtot_inv_file_name = "/global/homes/m/mhrosen/scratch/gkylmax/a-thesis-simulations/1x-beams/gk_lorentzian_mirror-geo_int_jacobtot_inv.gkyl",
-      .jacobvel_file_name = "/global/homes/m/mhrosen/scratch/gkylmax/a-thesis-simulations/1x-beams/gk_lorentzian_mirror-ion_jacobvel.gkyl",
+      .file_name = "/global/homes/m/mhrosen/scratch/gkylmax/a-thesis-simulations/1x-beams/zzim-ion_65.gkyl",
+      .jacobtot_inv_file_name = "/global/homes/m/mhrosen/scratch/gkylmax/a-thesis-simulations/1x-beams/zzim-geo_int_jacobtot_inv.gkyl",
+      .jacobvel_file_name = "/global/homes/m/mhrosen/scratch/gkylmax/a-thesis-simulations/1x-beams/zzim-ion_jacobvel.gkyl",
     },
 
     .mapc2p = {
@@ -512,7 +512,7 @@ int main(int argc, char **argv)
     .zmin = -2.5,  // Z of lower boundary
     .zmax =  2.5,  // Z of upper boundary
     .include_axis = false, // Include R=0 axis in grid
-    .fl_coord = GKYL_GEOMETRY_MIRROR_GRID_GEN_SQRT_PSI_CART_Z, // coordinate system for psi grid
+    .fl_coord = GKYL_GEOMETRY_MIRROR_GRID_GEN_PSI_CART_Z, // coordinate system for psi grid
   };
 
   struct gkyl_gk app_inp = {  // GK app

@@ -17,42 +17,20 @@ from pathlib import Path
 
 import numpy as np
 
-try:
-    import postgkyl as pg
-
-    POSTGKYL_V2 = hasattr(pg.GData, "interpolate")
-except (ImportError, AttributeError):
-    POSTGKYL_V2 = False
-
-if not POSTGKYL_V2:
-    from postgkyl.data import GData, GInterpModal
-
+import postgkyl as pg
 
 TRAPEZOID = np.trapezoid if hasattr(np, "trapezoid") else np.trapz
 M_DEUTERIUM = 2.014 * 1.67262192369e-27
 
 
 def interpolated_values(path: Path, component: int = 0) -> np.ndarray:
-    if POSTGKYL_V2:
-        data = pg.GData(str(path), basis_type="ms", poly_order=1)
-        nodal = data.select(comp=component).interpolate()
-        return np.squeeze(nodal.get_values())
-    else:
-        data = GData(str(path))
-        interp = GInterpModal(data, 1, "ms")
-        interp.interpolate(component, overwrite=True)
-        return np.squeeze(data.get_values()[..., 0])
-
+    data = pg.load(str(path))
+    nodal = data.interpolate().select(comp=component)
+    return np.squeeze(nodal.get_values())
 
 def mapped_coordinates(path: Path) -> np.ndarray:
-    if POSTGKYL_V2:
-        data = pg.GData(str(path), basis_type="ms", poly_order=1)
-        return np.asarray(data.interpolate().get_values())
-    else:
-        data = GData(str(path))
-        ndim = data.get_num_dims()
-        _, values = GInterpModal(data, 1, "ms").interpolate(tuple(range(ndim)))
-        return np.asarray(values)
+    data = pg.load(str(path))
+    return np.asarray(data.interpolate().get_values())
 
 
 def fit_multiplier(reference: np.ndarray, candidate: np.ndarray) -> float:
@@ -94,19 +72,19 @@ def main() -> None:
     two = args.two_x_dir / args.two_x_prefix
     frame = args.frame
 
-    coords_1x = mapped_coordinates(Path(f"{one}-mc2nu_pos_deflated.gkyl"))
-    coords_2x = mapped_coordinates(Path(f"{two}-mc2nu_pos_deflated.gkyl"))
+    coords_1x = mapped_coordinates(Path(f"{one}-geo_corn_mc2nu_pos_deflated.gkyl"))
+    coords_2x = mapped_coordinates(Path(f"{two}-geo_corn_mc2nu_pos_deflated.gkyl"))
     z_1x = coords_1x[:, 0]
     psi = coords_2x[:, 0, 0]
     z_2x = coords_2x[0, :, 1]
 
     m0_1x = interpolated_values(Path(f"{one}-ion_source_M0_{frame}.gkyl"))
     m2_1x = interpolated_values(Path(f"{one}-ion_source_M2_{frame}.gkyl"))
-    jac_1x = interpolated_values(Path(f"{one}-jacobgeo.gkyl"))
+    jac_1x = interpolated_values(Path(f"{one}-geo_int_jacobgeo.gkyl"))
 
     m0_2x = interpolated_values(Path(f"{two}-ion_source_M0_{frame}.gkyl"))
     m2_2x = interpolated_values(Path(f"{two}-ion_source_M2_{frame}.gkyl"))
-    jac_2x = interpolated_values(Path(f"{two}-jacobgeo.gkyl"))
+    jac_2x = interpolated_values(Path(f"{two}-geo_int_jacobgeo.gkyl"))
 
     # Compare local source moments on a common Z grid.  These multipliers answer
     # the actual question: by what factor would the 2x source need to change to

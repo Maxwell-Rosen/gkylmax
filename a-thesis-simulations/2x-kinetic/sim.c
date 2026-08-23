@@ -74,6 +74,8 @@ eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
     fout[0] = 1e-20;
     return;
   }
+  double psi = xn[0];
+  double psi_max = app->psi_max;
   double vpar = xn[2];
   double mu = xn[3];
   
@@ -100,7 +102,8 @@ eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
   double source = fmax(gamma0 * exp (-1.0 * (pow(fabs(vpar_midp) - v_beam, 2) + 
                                              pow(vperp - v_beam, 2)) / sigma_beam),1e-20);
 
-  fout[0] = source;
+  double radial_dependence = 1 - pow(fabs(psi/psi_max),1.5);
+  fout[0] = source * radial_dependence;
 }
 
 void
@@ -113,6 +116,8 @@ eval_f_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
     return;
   }
   double vpar = xn[2];
+  double psi = xn[0];
+  double psi_max = app->psi_max;
   double mu = xn[3];
   
   double bvec[3];
@@ -132,7 +137,8 @@ eval_f_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
 
   double source = fmax(gamma0 * sqrt(1/(M_PI*sigma_beam)) * exp (-1.0 * vtot2 / sigma_beam),1e-20);
 
-  fout[0] = source;
+  double radial_dependence = 1 - pow(fabs(psi/psi_max),1.5);
+  fout[0] = source * radial_dependence;
 }
 
 
