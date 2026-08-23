@@ -170,8 +170,8 @@ create_ctx(void)
   int poly_order = 1;
 
   // Source parameters
-double ion_source_amplitude = 42266787.1441; // Beam intM0 = 3.5134408153518073e+20
-double ion_source_temp = 19890.6834757 * eV ; // Beam intM2 = 1.4616335208453340e+06
+double ion_source_amplitude = 42265194.8755; // Beam intM0 = 3.5134408153518073e+20
+double ion_source_temp = 19889.9614892 * eV ; // Beam intM2 = 1.4616335208453340e+06
 
   // Geometry parameters.
   double RatZeq0 = 0.10; // Radius of the field line at Z=0.
