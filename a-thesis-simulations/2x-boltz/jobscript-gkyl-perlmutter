@@ -72,8 +72,8 @@ if [ "$max_number" -lt 0 ]; then
     ./sim -g
     sim_status=$?
   else
-    echo "srun -u -n $num_gpu ./sim -g -M -c $num_gpu"
-    srun -u -n $num_gpu --gpus $num_gpu ./sim -g -M -c $num_gpu
+    echo "srun -u -n $num_gpu ./sim -g -M -d $num_gpu"
+    srun -u -n $num_gpu --gpus $num_gpu ./sim -g -M -d $num_gpu
     sim_status=$?
   fi
 else
@@ -83,8 +83,8 @@ else
     ./sim -g -r $max_number
     sim_status=$?
   else
-    echo "srun -u -n $num_gpu ./sim -g -M -c $num_gpu -r $max_number"
-    srun -u -n $num_gpu --gpus $num_gpu ./sim -g -M -c $num_gpu -r $max_number
+    echo "srun -u -n $num_gpu ./sim -g -M -d $num_gpu -r $max_number"
+    srun -u -n $num_gpu --gpus $num_gpu ./sim -g -M -d $num_gpu -r $max_number
     sim_status=$?
   fi
 fi

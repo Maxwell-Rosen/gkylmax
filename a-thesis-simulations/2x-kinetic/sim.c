@@ -567,6 +567,7 @@ int main(int argc, char **argv)
       .collision_id = GKYL_LBO_COLLISIONS,
       .den_ref = ctx.n0,
       .temp_ref = ctx.Te0,
+      .nu_frac = 0.2641020164,
       .num_cross_collisions = 1,
       .collide_with = { "ion" },
       .write_diagnostics = true,

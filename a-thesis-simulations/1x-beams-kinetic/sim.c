@@ -129,7 +129,7 @@ void mapc2p_vel_elc(double t, const double *vc, double* GKYL_RESTRICT vp, void *
   double cvpar = vc[0], cmu = vc[1];
   double b = 1.4;
   vp[0] = vpar_max_elc*tan(cvpar*b)/tan(b);
-  vp[1] = mu_max_elc*pow(cmu,1.5);  // Cubic map in mu.
+  vp[1] = mu_max_elc*pow(cmu,1.5);
 }
 
 struct gk_mirror_ctx
@@ -220,9 +220,9 @@ create_ctx(void)
   double alpha_elc_oap = 2e-5;
   double alpha_fdp = 1.0;
   double time_dilation_scale_const_ion_oap = 1;
-  double time_dilation_scale_const_elc_oap = 0.002;
+  double time_dilation_scale_const_elc_oap = 0.016;
   double time_dilation_scale_const_ion_fdp = 1;
-  double time_dilation_scale_const_elc_fdp = 0.05;
+  double time_dilation_scale_const_elc_fdp = 0.45;
 
   // Calculate phase structure
   double t_end = (tau_oap + tau_fdp)*num_cycles + tau_fdp_extra;
@@ -258,8 +258,8 @@ create_ctx(void)
     poa_phases[2*i].time_dilation_scale_const_elc = time_dilation_scale_const_elc_fdp;
     poa_phases[2*i].is_positivity_enabled = is_positivity_enabled_fdp;
     poa_phases[2*i].is_static_field = is_static_field_fdp;
-    poa_phases[2*i+1].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
-    poa_phases[2*i+1].damping_rate_const = 1/5e-6;
+    poa_phases[2*i].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
+    poa_phases[2*i].damping_rate_const = 1/5e-6;
   }
   // The final stage is an extra, longer FDP.
   poa_phases[num_phases-1].phase = GK_POA_FDP;
