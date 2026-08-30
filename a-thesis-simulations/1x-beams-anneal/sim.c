@@ -204,17 +204,18 @@ create_ctx(void)
 
   double cfl_factor_times_omega_max = 1/10.0; // CFL factor for fixed factor times omega max multiplier.
 
-  // Calculate phase structure
-  double t_end = (tau_oap + tau_fdp)*num_cycles + tau_fdp_extra;
-  double tau_pair = tau_oap+tau_fdp; // Duration of an OAP+FDP pair.
-  int num_phases = 2*num_cycles + 1;
-  int num_frames = num_cycles * (num_frames_oap + num_frames_fdp) + num_frames_fdp_extra;
+  // Assemble the regular OAP/FDP cycles, the OAP annealing ramp, and the
+  // final FDP. Keeping every stage in num_phases ensures that the driver also
+  // runs the annealing stages and can locate them correctly on restart.
+  const double annealing_alphas[] = { alpha_oap, 2e-4, 2e-3 };
+  const double annealing_durations[] = { tau_oap, tau_oap, tau_oap/10 };
+  const int num_annealing_phases = sizeof(annealing_alphas)/sizeof(annealing_alphas[0]);
+  int num_phases = 2*num_cycles + num_annealing_phases + 1;
 
-  struct gk_poa_phase_params *poa_phases = gkyl_calloc(num_phases+3, sizeof(struct gk_poa_phase_params));
-  int poa_idx;
-  for (int i=0; i<(num_phases-1)/2; i++) {
+  struct gk_poa_phase_params *poa_phases = gkyl_calloc(num_phases, sizeof(struct gk_poa_phase_params));
+  int poa_idx = 0;
+  for (int i=0; i<num_cycles; i++) {
     // OAPs.
-    poa_idx = 2*i;
     poa_phases[poa_idx].phase = GK_POA_OAP;
     poa_phases[poa_idx].num_frames = num_frames_oap;
     poa_phases[poa_idx].duration = tau_oap;
@@ -224,9 +225,9 @@ create_ctx(void)
     poa_phases[poa_idx].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
     poa_phases[poa_idx].is_positivity_enabled = is_positivity_enabled_oap;
     poa_phases[poa_idx].damping_type = GKYL_GK_DAMPING_NONE;
+    poa_idx++;
 
     // FDPs.
-    poa_idx = 2*i+1;
     poa_phases[poa_idx].phase = GK_POA_FDP;
     poa_phases[poa_idx].num_frames = num_frames_fdp;
     poa_phases[poa_idx].duration = tau_fdp;
@@ -237,45 +238,25 @@ create_ctx(void)
     poa_phases[poa_idx].is_positivity_enabled = is_positivity_enabled_fdp;
     poa_phases[poa_idx].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
     poa_phases[poa_idx].damping_rate_const = 1/5e-6;
+    poa_idx++;
   }
 
-  // OAPs.
-  poa_idx = num_phases-1;
-  poa_phases[poa_idx].phase = GK_POA_OAP;
-  poa_phases[poa_idx].num_frames = num_frames_oap;
-  poa_phases[poa_idx].duration = tau_oap;
-  poa_phases[poa_idx].alpha = alpha_oap;
-  poa_phases[poa_idx].is_static_field = is_static_field_oap;
-  poa_phases[poa_idx].fdot_mult_type = fdot_mult_type_oap;
-  poa_phases[poa_idx].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
-  poa_phases[poa_idx].is_positivity_enabled = is_positivity_enabled_oap;
-  poa_phases[poa_idx].damping_type = GKYL_GK_DAMPING_NONE;
-
-  // An anealing OAP, larger alpha
-  poa_idx = num_phases;
-  poa_phases[poa_idx].phase = GK_POA_OAP;
-  poa_phases[poa_idx].num_frames = num_frames_oap;
-  poa_phases[poa_idx].duration = tau_oap;
-  poa_phases[poa_idx].alpha = 2e-4;
-  poa_phases[poa_idx].is_static_field = is_static_field_oap;
-  poa_phases[poa_idx].fdot_mult_type = fdot_mult_type_oap;
-  poa_phases[poa_idx].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
-  poa_phases[poa_idx].is_positivity_enabled = is_positivity_enabled_oap;
-  poa_phases[poa_idx].damping_type = GKYL_GK_DAMPING_NONE;
-
-  poa_idx = num_phases+1;
-  poa_phases[poa_idx].phase = GK_POA_OAP;
-  poa_phases[poa_idx].num_frames = num_frames_oap;
-  poa_phases[poa_idx].duration = tau_oap/10;
-  poa_phases[poa_idx].alpha = 2e-3;
-  poa_phases[poa_idx].is_static_field = is_static_field_oap;
-  poa_phases[poa_idx].fdot_mult_type = fdot_mult_type_oap;
-  poa_phases[poa_idx].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
-  poa_phases[poa_idx].is_positivity_enabled = is_positivity_enabled_oap;
-  poa_phases[poa_idx].damping_type = GKYL_GK_DAMPING_NONE;
+  // Increase alpha in stages so the distribution is annealed before the
+  // final full-dynamics phase.
+  for (int i=0; i<num_annealing_phases; i++) {
+    poa_phases[poa_idx].phase = GK_POA_OAP;
+    poa_phases[poa_idx].num_frames = num_frames_oap;
+    poa_phases[poa_idx].duration = annealing_durations[i];
+    poa_phases[poa_idx].alpha = annealing_alphas[i];
+    poa_phases[poa_idx].is_static_field = is_static_field_oap;
+    poa_phases[poa_idx].fdot_mult_type = fdot_mult_type_oap;
+    poa_phases[poa_idx].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
+    poa_phases[poa_idx].is_positivity_enabled = is_positivity_enabled_oap;
+    poa_phases[poa_idx].damping_type = GKYL_GK_DAMPING_NONE;
+    poa_idx++;
+  }
 
   // The final stage is an extra, longer FDP.
-  poa_idx = num_phases+2;
   poa_phases[poa_idx].phase = GK_POA_FDP;
   poa_phases[poa_idx].num_frames = num_frames_fdp_extra;
   poa_phases[poa_idx].duration = tau_fdp_extra;
@@ -286,6 +267,15 @@ create_ctx(void)
   poa_phases[poa_idx].is_positivity_enabled = is_positivity_enabled_fdp;
   poa_phases[poa_idx].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
   poa_phases[poa_idx].damping_rate_const = 1/5e-6;
+
+  // Derive the global totals from the completed schedule so phase additions
+  // cannot leave restart and progress bookkeeping out of sync.
+  double t_end = 0.0;
+  int num_frames = 0;
+  for (int i=0; i<num_phases; i++) {
+    t_end += poa_phases[i].duration;
+    num_frames += poa_phases[i].num_frames;
+  }
 
   double write_phase_freq = 1; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
   double int_diag_calc_freq = 100; // Frequency of calculating integrated diagnostics (as a factor of num_frames).

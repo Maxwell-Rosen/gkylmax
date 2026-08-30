@@ -1,9 +1,9 @@
 import postgkyl as pg
 
 frame = 65
-single_field = pg.load("../1x-beams/zzim-ion_BiMaxwellianMoments_" + str(frame) + ".gkyl").interpolate()
-many_field_inner = pg.load("zzim-ion_BiMaxwellianMoments_" + str(frame) + ".gkyl").interpolate().select(z0=0)
-many_field_outer = pg.load("zzim-ion_BiMaxwellianMoments_" + str(frame) + ".gkyl").interpolate().select(z0=-1)
+single_field = pg.load("../1x-beams/zzim-ion_BiMaxwellianMoments_" + str(frame) + ".gkyl").interpolate().map("../1x-beams/zzim-geo_corn_mc2nu_pos_deflated.gkyl")
+many_field_inner = pg.load("zzim-ion_BiMaxwellianMoments_" + str(frame) + ".gkyl").interpolate().map("../1x-beams/zzim-geo_corn_mc2nu_pos_deflated.gkyl").select(z0=0)
+many_field_outer = pg.load("zzim-ion_BiMaxwellianMoments_" + str(frame) + ".gkyl").interpolate().map("../1x-beams/zzim-geo_corn_mc2nu_pos_deflated.gkyl").select(z0=-1)
 
 factor = 1.602176634e-27 * 2.014 / 1.602176634e-19 / 1000
 
