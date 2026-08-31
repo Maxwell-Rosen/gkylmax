@@ -184,7 +184,7 @@ create_ctx(void)
   double tau_oap = 0.1;  // Duration of each phase.
   double tau_fdp = 15e-6;
   double tau_fdp_extra = 100e-6;
-  int num_cycles = 2; // Number of OAP+FDP cycles to run.
+  int num_cycles = 5; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
   int num_frames_oap = 5;        // Frames per OAP phase
@@ -207,8 +207,8 @@ create_ctx(void)
   // Assemble the regular OAP/FDP cycles, the OAP annealing ramp, and the
   // final FDP. Keeping every stage in num_phases ensures that the driver also
   // runs the annealing stages and can locate them correctly on restart.
-  const double annealing_alphas[] = { alpha_oap, 2e-4, 2e-3 };
-  const double annealing_durations[] = { tau_oap, tau_oap, tau_oap/10 };
+  const double annealing_alphas[] = { alpha_oap, 2e-4, 2e-3, 2e-2 };
+  const double annealing_durations[] = { tau_oap, tau_oap/5, tau_oap/30, tau_oap/300 };
   const int num_annealing_phases = sizeof(annealing_alphas)/sizeof(annealing_alphas[0]);
   int num_phases = 2*num_cycles + num_annealing_phases + 1;
 
