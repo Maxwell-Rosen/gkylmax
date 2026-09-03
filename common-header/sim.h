@@ -1,3 +1,5 @@
+#include <float.h>
+#include <math.h>
 #include <time.h>
 
 #include <gkyl_alloc.h>
@@ -403,14 +405,16 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
       gkyl_gyrokinetic_app_cout(app, stdout, "Taking time-step %ld at t = %g ...", step, t_curr);
     dt = t_end - t_curr; // Ensure we don't step beyond t_end.
     struct gkyl_update_status status = gkyl_gyrokinetic_update(app, dt);
-    if (step%1000 == 1 || step==1) {
+    if ((step%1000 == 1 || step==1) && status.success && status.dt_actual > 0.0) {
       // Calculate elapsed wall time and estimated time remaining
       struct timespec current_time;
       clock_gettime(CLOCK_MONOTONIC, &current_time);
       double wall_time_elapsed = (current_time.tv_sec - phase_start_time.tv_sec) + 
                                   (current_time.tv_nsec - phase_start_time.tv_nsec) / 1e9;
-      double sim_time_elapsed = t_curr - t_start;
-      double sim_time_remaining = t_end - t_curr;
+      // Include the update that just completed. At step one, using t_curr
+      // alone makes sim_time_elapsed zero and overflows the displayed ETA.
+      double sim_time_elapsed = t_curr + status.dt_actual - t_start;
+      double sim_time_remaining = fmax(0.0, t_end - t_curr - status.dt_actual);
       
       double wall_time_per_sim_time = wall_time_elapsed / sim_time_elapsed;
       double wall_time_remaining = wall_time_per_sim_time * sim_time_remaining;
@@ -421,6 +425,9 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
       double progress_pct = 100.0 * sim_time_elapsed / (sim_time_elapsed + sim_time_remaining);
       gkyl_gyrokinetic_app_cout(app, stdout, " dt = %g (phase %.1f%% complete, est. %dh %dm %ds remaining)\n", 
                                 status.dt_actual, progress_pct, hours, minutes, seconds);
+    }
+    else if (step%1000 == 1 || step==1) {
+      gkyl_gyrokinetic_app_cout(app, stdout, " dt = %g\n", status.dt_actual);
     }
 
     if (!status.success)
@@ -605,14 +612,16 @@ void run_phase_kinetic_elc(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx,
       gkyl_gyrokinetic_app_cout(app, stdout, "Taking time-step %ld at t = %g ...", step, t_curr);
     dt = t_end - t_curr; // Ensure we don't step beyond t_end.
     struct gkyl_update_status status = gkyl_gyrokinetic_update(app, dt);
-    if (step % 1000 == 1 || step==1) {
+    if ((step % 1000 == 1 || step==1) && status.success && status.dt_actual > 0.0) {
       // Calculate elapsed wall time and estimated time remaining
       struct timespec current_time;
       clock_gettime(CLOCK_MONOTONIC, &current_time);
       double wall_time_elapsed = (current_time.tv_sec - phase_start_time.tv_sec) + 
                                   (current_time.tv_nsec - phase_start_time.tv_nsec) / 1e9;
-      double sim_time_elapsed = t_curr - t_start;
-      double sim_time_remaining = t_end - t_curr;
+      // Include the update that just completed. At step one, using t_curr
+      // alone makes sim_time_elapsed zero and overflows the displayed ETA.
+      double sim_time_elapsed = t_curr + status.dt_actual - t_start;
+      double sim_time_remaining = fmax(0.0, t_end - t_curr - status.dt_actual);
       
       double wall_time_per_sim_time = wall_time_elapsed / sim_time_elapsed;
       double wall_time_remaining = wall_time_per_sim_time * sim_time_remaining;
@@ -623,6 +632,9 @@ void run_phase_kinetic_elc(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx,
       double progress_pct = 100.0 * sim_time_elapsed / (sim_time_elapsed + sim_time_remaining);
       gkyl_gyrokinetic_app_cout(app, stdout, " dt = %g (phase %.1f%% complete, est. %dh %dm %ds remaining)\n", 
                                 status.dt_actual, progress_pct, hours, minutes, seconds);
+    }
+    else if (step % 1000 == 1 || step==1) {
+      gkyl_gyrokinetic_app_cout(app, stdout, " dt = %g\n", status.dt_actual);
     }
 
     if (!status.success)
@@ -702,62 +714,123 @@ run_poa_simulation(struct gkyl_gk app_inp, struct gk_mirror_ctx ctx, struct gkyl
     tfs.frame_curr = status.frame;
     tfs.t_curr = status.stime;
 
-    // Find out what phase we are in.
-    double time_count = 0.0;
-    int frame_count = 0;
-    int pit_curr = 0;
+    // Locate the checkpoint in the configured phase schedule. In particular,
+    // never default to phase zero when no phase matches: that turns a schedule
+    // mismatch into negative durations and frame counts.
+    double schedule_end_time = 0.0;
+    int schedule_end_frame = 0;
     for (int pit=0; pit<ctx.num_phases; pit++) {
-      time_count += ctx.poa_phases[pit].duration;
-      frame_count += ctx.poa_phases[pit].num_frames;
-      if ((tfs.t_curr <= time_count) && (tfs.frame_curr <= frame_count)) {
-        pit_curr = pit;
+      schedule_end_time += ctx.poa_phases[pit].duration;
+      schedule_end_frame += ctx.poa_phases[pit].num_frames;
+    }
+    double time_tol = 64.0*DBL_EPSILON*fmax(1.0, fabs(schedule_end_time));
+
+    if (tfs.t_curr < -time_tol || tfs.t_curr > schedule_end_time+time_tol ||
+        tfs.frame_curr < 0 || tfs.frame_curr > schedule_end_frame) {
+      gkyl_gyrokinetic_app_cout(app, stderr,
+        "*** Restart checkpoint is incompatible with the configured POA schedule!\n");
+      gkyl_gyrokinetic_app_cout(app, stderr,
+        "    Checkpoint: frame %d at time %.16e s\n", tfs.frame_curr, tfs.t_curr);
+      gkyl_gyrokinetic_app_cout(app, stderr,
+        "    Schedule ends: frame %d at time %.16e s\n", schedule_end_frame, schedule_end_time);
+      gkyl_gyrokinetic_app_cout(app, stderr,
+        "    Use the same phase schedule that created the checkpoint; refusing to run negative remaining work.\n");
+      goto freeresources;
+    }
+
+    double phase_start_time = 0.0, phase_end_time = 0.0;
+    int phase_start_frame = 0, phase_end_frame = 0;
+    int pit_curr = -1;
+    bool schedule_complete = false;
+    for (int pit=0; pit<ctx.num_phases; pit++) {
+      phase_end_time += ctx.poa_phases[pit].duration;
+      phase_end_frame += ctx.poa_phases[pit].num_frames;
+
+      if (tfs.t_curr <= phase_end_time+time_tol && tfs.frame_curr <= phase_end_frame) {
+        bool before_phase = tfs.t_curr < phase_start_time-time_tol ||
+                            tfs.frame_curr < phase_start_frame;
+        bool at_phase_end = fabs(tfs.t_curr-phase_end_time) <= time_tol &&
+                            tfs.frame_curr == phase_end_frame;
+        if (before_phase)
+          break;
+        if (at_phase_end && pit+1 < ctx.num_phases) {
+          // A phase-boundary checkpoint starts the following phase. This
+          // avoids a zero-duration phase and divisions by zero in its triggers.
+          phase_start_time = phase_end_time;
+          phase_start_frame = phase_end_frame;
+          continue;
+        }
+        if (at_phase_end) {
+          schedule_complete = true;
+          phase_idx_init = ctx.num_phases;
+        }
+        else {
+          pit_curr = pit;
+          phase_idx_init = pit;
+        }
         break;
       }
-    };
-    phase_idx_init = pit_curr;
 
-    // Calculate time and frames at the START of the current phase
-    double phase_start_time = time_count - ctx.poa_phases[phase_idx_init].duration;
-    int phase_start_frame = frame_count - ctx.poa_phases[phase_idx_init].num_frames;
-    
-    // Calculate how much of the phase has elapsed
-    double time_elapsed_in_phase = tfs.t_curr - phase_start_time;
-    int frames_elapsed_in_phase = tfs.frame_curr - phase_start_frame;
+      phase_start_time = phase_end_time;
+      phase_start_frame = phase_end_frame;
+    }
 
-    // Change the duration and number frames so this phase reaches the expected
-    // time and number of frames and not beyond.
-    struct gk_poa_phase_params *pparams = &ctx.poa_phases[phase_idx_init];
-    int original_frames = pparams->num_frames;
-    double original_duration = pparams->duration;
-    pparams->num_frames = frame_count - tfs.frame_curr;
-    pparams->duration = time_count - tfs.t_curr;
+    if (schedule_complete) {
+      gkyl_gyrokinetic_app_cout(app, stdout,
+        "Restart frame %d at time %.6e s is already at the end of the configured POA schedule.\n",
+        tfs.frame_curr, tfs.t_curr);
+    }
+    else if (pit_curr < 0 || phase_end_frame-tfs.frame_curr <= 0 ||
+             phase_end_time-tfs.t_curr <= 0.0) {
+      gkyl_gyrokinetic_app_cout(app, stderr,
+        "*** Restart checkpoint does not map consistently to a configured POA phase!\n");
+      gkyl_gyrokinetic_app_cout(app, stderr,
+        "    Checkpoint: frame %d at time %.16e s\n", tfs.frame_curr, tfs.t_curr);
+      gkyl_gyrokinetic_app_cout(app, stderr,
+        "    The frame and time must belong to the same phase and leave positive remaining work.\n");
+      goto freeresources;
+    }
 
-    gkyl_gyrokinetic_app_cout(app, stdout, "\n");
-    gkyl_gyrokinetic_app_cout(app, stdout, "==============================================\n");
-    gkyl_gyrokinetic_app_cout(app, stdout, "          RESTART INFORMATION\n");
-    gkyl_gyrokinetic_app_cout(app, stdout, "==============================================\n");
-    gkyl_gyrokinetic_app_cout(app, stdout, "Restarting from frame %d at time = %.6e s\n", tfs.frame_curr, tfs.t_curr);
-    gkyl_gyrokinetic_app_cout(app, stdout, "Restart phase index: %d (of %d total phases)\n", phase_idx_init+1, ctx.num_phases);
-    gkyl_gyrokinetic_app_cout(app, stdout, "Restart phase type: %s\n", 
-      (pparams->phase == GK_POA_OAP) ? "OAP (Orbit Averaging Phase)" : "FDP (Full Dynamics Phase)");
-    gkyl_gyrokinetic_app_cout(app, stdout, "\n");
-    gkyl_gyrokinetic_app_cout(app, stdout, "Phase completion status:\n");
-    gkyl_gyrokinetic_app_cout(app, stdout, "  Time elapsed in current phase: %.6e s (%.1f%% of phase)\n", 
-      time_elapsed_in_phase, 
-      100.0*time_elapsed_in_phase/original_duration);
-    gkyl_gyrokinetic_app_cout(app, stdout, "  Frames completed in current phase: %d (of %d total)\n", 
-      frames_elapsed_in_phase, original_frames);
-    gkyl_gyrokinetic_app_cout(app, stdout, "\n");
-    gkyl_gyrokinetic_app_cout(app, stdout, "Remaining simulation:\n");
-    gkyl_gyrokinetic_app_cout(app, stdout, "  Remaining time in current phase: %.6e s\n", pparams->duration);
-    gkyl_gyrokinetic_app_cout(app, stdout, "  Remaining frames in current phase: %d\n", pparams->num_frames);
-    gkyl_gyrokinetic_app_cout(app, stdout, "  Total remaining phases: %d\n", ctx.num_phases - phase_idx_init);
-    gkyl_gyrokinetic_app_cout(app, stdout, "  Total remaining time: %.6e s (%.1f%% of simulation)\n", 
-      ctx.t_end - tfs.t_curr, 100.0*(ctx.t_end - tfs.t_curr)/ctx.t_end);
-    gkyl_gyrokinetic_app_cout(app, stdout, "  Total remaining frames: %d (of %d total)\n", 
-      ctx.num_frames - tfs.frame_curr, ctx.num_frames);
-    gkyl_gyrokinetic_app_cout(app, stdout, "==============================================\n");
-    gkyl_gyrokinetic_app_cout(app, stdout, "\n");
+    if (!schedule_complete) {
+      // Calculate how much of the phase has elapsed.
+      double time_elapsed_in_phase = tfs.t_curr - phase_start_time;
+      int frames_elapsed_in_phase = tfs.frame_curr - phase_start_frame;
+
+      // Change the duration and frame count so this phase reaches its original
+      // endpoint without repeating completed work.
+      struct gk_poa_phase_params *pparams = &ctx.poa_phases[phase_idx_init];
+      int original_frames = pparams->num_frames;
+      double original_duration = pparams->duration;
+      pparams->num_frames = phase_end_frame - tfs.frame_curr;
+      pparams->duration = phase_end_time - tfs.t_curr;
+
+      gkyl_gyrokinetic_app_cout(app, stdout, "\n");
+      gkyl_gyrokinetic_app_cout(app, stdout, "==============================================\n");
+      gkyl_gyrokinetic_app_cout(app, stdout, "          RESTART INFORMATION\n");
+      gkyl_gyrokinetic_app_cout(app, stdout, "==============================================\n");
+      gkyl_gyrokinetic_app_cout(app, stdout, "Restarting from frame %d at time = %.6e s\n", tfs.frame_curr, tfs.t_curr);
+      gkyl_gyrokinetic_app_cout(app, stdout, "Restart phase index: %d (of %d total phases)\n", phase_idx_init+1, ctx.num_phases);
+      gkyl_gyrokinetic_app_cout(app, stdout, "Restart phase type: %s\n",
+        (pparams->phase == GK_POA_OAP) ? "OAP (Orbit Averaging Phase)" : "FDP (Full Dynamics Phase)");
+      gkyl_gyrokinetic_app_cout(app, stdout, "\n");
+      gkyl_gyrokinetic_app_cout(app, stdout, "Phase completion status:\n");
+      gkyl_gyrokinetic_app_cout(app, stdout, "  Time elapsed in current phase: %.6e s (%.1f%% of phase)\n",
+        time_elapsed_in_phase,
+        100.0*time_elapsed_in_phase/original_duration);
+      gkyl_gyrokinetic_app_cout(app, stdout, "  Frames completed in current phase: %d (of %d total)\n",
+        frames_elapsed_in_phase, original_frames);
+      gkyl_gyrokinetic_app_cout(app, stdout, "\n");
+      gkyl_gyrokinetic_app_cout(app, stdout, "Remaining simulation:\n");
+      gkyl_gyrokinetic_app_cout(app, stdout, "  Remaining time in current phase: %.6e s\n", pparams->duration);
+      gkyl_gyrokinetic_app_cout(app, stdout, "  Remaining frames in current phase: %d\n", pparams->num_frames);
+      gkyl_gyrokinetic_app_cout(app, stdout, "  Total remaining phases: %d\n", ctx.num_phases - phase_idx_init);
+      gkyl_gyrokinetic_app_cout(app, stdout, "  Total remaining time: %.6e s (%.1f%% of simulation)\n",
+        schedule_end_time - tfs.t_curr, 100.0*(schedule_end_time - tfs.t_curr)/schedule_end_time);
+      gkyl_gyrokinetic_app_cout(app, stdout, "  Total remaining frames: %d (of %d total)\n",
+        schedule_end_frame - tfs.frame_curr, schedule_end_frame);
+      gkyl_gyrokinetic_app_cout(app, stdout, "==============================================\n");
+      gkyl_gyrokinetic_app_cout(app, stdout, "\n");
+    }
   }
   else {
 
@@ -775,8 +848,8 @@ run_poa_simulation(struct gkyl_gk app_inp, struct gk_mirror_ctx ctx, struct gkyl
     write_data(&trig_write_conf, &trig_write_phase, app, tfs.t_curr, true);
   }
 
-  if (app_args.num_steps != INT_MAX)
-    phase_idx_end = 1;
+  if (app_args.num_steps != INT_MAX && phase_idx_init < ctx.num_phases)
+    phase_idx_end = phase_idx_init+1;
 
   // Loop over number of number of phases;
   for (int pit=phase_idx_init; pit<phase_idx_end; pit++) {
