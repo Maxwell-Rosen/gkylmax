@@ -183,12 +183,14 @@ create_ctx(void)
   double alpha_fdp = 1.0;
   double tau_oap = 0.1;  // Duration of each phase.
   double tau_fdp = 15e-6;
+  double tau_annealing_final = 100e-6;
   double tau_fdp_extra = 100e-6;
   int num_cycles = 5; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
   int num_frames_oap = 5;        // Frames per OAP phase
   int num_frames_fdp = 5;        // Frames per FDP phase
+  int num_frames_annealing_final = 3*5;  // Frames for the final annealing phase
   int num_frames_fdp_extra = 3*5;  // Frames for the extra FDP phase
   
   // Whether to evolve the field.
@@ -203,14 +205,16 @@ create_ctx(void)
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_fdp = GKYL_GK_FDOT_MULTIPLIER_FIXED_FACTOR_TIMES_OMEGA_MAX;
 
   double cfl_factor_times_omega_max = 1/10.0; // CFL factor for fixed factor times omega max multiplier.
+  double low_pass_damping_rate = 1/5e-6;
 
-  // Assemble the regular OAP/FDP cycles, the OAP annealing ramp, and the
-  // final FDP. Keeping every stage in num_phases ensures that the driver also
-  // runs the annealing stages and can locate them correctly on restart.
+  // Assemble the regular OAP/FDP cycles, the OAP annealing ramp, the final
+  // loss-cone-masked annealing phase, and the final FDP. Keeping every stage
+  // in num_phases ensures that the driver also runs the annealing stages and
+  // can locate them correctly on restart.
   const double annealing_alphas[] = { alpha_oap, 2e-4, 2e-3, 2e-2 };
   const double annealing_durations[] = { tau_oap, tau_oap/5, tau_oap/30, tau_oap/300 };
   const int num_annealing_phases = sizeof(annealing_alphas)/sizeof(annealing_alphas[0]);
-  int num_phases = 2*num_cycles + num_annealing_phases + 1;
+  int num_phases = 2*num_cycles + num_annealing_phases + 2;
 
   struct gk_poa_phase_params *poa_phases = gkyl_calloc(num_phases, sizeof(struct gk_poa_phase_params));
   int poa_idx = 0;
@@ -237,12 +241,11 @@ create_ctx(void)
     poa_phases[poa_idx].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
     poa_phases[poa_idx].is_positivity_enabled = is_positivity_enabled_fdp;
     poa_phases[poa_idx].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
-    poa_phases[poa_idx].damping_rate_const = 1/5e-6;
+    poa_phases[poa_idx].damping_rate_const = low_pass_damping_rate;
     poa_idx++;
   }
 
-  // Increase alpha in stages so the distribution is annealed before the
-  // final full-dynamics phase.
+  // Increase alpha in stages before the full-alpha trapped-region anneal.
   for (int i=0; i<num_annealing_phases; i++) {
     poa_phases[poa_idx].phase = GK_POA_OAP;
     poa_phases[poa_idx].num_frames = num_frames_oap;
@@ -256,7 +259,21 @@ create_ctx(void)
     poa_idx++;
   }
 
-  // The final stage is an extra, longer FDP.
+  // Evolve only the trapped region at full alpha until it approaches a
+  // steady state, while damping rapid transients with the low-pass filter.
+  poa_phases[poa_idx].phase = GK_POA_OAP;
+  poa_phases[poa_idx].num_frames = num_frames_annealing_final;
+  poa_phases[poa_idx].duration = tau_annealing_final;
+  poa_phases[poa_idx].alpha = 1.0;
+  poa_phases[poa_idx].is_static_field = is_static_field_oap;
+  poa_phases[poa_idx].fdot_mult_type = fdot_mult_type_oap;
+  poa_phases[poa_idx].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
+  poa_phases[poa_idx].is_positivity_enabled = is_positivity_enabled_oap;
+  poa_phases[poa_idx].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
+  poa_phases[poa_idx].damping_rate_const = low_pass_damping_rate;
+  poa_idx++;
+
+  // Finish with 100 microseconds of unmasked full dynamics.
   poa_phases[poa_idx].phase = GK_POA_FDP;
   poa_phases[poa_idx].num_frames = num_frames_fdp_extra;
   poa_phases[poa_idx].duration = tau_fdp_extra;
@@ -266,7 +283,7 @@ create_ctx(void)
   poa_phases[poa_idx].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
   poa_phases[poa_idx].is_positivity_enabled = is_positivity_enabled_fdp;
   poa_phases[poa_idx].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
-  poa_phases[poa_idx].damping_rate_const = 1/5e-6;
+  poa_phases[poa_idx].damping_rate_const = low_pass_damping_rate;
 
   // Derive the global totals from the completed schedule so phase additions
   // cannot leave restart and progress bookkeeping out of sync.
