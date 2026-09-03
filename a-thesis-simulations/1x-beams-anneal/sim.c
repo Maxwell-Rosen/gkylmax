@@ -8,6 +8,7 @@
 #include <gkyl_fem_poisson_bctype.h>
 #include <gkyl_gyrokinetic.h>
 #include <gkyl_math.h>
+#define GK_POA_ENABLE_SECOND_FDOT_MULTIPLIER
 #include <sim.h>
 
 #include <rt_arg_parse.h>
@@ -260,13 +261,15 @@ create_ctx(void)
   }
 
   // Evolve only the trapped region at full alpha until it approaches a
-  // steady state, while damping rapid transients with the low-pass filter.
+  // steady state, using the FDP time-step restriction and damping rapid
+  // transients with the low-pass filter.
   poa_phases[poa_idx].phase = GK_POA_OAP;
   poa_phases[poa_idx].num_frames = num_frames_annealing_final;
   poa_phases[poa_idx].duration = tau_annealing_final;
   poa_phases[poa_idx].alpha = 1.0;
   poa_phases[poa_idx].is_static_field = is_static_field_oap;
   poa_phases[poa_idx].fdot_mult_type = fdot_mult_type_oap;
+  poa_phases[poa_idx].fdot_mult_type_secondary = fdot_mult_type_fdp;
   poa_phases[poa_idx].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
   poa_phases[poa_idx].is_positivity_enabled = is_positivity_enabled_oap;
   poa_phases[poa_idx].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;

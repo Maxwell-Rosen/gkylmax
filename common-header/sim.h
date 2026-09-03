@@ -28,6 +28,9 @@ struct gk_poa_phase_params {
   bool is_positivity_enabled, is_positivity_enabled_ion, is_positivity_enabled_elc; // Whether positivity is enabled.
   enum gkyl_gyrokinetic_positivity_type positivity_type, positivity_type_ion, positivity_type_elc; // Type of positivity (defaults to GKYL_GK_POSITIVITY_NONE).
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type, fdot_mult_type_ion, fdot_mult_type_elc; // Type of df/dt multipler.
+#ifdef GK_POA_ENABLE_SECOND_FDOT_MULTIPLIER
+  enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_secondary; // Optional second df/dt multiplier for Boltzmann-electron phases.
+#endif
   double f_threshold, f_threshold_ion, f_threshold_elc; // Threshold for df/dt multiplier.
   double cfl_factor_times_omega_max, cfl_factor_times_omega_max_ion, cfl_factor_times_omega_max_elc; // CFL factor for fixed factor times omega max multiplier.
   double time_dilation_scale_const, time_dilation_scale_const_ion, time_dilation_scale_const_elc; // Constant time dilation scale factor (if fdot_mult_type is GKYL_GK_FDOT_MULTIPLIER_CONSTANT).
@@ -328,6 +331,11 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
   gkyl_gyrokinetic_app_cout(app, stdout, "  Positivity = %s\n", pparams->is_positivity_enabled?"Yes":"No");
   gkyl_gyrokinetic_app_cout(app, stdout, "  df/dt multiplier = %s\n",
     fdot_multiplier_type_to_str(pparams->fdot_mult_type));
+#ifdef GK_POA_ENABLE_SECOND_FDOT_MULTIPLIER
+  if (pparams->fdot_mult_type_secondary != GKYL_GK_FDOT_MULTIPLIER_NONE)
+    gkyl_gyrokinetic_app_cout(app, stdout, "  Secondary df/dt multiplier = %s\n",
+      fdot_multiplier_type_to_str(pparams->fdot_mult_type_secondary));
+#endif
   gkyl_gyrokinetic_app_cout(app, stdout, "  df/dt threshold = %g\n", pparams->f_threshold);
   gkyl_gyrokinetic_app_cout(app, stdout, "  CFL factor times omega max = %g\n", pparams->cfl_factor_times_omega_max);
   gkyl_gyrokinetic_app_cout(app, stdout, "----------------------------------------------\n");
@@ -346,7 +354,11 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
   };
 
   struct gkyl_gyrokinetic_fdot_multiplier fdot_mult_inp = {
+#ifdef GK_POA_ENABLE_SECOND_FDOT_MULTIPLIER
+    .num_multipliers = pparams->fdot_mult_type_secondary == GKYL_GK_FDOT_MULTIPLIER_NONE ? 1 : 2,
+#else
     .num_multipliers = 1,
+#endif
     .multiplier[0] = {
       .type = pparams->fdot_mult_type,
       .f_threshold = pparams->f_threshold,
@@ -355,6 +367,16 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
       .cellwise_const = true,
       .write_diagnostics = true,
     },
+#ifdef GK_POA_ENABLE_SECOND_FDOT_MULTIPLIER
+    .multiplier[1] = {
+      .type = pparams->fdot_mult_type_secondary,
+      .f_threshold = pparams->f_threshold,
+      .cfl_factor_times_omega_max = pparams->cfl_factor_times_omega_max,
+      .time_dilation_scale_const = pparams->time_dilation_scale_const,
+      .cellwise_const = true,
+      .write_diagnostics = true,
+    },
+#endif
   };
   struct gkyl_gyrokinetic_field field_inp = {
     .gkfield_id = GKYL_GK_FIELD_BOLTZMANN,
