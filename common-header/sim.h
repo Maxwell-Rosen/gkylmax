@@ -397,8 +397,8 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
   struct gkyl_gyrokinetic_damping damping_inp = {
     .type = pparams->damping_type,
     .rate_const = pparams->damping_rate_const,
-    .write_rate = false,
-    .write_fbar = false,
+    .write_rate = true,
+    .write_fbar = true,
     .cellwise_const = false,
   };
 
@@ -597,8 +597,8 @@ void run_phase_kinetic_elc(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx,
   struct gkyl_gyrokinetic_damping damping_inp = {
     .type = pparams->damping_type,
     .rate_const = pparams->damping_rate_const,
-    .write_rate = false,
-    .write_fbar = false,
+    .write_rate = true,
+    .write_fbar = true,
     .cellwise_const = false,
   };
   

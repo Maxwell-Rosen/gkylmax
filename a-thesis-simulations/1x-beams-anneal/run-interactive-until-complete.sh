@@ -22,8 +22,8 @@ elif [[ ${1:-} == "--foreground" ]]; then
 fi
 
 run_dir_input=${1:-$script_dir}
-final_frame=${2:-85}
-file_prefix=${3:-zzim-ion_}
+final_frame=${2:-100}
+file_prefix=${3:-gk_lorentzian_mirror-ion_}
 job_script_name=${JOB_SCRIPT_NAME:-jobscript-gkyl-perlmutter}
 max_no_progress=${MAX_NO_PROGRESS:-3}
 interactive_session_limit=${INTERACTIVE_SESSION_LIMIT:-2}
