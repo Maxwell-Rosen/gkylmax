@@ -3,6 +3,8 @@
 #include <time.h>
 
 #include <gkyl_alloc.h>
+#include <gkyl_array_rio.h>
+#include <gkyl_basis.h>
 #include <gkyl_const.h>
 #include <gkyl_eqn_type.h>
 #include <gkyl_fem_poisson_bctype.h>
@@ -11,6 +13,105 @@
 #include <sim.h>
 
 #include <rt_arg_parse.h>
+
+// Fixed donor potential used to map the ion source to the midplane.
+struct ion_source_ctx {
+  struct gk_mirror_ctx *app;
+  struct gkyl_array *phi;
+  struct gkyl_basis basis;
+  double *z_edges; // Physical Z cell edges from the donor position map.
+  double phi_midp; // Volts.
+};
+
+static double
+source_potential(const struct ion_source_ctx *source, double z)
+{
+  // Invert the continuous, piecewise-linear P1 position map. The source
+  // callback receives mapped Z, while phi is stored on the computational grid.
+  int lo = 0, hi = source->phi->size-1;
+  while (lo < hi) {
+    int mid = lo + (hi-lo)/2;
+    if (z < source->z_edges[mid+1])
+      hi = mid;
+    else
+      lo = mid+1;
+  }
+  double zlo = source->z_edges[lo], zhi = source->z_edges[lo+1];
+  double xi = 2.0*(z-zlo)/(zhi-zlo)-1.0;
+  const double *coeff = gkyl_array_cfetch(source->phi, lo);
+  // Orthonormal 1x P1 serendipity expansion: phi0/sqrt(2) + sqrt(3/2)*phi1*xi.
+  return source->basis.eval_expand(&xi, coeff);
+}
+
+static void
+release_source_potential(struct ion_source_ctx *source)
+{
+  if (source->phi) gkyl_array_release(source->phi);
+  gkyl_free(source->z_edges);
+  source->phi = 0;
+  source->z_edges = 0;
+}
+
+static bool
+load_source_potential(struct ion_source_ctx *source,
+  const char *phi_file, const char *position_map_file)
+{
+  struct gkyl_rect_grid grid, map_grid;
+  struct gkyl_array *position_map = 0;
+  source->phi = gkyl_grid_array_new_from_file(&grid, phi_file);
+  if (!source->phi) {
+    fprintf(stderr, "Unable to read source potential: %s\n", phi_file);
+    goto fail;
+  }
+  gkyl_cart_modal_serendip(&source->basis, 1, 1);
+  if (grid.ndim != 1 || grid.cells[0] < 1 ||
+      source->phi->type != GKYL_DOUBLE || source->phi->ncomp != 2 ||
+      source->phi->size != grid.cells[0]) {
+    fprintf(stderr, "Source potential must be a scalar 1x P1 double array: %s\n", phi_file);
+    goto fail;
+  }
+
+  position_map = gkyl_grid_array_new_from_file(&map_grid, position_map_file);
+  if (!position_map) {
+    fprintf(stderr, "Unable to read source position map: %s\n", position_map_file);
+    goto fail;
+  }
+  if (!gkyl_rect_grid_cmp(&grid, &map_grid) ||
+      position_map->type != GKYL_DOUBLE || position_map->ncomp != 2 ||
+      position_map->size != source->phi->size) {
+    fprintf(stderr, "Source position map must be deflated 1x P1 on the potential grid: %s\n",
+      position_map_file);
+    goto fail;
+  }
+
+  source->z_edges = gkyl_malloc((grid.cells[0]+1)*sizeof(double));
+  for (int i=0; i<grid.cells[0]; ++i) {
+    const double *coeff = gkyl_array_cfetch(position_map, i);
+    double xi_lo = -1.0, xi_hi = 1.0;
+    double zlo = source->basis.eval_expand(&xi_lo, coeff);
+    double zhi = source->basis.eval_expand(&xi_hi, coeff);
+    if (i == 0) source->z_edges[0] = zlo;
+    if (!(zhi > zlo) ||
+        fabs(zlo-source->z_edges[i]) > 1e-10*fmax(1.0, fabs(zlo))) {
+      fprintf(stderr, "Source position map must be continuous and increasing (cell %d).\n", i+1);
+      goto fail;
+    }
+    source->z_edges[i+1] = zhi;
+  }
+  if (source->z_edges[0] > -source->app->Z_m ||
+      source->z_edges[grid.cells[0]] < source->app->Z_m) {
+    fprintf(stderr, "Source potential does not cover the source region [-Z_m, Z_m].\n");
+    goto fail;
+  }
+  source->phi_midp = source_potential(source, 0.0);
+  gkyl_array_release(position_map);
+  return true;
+
+fail:
+  if (position_map) gkyl_array_release(position_map);
+  release_source_potential(source);
+  return false;
+}
 
 // Evaluate initial conditions
 // I think ICs should be constructed to match the expander rather than the center
@@ -61,7 +162,8 @@ initial_temp_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT
 void
 eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
-  struct gk_mirror_ctx *app = ctx;
+  struct ion_source_ctx *source_ctx = ctx;
+  struct gk_mirror_ctx *app = source_ctx->app;
   double z = xn[0];
   if (fabs(z) > app->Z_m) { // For tandem mirrors, we just put this in the end cells
     fout[0] = 1e-20;
@@ -70,25 +172,27 @@ eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
   double vpar = xn[1];
   double mu = xn[2];
   
-  // Read the magnetic field at this location
-  // I don't like this implementation because it's only for mc2p geometries
-  // Should we specify B from the app or read from file? 
-  // If we do it from the app, then we can pass B,φ,B0,φ0.
-  // For demonstration, we don't need any of this and we can do it like this with just B
-  double bvec[3];
-  double xc_in[3] = {app->psi_eval, 0.0, z};
-  bfield_func(t, xc_in, bvec, ctx);
-  double Bmag = sqrt(bvec[0]*bvec[0] + bvec[1]*bvec[1] + bvec[2]*bvec[2]);
+  // This geometry uses Cartesian Z, not the arc length expected by bfield_func.
+  double BRad, BZ, Bmag;
+  Bfield_psiZ(app->psi_eval, z, app, &BRad, &BZ, &Bmag);
+  double phi = source_potential(source_ctx, z);
   
-  //Following energy conservation, re-map what vpar would be at the midplane
-  double vpar_midp = sqrt(pow(vpar,2.) + 2*mu*(Bmag - app->Bmag_midp)/app->mi); // Ignore potential for now
-  double vperp = sqrt(2.0 * mu * app->B_p / app->mi); // What magnetic field do we use here?
+  // Conserve E = mi*vpar^2/2 + mu*B + qi*phi along the orbit.
+  // phi is in volts, so qi*(phi-phi_midp) is an energy in joules.
+  double vpar_midp_sq = vpar*vpar + 2.0*(mu*(Bmag-app->Bmag_midp)
+    + app->qi*(phi-source_ctx->phi_midp))/app->mi;
+  if (vpar_midp_sq < 0.0) {
+    // No real midplane velocity exists for this phase-space point.
+    fout[0] = 1e-20;
+    return;
+  }
+  double vperp_midp_sq = 2.0*mu*app->Bmag_midp/app->mi;
 
   double gamma0 = app->ion_source_amplitude;
   double T_beam = app->ion_source_temp;
   double sigma_beam = 2*T_beam/app->mi;
 
-  double vtot2 = pow(vpar_midp,2.) + pow(vperp,2.);
+  double vtot2 = vpar_midp_sq + vperp_midp_sq;
 
   double source = fmax(gamma0 * sqrt(1/(M_PI*sigma_beam)) * exp (-1.0 * vtot2 / sigma_beam),1e-20);
 
@@ -170,8 +274,8 @@ create_ctx(void)
   int poly_order = 1;
 
   // Source parameters
-  double ion_source_amplitude = 42265194.8755; // Beam intM0 = 3.5134408153518073e+20
-  double ion_source_temp = 19889.9614892 * eV ; // Beam intM2 = 1.4616335208453340e+06
+double ion_source_amplitude = 42265194.8755; // Beam intM0 = 3.5134408153518073e+20
+double ion_source_temp = 19889.9614892 * eV ; // Beam intM2 = 1.4616335208453340e+06
 
   // Geometry parameters.
   double RatZeq0 = 0.10; // Radius of the field line at Z=0.
@@ -182,17 +286,17 @@ create_ctx(void)
   double Z_m = 0.98;
 
   // POA parameters  
-  double alpha_oap = 2e-5;  // Factor multiplying collisionless terms.
+  double alpha_oap = 1e-4;  // Factor multiplying collisionless terms.
   double alpha_fdp = 1.0;
   double tau_oap = 0.1;  // Duration of each phase.
-  double tau_fdp = 5e-3;
+  double tau_fdp = 2*15e-6;
   double tau_fdp_extra = 3*15e-6;
-  int num_cycles = 5; // Number of OAP+FDP cycles to run.
+  int num_cycles = 2; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
-  int num_frames_oap = 5;        // Frames per OAP phase
-  int num_frames_fdp = 5;        // Frames per FDP phase
-  int num_frames_fdp_extra = 3*5;  // Frames for the extra FDP phase
+  int num_frames_oap = 10;        // Frames per OAP phase
+  int num_frames_fdp = 10;        // Frames per FDP phase
+  int num_frames_fdp_extra = 15;  // Frames for the extra FDP phase
   
   // Whether to evolve the field.
   bool is_static_field_oap = false;
@@ -204,9 +308,8 @@ create_ctx(void)
   // Type of df/dt multipler.
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_oap = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE;
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_fdp = GKYL_GK_FDOT_MULTIPLIER_FIXED_FACTOR_TIMES_OMEGA_MAX;
-  
-  double cfl_factor_times_omega_max_mid = 1/1000.0; // CFL factor for fixed factor times omega max multiplier.
-  double cfl_factor_times_omega_max_end = 1/10.0; // CFL factor for fixed factor times omega max multiplier.
+
+  double cfl_factor_times_omega_max = 1/10.0; // CFL factor for fixed factor times omega max multiplier.
 
   // Calculate phase structure
   double t_end = (tau_oap + tau_fdp)*num_cycles + tau_fdp_extra;
@@ -223,7 +326,7 @@ create_ctx(void)
     poa_phases[2*i].alpha = alpha_oap;
     poa_phases[2*i].is_static_field = is_static_field_oap;
     poa_phases[2*i].fdot_mult_type = fdot_mult_type_oap;
-    poa_phases[2*i].cfl_factor_times_omega_max = 1.0;
+    poa_phases[2*i].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
     poa_phases[2*i].is_positivity_enabled = is_positivity_enabled_oap;
     poa_phases[2*i].damping_type = GKYL_GK_DAMPING_NONE;
 
@@ -234,7 +337,7 @@ create_ctx(void)
     poa_phases[2*i+1].alpha = alpha_fdp;
     poa_phases[2*i+1].is_static_field = is_static_field_fdp;
     poa_phases[2*i+1].fdot_mult_type = fdot_mult_type_fdp;
-    poa_phases[2*i+1].cfl_factor_times_omega_max = cfl_factor_times_omega_max_mid;
+    poa_phases[2*i+1].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
     poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_fdp;
     poa_phases[2*i+1].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
     poa_phases[2*i+1].damping_rate_const = 1/5e-6;
@@ -246,7 +349,7 @@ create_ctx(void)
   poa_phases[num_phases-1].alpha = alpha_fdp;
   poa_phases[num_phases-1].is_static_field = is_static_field_fdp;
   poa_phases[num_phases-1].fdot_mult_type = fdot_mult_type_fdp;
-  poa_phases[num_phases-1].cfl_factor_times_omega_max = cfl_factor_times_omega_max_end;
+  poa_phases[num_phases-1].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
   poa_phases[num_phases-1].is_positivity_enabled = is_positivity_enabled_fdp;
   poa_phases[num_phases-1].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
   poa_phases[num_phases-1].damping_rate_const = 1/5e-6;
@@ -340,6 +443,16 @@ int main(int argc, char **argv)
   }
 
   struct gk_mirror_ctx ctx = create_ctx(); // Context for init functions.
+  struct ion_source_ctx source_ctx = { .app = &ctx };
+  if (!load_source_potential(&source_ctx,
+      "/global/homes/m/mhrosen/scratch/gkylmax/a-thesis-simulations/1x-maxw/zzim-field_65.gkyl",
+      "/global/homes/m/mhrosen/scratch/gkylmax/a-thesis-simulations/1x-maxw/zzim-geo_corn_mc2nu_pos_deflated.gkyl")) {
+#ifdef GKYL_HAVE_MPI
+    if (app_args.use_mpi) MPI_Abort(MPI_COMM_WORLD, 1);
+#endif
+    release_ctx(&ctx);
+    return 1;
+  }
 
   int rank = 0;
 #ifdef GKYL_HAVE_MPI
@@ -367,14 +480,9 @@ int main(int argc, char **argv)
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
 
-    .projection = {
-      .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
-      .density = initial_density,
-      .ctx_density = &ctx,
-      .upar = initial_upar,
-      .ctx_upar = &ctx,
-      .temp = initial_temp_ion,
-      .ctx_temp = &ctx,
+    .init_from_file = {
+      .type = GKYL_IC_IMPORT_F,
+      .file_name = "/global/homes/m/mhrosen/scratch/gkylmax/a-thesis-simulations/1x-maxw/zzim-ion_65.gkyl",
     },
 
     .mapc2p = {
@@ -411,7 +519,7 @@ int main(int argc, char **argv)
       .projection[0] = {
         .proj_id = GKYL_PROJ_FUNC,
         .func = eval_f_ion_source,
-        .ctx_func = &ctx,
+        .ctx_func = &source_ctx,
       },
       .diagnostics = {
         .num_diag_moments = 7,
@@ -553,6 +661,7 @@ int main(int argc, char **argv)
   run_poa_simulation(app_inp, ctx, app_args, is_kinetic_elc);
 
   gkyl_gyrokinetic_comms_release(comm);
+  release_source_potential(&source_ctx);
   release_ctx(&ctx);
   
 #ifdef GKYL_HAVE_MPI
