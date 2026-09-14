@@ -2,4 +2,4 @@ pgkyl zzim-ion_bflux_xlower_integrated_HamiltonianMoments.gkyl zzim-ion_source_i
 
 pgkyl zzim-ion_integrated_moms.gkyl sel -c0 --z0 2: pl --saveas "iinteg.png" --no_show &
 
-pgkyl zzim-ion_integrated_moms.gkyl sel -c0 --z0 2: fit -f exp_plateau -p pl -f0 --saveas "iinteg_fit.png" --no_show &
+pgkyl zzim-ion_integrated_moms.gkyl sel -c0 --z0 2: fit -f linear -p pl -f0 --saveas "iinteg_fit.png" --no_show &
