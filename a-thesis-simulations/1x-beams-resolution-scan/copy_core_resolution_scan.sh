@@ -40,8 +40,8 @@ export FI_CXI_RDZV_THRESHOLD=0
 export FI_CXI_RDZV_EAGER_SIZE=0
 
 # Define arrays
-cell_numbers=(200 256 320)
-vpar_cell_numbers=(32 48)
+cell_numbers=(128 192 256 320)
+vpar_cell_numbers=(32 48 56)
 mu_cell_numbers=(8 16 24)
 
 run_job()

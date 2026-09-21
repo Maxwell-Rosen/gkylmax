@@ -1,4 +1,4 @@
-pgkyl zzim-ion_bflux_xlower_integrated_HamiltonianMoments.gkyl zzim-ion_source_integrated_moms.gkyl sel -c0 --z0 2: ev "f0 f1 / 2 *" pl --saveas "bfluxratio.png" --no_show --ymax 10 --ymin 0 -g &
+pgkyl zzim-ion_bflux_xlower_integrated_HamiltonianMoments.gkyl zzim-ion_source_integrated_moms.gkyl sel -c0 --z0 2: ev "f0 f1 / 2 *" pl --saveas "bfluxratio.png" --no_show --ymax 2 --ymin 0 -g &
 
 pgkyl zzim-ion_bflux_xlower_integrated_HamiltonianMoments.gkyl zzim-ion_source_integrated_moms.gkyl sel -c0 --z0 2: ev "f0 f1 / 2 *" pl --saveas "bfluxratio_log.png" --no_show --logy -g &
 

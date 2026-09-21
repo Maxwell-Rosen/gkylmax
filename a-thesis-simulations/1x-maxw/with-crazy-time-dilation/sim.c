@@ -185,7 +185,7 @@ create_ctx(void)
   double alpha_oap = 2e-5;  // Factor multiplying collisionless terms.
   double alpha_fdp = 1.0;
   double tau_oap = 0.1;  // Duration of each phase.
-  double tau_fdp = 15e-6;
+  double tau_fdp = 5e-3;
   double tau_fdp_extra = 3*15e-6;
   int num_cycles = 5; // Number of OAP+FDP cycles to run.
   
@@ -204,8 +204,9 @@ create_ctx(void)
   // Type of df/dt multipler.
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_oap = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE;
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_fdp = GKYL_GK_FDOT_MULTIPLIER_FIXED_FACTOR_TIMES_OMEGA_MAX;
-
-  double cfl_factor_times_omega_max = 1/10.0; // CFL factor for fixed factor times omega max multiplier.
+  
+  double cfl_factor_times_omega_max_mid = 1/1000.0; // CFL factor for fixed factor times omega max multiplier.
+  double cfl_factor_times_omega_max_end = 1/10.0; // CFL factor for fixed factor times omega max multiplier.
 
   // Calculate phase structure
   double t_end = (tau_oap + tau_fdp)*num_cycles + tau_fdp_extra;
@@ -222,7 +223,7 @@ create_ctx(void)
     poa_phases[2*i].alpha = alpha_oap;
     poa_phases[2*i].is_static_field = is_static_field_oap;
     poa_phases[2*i].fdot_mult_type = fdot_mult_type_oap;
-    poa_phases[2*i].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
+    poa_phases[2*i].cfl_factor_times_omega_max = 1.0;
     poa_phases[2*i].is_positivity_enabled = is_positivity_enabled_oap;
     poa_phases[2*i].damping_type = GKYL_GK_DAMPING_NONE;
 
@@ -233,7 +234,7 @@ create_ctx(void)
     poa_phases[2*i+1].alpha = alpha_fdp;
     poa_phases[2*i+1].is_static_field = is_static_field_fdp;
     poa_phases[2*i+1].fdot_mult_type = fdot_mult_type_fdp;
-    poa_phases[2*i+1].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
+    poa_phases[2*i+1].cfl_factor_times_omega_max = cfl_factor_times_omega_max_mid;
     poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_fdp;
     poa_phases[2*i+1].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
     poa_phases[2*i+1].damping_rate_const = 1/5e-6;
@@ -245,7 +246,7 @@ create_ctx(void)
   poa_phases[num_phases-1].alpha = alpha_fdp;
   poa_phases[num_phases-1].is_static_field = is_static_field_fdp;
   poa_phases[num_phases-1].fdot_mult_type = fdot_mult_type_fdp;
-  poa_phases[num_phases-1].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
+  poa_phases[num_phases-1].cfl_factor_times_omega_max = cfl_factor_times_omega_max_end;
   poa_phases[num_phases-1].is_positivity_enabled = is_positivity_enabled_fdp;
   poa_phases[num_phases-1].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
   poa_phases[num_phases-1].damping_rate_const = 1/5e-6;

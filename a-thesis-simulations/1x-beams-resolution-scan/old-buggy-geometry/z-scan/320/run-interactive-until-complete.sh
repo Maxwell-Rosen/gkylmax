@@ -23,7 +23,7 @@ fi
 
 run_dir_input=${1:-$script_dir}
 final_frame=${2:-65}
-file_prefix=${3:-zzim-ion_}
+file_prefix=${3:-gk_lorentzian_mirror-ion_}
 job_script_name=${JOB_SCRIPT_NAME:-jobscript-gkyl-perlmutter}
 max_no_progress=${MAX_NO_PROGRESS:-3}
 interactive_session_limit=${INTERACTIVE_SESSION_LIMIT:-2}
@@ -228,6 +228,16 @@ while ! is_complete; do
     echo "A numerical or restart failure was detected; not requesting another allocation." >&2
     echo "See: $attempt_log" >&2
     exit 1
+  fi
+
+  # squeue can report fewer than the configured number of interactive jobs
+  # while Slurm still refuses a new submission because of its QOS submit limit.
+  # This is a temporary scheduler refusal, not an allocation with no progress.
+  if grep -q 'QOSMaxSubmitJobPerUserLimit' "$attempt_log"; then
+    echo "The interactive QOS submission limit is still in use."
+    echo "Polling again in $session_poll_seconds seconds ..."
+    sleep "$session_poll_seconds"
+    continue
   fi
 
   if (( allocation_status == 0 )); then

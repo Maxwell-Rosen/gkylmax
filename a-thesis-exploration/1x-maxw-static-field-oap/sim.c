@@ -195,7 +195,7 @@ create_ctx(void)
   int num_frames_fdp_extra = 3*5;  // Frames for the extra FDP phase
   
   // Whether to evolve the field.
-  bool is_static_field_oap = false;
+  bool is_static_field_oap = true;
   bool is_static_field_fdp = false;
 
   // Whether to enable positivity.

@@ -39,12 +39,6 @@ initial_upar(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fou
 }
 
 void
-eval_zero(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  fout[0] = 0.0;
-}
-
-void
 initial_temp_ion(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
   struct gk_mirror_ctx *app = ctx;
@@ -84,13 +78,14 @@ eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
   double vpar_midp = sqrt(pow(vpar,2.) + 2*mu*(Bmag - app->Bmag_midp)/app->mi); // Ignore potential for now
   double vperp = sqrt(2.0 * mu * app->B_p / app->mi); // What magnetic field do we use here?
 
-  double gamma0 = app->ion_source_amplitude;
-  double T_beam = app->ion_source_temp;
+  double gamma0 = 200;
+  double T_beam = 200 * GKYL_ELEMENTARY_CHARGE;
+  double E_beam = 25000 * GKYL_ELEMENTARY_CHARGE;
+  double v_beam = sqrt(E_beam / app->mi);
   double sigma_beam = 2*T_beam/app->mi;
 
-  double vtot2 = pow(vpar_midp,2.) + pow(vperp,2.);
-
-  double source = fmax(gamma0 * sqrt(1/(M_PI*sigma_beam)) * exp (-1.0 * vtot2 / sigma_beam),1e-20);
+  double source = fmax(gamma0 * exp (-1.0 * (pow(fabs(vpar_midp) - v_beam, 2) + 
+                                             pow(vperp - v_beam, 2)) / sigma_beam),1e-20);
 
   fout[0] = source;
 }
@@ -162,16 +157,12 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   double vpar_max_elc = 4 * vte;
   double mu_max_elc = me * pow(4. * vte, 2.) / (2. * B_p);
-  int Nz = 400;
+  int Nz = 200;
   int Nvpar = 64;
   int Nmu = 32;
   int Nvpar_elc = 8;
   int Nmu_elc = 8;
   int poly_order = 1;
-
-  // Source parameters
-  double ion_source_amplitude = 42265194.8755; // Beam intM0 = 3.5134408153518073e+20
-  double ion_source_temp = 19889.9614892 * eV ; // Beam intM2 = 1.4616335208453340e+06
 
   // Geometry parameters.
   double RatZeq0 = 0.10; // Radius of the field line at Z=0.
@@ -293,9 +284,6 @@ create_ctx(void)
     .int_diag_calc_freq = int_diag_calc_freq,
     .dt_failure_tol = dt_failure_tol,
     .num_failures_max = num_failures_max,
-    
-    .ion_source_amplitude = ion_source_amplitude,
-    .ion_source_temp = ion_source_temp,
 
     .mcB = mcB,
     .gamma = gamma,
@@ -433,12 +421,7 @@ int main(int argc, char **argv)
     .diag_moments = {GKYL_F_MOMENT_BIMAXWELLIAN, GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_M3PAR, GKYL_F_MOMENT_M3PERP },
     .num_integrated_diag_moments = 1,
     .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN },
-    .num_time_rate_diagnostics = 3,
-    .time_rate_diagnostics = {
-      GKYL_GK_TIME_RATE_DIAGNOSTIC_FDOT_INTEGRATED_MOMENTS,
-      GKYL_GK_TIME_RATE_DIAGNOSTIC_FDOT_ABS_INTEGRATED_MOMENTS,
-      GKYL_GK_TIME_RATE_DIAGNOSTIC_FDOT,
-    },
+    .time_rate_diagnostics = true,
 
     .boundary_flux_diagnostics = {
       .num_integrated_diag_moments = 1,
@@ -467,7 +450,7 @@ int main(int argc, char **argv)
       .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
       .density = initial_density,
       .ctx_density = &ctx,
-      .upar = eval_zero,
+      .upar = initial_upar,
       .ctx_upar = &ctx,
       .temp = initial_temp_elc,
       .ctx_temp = &ctx,
@@ -511,7 +494,7 @@ int main(int argc, char **argv)
   };
 
   struct gkyl_gk app_inp = {  // GK app
-    .name = "zzim",
+    .name = "gk_lorentzian_mirror",
     .cdim = ctx.cdim,
     .lower = {ctx.Z_min},
     .upper = {ctx.Z_max},
