@@ -520,9 +520,9 @@ int main(int argc, char **argv)
       .position_map_info = {
         .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
         .map_strength = 1.0,
-        .maximum_slope_at_min_B = 4,
-        .maximum_slope_at_max_B = 4,
-        .gaussian_std = 0.25,
+        .maximum_slope_at_min_B = 2,
+        .maximum_slope_at_max_B = 2,
+        .gaussian_std = 0.5,
         .gaussian_max_integration_width = 1.0,
       },
     },
