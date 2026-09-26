@@ -24,6 +24,9 @@ struct gk_poa_phase_params {
   int num_frames; // Number of frames.
   double duration; // Duration.
   double alpha, alpha_ion, alpha_elc; // Factor multiplying collisionless terms.
+#ifdef GK_POA_ENABLE_COLLISIONLESS_TIME_DILATION
+  struct gkyl_gyrokinetic_fdot_multiplier collisionless_time_rate_multiplier; // Boltzmann-electron phase collisionless multipliers; zero count disables them.
+#endif
   bool is_static_field; // Whether to evolve the field.
   bool is_positivity_enabled, is_positivity_enabled_ion, is_positivity_enabled_elc; // Whether positivity is enabled.
   enum gkyl_gyrokinetic_positivity_type positivity_type, positivity_type_ion, positivity_type_elc; // Type of positivity (defaults to GKYL_GK_POSITIVITY_NONE).
@@ -351,6 +354,9 @@ void run_phase(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx, double num_
   struct gkyl_gyrokinetic_collisionless collisionless_inp = {
     .type = GKYL_GK_COLLISIONLESS_ES,
     .scale_factor = pparams->alpha,
+#ifdef GK_POA_ENABLE_COLLISIONLESS_TIME_DILATION
+    .time_rate_multiplier = pparams->collisionless_time_rate_multiplier,
+#endif
   };
 
   struct gkyl_gyrokinetic_fdot_multiplier fdot_mult_inp = {

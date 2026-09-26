@@ -22,7 +22,7 @@ elif [[ ${1:-} == "--foreground" ]]; then
 fi
 
 run_dir_input=${1:-$script_dir}
-final_frame=${2:-115}
+final_frame=${2:-65}
 file_prefix=${3:-zzim-ion_}
 job_script_name=${JOB_SCRIPT_NAME:-jobscript-gkyl-perlmutter}
 max_no_progress=${MAX_NO_PROGRESS:-3}

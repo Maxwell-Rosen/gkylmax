@@ -10,6 +10,8 @@ pgkyl zzim-ion_M1_65.gkyl \
   zzim-geo_int_jacobgeo.gkyl \
   zzim-geo_int_rtg33inv.gkyl \
   interp -n 1 \
-  ev 'f0 f1 * f2 * 4.1637684989244316e+20 /' \
+  ev 'f0 f1 * f2 * 3.513470238914313e20 /' \
   map -m zzim-geo_corn_mc2nu_pos_deflated.gkyl \
-  pl --xlabel 'Physical z (m)' --ylabel 'Particle rate / source' --saveas "total_fluxes.png" --no_show -g &
+  pl --xlabel 'Physical z (m)' --ylabel 'Particle rate / source' --saveas "total_fluxes.png" --no_show -g &\
+
+pgkyl zzim-ion_bflux_xlower_integrated_HamiltonianMoments.gkyl ../../a-thesis-simulations/1x-maxw/zzim-ion_bflux_xlower_integrated_HamiltonianMoments.gkyl sel -z 1001: pl -f0 -g --saveas "bfluxratio_compare.png" --no_show &

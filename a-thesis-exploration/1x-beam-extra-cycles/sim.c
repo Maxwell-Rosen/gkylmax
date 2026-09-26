@@ -85,13 +85,14 @@ eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
   double vpar_midp = sqrt(pow(vpar,2.) + 2*mu*(Bmag - app->Bmag_midp)/app->mi); // Ignore potential for now
   double vperp = sqrt(2.0 * mu * app->B_p / app->mi); // What magnetic field do we use here?
 
-  double gamma0 = app->ion_source_amplitude;
-  double T_beam = app->ion_source_temp;
+  double gamma0 = 200;
+  double T_beam = 200 * GKYL_ELEMENTARY_CHARGE;
+  double E_beam = 25000 * GKYL_ELEMENTARY_CHARGE;
+  double v_beam = sqrt(E_beam / app->mi);
   double sigma_beam = 2*T_beam/app->mi;
 
-  double vtot2 = pow(vpar_midp,2.) + pow(vperp,2.);
-
-  double source = fmax(gamma0 * sqrt(1/(M_PI*sigma_beam)) * exp (-1.0 * vtot2 / sigma_beam),1e-20);
+  double source = fmax(gamma0 * exp (-1.0 * (pow(fabs(vpar_midp) - v_beam, 2) + 
+                                             pow(vperp - v_beam, 2)) / sigma_beam),1e-20);
 
   fout[0] = source;
 }
@@ -169,10 +170,6 @@ create_ctx(void)
   int Nvpar_elc = 8;
   int Nmu_elc = 8;
   int poly_order = 1;
-
-  // Source parameters
-double ion_source_amplitude = 42564834.8496; // Beam intM0 = 4.1637684989244316e+20
-double ion_source_temp = 19523.1424682 * eV ; // Beam intM2 = 1.7339528733534398e+06
 
   // Geometry parameters.
   double RatZeq0 = 0.10; // Radius of the field line at Z=0.
@@ -304,9 +301,6 @@ double ion_source_temp = 19523.1424682 * eV ; // Beam intM2 = 1.7339528733534398
     .int_diag_calc_freq = int_diag_calc_freq,
     .dt_failure_tol = dt_failure_tol,
     .num_failures_max = num_failures_max,
-    
-    .ion_source_amplitude = ion_source_amplitude,
-    .ion_source_temp = ion_source_temp,
 
     .mcB = mcB,
     .gamma = gamma,

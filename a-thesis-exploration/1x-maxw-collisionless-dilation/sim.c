@@ -188,7 +188,7 @@ double ion_source_temp = 19523.1424682 * eV ; // Beam intM2 = 1.7339528733534398
   double tau_oap = 0.1;  // Duration of each phase.
   double tau_fdp = 15e-6;
   double tau_fdp_extra = 3*15e-6;
-  int num_cycles = 10; // Number of OAP+FDP cycles to run.
+  int num_cycles = 5; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
   int num_frames_oap = 5;        // Frames per OAP phase

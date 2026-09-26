@@ -11,5 +11,5 @@ pgkyl zzim-ion_M1_65.gkyl \
   zzim-geo_int_rtg33inv.gkyl \
   interp -n 1 \
   ev 'f0 f1 * f2 * 4.1637684989244316e+20 /' \
-  map -m zzim-geo_corn_mc2nu_pos_deflated.gkyl \
+  map zzim-geo_corn_mc2nu_pos_deflated.gkyl \
   pl --xlabel 'Physical z (m)' --ylabel 'Particle rate / source' --saveas "total_fluxes.png" --no_show -g &
