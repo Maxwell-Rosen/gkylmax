@@ -2,7 +2,7 @@
 
 # Repeatedly run a checkpointable Gkeyll simulation in four-hour Perlmutter
 # interactive allocations. With no arguments, this script runs the simulation
-# in its own directory and expects its final checkpoint to be frame 65.
+# in its own directory and expects its final checkpoint to be frame 115.
 #
 # It can also orchestrate another run directory:
 #   ./run-interactive-until-complete.sh RUN_DIR FINAL_FRAME [FILE_PREFIX]
@@ -22,7 +22,7 @@ elif [[ ${1:-} == "--foreground" ]]; then
 fi
 
 run_dir_input=${1:-$script_dir}
-final_frame=${2:-65}
+final_frame=${2:-50}
 file_prefix=${3:-zzim-ion_}
 job_script_name=${JOB_SCRIPT_NAME:-jobscript-gkyl-perlmutter}
 max_no_progress=${MAX_NO_PROGRESS:-3}
