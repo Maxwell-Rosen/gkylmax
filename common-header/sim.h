@@ -544,10 +544,16 @@ void run_phase_kinetic_elc(gkyl_gyrokinetic_app* app, struct gk_mirror_ctx *ctx,
   struct gkyl_gyrokinetic_collisionless ion_collisionless_inp = {
     .type = GKYL_GK_COLLISIONLESS_ES,
     .scale_factor = pparams->alpha_ion,
+#ifdef GK_POA_ENABLE_COLLISIONLESS_TIME_DILATION
+    .time_rate_multiplier = pparams->collisionless_time_rate_multiplier,
+#endif
   };
   struct gkyl_gyrokinetic_collisionless elc_collisionless_inp = {
     .type = GKYL_GK_COLLISIONLESS_ES,
     .scale_factor = pparams->alpha_elc,
+#ifdef GK_POA_ENABLE_COLLISIONLESS_TIME_DILATION
+    .time_rate_multiplier = pparams->collisionless_time_rate_multiplier,
+#endif
   };
   struct gkyl_gyrokinetic_fdot_multiplier ion_fdot_mult_inp = {
     .num_multipliers = 1,

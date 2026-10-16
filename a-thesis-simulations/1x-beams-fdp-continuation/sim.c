@@ -8,6 +8,7 @@
 #include <gkyl_fem_poisson_bctype.h>
 #include <gkyl_gyrokinetic.h>
 #include <gkyl_math.h>
+#define GK_POA_ENABLE_COLLISIONLESS_TIME_DILATION
 #include <sim.h>
 
 #include <rt_arg_parse.h>
@@ -163,7 +164,7 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   double vpar_max_elc = 4 * vte;
   double mu_max_elc = me * pow(4. * vte, 2.) / (2. * B_p);
-  int Nz = 400;
+  int Nz = 256;
   int Nvpar = 64;
   int Nmu = 32;
   int Nvpar_elc = 8;
@@ -179,7 +180,7 @@ create_ctx(void)
   double Z_m = 0.98;
 
   // POA parameters  
-  double alpha_oap = 2e-5;  // Factor multiplying collisionless terms.
+  double alpha_oap = 1e-3;  // Factor multiplying collisionless terms.
   double alpha_fdp = 1.0;
   double tau_oap = 0;
   double tau_fdp = 0;
@@ -217,6 +218,14 @@ create_ctx(void)
     poa_phases[2*i].num_frames = num_frames_oap;
     poa_phases[2*i].duration = tau_oap;
     poa_phases[2*i].alpha = alpha_oap;
+    poa_phases[2*i].collisionless_time_rate_multiplier = (struct gkyl_gyrokinetic_fdot_multiplier) {
+      .num_multipliers = 1,
+      .multiplier[0] = {
+        .type = GKYL_GK_FDOT_MULTIPLIER_FIXED_FACTOR_TIMES_OMEGA_MAX,
+        .cellwise_const = true,
+        .cfl_factor_times_omega_max = cfl_factor_times_omega_max,
+      },
+    };
     poa_phases[2*i].is_static_field = is_static_field_oap;
     poa_phases[2*i].fdot_mult_type = fdot_mult_type_oap;
     poa_phases[2*i].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
@@ -228,22 +237,26 @@ create_ctx(void)
     poa_phases[2*i+1].num_frames = num_frames_fdp;
     poa_phases[2*i+1].duration = tau_fdp;
     poa_phases[2*i+1].alpha = alpha_fdp;
+    poa_phases[2*i+1].collisionless_time_rate_multiplier.num_multipliers = 0;
     poa_phases[2*i+1].is_static_field = is_static_field_fdp;
     poa_phases[2*i+1].fdot_mult_type = fdot_mult_type_fdp;
     poa_phases[2*i+1].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
     poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_fdp;
-    poa_phases[2*i+1].damping_type = GKYL_GK_DAMPING_NONE;
+    poa_phases[2*i+1].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
+    poa_phases[2*i+1].damping_rate_const = 1/5e-6;
   }
   // The final stage is an extra, longer FDP.
   poa_phases[num_phases-1].phase = GK_POA_FDP;
   poa_phases[num_phases-1].num_frames = num_frames_fdp_extra;
   poa_phases[num_phases-1].duration = tau_fdp_extra;
   poa_phases[num_phases-1].alpha = alpha_fdp;
+  poa_phases[num_phases-1].collisionless_time_rate_multiplier.num_multipliers = 0;
   poa_phases[num_phases-1].is_static_field = is_static_field_fdp;
   poa_phases[num_phases-1].fdot_mult_type = fdot_mult_type_fdp;
   poa_phases[num_phases-1].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
   poa_phases[num_phases-1].is_positivity_enabled = is_positivity_enabled_fdp;
-  poa_phases[num_phases-1].damping_type = GKYL_GK_DAMPING_NONE;
+  poa_phases[num_phases-1].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
+  poa_phases[num_phases-1].damping_rate_const = 1/5e-6;
 
   double write_phase_freq = 1; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
   double int_diag_calc_freq = 100; // Frequency of calculating integrated diagnostics (as a factor of num_frames).
@@ -360,7 +373,7 @@ int main(int argc, char **argv)
 
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
-      .file_name = "/global/homes/m/mhrosen/scratch/gkylmax/a-thesis-simulations/1x-beams/zzim-ion_65.gkyl",
+      .file_name = "/global/homes/m/mhrosen/scratch/gkylmax/a-thesis-simulations/1x-beams/zzim-ion_75.gkyl",
     },
 
     .mapc2p = {
@@ -420,10 +433,12 @@ int main(int argc, char **argv)
     .diag_moments = {GKYL_F_MOMENT_BIMAXWELLIAN, GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_M3PAR, GKYL_F_MOMENT_M3PERP },
     .num_integrated_diag_moments = 1,
     .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN },
-    .num_time_rate_diagnostics = 3,
+    .num_time_rate_diagnostics = 5,
     .time_rate_diagnostics = {
       GKYL_GK_TIME_RATE_DIAGNOSTIC_FDOT_INTEGRATED_MOMENTS,
       GKYL_GK_TIME_RATE_DIAGNOSTIC_FDOT_ABS_INTEGRATED_MOMENTS,
+      GKYL_GK_TIME_RATE_DIAGNOSTIC_FDOT_MOMENTS,
+      GKYL_GK_TIME_RATE_DIAGNOSTIC_FDOT_ABS_MOMENTS,
       GKYL_GK_TIME_RATE_DIAGNOSTIC_FDOT,
     },
 
@@ -513,9 +528,9 @@ int main(int argc, char **argv)
       .position_map_info = {
         .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
         .map_strength = 1.0,
-        .maximum_slope_at_min_B = 2,
-        .maximum_slope_at_max_B = 2,
-        .gaussian_std = 0.5,
+        .maximum_slope_at_min_B = 4,
+        .maximum_slope_at_max_B = 4,
+        .gaussian_std = 0.25,
         .gaussian_max_integration_width = 1.0,
       },
     },

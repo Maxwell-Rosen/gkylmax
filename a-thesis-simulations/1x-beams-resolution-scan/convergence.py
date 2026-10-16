@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Resolution convergence for this 1x2v, p=1, Boltzmann-electron scan.
 
-See z-scan/CONVERGENCE.md for diagnostic definitions and normalization.
+Use --axis z, vpar, or mu to select the resolution scan (default: z).
 Only moment/geometry files are read; distribution functions are not loaded.
 """
 from __future__ import annotations
@@ -33,12 +33,12 @@ INVENTORY = [
 WALL = [
     (f'{key}_{side}', f'{title}: {label} wall', unit, scale)
     for key, title, unit, scale in [
-        ('gamma', 'Outward ion particle flux', r'$\Gamma_i$ [$\mathrm{m}^{-2}\,\mathrm{s}^{-1}$]', 1),
+        ('particle_balance', 'Particle boundary flux / source', r'$2\,\dot N_{i,\mathrm{wall}} / S_i$', 1),
         ('qi', 'Ion wall energy flux', r'$q_{i,\mathrm{wall}}$ [MW m$^{-2}$]', 1e-6),
         ('qtot', 'Total wall heat flux (model)', r'$q_{i+e,\mathrm{wall}}$ [MW m$^{-2}$]', 1e-6),
     ] for side, label in [('lo', 'lower'), ('hi', 'upper')]]
 SUMMARY = [INVENTORY[0], INVENTORY[4], INVENTORY[5],
-           ('loss', 'Particle loss, both walls', 'Rate [simulation normalization]', 1),
+           ('particle_balance', 'Particle boundary flux / source, both walls', r'$(\dot N_{i,\mathrm{lo}} + \dot N_{i,\mathrm{hi}}) / S_i$', 1),
            ('Pi', 'Ion wall power, both walls', 'Power [simulation normalization]', 1),
            ('Ptot', 'Total wall power, both walls (model)', 'Power [simulation normalization]', 1)]
 
@@ -150,6 +150,10 @@ def load_run(path, frame, te_ev, final_time=None):
     out = {'Ni': (ti, ion[:, 0]), 'Hi': (ti, ion[:, 2]),
            'Ne': (te, elc[:, 0]), 'Ee': (te, .5 * emass * (elc[:, 2] + elc[:, 3]))}
     out['Ntot'] = (ti, ion[:, 0] + sample(out['Ne'], ti))
+    source_t, source, _ = series(f('ion_source_integrated_moms'), 3)
+    if np.any(source[:, 0] <= 0):
+        raise ValueError(f'{path}: particle source must be positive for flux normalization')
+    out['source'] = (source_t, source[:, 0])
     # Surface files pack lower-face values, then an upper-boundary copy.
     # They are NOT volume-modal data despite the generic file metadata.
     area_data = read(f('geo_surf0_lenr')).get_values()
@@ -162,6 +166,8 @@ def load_run(path, frame, te_ev, final_time=None):
         t, b, _ = series(f(f'ion_bflux_x{edge}_integrated_HamiltonianMoments'), 3)
         # Both particle/energy fluxes are already outward positive at both ends.
         out[f'loss_{side}'] = (t, b[:, 0])
+        # Compare integrated rates in the same transverse normalization.
+        out[f'particle_balance_{side}'] = (t, 2 * b[:, 0] / sample(out['source'], t))
         out[f'Pi_{side}'] = (t, b[:, 2])
         out[f'Ptot_{side}'] = (t, b[:, 2] + 2 * temp * b[:, 0])
         out[f'gamma_{side}'] = (t, b[:, 0] / area)
@@ -171,6 +177,8 @@ def load_run(path, frame, te_ev, final_time=None):
     for key in ['loss', 'Pi', 'Ptot']:
         t, v = out[f'{key}_lo']
         out[key] = (t, v + sample(out[f'{key}_hi'], t))
+    t, loss = out['loss']
+    out['particle_balance'] = (t, loss / sample(out['source'], t))
 
     geom, jac = modal(f('geo_int_jacobgeo'))
     _, mapping = modal(f('geo_corn_mc2nu_pos_deflated'))
@@ -255,32 +263,39 @@ def histories(runs, metrics, output, name, end, zoom_start=None):
         ax.set(title=title, ylabel=unit,
                xlabel=r'Time in final relaxation [$\mu$s]' if zoom_start is not None else 'Simulation time [s]')
         ax.grid(alpha=.25)
+        if key.startswith('particle_balance'):
+            ax.axhline(1, color='0.4', ls=':', lw=1, label='Source balance = 1')
         ax.ticklabel_format(axis='y', style='sci', scilimits=(-3, 4), useMathText=True)
     axes.flat[0].legend(fontsize=9)
     fig.suptitle('Resolution scan: ' + ('final relaxation' if zoom_start is not None else 'full history (OAP/FDP simulation clock)'), fontsize=14)
     save(fig, output, name)
 
 
-def main(root=ROOT, axis='z'):
-    root = Path(root).resolve()
-    resolution_key, symbol = AXES[axis]
+def main(root=None, axis='z'):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--root', type=Path, default=root)
-    parser.add_argument('--baseline', type=Path, default=root.parent.parent / '1x-beams',
+    parser.add_argument('--axis', choices=AXES, default=axis,
+                        help='Scanned resolution (default: %(default)s)')
+    parser.add_argument('--root', type=Path, default=root,
+                        help='Scan directory (default: <axis>-scan beside this script)')
+    parser.add_argument('--baseline', type=Path,
                         help='Baseline used in compare.py; default: ../../1x-beams')
     parser.add_argument('--no-baseline', action='store_true')
     parser.add_argument('--exclude', '--exclude-resolutions', type=int, nargs='+',
                         action='extend', default=[], metavar='N',
-                        help=f'Exclude these {resolution_key} values, including matching baseline/extra runs; may be repeated')
+                        help='Exclude these scanned resolution values, including matching baseline/extra runs; may be repeated')
     parser.add_argument('--output', type=Path,
                         help='Default: convergence-plots, or convergence-plots-with-nunif with --nonuniform-run')
     parser.add_argument('--nonuniform-run', type=Path,
                         help='Additional mapped-grid run; retained as a separate point at its actual Nz')
-    parser.add_argument('--frame', type=int, default=65, help='Common comparison frame (default: completed run, 65)')
+    parser.add_argument('--frame', type=int, default=75, help='Common comparison frame (default: completed run, 75)')
     parser.add_argument('--window-us', type=float, default=15, help='Trailing averaging window, microseconds')
     parser.add_argument('--zoom-us', type=float, default=60, help='Final relaxation zoom, microseconds')
     parser.add_argument('--electron-temperature-ev', type=float, default=940)
     args = parser.parse_args()
+    axis = args.axis
+    resolution_key, symbol = AXES[axis]
+    args.root = (args.root or ROOT.parent / f'{axis}-scan').resolve()
+    args.baseline = args.baseline or args.root.parent.parent / '1x-beams'
     if args.frame < 1 or min(args.window_us, args.zoom_us, args.electron_temperature_ev) <= 0:
         parser.error('Frame, time windows and electron temperature must be positive')
     if any(n < 1 for n in args.exclude):
@@ -423,6 +438,9 @@ def main(root=ROOT, axis='z'):
             a.set_xticks(sorted(set((nz if a is ax else nz[:-1]).tolist() + [r[resolution_key] for r in extra])))
             a.grid(alpha=.25)
         ax.set_ylabel(unit)
+        if key == 'particle_balance':
+            ax.axhline(1, color='0.4', ls=':', lw=1, label='Source balance = 1')
+            ax.legend(fontsize=8)
         ex.set_ylabel('Signed difference [% of reference]')
     axes.flat[0].legend(fontsize=8)
     erraxes.flat[0].legend(fontsize=8)
@@ -467,6 +485,8 @@ def main(root=ROOT, axis='z'):
              f'Window: [{start:.12g}, {end:.12g}] s; reference {resolution_key}={reference["resolution"]}',
              'Integrated numbers, energies and powers retain the simulation transverse normalization.',
              'Wall flux densities use the surface area factor J |grad(z_comp)|.',
+             'Particle boundary flux panels use 2 * integrated wall particle flux / integrated ion source.',
+             'Both-wall particle balance uses (lower + upper) / source; unity denotes source-loss balance.',
              f'Model wall heat: ion Hamiltonian flux + 2 Te Gamma_i, Te={args.electron_temperature_ev:g} eV.',
              'Assumptions: grounded wall, ambipolar losses, Maxwellian Boltzmann electrons.',
              'Total stored energy = ion + electron kinetic energy, including bulk flow.',

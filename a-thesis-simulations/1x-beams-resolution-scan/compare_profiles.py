@@ -13,7 +13,7 @@ import postgkyl as pg
 def main(scan_dir, axis):
     scan_dir = Path(scan_dir).resolve()
     parser = argparse.ArgumentParser(description=f"Compare {axis} resolution profiles at one saved frame.")
-    parser.add_argument("--frame", type=int, default=65)
+    parser.add_argument("--frame", type=int, default=75)
     parser.add_argument("--baseline", type=Path, default=scan_dir.parent.parent / "1x-beams")
     parser.add_argument("--no-baseline", action="store_true")
     parser.add_argument("--output", type=Path, default=scan_dir / f"res-scan-{axis}.pdf")

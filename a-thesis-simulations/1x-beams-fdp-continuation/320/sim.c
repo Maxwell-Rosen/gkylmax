@@ -8,7 +8,7 @@
 #include <gkyl_fem_poisson_bctype.h>
 #include <gkyl_gyrokinetic.h>
 #include <gkyl_math.h>
-#define GK_POA_ENABLE_SECOND_FDOT_MULTIPLIER
+#define GK_POA_ENABLE_COLLISIONLESS_TIME_DILATION
 #include <sim.h>
 
 #include <rt_arg_parse.h>
@@ -85,13 +85,14 @@ eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
   double vpar_midp = sqrt(pow(vpar,2.) + 2*mu*(Bmag - app->Bmag_midp)/app->mi); // Ignore potential for now
   double vperp = sqrt(2.0 * mu * app->B_p / app->mi); // What magnetic field do we use here?
 
-  double gamma0 = app->ion_source_amplitude;
-  double T_beam = app->ion_source_temp;
+  double gamma0 = 200;
+  double T_beam = 200 * GKYL_ELEMENTARY_CHARGE;
+  double E_beam = 25000 * GKYL_ELEMENTARY_CHARGE;
+  double v_beam = sqrt(E_beam / app->mi);
   double sigma_beam = 2*T_beam/app->mi;
 
-  double vtot2 = pow(vpar_midp,2.) + pow(vperp,2.);
-
-  double source = fmax(gamma0 * sqrt(1/(M_PI*sigma_beam)) * exp (-1.0 * vtot2 / sigma_beam),1e-20);
+  double source = fmax(gamma0 * exp (-1.0 * (pow(fabs(vpar_midp) - v_beam, 2) + 
+                                             pow(vperp - v_beam, 2)) / sigma_beam),1e-20);
 
   fout[0] = source;
 }
@@ -163,16 +164,12 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   double vpar_max_elc = 4 * vte;
   double mu_max_elc = me * pow(4. * vte, 2.) / (2. * B_p);
-  int Nz = 400;
+  int Nz = 320;
   int Nvpar = 64;
   int Nmu = 32;
   int Nvpar_elc = 8;
   int Nmu_elc = 8;
   int poly_order = 1;
-
-  // Source parameters
-double ion_source_amplitude = 42265194.8755; // Beam intM0 = 3.5134408153518073e+20
-double ion_source_temp = 19889.9614892 * eV ; // Beam intM2 = 1.4616335208453340e+06
 
   // Geometry parameters.
   double RatZeq0 = 0.10; // Radius of the field line at Z=0.
@@ -183,19 +180,17 @@ double ion_source_temp = 19889.9614892 * eV ; // Beam intM2 = 1.4616335208453340
   double Z_m = 0.98;
 
   // POA parameters  
-  double alpha_oap = 2e-5;  // Factor multiplying collisionless terms.
+  double alpha_oap = 1e-3;  // Factor multiplying collisionless terms.
   double alpha_fdp = 1.0;
-  double tau_oap = 0.1;  // Duration of each phase.
-  double tau_fdp = 15e-6;
-  double tau_annealing_final = 100e-6;
-  double tau_fdp_extra = 100e-6;
-  int num_cycles = 5; // Number of OAP+FDP cycles to run.
+  double tau_oap = 0;
+  double tau_fdp = 0;
+  double tau_fdp_extra = 300e-6;
+  int num_cycles = 0; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
-  int num_frames_oap = 5;        // Frames per OAP phase
-  int num_frames_fdp = 5;        // Frames per FDP phase
-  int num_frames_annealing_final = 3*5;  // Frames for the final annealing phase
-  int num_frames_fdp_extra = 3*5;  // Frames for the extra FDP phase
+  int num_frames_oap = 0;        // Frames per OAP phase
+  int num_frames_fdp = 0;        // Frames per FDP phase
+  int num_frames_fdp_extra = 100;  // Frames for the extra FDP phase
   
   // Whether to evolve the field.
   bool is_static_field_oap = false;
@@ -209,96 +204,59 @@ double ion_source_temp = 19889.9614892 * eV ; // Beam intM2 = 1.4616335208453340
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_fdp = GKYL_GK_FDOT_MULTIPLIER_FIXED_FACTOR_TIMES_OMEGA_MAX;
 
   double cfl_factor_times_omega_max = 1/10.0; // CFL factor for fixed factor times omega max multiplier.
-  double low_pass_damping_rate = 1/5e-6;
 
-  // Assemble the regular OAP/FDP cycles, the OAP annealing ramp, the final
-  // loss-cone-masked annealing phase, and the final FDP. Keeping every stage
-  // in num_phases ensures that the driver also runs the annealing stages and
-  // can locate them correctly on restart.
-  const double annealing_alphas[] = { alpha_oap, 2e-4, 2e-3, 2e-2, 1e-1 };
-  const double annealing_durations[] = { tau_oap, tau_oap/5, tau_oap/30, tau_oap/300, tau_oap/3000 };
-  const int num_annealing_phases = sizeof(annealing_alphas)/sizeof(annealing_alphas[0]);
-  int num_phases = 2*num_cycles + num_annealing_phases + 2;
+  // Calculate phase structure
+  double t_end = (tau_oap + tau_fdp)*num_cycles + tau_fdp_extra;
+  double tau_pair = tau_oap+tau_fdp; // Duration of an OAP+FDP pair.
+  int num_phases = 2*num_cycles + 1;
+  int num_frames = num_cycles * (num_frames_oap + num_frames_fdp) + num_frames_fdp_extra;
 
   struct gk_poa_phase_params *poa_phases = gkyl_calloc(num_phases, sizeof(struct gk_poa_phase_params));
-  int poa_idx = 0;
-  for (int i=0; i<num_cycles; i++) {
+  for (int i=0; i<(num_phases-1)/2; i++) {
     // OAPs.
-    poa_phases[poa_idx].phase = GK_POA_OAP;
-    poa_phases[poa_idx].num_frames = num_frames_oap;
-    poa_phases[poa_idx].duration = tau_oap;
-    poa_phases[poa_idx].alpha = alpha_oap;
-    poa_phases[poa_idx].is_static_field = is_static_field_oap;
-    poa_phases[poa_idx].fdot_mult_type = fdot_mult_type_oap;
-    poa_phases[poa_idx].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
-    poa_phases[poa_idx].is_positivity_enabled = is_positivity_enabled_oap;
-    poa_phases[poa_idx].damping_type = GKYL_GK_DAMPING_NONE;
-    poa_idx++;
+    poa_phases[2*i].phase = GK_POA_OAP;
+    poa_phases[2*i].num_frames = num_frames_oap;
+    poa_phases[2*i].duration = tau_oap;
+    poa_phases[2*i].alpha = alpha_oap;
+    poa_phases[2*i].collisionless_time_rate_multiplier = (struct gkyl_gyrokinetic_fdot_multiplier) {
+      .num_multipliers = 1,
+      .multiplier[0] = {
+        .type = GKYL_GK_FDOT_MULTIPLIER_FIXED_FACTOR_TIMES_OMEGA_MAX,
+        .cellwise_const = true,
+        .cfl_factor_times_omega_max = cfl_factor_times_omega_max,
+      },
+    };
+    poa_phases[2*i].is_static_field = is_static_field_oap;
+    poa_phases[2*i].fdot_mult_type = fdot_mult_type_oap;
+    poa_phases[2*i].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
+    poa_phases[2*i].is_positivity_enabled = is_positivity_enabled_oap;
+    poa_phases[2*i].damping_type = GKYL_GK_DAMPING_NONE;
 
     // FDPs.
-    poa_phases[poa_idx].phase = GK_POA_FDP;
-    poa_phases[poa_idx].num_frames = num_frames_fdp;
-    poa_phases[poa_idx].duration = tau_fdp;
-    poa_phases[poa_idx].alpha = alpha_fdp;
-    poa_phases[poa_idx].is_static_field = is_static_field_fdp;
-    poa_phases[poa_idx].fdot_mult_type = fdot_mult_type_fdp;
-    poa_phases[poa_idx].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
-    poa_phases[poa_idx].is_positivity_enabled = is_positivity_enabled_fdp;
-    poa_phases[poa_idx].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
-    poa_phases[poa_idx].damping_rate_const = low_pass_damping_rate;
-    poa_idx++;
+    poa_phases[2*i+1].phase = GK_POA_FDP;
+    poa_phases[2*i+1].num_frames = num_frames_fdp;
+    poa_phases[2*i+1].duration = tau_fdp;
+    poa_phases[2*i+1].alpha = alpha_fdp;
+    poa_phases[2*i+1].collisionless_time_rate_multiplier.num_multipliers = 0;
+    poa_phases[2*i+1].is_static_field = is_static_field_fdp;
+    poa_phases[2*i+1].fdot_mult_type = fdot_mult_type_fdp;
+    poa_phases[2*i+1].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
+    poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_fdp;
+    poa_phases[2*i+1].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
+    poa_phases[2*i+1].damping_rate_const = 1/5e-6;
   }
-
-  // Increase alpha in stages before the full-alpha trapped-region anneal.
-  for (int i=0; i<num_annealing_phases; i++) {
-    poa_phases[poa_idx].phase = GK_POA_OAP;
-    poa_phases[poa_idx].num_frames = num_frames_oap;
-    poa_phases[poa_idx].duration = annealing_durations[i];
-    poa_phases[poa_idx].alpha = annealing_alphas[i];
-    poa_phases[poa_idx].is_static_field = is_static_field_oap;
-    poa_phases[poa_idx].fdot_mult_type = fdot_mult_type_oap;
-    poa_phases[poa_idx].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
-    poa_phases[poa_idx].is_positivity_enabled = is_positivity_enabled_oap;
-    poa_phases[poa_idx].damping_type = GKYL_GK_DAMPING_NONE;
-    poa_idx++;
-  }
-
-  // Evolve only the trapped region at full alpha until it approaches a
-  // steady state, using the FDP time-step restriction and damping rapid
-  // transients with the low-pass filter.
-  poa_phases[poa_idx].phase = GK_POA_OAP;
-  poa_phases[poa_idx].num_frames = num_frames_annealing_final;
-  poa_phases[poa_idx].duration = tau_annealing_final;
-  poa_phases[poa_idx].alpha = 1.0;
-  poa_phases[poa_idx].is_static_field = is_static_field_oap;
-  poa_phases[poa_idx].fdot_mult_type = fdot_mult_type_oap;
-  poa_phases[poa_idx].fdot_mult_type_secondary = fdot_mult_type_fdp;
-  poa_phases[poa_idx].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
-  poa_phases[poa_idx].is_positivity_enabled = is_positivity_enabled_oap;
-  poa_phases[poa_idx].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
-  poa_phases[poa_idx].damping_rate_const = low_pass_damping_rate;
-  poa_idx++;
-
-  // Finish with 100 microseconds of unmasked full dynamics.
-  poa_phases[poa_idx].phase = GK_POA_FDP;
-  poa_phases[poa_idx].num_frames = num_frames_fdp_extra;
-  poa_phases[poa_idx].duration = tau_fdp_extra;
-  poa_phases[poa_idx].alpha = alpha_fdp;
-  poa_phases[poa_idx].is_static_field = is_static_field_fdp;
-  poa_phases[poa_idx].fdot_mult_type = fdot_mult_type_fdp;
-  poa_phases[poa_idx].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
-  poa_phases[poa_idx].is_positivity_enabled = is_positivity_enabled_fdp;
-  poa_phases[poa_idx].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
-  poa_phases[poa_idx].damping_rate_const = low_pass_damping_rate;
-
-  // Derive the global totals from the completed schedule so phase additions
-  // cannot leave restart and progress bookkeeping out of sync.
-  double t_end = 0.0;
-  int num_frames = 0;
-  for (int i=0; i<num_phases; i++) {
-    t_end += poa_phases[i].duration;
-    num_frames += poa_phases[i].num_frames;
-  }
+  // The final stage is an extra, longer FDP.
+  poa_phases[num_phases-1].phase = GK_POA_FDP;
+  poa_phases[num_phases-1].num_frames = num_frames_fdp_extra;
+  poa_phases[num_phases-1].duration = tau_fdp_extra;
+  poa_phases[num_phases-1].alpha = alpha_fdp;
+  poa_phases[num_phases-1].collisionless_time_rate_multiplier.num_multipliers = 0;
+  poa_phases[num_phases-1].is_static_field = is_static_field_fdp;
+  poa_phases[num_phases-1].fdot_mult_type = fdot_mult_type_fdp;
+  poa_phases[num_phases-1].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
+  poa_phases[num_phases-1].is_positivity_enabled = is_positivity_enabled_fdp;
+  poa_phases[num_phases-1].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
+  poa_phases[num_phases-1].damping_rate_const = 1/5e-6;
 
   double write_phase_freq = 1; // Frequency of writing phase-space diagnostics (as a fraction of num_frames).
   double int_diag_calc_freq = 100; // Frequency of calculating integrated diagnostics (as a factor of num_frames).
@@ -343,9 +301,6 @@ double ion_source_temp = 19889.9614892 * eV ; // Beam intM2 = 1.4616335208453340
     .int_diag_calc_freq = int_diag_calc_freq,
     .dt_failure_tol = dt_failure_tol,
     .num_failures_max = num_failures_max,
-    
-    .ion_source_amplitude = ion_source_amplitude,
-    .ion_source_temp = ion_source_temp,
 
     .mcB = mcB,
     .gamma = gamma,
@@ -416,14 +371,9 @@ int main(int argc, char **argv)
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
 
-    .projection = {
-      .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
-      .density = initial_density,
-      .ctx_density = &ctx,
-      .upar = initial_upar,
-      .ctx_upar = &ctx,
-      .temp = initial_temp_ion,
-      .ctx_temp = &ctx,
+    .init_from_file = {
+      .type = GKYL_IC_IMPORT_F,
+      .file_name = "/global/homes/m/mhrosen/scratch/gkylmax/a-thesis-simulations/1x-beams-resolution-scan/z-scan/320/zzim-ion_75.gkyl",
     },
 
     .mapc2p = {
@@ -578,9 +528,9 @@ int main(int argc, char **argv)
       .position_map_info = {
         .id = GKYL_PMAP_CONSTANT_DB_NUMERIC,
         .map_strength = 1.0,
-        .maximum_slope_at_min_B = 2,
-        .maximum_slope_at_max_B = 2,
-        .gaussian_std = 0.5,
+        .maximum_slope_at_min_B = 4,
+        .maximum_slope_at_max_B = 4,
+        .gaussian_std = 0.25,
         .gaussian_max_integration_width = 1.0,
       },
     },

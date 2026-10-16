@@ -8,6 +8,7 @@
 #include <gkyl_fem_poisson_bctype.h>
 #include <gkyl_gyrokinetic.h>
 #include <gkyl_math.h>
+#define GK_POA_ENABLE_COLLISIONLESS_TIME_DILATION
 #include <sim.h>
 
 #include <rt_arg_parse.h>
@@ -179,17 +180,17 @@ create_ctx(void)
   double Z_m = 0.98;
 
   // POA parameters  
-  double alpha_oap = 2e-5;  // Factor multiplying collisionless terms.
+  double alpha_oap = 1e-3;  // Factor multiplying collisionless terms.
   double alpha_fdp = 1.0;
   double tau_oap = 0.1;  // Duration of each phase.
   double tau_fdp = 15e-6;
-  double tau_fdp_extra = 3*15e-6;
+  double tau_fdp_extra = 5*15e-6;
   int num_cycles = 5; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
   int num_frames_oap = 5;        // Frames per OAP phase
   int num_frames_fdp = 5;        // Frames per FDP phase
-  int num_frames_fdp_extra = 3*5;  // Frames for the extra FDP phase
+  int num_frames_fdp_extra = 5*5;  // Frames for the extra FDP phase
   
   // Whether to evolve the field.
   bool is_static_field_oap = false;
@@ -217,6 +218,14 @@ create_ctx(void)
     poa_phases[2*i].num_frames = num_frames_oap;
     poa_phases[2*i].duration = tau_oap;
     poa_phases[2*i].alpha = alpha_oap;
+    poa_phases[2*i].collisionless_time_rate_multiplier = (struct gkyl_gyrokinetic_fdot_multiplier) {
+      .num_multipliers = 1,
+      .multiplier[0] = {
+        .type = GKYL_GK_FDOT_MULTIPLIER_FIXED_FACTOR_TIMES_OMEGA_MAX,
+        .cellwise_const = true,
+        .cfl_factor_times_omega_max = cfl_factor_times_omega_max,
+      },
+    };
     poa_phases[2*i].is_static_field = is_static_field_oap;
     poa_phases[2*i].fdot_mult_type = fdot_mult_type_oap;
     poa_phases[2*i].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
@@ -228,6 +237,7 @@ create_ctx(void)
     poa_phases[2*i+1].num_frames = num_frames_fdp;
     poa_phases[2*i+1].duration = tau_fdp;
     poa_phases[2*i+1].alpha = alpha_fdp;
+    poa_phases[2*i+1].collisionless_time_rate_multiplier.num_multipliers = 0;
     poa_phases[2*i+1].is_static_field = is_static_field_fdp;
     poa_phases[2*i+1].fdot_mult_type = fdot_mult_type_fdp;
     poa_phases[2*i+1].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
@@ -240,6 +250,7 @@ create_ctx(void)
   poa_phases[num_phases-1].num_frames = num_frames_fdp_extra;
   poa_phases[num_phases-1].duration = tau_fdp_extra;
   poa_phases[num_phases-1].alpha = alpha_fdp;
+  poa_phases[num_phases-1].collisionless_time_rate_multiplier.num_multipliers = 0;
   poa_phases[num_phases-1].is_static_field = is_static_field_fdp;
   poa_phases[num_phases-1].fdot_mult_type = fdot_mult_type_fdp;
   poa_phases[num_phases-1].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
@@ -427,10 +438,12 @@ int main(int argc, char **argv)
     .diag_moments = {GKYL_F_MOMENT_BIMAXWELLIAN, GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_M3PAR, GKYL_F_MOMENT_M3PERP },
     .num_integrated_diag_moments = 1,
     .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN },
-    .num_time_rate_diagnostics = 3,
+    .num_time_rate_diagnostics = 5,
     .time_rate_diagnostics = {
       GKYL_GK_TIME_RATE_DIAGNOSTIC_FDOT_INTEGRATED_MOMENTS,
       GKYL_GK_TIME_RATE_DIAGNOSTIC_FDOT_ABS_INTEGRATED_MOMENTS,
+      GKYL_GK_TIME_RATE_DIAGNOSTIC_FDOT_MOMENTS,
+      GKYL_GK_TIME_RATE_DIAGNOSTIC_FDOT_ABS_MOMENTS,
       GKYL_GK_TIME_RATE_DIAGNOSTIC_FDOT,
     },
 

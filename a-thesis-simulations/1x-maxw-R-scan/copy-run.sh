@@ -8,12 +8,23 @@ psi_dir="${PSI_DIR:-$project_dir/generate_efit}"
 
 cd "$script_dir"
 
-# Perlmutter-specific modules (commented out for stellar-amd)
-# module load PrgEnv-gnu/8.5.0
-# module load craype-accel-nvidia80
-# module load cray-mpich/8.1.28
-# module load cudatoolkit/12.4
-# module load nccl/2.18.3-cu12
+# Perlmutter-specific modules
+module load PrgEnv-gnu/8.6.0
+module load craype-accel-nvidia80
+module load cray-mpich/9.0.1
+module load cudatoolkit/13.0
+module load nccl/2.29.2-cu13
+module load cray-libsci/25.09.0
+export MPICH_GPU_SUPPORT_ENABLED=0
+export DVS_MAXNODES=24_
+export MPICH_MPIIO_DVS_MAXNODES=24
+export NCCL_NET_GDR_LEVEL=PHB
+export NCCL_NET="AWS Libfabric"
+export NCCL_CROSS_NIC=1
+export FI_CXI_DISABLE_HOST_REGISTER=1
+export FI_CXI_RDZV_GET_MIN=0
+export FI_CXI_RDZV_THRESHOLD=0
+export FI_CXI_RDZV_EAGER_SIZE=0
 
 # Define arrays for magnetic field parameters
 mcB_values=(2.130115 2.665626 3.691260 4.490901 5.416264 8.125522)
@@ -61,14 +72,10 @@ for i in "${!mcB_values[@]}"; do
   # Change into the folder
   cd "$folder_name" || exit
 
-	if [ "$R" -eq 3 ]; then
-		sed -i 's/^[[:space:]]*int Nz = .*/  int Nz = 192;/' sim.c
-	elif [ "$R" -eq 5 ]; then
-		sed -i 's/^[[:space:]]*int Nz = .*/  int Nz = 256;/' sim.c
-	elif [ "$R" -eq 50 ]; then
-		sed -i 's/^[[:space:]]*int Nz = .*/  int Nz = 800;/' sim.c
-		sed -i 's/^[[:space:]]*bool is_positivity_enabled_fdp = .*/  bool is_positivity_enabled_fdp = true;/' sim.c
-		sed -i 's|^[[:space:]]*double cfl_factor_times_omega_max = .*|  double cfl_factor_times_omega_max = 1/20.0; // CFL factor for fixed factor times omega max multiplier.|' sim.c
+	if [ "$R" -eq 50 ]; then
+		sed -i 's/^[[:space:]]*int Nz = .*/  int Nz = 400;/' sim.c
+		# sed -i 's/^[[:space:]]*bool is_positivity_enabled_fdp = .*/  bool is_positivity_enabled_fdp = true;/' sim.c
+		# sed -i 's|^[[:space:]]*double cfl_factor_times_omega_max = .*|  double cfl_factor_times_omega_max = 1/20.0; // CFL factor for fixed factor times omega max multiplier.|' sim.c
 	fi
 
   sed -i "s/^[[:space:]]*double ion_source_amplitude = .*/  double ion_source_amplitude = ${src_amp[$i]}; \/\/ Beam intM0 = 3.1099679832479321e+20/" sim.c
@@ -78,7 +85,7 @@ for i in "${!mcB_values[@]}"; do
   psi_file="$psi_dir/lorentzian_R${R}.geqdsk_psi.gkyl"
   sed -i "s|^[[:space:]]*\.filename_psi = .*|    .filename_psi = \"$psi_file\", // psi file to use|" sim.c
 	
-  sed -i "s/^#SBATCH -J .*/#SBATCH -J poa-R-${R}/" jobscript-gkyl-perlmutter
+  sed -i "s/^#SBATCH -J .*/#SBATCH -J poa-max-R-${R}/" jobscript-gkyl-perlmutter
   
   # Build the simulation
   make clean

@@ -17,23 +17,13 @@ module load craype-accel-nvidia80
 module load cray-mpich/9.0.1
 module load cudatoolkit/13.0
 module load nccl/2.29.2-cu13
-module load cray-libsci/25.09.0  #.Disable CUDA-ware MPI, since it causes problems on Perlmutter and we use NCCL alone.
+module load cray-libsci/25.09.0
 export MPICH_GPU_SUPPORT_ENABLED=0
-
-#.On Perlmutter some jobs get warnings about DVS_MAXNODES (used in file stripping).
-#.We set it to 24 for now, but really this depends on the amount/size of I/O being performed.
-#.See online NERSC docs and the intro_mpi man page.
 export DVS_MAXNODES=24_
 export MPICH_MPIIO_DVS_MAXNODES=24
-
-# Safely route GPUDirect RDMA over the Host Bridge
 export NCCL_NET_GDR_LEVEL=PHB
-
-# Tell NCCL to use the Libfabric plugin
 export NCCL_NET="AWS Libfabric"
 export NCCL_CROSS_NIC=1
-
-# Disable host registration and eager messages to prevent Slingshot 11 hangs
 export FI_CXI_DISABLE_HOST_REGISTER=1
 export FI_CXI_RDZV_GET_MIN=0
 export FI_CXI_RDZV_THRESHOLD=0

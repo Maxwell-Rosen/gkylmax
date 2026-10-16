@@ -12,13 +12,13 @@ set -euo pipefail
 # -------------------------------
 SIM_FILE="sim.c"
 SIM_BIN="./sim"
-SIM_ARGS="-s0"
+SIM_ARGS="-s1"
 PYTHON_CMD="python3"
 OPT_SCRIPT="optimize_source_params.py"
 HISTORY_FILE="source_optimization_history.csv"
 
-M0_TARGET="3.5134408153518073e+20"
-M2_TARGET="1.4616335208453340e+06"
+M0_TARGET="4.163771509442856e+20"
+M2_TARGET="1.7339541782715302e+06"
 TOL_REL="0.000001"
 MAX_ITERS=20
 
