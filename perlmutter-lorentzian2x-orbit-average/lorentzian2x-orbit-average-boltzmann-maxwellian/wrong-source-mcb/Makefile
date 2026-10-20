@@ -29,7 +29,7 @@ SUPERLU_LIB_NAME ?= superlu
 SUPERLU_LIBS ?= -l$(SUPERLU_LIB_NAME)
 
 # Include config.mak file (if it exists)
--include /global/homes/m/mhrosen/gkylsoft/gkeyll/share/config.mak
+-include /home/mr1884/gkylsoft/gkeyll/share/config.mak
 
 CFLAGS = -O3 -g -ffast-math -I. 
 

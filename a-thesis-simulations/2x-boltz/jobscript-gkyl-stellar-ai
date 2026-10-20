@@ -1,0 +1,73 @@
+#!/bin/bash -l
+
+#.Declare a name for this job, preferably with 16 or fewer characters.
+#SBATCH -J 1x-beams
+
+#.Request the queue (enter the possible names, if omitted, default is the default)
+#.this job is going to use the default
+#SBATCH --qos pppl-short
+#SBATCH -C gpu 
+
+#.Number of nodes to request (Perlmutter has 64 cores and 4 GPUs per node)
+#SBATCH -N 1
+#SBATCH --ntasks 8
+
+#.Specify GPU needs:
+#SBATCH --constraint gpu
+#SBATCH --gres=gpu:8
+
+#.Request wall time
+#SBATCH -t 4:00:00
+
+#.Mail is sent to you when the job starts and when it terminates or aborts.
+## SBATCH --mail-user=mhrosen@pppl.gov
+## SBATCH --mail-type=ALL
+num_gpu=8
+
+: "${PS1:=}"
+module purge
+module load nvhpc/26.5 # For NCCL.
+module load cudatoolkit/13.3
+module load openmpi/nvhpc-26.5/5.0.10
+module load openblas/0.3.x
+export LD_LIBRARY_PATH="${NVHPC_ROOT:?}/comm_libs/nccl/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export NCCL_DEBUG=WARN UCX_LOG_LEVEL=warn UCX_TLS=self,sm,cuda
+
+max_number=-1
+file_prefix="zzim-ion_"
+shopt -s nullglob
+matching_files=("${file_prefix}"[0-9]*.gkyl)
+for file in "${matching_files[@]}"; do
+  number=${file#"$file_prefix"}
+  number=${number%.gkyl}
+  if [[ $number =~ ^[0-9]+$ ]] && (( 10#$number > max_number )); then
+    max_number=$((10#$number))
+  fi
+done
+echo "Max number is $max_number"
+
+if [ "$max_number" -lt 0 ]; then
+  echo "No matching files found. Starting from the beginning"
+  if [ "$num_gpu" -eq 1 ]; then
+    echo "./sim -g"
+    ./sim -g
+    sim_status=$?
+  else
+    echo "mpirun -np $num_gpu ./sim -g -M -c $num_gpu"
+    mpirun -np "$num_gpu" ./sim -g -M -c "$num_gpu"
+    sim_status=$?
+  fi
+else
+  echo "Resuming from file $max_number"
+  if [ "$num_gpu" -eq 1 ]; then
+    echo "./sim -g -r $max_number"
+    ./sim -g -r $max_number
+    sim_status=$?
+  else
+    echo "mpirun -np $num_gpu ./sim -g -M -c $num_gpu -r $max_number"
+    mpirun -np "$num_gpu" ./sim -g -M -c "$num_gpu" -r "$max_number"
+    sim_status=$?
+  fi
+fi
+
+exit "$sim_status"

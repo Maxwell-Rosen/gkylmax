@@ -366,7 +366,7 @@ int main(int argc, char **argv)
 
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
-      .file_name = "/global/homes/m/mhrosen/scratch/gkylmax/a-thesis-simulations/1x-maxw-extra-dilated/zzim-ion_20.gkyl",
+      .file_name = "/scratch/gpfs/CSD/mr1884/gkylmax/gkylmax/a-thesis-simulations/1x-maxw-extra-dilated/zzim-ion_20.gkyl",
     },
 
     .mapc2p = {
@@ -495,7 +495,7 @@ int main(int argc, char **argv)
   };
 
   struct gkyl_mirror_geo_grid_inp grid_inp = {
-    .filename_psi = "/global/homes/m/mhrosen/scratch/gkylmax/generate_efit/lorentzian_R32.geqdsk_psi.gkyl", // psi file to use
+    .filename_psi = "/scratch/gpfs/CSD/mr1884/gkylmax/gkylmax/generate_efit/lorentzian_R32.geqdsk_psi.gkyl", // psi file to use
     .rclose = 0.2, // closest R to region of interest
     .zmin = -2.5,  // Z of lower boundary
     .zmax =  2.5,  // Z of upper boundary

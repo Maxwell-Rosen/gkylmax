@@ -327,7 +327,7 @@ void
 load_wham_distf(void* ctx)
 {
   struct gk_mirror_ctx *app = ctx;
-  char* filename_base = "/global/homes/m/mhrosen/scratch/gkylmax/binary_files/";
+  char* filename_base = "/scratch/gpfs/CSD/mr1884/gkylmax/gkylmax/binary_files/";
 
   char filename_f_dist_ion[256];
   sprintf(filename_f_dist_ion, "%sf_dist_ion.bin", filename_base);
@@ -774,7 +774,7 @@ int main(int argc, char **argv)
   };
 
 struct gkyl_efit_inp efit_inp = {
-    .filepath = "/global/homes/m/mhrosen/scratch/gkylmax/eqdsk/wham.geqdsk",
+    .filepath = "/scratch/gpfs/CSD/mr1884/gkylmax/gkylmax/eqdsk/wham.geqdsk",
     .rz_poly_order = 2,                     // polynomial order for psi(R,Z) used for field line tracing
     .flux_poly_order = 1,                   // polynomial order for fpol(psi)
   };
