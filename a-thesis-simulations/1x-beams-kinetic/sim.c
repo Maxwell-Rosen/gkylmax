@@ -173,7 +173,7 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   double vpar_max_elc = 16 * vte;
   double mu_max_elc = me * pow(4. * vte, 2.) / (2. * B_p);
-  int Nz = 256;
+  int Nz = 400;
   int Nvpar = 64;
   int Nmu = 32;
   int Nvpar_elc = 64;
@@ -412,7 +412,7 @@ int main(int argc, char **argv)
 
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
-      .file_name = "/scratch/gpfs/CSD/mr1884/gkylmax/gkylmax/a-thesis-simulations/1x-beams/zzim-ion_75.gkyl",
+      .file_name = "/scratch/gpfs/CSD/mr1884/gkylmax/a-thesis-simulations/1x-beams/zzim-ion_75.gkyl",
     },
     // .init_from_file = {
     //   .type = GKYL_IC_IMPORT_F,
@@ -514,7 +514,7 @@ int main(int argc, char **argv)
       .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
       .density_import = {
         .type = GKYL_IC_IMPORT_F,
-        .file_name = "/scratch/gpfs/CSD/mr1884/gkylmax/gkylmax/a-thesis-simulations/1x-beams/zzim-ion_M0_75.gkyl",
+        .file_name = "/scratch/gpfs/CSD/mr1884/gkylmax/a-thesis-simulations/1x-beams/zzim-ion_M0_75.gkyl",
       },
       .upar = initial_upar_elc,
       .ctx_upar = &ctx,
@@ -609,12 +609,12 @@ int main(int argc, char **argv)
     .is_static = false,
     .polarization_potential_import = {
       .type = GKYL_IC_IMPORT_F,
-      .file_name = "/scratch/gpfs/CSD/mr1884/gkylmax/gkylmax/a-thesis-simulations/1x-beams/zzim-field_75.gkyl",
+      .file_name = "/scratch/gpfs/CSD/mr1884/gkylmax/a-thesis-simulations/1x-beams/zzim-field_75.gkyl",
     }
   };
 
   struct gkyl_mirror_geo_grid_inp grid_inp = {
-    .filename_psi = "/scratch/gpfs/CSD/mr1884/gkylmax/gkylmax/generate_efit/lorentzian_R32.geqdsk_psi.gkyl", // psi file to use
+    .filename_psi = "/scratch/gpfs/CSD/mr1884/gkylmax/generate_efit/lorentzian_R32.geqdsk_psi.gkyl", // psi file to use
     .rclose = 0.2, // closest R to region of interest
     .zmin = -2.5,  // Z of lower boundary
     .zmax =  2.5,  // Z of upper boundary

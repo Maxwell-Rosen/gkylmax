@@ -39,11 +39,11 @@ _trapz = np.trapezoid if hasattr(np, "trapezoid") else np.trapz
 
 # ── 0. USER CONFIGURATION ─────────────────────────────────────────────────────
 
-SIM_DIR    = "/scratch/gpfs/CSD/mr1884/gkylmax/gkylmax/perlmutter-lorentzian2x-orbit-average/R32-without-nuie/"   # directory containing .gkyl files
+SIM_DIR    = "/scratch/gpfs/CSD/mr1884/gkylmax/perlmutter-lorentzian2x-orbit-average/R32-without-nuie/"   # directory containing .gkyl files
 PREFIX     = "gk_lorentzian_mirror"
 TF         = 0           # time frame for source diagnostics (0 = time independent source)
 
-SIM_DIR_1X = "/scratch/gpfs/CSD/mr1884/gkylmax/gkylmax/perlmutter-lorentzian2x-orbit-average/R32-without-nuie-1x/"   # 1x2v simulation directory
+SIM_DIR_1X = "/scratch/gpfs/CSD/mr1884/gkylmax/perlmutter-lorentzian2x-orbit-average/R32-without-nuie-1x/"   # 1x2v simulation directory
 PREFIX_1X  = "gk_lorentzian_mirror"
 TF_1X      = 0
 

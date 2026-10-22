@@ -5,7 +5,7 @@
 
 #.Request the queue (enter the possible names, if omitted, default is the default)
 #.this job is going to use the default
-#SBATCH --qos pppl-short
+#SBATCH --qos pppl-medium
 #SBATCH -C gpu 
 
 #.Number of nodes to request (Perlmutter has 64 cores and 4 GPUs per node)
@@ -17,7 +17,7 @@
 #SBATCH --gres=gpu:8
 
 #.Request wall time
-#SBATCH -t 4:00:00
+#SBATCH -t 24:00:00
 
 #.Mail is sent to you when the job starts and when it terminates or aborts.
 ## SBATCH --mail-user=mhrosen@pppl.gov

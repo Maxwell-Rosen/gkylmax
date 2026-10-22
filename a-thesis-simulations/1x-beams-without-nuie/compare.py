@@ -4,7 +4,7 @@ import postgkyl as pg
 
 bimax_filename = "zzim-ion_BiMaxwellianMoments_65.gkyl"
 mc2nu_filename = "zzim-geo_corn_mc2nu_pos_deflated.gkyl"
-orig_folder = "/scratch/gpfs/CSD/mr1884/gkylmax/gkylmax/a-thesis-simulations/1x-beams/"
+orig_folder = "/scratch/gpfs/CSD/mr1884/gkylmax/a-thesis-simulations/1x-beams/"
 
 with_pos = pg.load(bimax_filename).interpolate().map(mc2nu_filename)
 original = pg.load(orig_folder + bimax_filename).interpolate().map(orig_folder + mc2nu_filename)

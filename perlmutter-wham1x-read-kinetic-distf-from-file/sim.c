@@ -625,7 +625,7 @@ int main(int argc, char **argv)
   };
 
   struct gkyl_mirror_geo_grid_inp grid_inp = {
-    .filename_psi = "/scratch/gpfs/CSD/mr1884/gkylmax/gkylmax/eqdsk/wham_hires.geqdsk_psi.gkyl", // psi file to use
+    .filename_psi = "/scratch/gpfs/CSD/mr1884/gkylmax/eqdsk/wham_hires.geqdsk_psi.gkyl", // psi file to use
     .rclose = 0.2, // closest R to region of interest
     .zmin = -2.0,  // Z of lower boundary
     .zmax =  2.0,  // Z of upper boundary
