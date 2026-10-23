@@ -22,9 +22,9 @@ export LD_LIBRARY_PATH="${NVHPC_ROOT:?}/comm_libs/nccl/lib${LD_LIBRARY_PATH:+:$L
 export NCCL_DEBUG=WARN UCX_LOG_LEVEL=warn UCX_TLS=self,sm,cuda
 
 # Define arrays
-cell_numbers=(64 96 128 192 320 400)
-vpar_cell_numbers=(32 48 56)
-mu_cell_numbers=(8 16 24 40)
+# cell_numbers=(64 96 128 192 320 400)
+# vpar_cell_numbers=(32 48 56)
+mu_cell_numbers=(24 40)
 
 run_job()
 {
@@ -66,34 +66,34 @@ rm -f core/sim core/sim.d
 #   cd - || exit
 # done
 
-# Start runs for vpar scans
-for vcell_number in "${vpar_cell_numbers[@]}"; do
-  # Create the folder structure
-  folder_name="vpar-scan/${vcell_number}"
+# # Start runs for vpar scans
+# for vcell_number in "${vpar_cell_numbers[@]}"; do
+#   # Create the folder structure
+#   folder_name="vpar-scan/${vcell_number}"
 
-  mkdir -p "$folder_name"
+#   mkdir -p "$folder_name"
 
-  # Copy core files into the folder
-  cp core/* "$folder_name/"
+#   # Copy core files into the folder
+#   cp core/* "$folder_name/"
 
-  # Change into the folder
-  cd "$folder_name" || exit
+#   # Change into the folder
+#   cd "$folder_name" || exit
 
-  sed -i -E "s/^[[:space:]]*int Nvpar = [0-9]+;/  int Nvpar = $vcell_number;/" sim.c
-  sed -i "4s/.*/#SBATCH -J poa-vpar-$vcell_number/" jobscript-gkyl-stellar-ai
+#   sed -i -E "s/^[[:space:]]*int Nvpar = [0-9]+;/  int Nvpar = $vcell_number;/" sim.c
+#   sed -i "4s/.*/#SBATCH -J poa-vpar-$vcell_number/" jobscript-gkyl-stellar-ai
 
-  # Build the simulation
-  make
+#   # Build the simulation
+#   make
 
-  # Start the run using the selected submission mode
-  run_job
+#   # Start the run using the selected submission mode
+#   run_job
 
-  # Print confirmation
-  echo "started run for vpar = $vcell_number"
+#   # Print confirmation
+#   echo "started run for vpar = $vcell_number"
 
-  # Change back to the root directory
-  cd - || exit
-done
+#   # Change back to the root directory
+#   cd - || exit
+# done
 
 # Start runs for mu scans
 for vcell_number in "${mu_cell_numbers[@]}"; do
