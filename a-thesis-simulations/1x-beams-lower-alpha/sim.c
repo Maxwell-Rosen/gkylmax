@@ -164,9 +164,9 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   double vpar_max_elc = 4 * vte;
   double mu_max_elc = me * pow(4. * vte, 2.) / (2. * B_p);
-  int Nz = 256;
+  int Nz = 400;
   int Nvpar = 64;
-  int Nmu = 24;
+  int Nmu = 32;
   int Nvpar_elc = 8;
   int Nmu_elc = 8;
   int poly_order = 1;
@@ -180,7 +180,7 @@ create_ctx(void)
   double Z_m = 0.98;
 
   // POA parameters  
-  double alpha_oap = 1e-3;  // Factor multiplying collisionless terms.
+  double alpha_oap = 10e-3;  // Factor multiplying collisionless terms.
   double alpha_fdp = 1.0;
   double tau_oap = 0.1;  // Duration of each phase.
   double tau_fdp = 15e-6;
@@ -509,7 +509,7 @@ int main(int argc, char **argv)
   };
 
   struct gkyl_mirror_geo_grid_inp grid_inp = {
-    .filename_psi = "/global/homes/m/mhrosen/scratch/gkylmax/generate_efit/lorentzian_R32.geqdsk_psi.gkyl", // psi file to use
+    .filename_psi = "/scratch/gpfs/CSD/mr1884/gkylmax/generate_efit/lorentzian_R32.geqdsk_psi.gkyl", // psi file to use
     .rclose = 0.2, // closest R to region of interest
     .zmin = -2.5,  // Z of lower boundary
     .zmax =  2.5,  // Z of upper boundary

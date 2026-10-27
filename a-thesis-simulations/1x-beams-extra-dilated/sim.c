@@ -223,7 +223,7 @@ create_ctx(void)
       .multiplier[0] = {
         .type = GKYL_GK_FDOT_MULTIPLIER_FIXED_FACTOR_TIMES_OMEGA_MAX,
         .cellwise_const = true,
-        .cfl_factor_times_omega_max = cfl_factor_times_omega_max,
+        .cfl_factor_times_omega_max = 1/10.0,
       },
     };
     poa_phases[2*i].is_static_field = is_static_field_oap;

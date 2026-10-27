@@ -164,9 +164,9 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   double vpar_max_elc = 4 * vte;
   double mu_max_elc = me * pow(4. * vte, 2.) / (2. * B_p);
-  int Nz = 256;
+  int Nz = 400;
   int Nvpar = 64;
-  int Nmu = 8;
+  int Nmu = 32;
   int Nvpar_elc = 8;
   int Nmu_elc = 8;
   int poly_order = 1;
@@ -182,15 +182,15 @@ create_ctx(void)
   // POA parameters  
   double alpha_oap = 1e-3;  // Factor multiplying collisionless terms.
   double alpha_fdp = 1.0;
-  double tau_oap = 0.1;  // Duration of each phase.
-  double tau_fdp = 15e-6;
-  double tau_fdp_extra = 5*15e-6;
-  int num_cycles = 5; // Number of OAP+FDP cycles to run.
+  double tau_oap = 0;  // Duration of each phase.
+  double tau_fdp = 0;
+  double tau_fdp_extra = 0.1;
+  int num_cycles = 0; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
-  int num_frames_oap = 5;        // Frames per OAP phase
-  int num_frames_fdp = 5;        // Frames per FDP phase
-  int num_frames_fdp_extra = 5*5;  // Frames for the extra FDP phase
+  int num_frames_oap = 0;        // Frames per OAP phase
+  int num_frames_fdp = 0;        // Frames per FDP phase
+  int num_frames_fdp_extra = 20;  // Frames for the extra FDP phase
   
   // Whether to evolve the field.
   bool is_static_field_oap = false;
@@ -203,7 +203,7 @@ create_ctx(void)
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_oap = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE;
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_fdp = GKYL_GK_FDOT_MULTIPLIER_FIXED_FACTOR_TIMES_OMEGA_MAX;
 
-  double cfl_factor_times_omega_max = 1/10.0; // CFL factor for fixed factor times omega max multiplier.
+  double cfl_factor_times_omega_max = 1/1000.0; // CFL factor for fixed factor times omega max multiplier.
 
   // Calculate phase structure
   double t_end = (tau_oap + tau_fdp)*num_cycles + tau_fdp_extra;
@@ -223,7 +223,7 @@ create_ctx(void)
       .multiplier[0] = {
         .type = GKYL_GK_FDOT_MULTIPLIER_FIXED_FACTOR_TIMES_OMEGA_MAX,
         .cellwise_const = true,
-        .cfl_factor_times_omega_max = cfl_factor_times_omega_max,
+        .cfl_factor_times_omega_max = 1/10.0,
       },
     };
     poa_phases[2*i].is_static_field = is_static_field_oap;
@@ -371,14 +371,9 @@ int main(int argc, char **argv)
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
 
-    .projection = {
-      .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
-      .density = initial_density,
-      .ctx_density = &ctx,
-      .upar = initial_upar,
-      .ctx_upar = &ctx,
-      .temp = initial_temp_ion,
-      .ctx_temp = &ctx,
+    .init_from_file = {
+      .type = GKYL_IC_IMPORT_F,
+      .file_name = "/scratch/gpfs/CSD/mr1884/gkylmax/a-thesis-simulations/1x-beams-extra-dilated/zzim-ion_75.gkyl",
     },
 
     .mapc2p = {
@@ -509,7 +504,7 @@ int main(int argc, char **argv)
   };
 
   struct gkyl_mirror_geo_grid_inp grid_inp = {
-    .filename_psi = "/global/homes/m/mhrosen/scratch/gkylmax/generate_efit/lorentzian_R32.geqdsk_psi.gkyl", // psi file to use
+    .filename_psi = "/scratch/gpfs/CSD/mr1884/gkylmax/generate_efit/lorentzian_R32.geqdsk_psi.gkyl", // psi file to use
     .rclose = 0.2, // closest R to region of interest
     .zmin = -2.5,  // Z of lower boundary
     .zmax =  2.5,  // Z of upper boundary

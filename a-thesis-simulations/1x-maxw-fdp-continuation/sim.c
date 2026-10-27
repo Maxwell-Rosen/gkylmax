@@ -193,7 +193,7 @@ create_ctx(void)
   // Frame counts for each phase type (specified independently)
   int num_frames_oap = 0;        // Frames per OAP phase
   int num_frames_fdp = 0;        // Frames per FDP phase
-  int num_frames_fdp_extra = 100;  // Frames for the extra FDP phase
+  int num_frames_fdp_extra = 30;  // Frames for the extra FDP phase
   
   // Whether to evolve the field.
   bool is_static_field_oap = false;

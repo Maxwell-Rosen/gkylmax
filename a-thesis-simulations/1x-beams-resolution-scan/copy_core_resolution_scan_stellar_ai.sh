@@ -22,9 +22,9 @@ export LD_LIBRARY_PATH="${NVHPC_ROOT:?}/comm_libs/nccl/lib${LD_LIBRARY_PATH:+:$L
 export NCCL_DEBUG=WARN UCX_LOG_LEVEL=warn UCX_TLS=self,sm,cuda
 
 # Define arrays
-# cell_numbers=(64 96 128 192 320 400)
+cell_numbers=(128 192 256 320)
 # vpar_cell_numbers=(32 48 56)
-mu_cell_numbers=(24 40)
+# mu_cell_numbers=(24 40)
 
 run_job()
 {
@@ -37,34 +37,34 @@ run_job()
 
 rm -f core/sim core/sim.d
 
-# # Start runs for z scans
-# for cell_number in "${cell_numbers[@]}"; do
-#   # Create the folder structure
-#   folder_name="z-scan/${cell_number}"
+# Start runs for z scans
+for cell_number in "${cell_numbers[@]}"; do
+  # Create the folder structure
+  folder_name="z-scan/${cell_number}"
 
-#   mkdir -p "$folder_name"
+  mkdir -p "$folder_name"
 
-#   # Copy core files into the folder
-#   cp core/* "$folder_name/"
+  # Copy core files into the folder
+  cp core/* "$folder_name/"
 
-#   # Change into the folder
-#   cd "$folder_name" || exit
+  # Change into the folder
+  cd "$folder_name" || exit
 
-#   sed -i -E "s/^[[:space:]]*int Nz = [0-9]+;/  int Nz = $cell_number;/" sim.c
-#   sed -i "4s/.*/#SBATCH -J poa-z-$cell_number/" jobscript-gkyl-stellar-ai
+  sed -i -E "s/^[[:space:]]*int Nz = [0-9]+;/  int Nz = $cell_number;/" sim.c
+  sed -i "4s/.*/#SBATCH -J poa-z-$cell_number/" jobscript-gkyl-stellar-ai
   
-#   # Build the simulation
-#   make
+  # Build the simulation
+  make
 
-#   # Start the run using the selected submission mode
-#   run_job
+  # Start the run using the selected submission mode
+  run_job
 
-#   # Print confirmation
-#   echo "started run for cell_number = $cell_number"
+  # Print confirmation
+  echo "started run for cell_number = $cell_number"
 
-#   # Change back to the root directory
-#   cd - || exit
-# done
+  # Change back to the root directory
+  cd - || exit
+done
 
 # # Start runs for vpar scans
 # for vcell_number in "${vpar_cell_numbers[@]}"; do
@@ -95,31 +95,31 @@ rm -f core/sim core/sim.d
 #   cd - || exit
 # done
 
-# Start runs for mu scans
-for vcell_number in "${mu_cell_numbers[@]}"; do
-  # Create the folder structure
-  folder_name="mu-scan/${vcell_number}"
+# # Start runs for mu scans
+# for vcell_number in "${mu_cell_numbers[@]}"; do
+#   # Create the folder structure
+#   folder_name="mu-scan/${vcell_number}"
 
-  mkdir -p "$folder_name"
+#   mkdir -p "$folder_name"
 
-  # Copy core files into the folder
-  cp core/* "$folder_name/"
+#   # Copy core files into the folder
+#   cp core/* "$folder_name/"
 
-  # Change into the folder
-  cd "$folder_name" || exit
+#   # Change into the folder
+#   cd "$folder_name" || exit
 
-  sed -i -E "s/^[[:space:]]*int Nmu = [0-9]+;/  int Nmu = $vcell_number;/" sim.c
-  sed -i "4s/.*/#SBATCH -J poa-mu-$vcell_number/" jobscript-gkyl-stellar-ai
+#   sed -i -E "s/^[[:space:]]*int Nmu = [0-9]+;/  int Nmu = $vcell_number;/" sim.c
+#   sed -i "4s/.*/#SBATCH -J poa-mu-$vcell_number/" jobscript-gkyl-stellar-ai
 
-  # Build the simulation
-  make
+#   # Build the simulation
+#   make
 
-  # Start the run using the selected submission mode
-  run_job
+#   # Start the run using the selected submission mode
+#   run_job
 
-  # Print confirmation
-  echo "started run for mu = $vcell_number"
+#   # Print confirmation
+#   echo "started run for mu = $vcell_number"
 
-  # Change back to the root directory
-  cd - || exit
-done
+#   # Change back to the root directory
+#   cd - || exit
+# done

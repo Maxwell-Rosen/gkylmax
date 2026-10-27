@@ -10,54 +10,54 @@ extract_max() {
 cd R-scan/R-3
 M0_R3=$(pgkyl zzim-ion_integrated_moms.gkyl sel --z0 -1 -c 0 info 2>&1 | extract_max)
 M0S_R3=$(pgkyl zzim-ion_source_integrated_moms.gkyl sel --z0 -1 -c 0 info 2>&1 | extract_max)
-nu_R3=$(pgkyl zzim-ion_lbo_nu_sum_65.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
-M0mid_R3=$(pgkyl zzim-ion_M0_65.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
+nu_R3=$(pgkyl zzim-ion_lbo_nu_sum_75.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
+M0mid_R3=$(pgkyl zzim-ion_M0_75.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
 cd ../..
 
 # R=5
 cd R-scan/R-5
 M0_R5=$(pgkyl zzim-ion_integrated_moms.gkyl sel --z0 -1 -c 0 info 2>&1 | extract_max)
 M0S_R5=$(pgkyl zzim-ion_source_integrated_moms.gkyl sel --z0 -1 -c 0 info 2>&1 | extract_max)
-nu_R5=$(pgkyl zzim-ion_lbo_nu_sum_65.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
-M0mid_R5=$(pgkyl zzim-ion_M0_65.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
+nu_R5=$(pgkyl zzim-ion_lbo_nu_sum_75.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
+M0mid_R5=$(pgkyl zzim-ion_M0_75.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
 cd ../..
 
 # R=10
 cd R-scan/R-10
 M0_R10=$(pgkyl zzim-ion_integrated_moms.gkyl sel --z0 -1 -c 0 info 2>&1 | extract_max)
 M0S_R10=$(pgkyl zzim-ion_source_integrated_moms.gkyl sel --z0 -1 -c 0 info 2>&1 | extract_max)
-nu_R10=$(pgkyl zzim-ion_lbo_nu_sum_65.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
-M0mid_R10=$(pgkyl zzim-ion_M0_65.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
+nu_R10=$(pgkyl zzim-ion_lbo_nu_sum_75.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
+M0mid_R10=$(pgkyl zzim-ion_M0_75.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
 cd ../..
 
 # R=15
 cd R-scan/R-15
 M0_R15=$(pgkyl zzim-ion_integrated_moms.gkyl sel --z0 -1 -c 0 info 2>&1 | extract_max)
 M0S_R15=$(pgkyl zzim-ion_source_integrated_moms.gkyl sel --z0 -1 -c 0 info 2>&1 | extract_max)
-nu_R15=$(pgkyl zzim-ion_lbo_nu_sum_65.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
-M0mid_R15=$(pgkyl zzim-ion_M0_65.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
+nu_R15=$(pgkyl zzim-ion_lbo_nu_sum_75.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
+M0mid_R15=$(pgkyl zzim-ion_M0_75.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
 cd ../..
 
 # R=22
 cd R-scan/R-22
 M0_R22=$(pgkyl zzim-ion_integrated_moms.gkyl sel --z0 -1 -c 0 info 2>&1 | extract_max)
 M0S_R22=$(pgkyl zzim-ion_source_integrated_moms.gkyl sel --z0 -1 -c 0 info 2>&1 | extract_max)
-nu_R22=$(pgkyl zzim-ion_lbo_nu_sum_65.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
-M0mid_R22=$(pgkyl zzim-ion_M0_65.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
+nu_R22=$(pgkyl zzim-ion_lbo_nu_sum_75.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
+M0mid_R22=$(pgkyl zzim-ion_M0_75.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
 cd ../..
 
 cd R-scan/R-50
 M0_R50=$(pgkyl zzim-ion_integrated_moms.gkyl sel --z0 -1 -c 0 info 2>&1 | extract_max)
 M0S_R50=$(pgkyl zzim-ion_source_integrated_moms.gkyl sel --z0 -1 -c 0 info 2>&1 | extract_max)
-nu_R50=$(pgkyl zzim-ion_lbo_nu_sum_65.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
-M0mid_R50=$(pgkyl zzim-ion_M0_65.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
+nu_R50=$(pgkyl zzim-ion_lbo_nu_sum_75.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
+M0mid_R50=$(pgkyl zzim-ion_M0_75.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
 cd ../..
 
 cd ../1x-beams
 M0_R32=$(pgkyl zzim-ion_integrated_moms.gkyl sel --z0 -1 -c 0 info 2>&1 | extract_max)
 M0S_R32=$(pgkyl zzim-ion_source_integrated_moms.gkyl sel --z0 -1 -c 0 info 2>&1 | extract_max)
-nu_R32=$(pgkyl zzim-ion_lbo_nu_sum_65.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
-M0mid_R32=$(pgkyl zzim-ion_M0_65.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
+nu_R32=$(pgkyl zzim-ion_lbo_nu_sum_75.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
+M0mid_R32=$(pgkyl zzim-ion_M0_75.gkyl interp sel --z0 0.0 info 2>&1 | extract_max)
 cd ../1x-beams-R-scan
 
 # Print Python-ready output
