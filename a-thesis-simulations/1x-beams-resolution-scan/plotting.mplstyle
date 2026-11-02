@@ -1,0 +1,9 @@
+# Shared typography for every resolution-scan figure. Requires LaTeX.
+text.usetex: True
+font.family: serif
+font.size: 12
+axes.titlesize: 18
+axes.labelsize: 22
+legend.fontsize: 12
+xtick.labelsize: 14
+ytick.labelsize: 14

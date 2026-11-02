@@ -20,6 +20,9 @@ h5py
 *.out
 *.app
 
+# Process core dumps
+core.[0-9]*
+
 # Ignore logs and databases
 *.log
 *.sql

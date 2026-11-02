@@ -132,7 +132,6 @@ struct gk_mirror_ctx
 create_ctx(void)
 {
   int cdim = 2, vdim = 2; // Dimensionality.
-  int poly_order = 1;
 
   // Universal constant parameters.
   double eps0 = GKYL_EPSILON0;
@@ -167,13 +166,13 @@ create_ctx(void)
   double mu_max_ion = mi * pow(3. * vti, 2.) / (2. * B_p);
   double vpar_max_elc = 4 * vte;
   double mu_max_elc = me * pow(4. * vte, 2.) / (2. * B_p);
-
   int Nz = 400;
   int Npsi = 4;
   int Nvpar = 64;
   int Nmu = 32;
   int Nvpar_elc = 8;
   int Nmu_elc = 8;
+  int poly_order = 1;
 
   // Geometry parameters.
   double RatZeq0 = 0.10; // Radius of the field line at Z=0.
@@ -270,8 +269,6 @@ create_ctx(void)
   struct gk_mirror_ctx ctx = {
     .cdim = cdim,
     .vdim = vdim,
-    .poly_order = poly_order,
-
     .mi = mi,
     .qi = qi,
     .me = me,
@@ -282,7 +279,6 @@ create_ctx(void)
     .beta = beta,
     .tau = tau,
     .Ti0 = Ti0,
-
     .nuFrac = nuFrac,
     .logLambdaIon = logLambdaIon,
     .nuIon = nuIon,
@@ -293,7 +289,6 @@ create_ctx(void)
     .mu_max_ion = mu_max_ion,
     .vpar_max_elc = vpar_max_elc,
     .mu_max_elc = mu_max_elc,
-
     .Npsi = Npsi,
     .Nz = Nz,
     .Nvpar = Nvpar,
@@ -303,7 +298,7 @@ create_ctx(void)
     .cells = {Npsi, Nz, Nvpar, Nmu},
     .Z_min = Z_min,
     .Z_max = Z_max,
-
+    .poly_order = poly_order,
     .t_end = t_end,
     .num_frames = num_frames,
     .num_phases = num_phases,
@@ -387,11 +382,14 @@ int main(int argc, char **argv)
     .cells = { cells_v[0], cells_v[1]},
     .polarization_density = ctx.n0,
 
-    .init_from_file = {
-      .type = GKYL_IC_IMPORT_F,
-      .file_name = "/scratch/gpfs/CSD/mr1884/gkylmax/a-thesis-simulations/1x-beams/zzim-ion_75.gkyl",
-      .jacobtot_inv_file_name = "/scratch/gpfs/CSD/mr1884/gkylmax/a-thesis-simulations/1x-beams/zzim-geo_int_jacobtot_inv.gkyl",
-      .jacobvel_file_name = "/scratch/gpfs/CSD/mr1884/gkylmax/a-thesis-simulations/1x-beams/zzim-ion_jacobvel.gkyl",
+    .projection = {
+      .proj_id = GKYL_PROJ_MAXWELLIAN_PRIM,
+      .density = initial_density,
+      .ctx_density = &ctx,
+      .upar = initial_upar,
+      .ctx_upar = &ctx,
+      .temp = initial_temp_ion,
+      .ctx_temp = &ctx,
     },
 
     .mapc2p = {

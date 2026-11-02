@@ -18,6 +18,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import postgkyl as pg
 
+STYLE_DIR = Path(__file__).resolve().parent
+if STYLE_DIR.name in {'z-scan', 'vpar-scan', 'mu-scan'}:
+    STYLE_DIR = STYLE_DIR.parent
+plt.style.use(STYLE_DIR / 'plotting.mplstyle')
+
 ROOT = Path(__file__).resolve().parent / 'z-scan'
 AXES = {'z': ('Nz', r'N_z'), 'vpar': ('Nvpar', r'N_{v_\parallel}'), 'mu': ('Nmu', r'N_\mu')}
 COLORS = ['#0072B2', '#D55E00', '#009E73', '#CC79A7', '#E69F00', '#56B4E9', '#332288', '#882255']
@@ -96,6 +101,10 @@ def input_signature(path, allow_mapping=False, axis='z'):
     # Only the scanned resolution may differ. Refuse accidental mixed physics.
     s = path.read_text()
     s = re.sub(r'//[^\n]*|/\*.*?\*/', '', s, flags=re.S)
+    # Runs copied between machines retain the same equilibrium file basename.
+    # Match the compatibility check already used by the scan-local scripts.
+    s = re.sub(r'(\.filename_psi\s*=\s*)"([^"]+)"',
+               lambda m: f'{m[1]}"{Path(m[2]).name}"', s)
     key = AXES[axis][0]
     s = re.sub(rf'\bint\s+{key}\s*=\s*\d+\s*;', f'int {key} = RESOLUTION;', s)
     if allow_mapping:
@@ -248,7 +257,7 @@ def save(fig, output, name):
 
 
 def histories(runs, metrics, output, name, end, zoom_start=None):
-    fig, axes = plt.subplots(3, 2, figsize=(12, 10), layout='constrained')
+    fig, axes = plt.subplots(3, 2, figsize=(16, 13), layout='constrained')
     for ax, (key, title, unit, scale) in zip(axes.flat, metrics):
         for run, color in zip(runs, (COLORS[i % len(COLORS)] for i in range(len(runs)))):
             if run['mapping'] == 'nunif':
@@ -260,14 +269,15 @@ def histories(runs, metrics, output, name, end, zoom_start=None):
             xx = (tt - zoom_start) * 1e6 if zoom_start is not None else tt
             ax.plot(xx, sample((t, v), tt) * scale, color=color,
                     label=run_label(run), **line_style(run))
-        ax.set(title=title, ylabel=unit,
+        ax.set(title=title, ylabel=unit.replace(' [simulation normalization]', '\n[simulation normalization]'),
                xlabel=r'Time in final relaxation [$\mu$s]' if zoom_start is not None else 'Simulation time [s]')
         ax.grid(alpha=.25)
         if key.startswith('particle_balance'):
             ax.axhline(1, color='0.4', ls=':', lw=1, label='Source balance = 1')
         ax.ticklabel_format(axis='y', style='sci', scilimits=(-3, 4), useMathText=True)
-    axes.flat[0].legend(fontsize=9)
-    fig.suptitle('Resolution scan: ' + ('final relaxation' if zoom_start is not None else 'full history (OAP/FDP simulation clock)'), fontsize=14)
+    axes.flat[0].legend()
+    fig.suptitle('Resolution scan: ' + ('final relaxation' if zoom_start is not None else 'full history (OAP/FDP simulation clock)'),
+                 fontsize=plt.rcParams['axes.titlesize'])
     save(fig, output, name)
 
 
@@ -378,7 +388,7 @@ def main(root=None, axis='z'):
     if args.nonuniform_run and output.resolve() == (args.root / 'convergence-plots').resolve():
         parser.error('Use a separate output folder for the extra mapping')
     output.mkdir(parents=True, exist_ok=True)
-    plt.rcParams.update({'font.size': 10, 'axes.spines.top': False, 'axes.spines.right': False})
+    plt.rcParams.update({'axes.spines.top': False, 'axes.spines.right': False})
     for metrics, name in [(INVENTORY, 'inventories'), (WALL, 'wall_fluxes')]:
         histories(runs, metrics, output, name + '_history', end)
         histories(runs, metrics, output, name + '_final_relaxation', end, zoom_start)
@@ -407,8 +417,8 @@ def main(root=None, axis='z'):
         writer.writeheader()
         writer.writerows(rows)
 
-    fig, axes = plt.subplots(2, 3, figsize=(14, 8), layout='constrained')
-    errfig, erraxes = plt.subplots(2, 3, figsize=(14, 8), layout='constrained')
+    fig, axes = plt.subplots(2, 3, figsize=(20, 11), layout='constrained')
+    errfig, erraxes = plt.subplots(2, 3, figsize=(20, 11), layout='constrained')
     for ax, ex, (key, title, unit, scale) in zip(axes.flat, erraxes.flat, SUMMARY):
         selected = [r for r in rows if r['metric'] == key and r['mapping'] == 'original']
         nz = np.array([r[resolution_key] for r in selected])
@@ -416,7 +426,7 @@ def main(root=None, axis='z'):
         low = np.array([r['window_min'] for r in selected])
         high = np.array([r['window_max'] for r in selected])
         ax.errorbar(nz, means * scale, yerr=np.array([means-low, high-means]) * scale,
-                    fmt='o-', capsize=4, label=f'Last {args.window_us:g} µs mean and range')
+                    fmt='o-', capsize=4, label=rf'Last {args.window_us:g} $\mu$s mean and range')
         ax.plot(nz, [r['final'] * scale for r in selected], 's--', label='Final value')
         ex.plot(nz[:-1], [r['final_difference_percent'] for r in selected[:-1]], 's--', label='Final value')
         ex.plot(nz[:-1], [r['mean_difference_percent'] for r in selected[:-1]], 'o-', label='Window mean')
@@ -437,19 +447,19 @@ def main(root=None, axis='z'):
             a.set(title=title, xlabel=f'${symbol}$')
             a.set_xticks(sorted(set((nz if a is ax else nz[:-1]).tolist() + [r[resolution_key] for r in extra])))
             a.grid(alpha=.25)
-        ax.set_ylabel(unit)
+        ax.set_ylabel(unit.replace(' [simulation normalization]', '\n[simulation normalization]'))
         if key == 'particle_balance':
             ax.axhline(1, color='0.4', ls=':', lw=1, label='Source balance = 1')
-            ax.legend(fontsize=8)
-        ex.set_ylabel('Signed difference [% of reference]')
-    axes.flat[0].legend(fontsize=8)
-    erraxes.flat[0].legend(fontsize=8)
+            ax.legend()
+        ex.set_ylabel(r'Signed difference [\% of reference]')
+    axes.flat[0].legend()
+    erraxes.flat[0].legend()
     fig.suptitle(f'Convergence at t = {end:.9g} s; bars show temporal range, not uncertainty')
     errfig.suptitle(f'Differences relative to original-mapping ${symbol}={reference["resolution"]}$ (finite-resolution reference)')
     save(fig, output, 'convergence_vs_resolution')
     save(errfig, output, 'relative_differences')
 
-    fig, axes = plt.subplots(2, 2, figsize=(12, 8), layout='constrained')
+    fig, axes = plt.subplots(2, 2, figsize=(14, 10), layout='constrained')
     titles = ['Ion density', 'Parallel velocity', 'Parallel temperature', 'Perpendicular temperature']
     units = [r'$n_i$ [m$^{-3}$]', r'$u_\parallel$ [m s$^{-1}$]', r'$T_\parallel$ [keV]', r'$T_\perp$ [keV]']
     for run, color in zip(runs, (COLORS[i % len(COLORS)] for i in range(len(runs)))):

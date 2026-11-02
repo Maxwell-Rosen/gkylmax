@@ -196,9 +196,9 @@ create_ctx(void)
   int num_cycles = 5; // Number of OAP+FDP cycles to run.
   
   // Frame counts for each phase type (specified independently)
-  int num_frames_oap = 10;        // Frames per OAP phase
-  int num_frames_fdp = 10;        // Frames per FDP phase
-  int num_frames_fdp_extra = 5*10;  // Frames for the extra FDP phase
+  int num_frames_oap = 5;        // Frames per OAP phase
+  int num_frames_fdp = 5;        // Frames per FDP phase
+  int num_frames_fdp_extra = 5*5;  // Frames for the extra FDP phase
   
   // Whether to evolve the field.
   bool is_static_field_oap = false;

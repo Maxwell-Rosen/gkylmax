@@ -180,7 +180,7 @@ create_ctx(void)
   double Z_m = 0.98;
 
   // POA parameters  
-  double alpha_oap = 10e-3;  // Factor multiplying collisionless terms.
+  double alpha_oap = 2.5e-3;  // Factor multiplying collisionless terms.
   double alpha_fdp = 1.0;
   double tau_oap = 0.1;  // Duration of each phase.
   double tau_fdp = 15e-6;

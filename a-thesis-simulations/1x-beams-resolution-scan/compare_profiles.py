@@ -61,6 +61,7 @@ def main(scan_dir, axis):
     direction = {"z": r"$z$", "vpar": r"$v_\parallel$", "mu": r"$\mu$"}[axis]
     pg.plot(
         *datasets,
+        style=str(Path(__file__).resolve().parent / 'plotting.mplstyle'),
         color=colors,
         figure=0,
         legend_labels=labels,

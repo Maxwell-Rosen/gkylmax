@@ -373,7 +373,7 @@ int main(int argc, char **argv)
 
     .init_from_file = {
       .type = GKYL_IC_IMPORT_F,
-      .file_name = "/scratch/gpfs/CSD/mr1884/gkylmax/a-thesis-simulations/1x-beams-fdp-continuation/zzim-ion_100.gkyl",
+      .file_name = "/scratch/gpfs/CSD/mr1884/gkylmax/a-thesis-simulations/1x-beams-fdp-continuation/zzim-ion_30.gkyl",
     },
 
     .mapc2p = {

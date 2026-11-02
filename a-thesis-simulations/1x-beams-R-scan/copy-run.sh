@@ -74,7 +74,7 @@ for i in "${!mcB_values[@]}"; do
   cd "$folder_name" || exit
 
 	if [ "$R" -eq 50 ]; then
-		sed -i 's/^[[:space:]]*int Nz = .*/  int Nz = 400;/' sim.c
+		sed -i 's/^[[:space:]]*int Nz = .*/  int Nz = 800;/' sim.c
 		# sed -i 's/^[[:space:]]*bool is_positivity_enabled_fdp = .*/  bool is_positivity_enabled_fdp = true;/' sim.c
 		# sed -i 's|^[[:space:]]*double cfl_factor_times_omega_max = .*|  double cfl_factor_times_omega_max = 1/20.0; // CFL factor for fixed factor times omega max multiplier.|' sim.c
 	fi

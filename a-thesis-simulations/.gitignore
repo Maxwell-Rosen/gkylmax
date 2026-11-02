@@ -1,0 +1,7 @@
+**/*.png
+**/*.svg
+**/*.pdf
+**/*.csv
+
+# Generated NumPy data snapshots
+*.npz
