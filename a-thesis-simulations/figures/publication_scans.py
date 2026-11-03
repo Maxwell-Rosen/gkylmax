@@ -36,7 +36,7 @@ SHORT_LABELS = { 'Ni': r'$N_i$ [$10^{19}$]', 'Ei_J': r'$E_i$ [kJ]' }
 # renewed review; scalar durations/counts outside these blocks are parsed below.
 PHASE_ASSEMBLY_HASHES = {
     'standard': '154f8fddcb24fb198c282fa4b09ed39f554cdab8cf8293f4aa8de914d83d0891',
-    'annealing': 'c4e16581a039c7e5e45ef52ba47474c9ca0913a6c68602714e0cbea2e4aab07f',
+    'annealing': '5ea70e6058eca43b4da784c1c11021f6bb6447be962ff2472a3226403d1ba19c',
 }
 
 
@@ -827,12 +827,12 @@ def report(args, manifest, runs, sampling):
                   '   Both one-sided cell-end traces are shown in the profiles; they are not used for numerical quadrature. Dashed vertical lines mark the mirror throats.',
                   '   The summary CSV includes both signed and absolute integrals and their percentages of the FDP line density. The profile CSV adds the weak relative difference. Alpha-point connections only guide the eye.', '']
     if args.study == 'extra-cycles-fdp-length':
-        lines += ['7. Annealing-stage evolution of ion number, kinetic energy, and source-loss ratio after four regular OAP/FDP cycles.',
-                  '   Columns show OAP alpha=0.001 for 100 ms, alpha=0.01 for 10 ms, alpha=0.1 for 1 ms, then the 75-us final FDP.',
+        lines += ['7. Annealing-stage evolution of ion number, kinetic energy, and source-loss ratio after the regular OAP/FDP cycles.',
+                  '   Columns show OAP alpha=0.001 for 100 ms, alpha=0.01 for 10 ms, alpha=0.1 for 1 ms, then the final FDP.',
                   '   Each column uses its own simulation-clock axis, relative to its saved stage-end frame. Shared row scales compare the stages; dots mark stored energy samples.',
                   '   Dashed purple lines give the baseline final value for reference; the gray dotted line marks source-loss balance.',
-                  '   07_annealing_schedule.csv records nominal and observed boundaries (frames 40, 45, 50, 55, 80). Boundary frames are written just after crossing a phase boundary.',
-                  '   The source allocates one unused zero-duration phase; saved output confirms the nonzero stages and frame 80 at 0.511135 s. Stale input comments are not used as phase definitions.',
+                  '   07_annealing_schedule.csv records nominal durations and observed frame boundaries from this snapshot. Boundary frames are written just after crossing a phase boundary.',
+                  '   Cached snapshots retain the schedule of the recorded run; editing the input does not change previously saved results.',
                   '   The archived 1x-beams-anneal/256 data are excluded from this fixed-resolution comparison; the main annealing run matches the baseline 400 x 64 x 32 grid.', '']
     lines += ['RUNS AND CHECKS']
     for run in runs:

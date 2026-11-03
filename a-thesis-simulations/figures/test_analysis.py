@@ -89,13 +89,25 @@ class AnnealingTests(unittest.TestCase):
 
     def test_annealing_final_fdp_excludes_the_ramp(self):
         params = read_parameters(self.root / '1x-beams-anneal')
-        self.assertEqual(params['expected_frame'], 80)
+        baseline = read_parameters(self.root / '1x-beams')
+        for key in ('alpha_oap', 'tau_oap', 'tau_fdp',
+                    'num_frames_oap', 'num_frames_fdp'):
+            self.assertEqual(params[key], baseline[key])
+        self.assertEqual(params['num_cycles'] + 1, baseline['num_cycles'])
+        self.assertEqual(params['expected_frame'], 85)
         self.assertEqual(params['continuous_fdp_start_frame'], 55)
-        self.assertAlmostEqual(params['expected_end_s'], .511135)
-        self.assertAlmostEqual(params['expected_end_s'] - params['continuous_fdp_start_s'], 75e-6)
+        self.assertAlmostEqual(params['expected_end_s'], .511150)
+        self.assertAlmostEqual(params['expected_end_s'] - params['continuous_fdp_start_s'],
+                               baseline['expected_end_s'] - baseline['continuous_fdp_start_s'])
+        self.assertAlmostEqual(params['tau_fdp_extra'] / params['num_frames_fdp_extra'],
+                               baseline['tau_fdp_extra'] / baseline['num_frames_fdp_extra'])
         stages = params['annealing_stages']
+        self.assertEqual(stages[0]['alpha'], baseline['alpha_oap'])
+        self.assertEqual(stages[0]['duration_s'], baseline['tau_oap'])
+        self.assertAlmostEqual(params['expected_end_s'] - baseline['expected_end_s'],
+                               sum(s['duration_s'] for s in stages[1:-1]))
         self.assertEqual([s['start_frame'] for s in stages], [40, 45, 50, 55])
-        np.testing.assert_allclose([s['duration_s'] for s in stages], [.1, .01, .001, 75e-6])
+        np.testing.assert_allclose([s['duration_s'] for s in stages], [.1, .01, .001, 90e-6])
 
     def test_schedule_review_does_not_hide_physics_changes(self):
         study = 'extra-cycles-fdp-length'

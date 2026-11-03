@@ -184,13 +184,15 @@ create_ctx(void)
   double alpha_fdp = 1.0;
   double tau_oap = 0.1;  // Duration of each phase.
   double tau_fdp = 15e-6;
-  double tau_fdp_extra = 5*15e-6;
-  int num_cycles = 4; // Number of OAP+FDP cycles to run.
+  // The baseline ends with consecutive 15 us and 75 us FDPs. Keep the same
+  // 90 us of full dynamics after annealing the fifth OAP.
+  double tau_fdp_extra = 6*15e-6;
+  int num_cycles = 4; // Regular pairs; the first ramp stage supplies OAP 5.
   
   // Frame counts for each phase type (specified independently)
   int num_frames_oap = 5;        // Frames per OAP phase
   int num_frames_fdp = 5;        // Frames per FDP phase
-  int num_frames_fdp_extra = 5*5;  // Frames for the extra FDP phase
+  int num_frames_fdp_extra = 6*5;  // Final 90 us FDP, retaining 3 us frame spacing
   
   // Whether to evolve the field.
   bool is_static_field_oap = false;
@@ -206,14 +208,14 @@ create_ctx(void)
   double cfl_factor_times_omega_max = 1/10.0; // CFL factor for fixed factor times omega max multiplier.
   double low_pass_damping_rate = 1/5e-6;
 
-  // Assemble the regular OAP/FDP cycles, the OAP annealing ramp, the final
-  // loss-cone-masked annealing phase, and the final FDP. Keeping every stage
-  // in num_phases ensures that the driver also runs the annealing stages and
-  // can locate them correctly on restart.
+  // Run four regular OAP/FDP pairs, then the fifth 100 ms OAP at alpha=1e-3
+  // with two extra annealing stages (10 ms at 1e-2 and 1 ms at 1e-1).
+  // Finish with the baseline's 90 us continuous FDP: t_end is only 11 ms later.
+  // Count only initialized phases so restart bookkeeping matches the schedule.
   const double annealing_alphas[] = { 1e-3, 1e-2, 1e-1 };
   const double annealing_durations[] = { tau_oap, tau_oap/10, tau_oap/100};
   const int num_annealing_phases = sizeof(annealing_alphas)/sizeof(annealing_alphas[0]);
-  int num_phases = 2*num_cycles + num_annealing_phases + 2;
+  int num_phases = 2*num_cycles + num_annealing_phases + 1;
 
   struct gk_poa_phase_params *poa_phases = gkyl_calloc(num_phases, sizeof(struct gk_poa_phase_params));
   int poa_idx = 0;
@@ -253,7 +255,7 @@ create_ctx(void)
     poa_idx++;
   }
 
-  // Increase alpha in stages before the full-alpha trapped-region anneal.
+  // Increase alpha in stages before switching to unmasked full dynamics.
   for (int i=0; i<num_annealing_phases; i++) {
     poa_phases[poa_idx].phase = GK_POA_OAP;
     poa_phases[poa_idx].num_frames = num_frames_oap;
@@ -275,11 +277,12 @@ create_ctx(void)
     poa_idx++;
   }
 
-  // Finish with 100 microseconds of unmasked full dynamics.
+  // Finish with 90 microseconds of unmasked full dynamics, as in the baseline.
   poa_phases[poa_idx].phase = GK_POA_FDP;
   poa_phases[poa_idx].num_frames = num_frames_fdp_extra;
   poa_phases[poa_idx].duration = tau_fdp_extra;
   poa_phases[poa_idx].alpha = alpha_fdp;
+  poa_phases[poa_idx].collisionless_time_rate_multiplier.num_multipliers = 0;
   poa_phases[poa_idx].is_static_field = is_static_field_fdp;
   poa_phases[poa_idx].fdot_mult_type = fdot_mult_type_fdp;
   poa_phases[poa_idx].cfl_factor_times_omega_max = cfl_factor_times_omega_max;
