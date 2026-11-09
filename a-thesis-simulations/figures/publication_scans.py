@@ -205,6 +205,22 @@ def input_inventory(path, frame):
             for name in names}
 
 
+def closest_balance_frame(run, minimum_duration):
+    """Select a saved moment frame nearest source-loss balance, with window coverage."""
+    times = run['data']['Ei'][0]
+    start = max(series[0][0] for series in run['data'].values())
+    candidates = np.flatnonzero(times >= start + minimum_duration)
+    if not len(candidates):
+        raise ValueError(f'{run["path"]}: no saved frame covers the requested comparison windows')
+    ratios = cv.sample(run['data']['particle_balance'], times[candidates])
+    best = int(np.argmin(abs(ratios - 1)))
+    return int(candidates[best]), dict(
+        criterion='closest source-loss ratio to 1 among saved moment frames',
+        target_ratio=1., selected_ratio=float(ratios[best]),
+        minimum_duration_s=minimum_duration, candidate_frames=len(candidates),
+        latest_available_frame=len(times) - 1, latest_available_time_s=float(times[-1]))
+
+
 def collect(args):
     runs, unavailable = [], []
     retained, previous = {}, None
@@ -244,9 +260,17 @@ def collect(args):
             continue
         if frames[:frame + 1] != list(range(frame + 1)):
             raise ValueError(f'{path}: missing earlier moment frames')
-        before = input_inventory(path, frame)
+        inventory_frame = frame
+        before = input_inventory(path, inventory_frame)
         print(f'Reading {path} at frame {frame}', flush=True)
         run = cv.load_run(path, frame, 940)
+        if spec['uid'] == 'fdp_ongoing':
+            frame, selection = closest_balance_frame(run, max(args.zoom_us, args.window_us) * 1e-6)
+            if frame != inventory_frame:
+                run = cv.load_run(path, frame, 940)
+            run['endpoint_selection'] = selection
+            print(f'Selected continuation frame {frame} at {run["end"] * 1e3:.6g} ms; '
+                  f'source-loss ratio={selection["selected_ratio"]:.8g}', flush=True)
         if args.study == 'alpha-scan':
             first = params['continuous_fdp_start_frame']
             n_oap, _ = cv.modal(path / f'zzim-ion_M0_{first}.gkyl')
@@ -260,7 +284,7 @@ def collect(args):
                                              oap_time_s=float(n_oap.ctx['time']),
                                              fdp_time_s=float(n_fdp.ctx['time']))
             run['density_comparison_profile'] = profile
-        if input_inventory(path, frame) != before:
+        if input_inventory(path, inventory_frame) != before:
             raise ValueError(f'{path}: input changed while reading; rerun to obtain a consistent snapshot')
         if max(v for k, v in run['checks'].items() if k.startswith('max_relative')) > .01:
             raise ValueError(f'{path}: moment reconstruction differs by more than 1%')
@@ -276,10 +300,6 @@ def collect(args):
             label_alpha = float(path.name.removeprefix('alpha-')) if spec['uid'] != 'baseline' else params['alpha_oap']
             if not np.isclose(label_alpha, params['alpha_oap']):
                 raise ValueError(f'{path}: directory alpha and input disagree')
-        if spec['uid'] == 'fdp_ongoing':
-            spec['label'] = rf'+300 $\mu$s + {run["end"] * 1e3:.3g} ms FDP'
-            spec['label'] += ' (ongoing)' if not complete else ''
-            spec['short_label'] = 'Ongoing' if not complete else 'Extended'
         first = params['continuous_fdp_start_frame']
         if first >= frame:
             raise ValueError(f'{path}: final FDP has not yet been sampled')
@@ -330,6 +350,11 @@ def collect(args):
             expected = Path(origin['path']) / f'zzim-ion_{origin["frame"]}.gkyl'
             if Path(run['parameters']['imported_distribution']).resolve() != expected.resolve():
                 raise ValueError(f'{uid}: continuation does not import the expected parent endpoint')
+            if uid == 'fdp_ongoing':
+                run['added_fdp_time_s'] = origin['end'] + run['end']
+                duration_ms = run['added_fdp_time_s'] * 1e3
+                run['label'] = f'Baseline + {duration_ms:.3g} ms FDP'
+                run['short_label'] = f'+{duration_ms:.3g} ms'
     if args.study == 'extra-time-dilation':
         continuation = args.root / '1x-beams-extra-dilated-fdp-continuation'
         frames = complete_frames(continuation)
@@ -779,10 +804,15 @@ def report(args, manifest, runs, sampling):
             '   Dots mark saved energy and central-density samples. The dotted vertical line marks the start of the configured extra FDP.',
         ]
     if args.study == 'extra-cycles-fdp-length':
+        annealing = next((r for r in runs if r['uid'] == 'annealing'), None)
         fdp_caption = [
             f'4. The last up to 90 microseconds of all {len(runs)} runs, overlaid in a single column of five diagnostic panels.',
             '   All panels share the same endpoint-aligned time axis. Sparse energy and central-density histories show native samples only.',
-            '   Annealing has only 75 microseconds of continuous final FDP; its curve begins there, excluding the preceding OAP.',
+            *([f'   Annealing has {annealing["parameters"]["tau_fdp_extra"] * 1e6:g} microseconds of continuous final FDP; its curve begins at the saved boundary, excluding the preceding OAP.']
+              if annealing else []),
+            *(['   The green continuation uses the saved moment frame with source-loss ratio closest to 1 and enough history for the comparison windows.',
+               '   Its legend duration includes the preceding 300-microsecond FDP continuation, measured from the baseline endpoint. The manifest records the selection criterion and ratio.']
+              if any('endpoint_selection' in r for r in runs) else []),
             '   The historical output filename 04_last_full_dynamics is retained; this view is limited to the last 90 microseconds.',
         ]
     lines = [f'PUBLICATION FIGURES: {args.study}',
@@ -843,6 +873,8 @@ def report(args, manifest, runs, sampling):
                   f'  cycles={p["num_cycles"]}; alpha_oap={p["alpha_oap"]:g}; c_omega={p["cfl_factor_times_omega_max"]:g}; tau_fdp={p["tau_fdp"]:g} s; tau_extra={p["tau_fdp_extra"]:g} s',
                   f'  observed full-FDP interval: {run["phase_start"]:.12g} to {run["end"]:.12g} s ({(run["end"]-run["phase_start"])*1e6:.9g} us)',
                   f'  reconstruction / temperature checks: {run["checks"]}']
+        if 'endpoint_selection' in run:
+            lines.append(f'  endpoint selection: {run["endpoint_selection"]}')
         if 'density_comparison' in run:
             lines.append(f'  OAP/FDP density comparison: {run["density_comparison"]}')
         if 'annealing_stages' in p:

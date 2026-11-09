@@ -1,9 +1,9 @@
 import postgkyl as pg
 
-frame = 65
+frame = 75
 single_field = pg.load("../1x-beams/zzim-ion_BiMaxwellianMoments_" + str(frame) + ".gkyl").interpolate().map("../1x-beams/zzim-geo_corn_mc2nu_pos_deflated.gkyl")
-many_field_inner = pg.load("zzim-ion_BiMaxwellianMoments_" + str(frame) + ".gkyl").interpolate().map("../1x-beams/zzim-geo_corn_mc2nu_pos_deflated.gkyl").select(z0=0)
-many_field_outer = pg.load("zzim-ion_BiMaxwellianMoments_" + str(frame) + ".gkyl").interpolate().map("../1x-beams/zzim-geo_corn_mc2nu_pos_deflated.gkyl").select(z0=-1)
+many_field_inner = pg.load("zzim-ion_BiMaxwellianMoments_" + str(frame) + ".gkyl").interpolate().map("zzim-geo_corn_mc2nu_pos_deflated.gkyl").select(z0=0)
+many_field_outer = pg.load("zzim-ion_BiMaxwellianMoments_" + str(frame) + ".gkyl").interpolate().map("zzim-geo_corn_mc2nu_pos_deflated.gkyl").select(z0=-1)
 
 factor = 1.602176634e-27 * 2.014 / 1.602176634e-19 / 1000
 
@@ -11,9 +11,10 @@ for data in (single_field, many_field_inner, many_field_outer):
     data[..., 2:4] *= factor
 
 pg.plot(single_field, many_field_inner, many_field_outer,
+    multiblock=True,  # Keep all three datasets on one comparison figure.
     color=["#0072B2", "#D55E00", "#059E00"],
+    linestyle=["-", "--", ":"],
     title="1x vs 2x",
-    legend = True,
     legend_labels = ["1x", "2x inner", "2x outer"],
     legend_subplot = 0,
     legend_loc = "best",

@@ -115,9 +115,17 @@ without `--reuse-data` before plotting figure 7 from the snapshot.
 
 `--refresh-runs UID ...` reads only the named runs and retains the others from
 the existing output snapshot. It is mutually exclusive with `--reuse-data`.
-The annealing addition preserves the four previously recorded comparison runs,
-including continuation frame 13: newer raw continuation diagnostics contain
-backward time jumps from restart output and fail the reader's validation.
+The annealing addition preserved the four previously recorded comparison runs,
+including continuation frame 13. Fresh collection now reconciles appended
+restart diagnostics and selects the complete continuation moment frame whose
+source-loss ratio is closest to 1, with enough history for the requested windows.
+The dotted green curve uses this selected frame consistently for all diagnostics
+and profiles. Its legend adds the preceding 300 μs continuation to the selected
+time, so "Baseline + 2.4 ms FDP" represents frame 21 at 2.1 ms in the long
+continuation. The ratio at that frame is approximately 1.00155. The manifest
+records the selection criterion, ratio, candidate count, and latest available
+frame. Raw collection reevaluates the selection as new frames become available;
+`--reuse-data` preserves the recorded selection.
 Per-run collection times and source inventories are retained in the manifest.
 Use `--reuse-data` to reproduce this complete five-run set. Older cycle/FDP
 snapshots need `--refresh-runs annealing` once to add the annealing data.
@@ -130,21 +138,21 @@ continuous interval. Its dotted line marks the configured extra-phase boundary.
 The extra cycles / FDP duration study restricts every run in figure 4 to the
 last up to 90 μs, retaining the filename `04_last_full_dynamics`; the other studies
 show the entire final continuous interval.
-The recorded annealing run has four regular cycles followed by OAP stages with alpha
-0.001, 0.01, and 0.1 lasting 100, 10, and 1 ms. Its final FDP is **75 μs**
-(frames 55–80), ending at **0.511135 s**. Its figure-4 curve begins at -75 μs;
-the preceding annealing stage is not counted as FDP. The `256/` archive has a
-different spatial resolution and is excluded from this comparison. The selected
-annealing run uses the same 400 × 64 × 32 grid as the baseline.
-The revised `1x-beams-anneal/sim.c` keeps four regular OAP/FDP pairs. The
-first ramp stage supplies the fifth 100 ms OAP at alpha=0.001, matching the
-baseline's five main OAPs; alpha=0.01 and 0.1 add 10 ms and 1 ms of annealing.
-The **90 μs** final FDP (frames 55–85) now matches the baseline's continuous
-final FDP. The endpoint is **0.511150 s**, exactly 11 ms after the baseline's
-0.500150 s. The final frame spacing remains 3 μs, and all 12 allocated phases
-are initialized. Rebuild the executable before running or resuming this input.
-The saved figures and `--reuse-data` snapshot still describe the recorded run;
-refresh the annealing data only after outputs for the revised schedule are available.
+The annealing input and regenerated data have four regular OAP/FDP pairs,
+followed by OAP stages with alpha 0.001, 0.01, and 0.1 lasting 100, 10, and 1 ms.
+The first ramp stage supplies the fifth 100 ms OAP, matching the baseline's
+five main OAPs. The last two stages add 11 ms of annealing.
+The final **90 μs FDP** uses frames **55–85**, ending at **0.511150 s**;
+the baseline's continuous 90 μs FDP uses frames **45–75**, ending at
+**0.500150 s**. Both have 31 saved moment frames with approximately 3 μs
+spacing. Their saved FDP durations are 89.999474 μs because the boundary
+frames are written just after the nominal start. Figure 4 aligns each run
+by its own endpoint, so both curves span approximately -90 to 0 μs.
+The preceding annealing stage is not counted as FDP. Fresh figures and the
+current snapshot include annealing frame 85; older snapshots retain their
+recorded endpoints until refreshed.
+The `256/` archive has a different spatial resolution and is excluded.
+The selected annealing run uses the same 400 × 64 × 32 grid as the baseline.
 The last 60 μs is a separate view, not a claim about the phase duration. For the
 extra-dilation run these durations are 25 ms, 5 ms, and 30 ms, respectively.
 Continuations reset their clock; their full-interval panels show the available
@@ -179,8 +187,16 @@ manifest and methods.
 
 ## Checks
 
-The shared reader rejects nonfinite data, backward time, unsupported bases,
-missing frames, and temporal extrapolation. It reconstructs particle number and
+The shared reader reconciles backward time jumps in appended integrated
+diagnostics by discarding earlier-written samples at or after a later restart's
+first sample. Later output replaces the entire old tail, even if the new segment
+has not reached the old endpoint. Exact duplicate times keep the last value;
+timestamps are not sorted or averaged. A warning reports restart and discarded
+sample counts. Raw simulation files are unchanged.
+
+The reader rejects empty or nonfinite diagnostic times, nonfinite data,
+unsupported bases, missing frames, non-increasing spatial frame times, and
+temporal extrapolation. It reconstructs particle number and
 Hamiltonian energy independently. New studies also check the reviewed input
 differences, saved endpoint times, phase-boundary times, fixed resolution,
 geometry, continuation parent paths, and whether inputs changed while reading.

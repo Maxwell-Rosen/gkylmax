@@ -1,4 +1,5 @@
 import postgkyl as pg
+import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
@@ -9,14 +10,23 @@ import fortranformat as ff
 from datetime import date
 from typing import Any, Generator, Iterable, List, TextIO, Union
 
-# Remember to delete the top line and that Gkeyll takes the _psi file which is made from the efit file reader
+# Gkeyll consumes the _psi.gkyl file produced by its eqdskreader tool.
+# Regenerate just this case with: python write_efit_tandem_lorentzian.py --ratio 15 --no-show
+parser = argparse.ArgumentParser(description="Generate tandem-mirror EFIT geometry.")
+parser.add_argument("--ratio", type=int, choices=[3, 5, 10, 15, 22, 32, 40, 50],
+                    help="Generate only this mirror ratio (default: all).")
+parser.add_argument("--no-show", action="store_true", help="Skip interactive plots.")
+args = parser.parse_args()
 
 # Parameters for different mirror ratios R
 R_values = [3, 5, 10, 15, 22, 32, 40, 50]
-mcB_inner_values = [2.005804, 2.523435, 3.500993, 4.258079, 5.131404, 6.165174, 6.879326, 7.677658]
-mcB_outer_values = [2.021283, 2.541062, 3.535280, 4.311313, 5.210360, 6.278592, 7.019136, 7.848735]
-gamma_inner_values = [0.454541, 0.333259, 0.226795, 0.182798, 0.149642, 0.123304, 0.109952, 0.098086]
-gamma_outer_values = [0.453590, 0.333783, 0.228416, 0.184758, 0.151760, 0.125465, 0.112109, 0.100215]
+# R=15 is fitted to 1x-beams-R-scan/R-scan/R-15/sim.c (mcB=4.490901,
+# gamma=0.182792, Z_m=0.98): B(3)=0.525855175422956 T, B'(3)=0,
+# and B(2.02)=B(3.98)=7.887786454957742 T. Other ratios retain their 0.5 T fits.
+mcB_inner_values = [2.005804, 2.523435, 3.500993, 4.40472649800896, 5.131404, 6.165174, 6.879326, 7.677658]
+mcB_outer_values = [2.021283, 2.541062, 3.535280, 4.43361109329362, 5.210360, 6.278592, 7.019136, 7.848735]
+gamma_inner_values = [0.454541, 0.333259, 0.226795, 0.179764052557285, 0.149642, 0.123304, 0.109952, 0.098086]
+gamma_outer_values = [0.453590, 0.333783, 0.228416, 0.180659867097517, 0.151760, 0.125465, 0.112109, 0.100215]
 
 B0 = 0.0
 R0 = .02
@@ -25,11 +35,12 @@ L_center = 4.0
 L_plugs = 2.0
 L_to_wall = 1.5
 
-def psi_f(R, Z, mcB_inner, mcB_outer, gamma_inner, gamma_outer):
-  return 0.5*np.power(R,2)*mcB_inner*( 1./(np.pi*gamma_inner*(1.+((Z-L_center/2)/gamma_inner)**2)) \
-                                +1./(np.pi*gamma_inner*(1.+((Z+L_center/2)/gamma_inner)**2))) \
-        +0.5*np.power(R,2)*mcB_outer*( 1./(np.pi*gamma_outer*(1.+((Z-(L_center/2+L_plugs))/gamma_outer)**2)) \
-                                +1./(np.pi*gamma_outer*(1.+((Z+(L_center/2+L_plugs))/gamma_outer)**2)) )
+def psi_f(R, Z, mcB_inner, mcB_outer, gamma_inner, gamma_outer,
+          center_length=L_center, plug_length=L_plugs):
+  return 0.5*np.power(R,2)*mcB_inner*( 1./(np.pi*gamma_inner*(1.+((Z-center_length/2)/gamma_inner)**2)) \
+                                +1./(np.pi*gamma_inner*(1.+((Z+center_length/2)/gamma_inner)**2))) \
+        +0.5*np.power(R,2)*mcB_outer*( 1./(np.pi*gamma_outer*(1.+((Z-(center_length/2+plug_length))/gamma_outer)**2)) \
+                                +1./(np.pi*gamma_outer*(1.+((Z+(center_length/2+plug_length))/gamma_outer)**2)) )
 
 #RZ box
 NW = 513
@@ -82,6 +93,11 @@ def write_line(data: Iterable[Any], fh: TextIO, fmt: str) -> None:
 for idx, (mcB_inner, mcB_outer, gamma_inner, gamma_outer, R_mirror) in enumerate(
     zip(mcB_inner_values, mcB_outer_values, gamma_inner_values, gamma_outer_values, R_values)
 ):
+    if args.ratio is not None and R_mirror != args.ratio:
+        continue
+    # Keep plug midplanes at +-3 m and align R-15 throats with shifted simple mirrors.
+    # The common box stays at +-5.5 m, matching the reference's +-2.5 m outer boundary.
+    center_length, plug_length = (4.04, 1.96) if R_mirror == 15 else (L_center, L_plugs)
     outFileName = f'tandem_R{R_mirror}.geqdsk'
     
     print(f"\n--- Processing R = {R_mirror} ---")
@@ -90,8 +106,8 @@ for idx, (mcB_inner, mcB_outer, gamma_inner, gamma_outer, R_mirror) in enumerate
         f"gamma_inner = {gamma_inner}, gamma_outer = {gamma_outer}"
     )
     
-    SIMAG = psi_f(2.0, 0, mcB_inner, mcB_outer, gamma_inner, gamma_outer)
-    SIBRY = psi_f(4.0, 0, mcB_inner, mcB_outer, gamma_inner, gamma_outer)
+    SIMAG = psi_f(2.0, 0, mcB_inner, mcB_outer, gamma_inner, gamma_outer, center_length, plug_length)
+    SIBRY = psi_f(4.0, 0, mcB_inner, mcB_outer, gamma_inner, gamma_outer, center_length, plug_length)
     
     print("simag = %g"%SIMAG)
     print("sibry = %g"%SIBRY)
@@ -100,7 +116,7 @@ for idx, (mcB_inner, mcB_outer, gamma_inner, gamma_outer, R_mirror) in enumerate
     psiRZ = np.zeros((len(Rgrid),len(Zgrid)))
     for i,Ri in enumerate(Rgrid):
         for j,Zj in enumerate(Zgrid):
-            psiRZ[i,j] = psi_f(Ri, Zj, mcB_inner, mcB_outer, gamma_inner, gamma_outer)
+            psiRZ[i,j] = psi_f(Ri, Zj, mcB_inner, mcB_outer, gamma_inner, gamma_outer, center_length, plug_length)
     
     plt.figure()
     plt.contour(Rgrid,Zgrid, psiRZ.T, levels = (np.linspace(0.001,0.004,12)))
@@ -179,4 +195,5 @@ for idx, (mcB_inner, mcB_outer, gamma_inner, gamma_outer, R_mirror) in enumerate
     
     print(f"Written: {outFileName}")
 
-plt.show()
+if not args.no_show:
+    plt.show()

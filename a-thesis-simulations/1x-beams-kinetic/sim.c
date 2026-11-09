@@ -13,6 +13,9 @@
 
 #include <rt_arg_parse.h>
 
+// Kinetic continuation of 1x-beams frame 75; continuation time starts at zero.
+// Retain the ion checkpoint, geometry, beam source and initial polarization.
+
 // Evaluate initial conditions
 void
 initial_upar_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
@@ -37,39 +40,7 @@ initial_temp_elc(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT
   fout[0] = app->Te0;
 }
 
-void
-eval_f_ion_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
-{
-  struct gk_mirror_ctx *app = ctx;
-  double z = xn[0];
-  if (fabs(z) > app->Z_m) { // For tandem mirrors, we just put this in the end cells
-    fout[0] = 1e-20;
-    return;
-  }
-  double vpar = xn[1];
-  double mu = xn[2];
-  
-  double bvec[3];
-  double xc_in[3] = {app->psi_eval, 0.0, z};
-  bfield_func(t, xc_in, bvec, ctx);
-  double Bmag = sqrt(bvec[0]*bvec[0] + bvec[1]*bvec[1] + bvec[2]*bvec[2]);
-  
-  //Following energy conservation, re-map what vpar would be at the midplane
-  double vpar_midp = sqrt(pow(vpar,2.) + 2*mu*(Bmag - app->Bmag_midp)/app->mi); // Ignore potential for now
-  double vperp = sqrt(2.0 * mu * app->B_p / app->mi); // What magnetic field do we use here?
-
-  double gamma0 = 200;
-  double T_beam = 200 * GKYL_ELEMENTARY_CHARGE;
-  double E_beam = 25000 * GKYL_ELEMENTARY_CHARGE;
-  double v_beam = sqrt(E_beam / app->mi);
-  double sigma_beam = 2*T_beam/app->mi;
-
-  double source = fmax(gamma0 * exp (-1.0 * (pow(fabs(vpar_midp) - v_beam, 2) + 
-                                             pow(vperp - v_beam, 2)) / sigma_beam),1e-20);
-
-  fout[0] = source;
-}
-
+// Midplane-mapped approximation to the bounce-averaged electron source.
 void
 eval_f_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRICT fout, void *ctx)
 {
@@ -81,17 +52,17 @@ eval_f_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
   }
   double vpar = xn[1];
   double mu = xn[2];
-  
+
   double bvec[3];
   double xc_in[3] = {app->psi_eval, 0.0, z};
   bfield_func(t, xc_in, bvec, ctx);
   double Bmag = sqrt(bvec[0]*bvec[0] + bvec[1]*bvec[1] + bvec[2]*bvec[2]);
-  
-  //Following energy conservation, re-map what vpar would be at the midplane
-  double vpar_midp = sqrt(pow(vpar,2.) + 2*mu*(Bmag - app->Bmag_midp)/app->mi); // Ignore potential for now
-  double vperp = sqrt(2.0 * mu * app->B_p / app->mi); // What magnetic field do we use here?
 
-  double gamma0 = 1948889.53472; // Must adjust to match ion source rate for quasi-neutrality
+  // Map to the midplane using energy conservation, as in the original source.
+  double vpar_midp = sqrt(pow(vpar,2.) + 2*mu*(Bmag - app->Bmag_midp)/app->mi); // Ignore potential for now
+  double vperp = sqrt(2.0 * mu * app->B_p / app->mi); // Preserve the original midplane-field convention.
+
+  double gamma0 = 1948889.53472; // Original normalization; recalibrate if the source/grid changes.
   double T_beam = 400 * GKYL_ELEMENTARY_CHARGE;
   double sigma_beam = 2*T_beam/app->mi;
 
@@ -101,7 +72,6 @@ eval_f_elc_source(double t, const double *GKYL_RESTRICT xn, double *GKYL_RESTRIC
 
   fout[0] = source;
 }
-
 
 void mapc2p_vel_ion(double t, const double *vc, double* GKYL_RESTRICT vp, void *ctx)
 {
@@ -216,9 +186,10 @@ create_ctx(void)
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_elc_oap = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE;
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_ion_fdp = GKYL_GK_FDOT_MULTIPLIER_FIXED_FACTOR_TIMES_OMEGA_MAX;
   enum gkyl_gyrokinetic_fdot_multiplier_type fdot_mult_type_elc_fdp = GKYL_GK_FDOT_MULTIPLIER_FIXED_DT_OMEGAH;
-  // Boltzmann electrons have dt_OAP = 2e-6 s, dt_FDP = 5e-10 s.
-  double alpha_ion_oap = 1e-3;  // Factor multiplying collisionless terms.
-  double alpha_elc_oap = 1e-3;
+  // Match 1x-beams: alpha(z,v) is this scale times the cellwise
+  // FIXED_FACTOR_TIMES_OMEGA_MAX multiplier on collisionless terms only.
+  // The shared kinetic phase driver applies that chain to both species.
+  double alpha_oap = 1e-3;
   double alpha_fdp = 1.0;
   double time_dilation_scale_const_ion_oap = 1;
   double time_dilation_scale_const_elc_oap = 0.0012;
@@ -226,9 +197,9 @@ create_ctx(void)
   double time_dilation_scale_const_elc_fdp = 1./60.;
   double cfl_factor_times_omega_max = 1/10.0; // CFL factor for fixed factor times omega max multiplier.
 
-  // Calculate phase structure
+  // Relax the imported Boltzmann state in an FDP before the first kinetic OAP.
+  // Keep the continuation schedule (FDP, OAP) x 5, then an extra FDP.
   double t_end = (tau_oap + tau_fdp)*num_cycles + tau_fdp_extra;
-  double tau_pair = tau_oap+tau_fdp; // Duration of an OAP+FDP pair.
   int num_phases = 2*num_cycles + 1;
   int num_frames = num_cycles * (num_frames_oap + num_frames_fdp) + num_frames_fdp_extra;
 
@@ -238,13 +209,16 @@ create_ctx(void)
     poa_phases[2*i+1].phase = GK_POA_OAP;
     poa_phases[2*i+1].num_frames = num_frames_oap;
     poa_phases[2*i+1].duration = tau_oap;
-    poa_phases[2*i+1].alpha_ion = alpha_ion_oap;
-    poa_phases[2*i+1].alpha_elc = alpha_elc_oap;
+    poa_phases[2*i+1].alpha_ion = alpha_oap;
+    poa_phases[2*i+1].alpha_elc = alpha_oap;
     poa_phases[2*i+1].fdot_mult_type_ion = fdot_mult_type_ion_oap;
     poa_phases[2*i+1].fdot_mult_type_elc = fdot_mult_type_elc_oap;
     poa_phases[2*i+1].time_dilation_scale_const_ion = time_dilation_scale_const_ion_oap;
     poa_phases[2*i+1].time_dilation_scale_const_elc = time_dilation_scale_const_elc_oap;
-    poa_phases[2*i+1].is_positivity_enabled = is_positivity_enabled_oap;
+    poa_phases[2*i+1].is_positivity_enabled_ion = is_positivity_enabled_oap;
+    poa_phases[2*i+1].is_positivity_enabled_elc = is_positivity_enabled_oap;
+    poa_phases[2*i+1].positivity_type_ion = is_positivity_enabled_oap ? GKYL_GK_POSITIVITY_SHIFT : GKYL_GK_POSITIVITY_NONE;
+    poa_phases[2*i+1].positivity_type_elc = poa_phases[2*i+1].positivity_type_ion;
     poa_phases[2*i+1].is_static_field = is_static_field_oap;
     poa_phases[2*i+1].damping_type = GKYL_GK_DAMPING_NONE;
     poa_phases[2*i+1].collisionless_time_rate_multiplier = (struct gkyl_gyrokinetic_fdot_multiplier) {
@@ -253,8 +227,10 @@ create_ctx(void)
         .type = GKYL_GK_FDOT_MULTIPLIER_FIXED_FACTOR_TIMES_OMEGA_MAX,
         .cellwise_const = true,
         .cfl_factor_times_omega_max = cfl_factor_times_omega_max,
+        .write_diagnostics = true,
       },
     };
+    poa_phases[2*i+1].cfl_frac_omegaH = 1e6;
 
     // FDPs.
     poa_phases[2*i].phase = GK_POA_FDP;
@@ -267,7 +243,10 @@ create_ctx(void)
     poa_phases[2*i].time_dilation_scale_const_ion = time_dilation_scale_const_ion_fdp;
     poa_phases[2*i].time_dilation_scale_const_elc = time_dilation_scale_const_elc_fdp;
     poa_phases[2*i].cfl_factor_times_omega_max_ion = cfl_factor_times_omega_max;
-    poa_phases[2*i].is_positivity_enabled = is_positivity_enabled_fdp;
+    poa_phases[2*i].is_positivity_enabled_ion = is_positivity_enabled_fdp;
+    poa_phases[2*i].is_positivity_enabled_elc = is_positivity_enabled_fdp;
+    poa_phases[2*i].positivity_type_ion = is_positivity_enabled_fdp ? GKYL_GK_POSITIVITY_SHIFT : GKYL_GK_POSITIVITY_NONE;
+    poa_phases[2*i].positivity_type_elc = poa_phases[2*i].positivity_type_ion;
     poa_phases[2*i].is_static_field = is_static_field_fdp;
     poa_phases[2*i].collisionless_time_rate_multiplier.num_multipliers = 0;
     poa_phases[2*i].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
@@ -284,7 +263,10 @@ create_ctx(void)
   poa_phases[num_phases-1].time_dilation_scale_const_ion = time_dilation_scale_const_ion_fdp;
   poa_phases[num_phases-1].time_dilation_scale_const_elc = time_dilation_scale_const_elc_fdp;
   poa_phases[num_phases-1].cfl_factor_times_omega_max_ion = cfl_factor_times_omega_max;
-  poa_phases[num_phases-1].is_positivity_enabled = is_positivity_enabled_fdp;
+  poa_phases[num_phases-1].is_positivity_enabled_ion = is_positivity_enabled_fdp;
+  poa_phases[num_phases-1].is_positivity_enabled_elc = is_positivity_enabled_fdp;
+  poa_phases[num_phases-1].positivity_type_ion = is_positivity_enabled_fdp ? GKYL_GK_POSITIVITY_SHIFT : GKYL_GK_POSITIVITY_NONE;
+  poa_phases[num_phases-1].positivity_type_elc = poa_phases[num_phases-1].positivity_type_ion;
   poa_phases[num_phases-1].is_static_field = is_static_field_fdp;
   poa_phases[num_phases-1].collisionless_time_rate_multiplier.num_multipliers = 0;
   poa_phases[num_phases-1].damping_type = GKYL_GK_DAMPING_LOW_PASS_FILTER;
@@ -394,6 +376,8 @@ int main(int argc, char **argv)
   // Construct communicator for use in app.
   struct gkyl_comm *comm = gkyl_gyrokinetic_comms_new(app_args.use_mpi, app_args.use_gpu, stderr);
 
+  const struct gk_poa_phase_params *initial_phase = &ctx.poa_phases[0];
+
   struct gkyl_gyrokinetic_species ion = {
     .name = "ion",
     .charge = ctx.qi,
@@ -414,14 +398,11 @@ int main(int argc, char **argv)
       .type = GKYL_IC_IMPORT_F,
       .file_name = "/scratch/gpfs/CSD/mr1884/gkylmax/a-thesis-simulations/1x-beams/zzim-ion_75.gkyl",
     },
-    // .init_from_file = {
-    //   .type = GKYL_IC_IMPORT_F,
-    //   .file_name = "zzim-ion_0.gkyl",
-    // },
 
     .collisionless = {
       .type = GKYL_GK_COLLISIONLESS_ES,
-      .scale_factor = 1.0, // Will be replaced below.
+      .scale_factor = initial_phase->alpha_ion,
+      .time_rate_multiplier = initial_phase->collisionless_time_rate_multiplier,
       .write_diagnostics = true,
     },
 
@@ -437,26 +418,23 @@ int main(int argc, char **argv)
     .time_rate_multiplier = {
       .num_multipliers = 1,
       .multiplier[0] = {
-        .type = GKYL_GK_FDOT_MULTIPLIER_LOSS_CONE,
+        .type = initial_phase->fdot_mult_type_ion,
         .cellwise_const = true,
         .write_diagnostics = true,
+        .cfl_factor_times_omega_max = initial_phase->cfl_factor_times_omega_max_ion,
+        .time_dilation_scale_const = initial_phase->time_dilation_scale_const_ion,
       },
     },
 
     .source = {
-      .source_id = GKYL_PROJ_SOURCE,
+      // Stationary 25 keV beam (200 eV spread) from the reference run.
+      // Import J*f on the same geometry and velocity grid as the checkpoint.
+      .source_id = GKYL_SOURCE_FROMFILE,
       .num_sources = 1,
-      .projection[0] = {
-        .proj_id = GKYL_PROJ_FUNC,
-        .func = eval_f_ion_source,
-        .ctx_func = &ctx,
+      .source_import[0] = {
+        .type = GKYL_IC_IMPORT_F,
+        .file_name = "/scratch/gpfs/CSD/mr1884/gkylmax/a-thesis-simulations/1x-beams/zzim-ion_source_0.gkyl",
       },
-      // .source_id = GKYL_SOURCE_FROMFILE,
-      // .num_sources = 1,
-      // .source_import[0] = {
-      //   .type = GKYL_IC_IMPORT_F,
-      //   .file_name = "zzim-ion_source_0.gkyl",
-      // },
       .diagnostics = {
         .num_diag_moments = 7,
         .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_HAMILTONIAN, GKYL_F_MOMENT_BIMAXWELLIAN},
@@ -521,14 +499,11 @@ int main(int argc, char **argv)
       .temp = initial_temp_elc,
       .ctx_temp = &ctx,
     },
-    // .init_from_file = {
-    //   .type = GKYL_IC_IMPORT_F,
-    //   .file_name = "zzim-elc_0.gkyl",
-    // },
 
     .collisionless = {
       .type = GKYL_GK_COLLISIONLESS_ES,
-      .scale_factor = 1.0,
+      .scale_factor = initial_phase->alpha_elc,
+      .time_rate_multiplier = initial_phase->collisionless_time_rate_multiplier,
       .write_diagnostics = true,
     },
 
@@ -536,8 +511,6 @@ int main(int argc, char **argv)
       .collision_id = GKYL_LBO_COLLISIONS,
       .den_ref = ctx.n0,
       .temp_ref = ctx.Te0,
-      // .nu_frac = 
-      // 641020164,
       .num_cross_collisions = 1,
       .collide_with = { "ion" },
       .write_diagnostics = true,
@@ -546,10 +519,11 @@ int main(int argc, char **argv)
     .time_rate_multiplier = {
       .num_multipliers = 1,
       .multiplier[0] = {
-        .type = GKYL_GK_FDOT_MULTIPLIER_FIXED_DT_OMEGAH,
+        .type = initial_phase->fdot_mult_type_elc,
         .cellwise_const = true,
         .write_diagnostics = true,
-        .time_dilation_scale_const = 0.1,
+        .cfl_factor_times_omega_max = initial_phase->cfl_factor_times_omega_max_elc,
+        .time_dilation_scale_const = initial_phase->time_dilation_scale_const_elc,
       },
     },
 
@@ -561,12 +535,6 @@ int main(int argc, char **argv)
         .func = eval_f_elc_source,
         .ctx_func = &ctx,
       },
-      // .source_id = GKYL_SOURCE_FROMFILE,
-      // .num_sources = 1,
-      // .source_import[0] = {
-      //   .type = GKYL_IC_IMPORT_F,
-      //   .file_name = "zzim-elc_source_0.gkyl",
-      // },
       .diagnostics = {
         .num_diag_moments = 6,
         .diag_moments = { GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_HAMILTONIAN},
@@ -590,10 +558,12 @@ int main(int argc, char **argv)
     .diag_moments = {GKYL_F_MOMENT_BIMAXWELLIAN, GKYL_F_MOMENT_M0, GKYL_F_MOMENT_M1, GKYL_F_MOMENT_M2, GKYL_F_MOMENT_M2PAR, GKYL_F_MOMENT_M2PERP, GKYL_F_MOMENT_M3PAR, GKYL_F_MOMENT_M3PERP },
     .num_integrated_diag_moments = 1,
     .integrated_diag_moments = { GKYL_F_MOMENT_HAMILTONIAN },
-    .num_time_rate_diagnostics = 3,
+    .num_time_rate_diagnostics = 5,
     .time_rate_diagnostics = {
       GKYL_GK_TIME_RATE_DIAGNOSTIC_FDOT_INTEGRATED_MOMENTS,
       GKYL_GK_TIME_RATE_DIAGNOSTIC_FDOT_ABS_INTEGRATED_MOMENTS,
+      GKYL_GK_TIME_RATE_DIAGNOSTIC_FDOT_MOMENTS,
+      GKYL_GK_TIME_RATE_DIAGNOSTIC_FDOT_ABS_MOMENTS,
       GKYL_GK_TIME_RATE_DIAGNOSTIC_FDOT,
     },
 
@@ -606,11 +576,12 @@ int main(int argc, char **argv)
   struct gkyl_gyrokinetic_field field = {
     .polarization_bmag = ctx.B_p,
     .kperpSq = pow(ctx.kperp, 2.),
-    .is_static = false,
+    .is_static = initial_phase->is_static_field,
+    .time_rate_diagnostics = true,
     .polarization_potential_import = {
       .type = GKYL_IC_IMPORT_F,
       .file_name = "/scratch/gpfs/CSD/mr1884/gkylmax/a-thesis-simulations/1x-beams/zzim-field_75.gkyl",
-    }
+    },
   };
 
   struct gkyl_mirror_geo_grid_inp grid_inp = {

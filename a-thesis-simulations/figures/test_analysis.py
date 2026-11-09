@@ -5,13 +5,73 @@ Run with: python -m unittest discover -s figures -p 'test_*.py'
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from publication_style import history_values
-from publication_scans import arithmetic, physics_signature, plot_history, read_parameters
+from publication_scans import arithmetic, closest_balance_frame, physics_signature, plot_history, read_parameters
 import diagnostics as cv
 import matplotlib.pyplot as plt
 import numpy as np
 import postgkyl as pg
+
+
+class RestartSeriesTests(unittest.TestCase):
+    def read_series(self, times, values=None):
+        times = np.asarray(times, dtype=float)
+        if values is None:
+            values = np.arange(times.size * 3, dtype=float).reshape(-1, 3)
+        data = SimpleNamespace(get_grid=lambda: [times],
+                               get_values=lambda: values, ctx={'mass': 2.})
+        with patch.object(cv, 'read', return_value=data):
+            return cv.series(Path('restart.gkyl'), 3)
+
+    def test_increasing_series_is_unchanged(self):
+        times = [0., .1, .4, 1.]
+        t, values, ctx = self.read_series(times)
+        np.testing.assert_array_equal(t, times)
+        np.testing.assert_array_equal(values, np.arange(12).reshape(4, 3))
+        self.assertEqual(ctx, {'mass': 2.})
+
+    def test_duplicate_boundary_keeps_last_values(self):
+        t, values, _ = self.read_series([0., 1., 1., 1., 2., 2.])
+        np.testing.assert_array_equal(t, [0., 1., 2.])
+        np.testing.assert_array_equal(values, np.arange(18).reshape(6, 3)[[0, 3, 5]])
+
+    def test_restart_replaces_overlap_with_different_timestamps(self):
+        with self.assertWarnsRegex(UserWarning, '1 appended restart.*2 superseded'):
+            t, values, _ = self.read_series([0., 1., 2., 3., 1.1, 2.1, 3.1, 4.])
+        np.testing.assert_array_equal(t, [0., 1., 1.1, 2.1, 3.1, 4.])
+        np.testing.assert_array_equal(values, np.arange(24).reshape(8, 3)[[0, 1, 4, 5, 6, 7]])
+
+    def test_later_restart_can_replace_multiple_earlier_segments(self):
+        with self.assertWarnsRegex(UserWarning, '2 appended restart.*5 superseded'):
+            t, values, _ = self.read_series([0., 1., 2., 3., 2., 4., 1., 2., 5.])
+        np.testing.assert_array_equal(t, [0., 1., 2., 5.])
+        np.testing.assert_array_equal(values, np.arange(27).reshape(9, 3)[[0, 6, 7, 8]])
+
+    def test_short_restart_does_not_retain_obsolete_future(self):
+        with self.assertWarnsRegex(UserWarning, '1 appended restart.*3 superseded'):
+            t, values, _ = self.read_series([0., 1., 2., 3., 4., 1.5, 2.5])
+        np.testing.assert_array_equal(t, [0., 1., 1.5, 2.5])
+        np.testing.assert_array_equal(values, np.arange(21).reshape(7, 3)[[0, 1, 5, 6]])
+        with self.assertRaisesRegex(ValueError, 'extrapolate'):
+            cv.sample((t, values[:, 0]), 3.)
+
+    def test_single_sample_is_preserved(self):
+        t, values, _ = self.read_series([0.])
+        np.testing.assert_array_equal(t, [0.])
+        np.testing.assert_array_equal(values, [[0., 1., 2.]])
+
+    def test_invalid_times_are_rejected(self):
+        for times in ([], [0., np.nan], [0., np.inf], [0., -np.inf], [[0., 1.]]):
+            with self.subTest(times=times):
+                with self.assertRaisesRegex(ValueError, 'nonempty, finite diagnostic times'):
+                    self.read_series(times)
+
+    def test_invalid_components_are_still_rejected(self):
+        with self.assertRaisesRegex(ValueError, 'Unexpected diagnostic shape'):
+            self.read_series([0., 1.], np.ones((2, 2)))
 
 
 class DiagnosticTests(unittest.TestCase):
@@ -82,6 +142,31 @@ class DiagnosticTests(unittest.TestCase):
         self.assertAlmostEqual(arithmetic('1/1000.0'), .001)
         with self.assertRaises(ValueError):
             arithmetic('__import__("os").getcwd()')
+
+
+class ContinuationSelectionTests(unittest.TestCase):
+    def setUp(self):
+        self.run = dict(path=Path('continuation'), data={
+            'Ei': (np.array([0., .1, .2, .3]), np.ones(4)),
+            'particle_balance': (np.array([0., .1, .15, .2, .3]),
+                                 np.array([.999, .8, 1., 1.02, 1.4]))})
+
+    def test_selects_closest_saved_frame_with_enough_history(self):
+        frame, selection = closest_balance_frame(self.run, .05)
+        # The exact crossing at .15 has no spatial frame; frame 0 lacks history.
+        self.assertEqual(frame, 2)
+        self.assertEqual(selection['selected_ratio'], 1.02)
+        self.assertEqual(selection['latest_available_frame'], 3)
+        self.assertEqual(selection['candidate_frames'], 3)
+
+    def test_window_must_be_covered_by_every_diagnostic(self):
+        self.run['data']['source'] = (np.array([.16, .3]), np.ones(2))
+        frame, _ = closest_balance_frame(self.run, .05)
+        self.assertEqual(frame, 3)
+
+    def test_missing_window_coverage_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, 'no saved frame covers'):
+            closest_balance_frame(self.run, .4)
 
 
 class AnnealingTests(unittest.TestCase):

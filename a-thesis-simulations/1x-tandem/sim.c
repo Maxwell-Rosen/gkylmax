@@ -148,7 +148,7 @@ create_ctx(void)
   double mi = 2.014 * mp;
   double Te0 = 940 * eV;
   double n0 = 3e19;
-  double B_p = 0.53; // Bmag at z=0
+  double B_p = 0.53; // Nominal plug-midplane field, as in the beam R-15 case.
   double beta = 0.4;
   double tau = pow(B_p, 2.) * beta / (2.0 * mu0 * n0 * Te0) - 1.;
   double Ti0 = tau * Te0;
@@ -176,16 +176,19 @@ create_ctx(void)
   int poly_order = 1;
 
   // Geometry parameters.
-  double RatZeq0 = 0.15; // Radius of the field line at Z=0.
+  double R_plug_midp = 0.10; // Match the beam R-15 field-line radius at each plug midplane.
   double Z_min = -5.5;
   double Z_max =  5.5;
-  double L_center = 4.0;
-  double L_plugs = 2.0;
-  // Tandem parameters for R = 15.
-  double mcB_inner = 4.258079;
-  double mcB_outer = 4.311313;
-  double gamma_inner = 0.182798;
-  double gamma_outer = 0.184758;
+  // R-15 mirrors shifted to Z=+-3: throats at +-(3-0.98) and +-(3+0.98).
+  double L_center = 4.04;
+  double L_plugs = 1.96;
+  // Match R-15's actual B_mid=0.525855175423 T and B_throat=7.887786454958 T,
+  // with dB/dZ=0 at each plug midplane. Keep these in sync with
+  // generate_efit/write_efit_tandem_lorentzian.py and tandem_R15.geqdsk_psi.gkyl.
+  double mcB_inner = 4.40472649800896;
+  double mcB_outer = 4.43361109329362;
+  double gamma_inner = 0.179764052557285;
+  double gamma_outer = 0.180659867097517;
 
   // POA parameters  
   double alpha_oap = 1e-3;  // Factor multiplying collisionless terms.
@@ -289,7 +292,6 @@ create_ctx(void)
     .nuIon = nuIon,
     .vti = vti,
     .vte = vte,
-    .RatZeq0 = RatZeq0,
     .vpar_max_ion = vpar_max_ion,
     .mu_max_ion = mu_max_ion,
     .vpar_max_elc = vpar_max_elc,
@@ -320,11 +322,16 @@ create_ctx(void)
     .Z_max = Z_max,
   };
   
-  // Populate a couple more values in the context.
-  ctx.psi_eval = psi_RZ_tandem(ctx.RatZeq0, 0.0, &ctx);
+  // Select the same flux/plug-midplane radius as the beam R-15 reference.
+  // The corresponding radius in the tandem's central cell is about 0.184374 m.
+  double Z_plug_midp = 0.5 * (ctx.L_center + ctx.L_plugs);
+  ctx.psi_eval = psi_RZ_tandem(R_plug_midp, Z_plug_midp, &ctx);
+  ctx.RatZeq0 = R_psiZ_tandem(ctx.psi_eval, 0.0, &ctx);
 
-  // Calculate magnetic field magnitude at midplane (Z=0)
-  ctx.Bmag_midp = 0.5; // Optimization target
+  // The beam reference field is at the plug midplane (Z=+-3), not Z=0.
+  double BRad_midp, BZ_midp;
+  Bfield_psiZ_tandem(ctx.psi_eval, Z_plug_midp, &ctx,
+    &BRad_midp, &BZ_midp, &ctx.Bmag_midp);
 
   ctx.z_min    = z_psiZ_tandem(ctx.psi_eval, ctx.Z_min, &ctx);
   ctx.z_max    = z_psiZ_tandem(ctx.psi_eval, ctx.Z_max, &ctx);
@@ -519,8 +526,8 @@ int main(int argc, char **argv)
   struct gkyl_mirror_geo_grid_inp grid_inp = {
     .filename_psi = "/scratch/gpfs/CSD/mr1884/gkylmax/generate_efit/tandem_R15.geqdsk_psi.gkyl", // psi file to use
     .rclose = 0.2, // closest R to region of interest
-    .zmin = -5.5,  // Z of lower boundary
-    .zmax =  5.5,  // Z of upper boundary
+    .zmin = ctx.Z_min,  // Z of lower boundary
+    .zmax = ctx.Z_max,  // Z of upper boundary
     .include_axis = false, // Include R=0 axis in grid
     .fl_coord = GKYL_GEOMETRY_MIRROR_GRID_GEN_PSI_CART_Z, // coordinate system for psi grid
   };

@@ -22,14 +22,25 @@ def read(path):
 
 
 def series(path, components):
+    """Read append-only diagnostics, letting later restarts replace old tails."""
     d = read(path)
     t, v = np.asarray(d.get_grid()[0]), d.get_values()
+    if t.ndim != 1 or not len(t) or not np.isfinite(t).all():
+        raise ValueError(f'Expected nonempty, finite diagnostic times in {path}')
     if v.ndim != 2 or v.shape != (len(t), components):
         raise ValueError(f'Unexpected diagnostic shape in {path}: {v.shape}')
-    if np.any(np.diff(t) < 0):
-        raise ValueError(f'Time goes backwards in {path}; check appended restart output')
-    # Keep the last copy of an exactly duplicated restart/phase-boundary time.
-    keep = np.r_[np.diff(t) != 0, True]
+    # A restart appends samples from an earlier time without removing the old
+    # tail. Keep a sample only if it precedes every later-written sample. This
+    # discards superseded tails even when restart timestamps differ slightly,
+    # and keeps the last copy of an exactly duplicated phase-boundary time.
+    # Sorting would incorrectly interleave old and restarted trajectories.
+    future_min = np.minimum.accumulate(t[::-1])[::-1]
+    keep = np.r_[t[:-1] < future_min[1:], True]
+    restarts = np.count_nonzero(np.diff(t) < 0)
+    if restarts:
+        warnings.warn(f'{path}: reconciled {restarts} appended restart(s); '
+                      f'discarded {np.count_nonzero(~keep)} superseded samples',
+                      stacklevel=2)
     return t[keep], v[keep], d.ctx
 
 
